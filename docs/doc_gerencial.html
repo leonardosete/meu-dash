@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação Gerencial - Dash Alertas</title>
+    <style>
+        :root {
+            --bg-color: #f4f7fc;
+            --card-color: #ffffff;
+            --text-color: #333;
+            --text-secondary-color: #555;
+            --border-color: #e3e6f0;
+            --accent-color: #4e73df;
+            --success-color: #1cc88a;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        h1, h2, h3 {
+            color: var(--text-color);
+            font-weight: 600;
+            padding-bottom: 10px;
+        }
+        h1 { 
+            font-size: 2.5em; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid var(--accent-color); 
+            color: var(--accent-color);
+        }
+        h2 { 
+            font-size: 1.8em; 
+            margin-top: 50px; 
+            border-bottom: 1px solid var(--border-color);
+        }
+        h3 { 
+            font-size: 1.4em; 
+            margin-top: 40px; 
+            color: var(--accent-color);
+        }
+        p { color: var(--text-secondary-color); }
+        a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+        a:hover { text-decoration: underline; }
+        .card {
+            background: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 25px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .kpi-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .kpi-value {
+            font-size: 3em;
+            font-weight: 700;
+            margin: 0;
+        }
+        .kpi-label {
+            font-size: 1.1em;
+            color: var(--text-secondary-color);
+            margin-top: 5px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+        .highlight {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .highlight-success { background-color: rgba(28, 200, 138, 0.1); border-left: 5px solid var(--success-color); }
+        .highlight-danger { background-color: rgba(231, 74, 59, 0.1); border-left: 5px solid var(--danger-color); }
+        .highlight-warning { background-color: rgba(246, 194, 62, 0.1); border-left: 5px solid var(--warning-color); }
+        .flow-diagram {
+            list-style: none;
+            padding: 0;
+            position: relative;
+        }
+        .flow-diagram li {
+            padding: 20px;
+            background: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .flow-diagram li::after {
+            content: '→';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            color: var(--accent-color);
+        }
+        .flow-diagram li:last-child::after { content: ''; }
+        .flow-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard de Análise de Alertas: Guia Gerencial</h1>
+        <p>Este documento explica o propósito, os principais indicadores e como utilizar o dashboard para tomar decisões estratégicas.</p>
+
+        <section id="proposito">
+            <h2>1. O Propósito do Dashboard</h2>
+            <div class="card">
+                <p>Em um ambiente com milhares de alertas diários, é impossível tratar tudo. O dashboard foi criado para resolver este problema, transformando o "ruído" operacional em um plano de ação claro e priorizado.</p>
+                <p><strong>O objetivo principal é direcionar o foco das equipes para os problemas que representam o maior risco e a maior ineficiência para o negócio.</strong></p>
+            </div>
+        </section>
+
+        <section id="interpretacao">
+            <h2>2. Como Interpretar os Indicadores (KPIs)</h2>
+            <p>O dashboard apresenta uma visão simplificada da saúde operacional através de quatro pilares:</p>
+
+            <div class="grid-container">
+                <div class="card kpi-card">
+                    <div class="kpi-value" style="color: var(--danger-color);">🔥</div>
+                    <h3 style="border:none; margin-top:15px;">Foco de Atuação</h3>
+                    <p>Mostra o número de <strong>Casos</strong> (problemas raiz) onde a automação falhou ou não existe. Este é o principal indicador de trabalho manual e risco. <strong>O objetivo é manter este número o mais baixo possível.</strong></p>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-value" style="color: var(--warning-color);">⚠️</div>
+                    <h3 style="border:none; margin-top:15px;">Instabilidade Crônica</h3>
+                    <p>Mede os Casos que são resolvidos por automação, mas que ocorrem com alta frequência. Indica instabilidade e é uma oportunidade para análise de causa raiz e solução definitiva.</p>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-value" style="color: var(--success-color);">✅</div>
+                    <h3 style="border:none; margin-top:15px;">Sucesso da Automação</h3>
+                    <p>Indica a porcentagem de Casos que foram tratados com sucesso pela automação, sem necessidade de intervenção humana. Uma taxa alta indica uma operação eficiente.</p>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-value" style="color: var(--info-color);">📜</div>
+                    <h3 style="border:none; margin-top:15px;">Qualidade dos Dados</h3>
+                    <p>Garante a confiabilidade da análise. O sistema notifica automaticamente se encontrar dados de entrada inconsistentes, permitindo a correção na origem e garantindo que as decisões sejam baseadas em informações precisas.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="decisoes">
+            <h2>3. Usando o Dashboard para Tomar Decisões</h2>
+            
+            <h3>O que é um "Caso" e por que ele é importante?</h3>
+            <div class="card">
+                <p>O dashboard não foca em alertas individuais, mas em <strong>Casos</strong>. Um Caso agrupa todos os alertas da mesma natureza em um mesmo recurso. Em vez de ver "100 alertas de disco cheio", você vê <strong>"1 Caso de disco cheio"</strong>.</p>
+                <p>Essa abordagem permite focar na <strong>causa raiz</strong> do problema, e não no sintoma (o alerta).</p>
+            </div>
+
+            <h3>Como os Casos são Priorizados?</h3>
+            <div class="card">
+                <p>A prioridade de um caso é definida por um <strong>Score Ponderado</strong>, que responde a três perguntas:</p>
+                <ul>
+                    <li><strong>Qual o risco para o negócio?</strong> (Severidade e Prioridade do alerta)</li>
+                    <li><strong>Nossa automação está sendo eficiente?</strong> (A automação falhou? Com que frequência?)</li>
+                    <li><strong>Qual o impacto operacional?</strong> (Quantos alertas (ruído) este caso está gerando?)</li>
+                </ul>
+                <p>Casos com scores mais altos são os mais críticos e devem ser o foco principal da equipe. Para facilitar o entendimento, o próprio dashboard principal contém uma seção "Conceitos" que detalha essa lógica.</p>
+            </div>
+
+            <h3>Análise de Tendência: Estamos Melhorando?</h3>
+            <div class="card">
+                <p>Quando o sistema analisa dois períodos, ele gera o <strong>Relatório de Tendência</strong>, que é uma das ferramentas mais poderosas para a gestão. Ele responde a perguntas como:</p>
+                <ul>
+                    <li>Quantos problemas do período passado foram efetivamente resolvidos? (<strong>Taxa de Resolução</strong>)</li>
+                    <li>Quantos problemas novos surgiram e exigem atenção?</li>
+                    <li>Quais problemas são "crônicos" e persistem ao longo do tempo?</li>
+                    <li>Qual o saldo final de problemas? Estamos com mais ou menos casos para resolver do que antes?</li>
+                </ul>
+                <p>O relatório apresenta um <strong>Funil de Resolução</strong> visual, que mostra claramente o fluxo de casos de um período para o outro, tornando a análise de eficácia mais intuitiva.</p>
+                <div class="highlight highlight-success">
+                    <strong>Ação Gerencial:</strong> Use a <strong>Taxa de Resolução</strong> como o principal KPI para medir a eficácia das equipes na solução de problemas de causa raiz. Utilize a lista de <strong>problemas persistentes</strong> para cobrar ações mais profundas e estratégicas, quebrando o ciclo de falhas recorrentes.
+                </div>
+            </div>
+        </section>
+
+        <section id="fluxo">
+            <h2>4. O Fluxo de Dados Simplificado</h2>
+            <div class="card">
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="icon">📥</div>
+                        <h4>1. Coleta</h4>
+                        <p>Arquivos CSV com milhares de alertas são inseridos no sistema.</p>
+                    </div>
+                    <div class="flow-step">
+                        <div class="icon">⚙️</div>
+                        <h4>2. Análise</h4>
+                        <p>O motor de análise agrupa alertas em Casos, valida os dados e calcula o Score de Prioridade.</p>
+                    </div>
+                    <div class="flow-step">
+                        <div class="icon">📊</div>
+                        <h4>3. Geração</h4>
+                        <p>Dashboards interativos e planos de ação são criados e disponibilizados para as equipes.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>
