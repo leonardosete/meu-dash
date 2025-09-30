@@ -19,7 +19,7 @@
 1.  **Sincronização Obrigatória:** Qualquer alteração no código que afete o fluxo de execução, as entradas/saídas de um script ou a estrutura dos relatórios gerados **DEVE** ser refletida imediatamente neste arquivo e, subsequentemente, nos documentos `doc_tecnica.html` e `doc_gerencial.html`.
 2.  **Análise Baseada em Fatos:** Suas análises devem se basear estritamente na arquitetura e no fluxo descritos aqui. Não presuma funcionalidades que não estejam documentadas.
 3.  **Clareza e Precisão:** Ao gerar código ou documentação, seja explícito sobre as dependências entre os scripts e os artefatos que eles consomem e produzem.
-4.  **Ponto de Partida Fixo:** Toda análise de fluxo de execução deve, obrigatoriamente, começar pelo orquestrador principal: `scripts/gerar_relatorio.sh`.
+4.  **Ponto de Partida Fixo:** Toda análise de fluxo de execução deve, obrigatoriamente, começar pelos orquestradores principais: `scripts/gerar_relatorio.sh` (para Linux/macOS) ou `scripts/gerar_relatorio.ps1` (para Windows).
 
 ---
 
@@ -99,40 +99,39 @@ Para garantir a integridade da análise, o script `analisar_alertas.py` realiza 
 
 # 🏛️ ARQUITETURA E COMPONENTES
 
-## 1. Orquestrador Principal
+## 1. Orquestradores Principais
 
-#### Script: `scripts/gerar_relatorio.sh`
-- **Responsabilidade:** Único ponto de entrada do projeto. Orquestra todo o fluxo de análise e geração de relatórios.
+#### Scripts: `scripts/gerar_relatorio.sh` e `scripts/gerar_relatorio.ps1`
+- **Responsabilidade:** Único ponto de entrada do projeto. Orquestram todo o fluxo de análise e geração de relatórios para ambientes Linux/macOS (`.sh`) e Windows (`.ps1`).
 - **Entradas (Inputs):**
     - Arquivos `.csv` localizados em `data/put_csv_here/`.
     - Templates HTML em `templates/`.
 - **Saídas (Outputs):**
     - Diretório de resultados (`reports/analise-comparativa-...` ou `reports/resultados-...`) contendo todos os dashboards e arquivos de dados.
 - **Detalhes Chave:**
-    - Prepara o ambiente Python e instala dependências (`pandas`, `openpyxl`).
-    - Invoca `selecionar_arquivos.py` para ordenar os CSVs em modo comparativo.
-    - Invoca `analisar_alertas.py` com as flags corretas (`--resumo-only` para o período anterior).
-    - Invoca `get_date_range.py` e passa os resultados para `analise_tendencia.py`.
-    - Usa `awk` para injetar dados do `atuar.csv` no `editor_template.html`, criando o `editor_atuacao.html`.
-    - Move o log `invalid_self_healing_status.csv` para o diretório de resultados, se existir.
+    - Preparam o ambiente Python e instalam dependências (`pandas`, `openpyxl`).
+    - Invocam `selecionar_arquivos.py` para ordenar os CSVs em modo comparativo.
+    - Invocam `analisar_alertas.py` com as flags corretas (`--resumo-only` para o período anterior).
+    - Invocam `get_date_range.py` e passam os resultados para `analise_tendencia.py`.
+    - Injetam dados do `atuar.csv` no `editor_template.html` para criar o `editor_atuacao.html`.
+    - Movem o log `invalid_self_healing_status.csv` para o diretório de resultados, se existir.
 
 ## 2. Motores de Análise
 
 #### Script: `src/analisar_alertas.py`
-- **Responsabilidade:** Processar um único arquivo de alertas e gerar todo o ecossistema de dashboards para aquele período.
+- **Responsabilidade:** Processar um único arquivo de alertas, realizar a análise principal e orquestrar a geração dos relatórios HTML para aquele período.
 - **Entradas (Inputs):**
     - Um único arquivo `.csv` de alertas (via argumento posicional).
     - Argumentos de linha de comando para especificar os caminhos de saída de todos os artefatos (e.g., `--output-json`, `--output-actuation`, `--plan-dir`, etc.).
     - A flag `--resumo-only` para o modo de análise otimizada.
 - **Saídas (Outputs):**
     - **`resumo_problemas.json` (Artefato Central)**
-    - Todos os dashboards HTML (`resumo_geral.html`, `plano-de-acao-[TIME].html`, etc.).
     - Arquivos de dados CSV (`atuar.csv`, `remediados.csv`, `remediados_frequentes.csv`).
     - Opcionalmente, `invalid_self_healing_status.csv` se forem encontrados status inválidos.
 - **Detalhes Chave:**
     - **Motor de Análise:** Agrupa alertas em **Casos** e calcula o **Score de Prioridade Ponderado**.
     - **Validação de Dados:** Verifica a coluna `self_healing_status` e gera o log de anomalias.
-    - **Tratamento de Status Inválido:** Para casos que requerem atuação manual e que possuem um histórico de status de remediação inválido, a `acao_sugerida` é prefixada com um aviso (`⚠️ Analise o status da remediação | ...`) para garantir que a inconsistência de dados seja investigada.
+    - **Geração de Relatórios:** Invoca funções do `gerador_html.py` para criar todos os dashboards HTML (`resumo_geral.html`, planos de squad, páginas de detalhe, etc.).
     - **Documentação Embutida:** O dashboard principal (`resumo_geral.html`) contém uma seção "Conceitos" detalhada, que explica a lógica da análise diretamente para o usuário final.
 
 #### Script: `src/analise_tendencia.py`
@@ -147,13 +146,22 @@ Para garantir a integridade da análise, o script `analisar_alertas.py` realiza 
 - **Detalhes Chave:**
     - **Análise de Funil:** Apresenta um "Funil de Resolução" que mostra visualmente o fluxo de casos: quantos foram resolvidos, quantos persistiram e quantos novos surgiram.
     - **Cálculo de KPIs:** Calcula e destaca a "Taxa de Resolução" como um indicador chave de eficácia.
-    - **Navegação por Abas:** Organiza a análise em abas interativas, permitindo a exploração detalhada de:
-        - **Casos Persistentes:** Problemas que continuam sem solução entre os períodos.
-        - **Novos Problemas:** Casos que surgiram no período atual.
-        - **Problemas Resolvidos:** Casos que foram solucionados.
-    - **Tabelas de Variação:** Mostra a variação no volume de alertas por Squad e por tipo de problema, facilitando a identificação de melhorias e regressões.
+    - **Navegação por Abas:** Organiza a análise em abas interativas para exploração detalhada.
 
-## 3. Scripts Auxiliares
+## 3. Módulo de Geração de HTML
+
+#### Script: `src/gerador_html.py`
+- **Responsabilidade:** Centralizar toda a lógica de renderização de HTML.
+- **Entradas (Inputs):**
+    - Dicionários de contexto com os dados da análise (e.g., KPIs, DataFrames de top problemas).
+    - Strings de templates HTML.
+- **Saídas (Outputs):**
+    - Strings HTML formatadas, prontas para serem salvas em arquivos.
+- **Detalhes Chave:**
+    - Contém funções específicas para renderizar cada componente do dashboard (KPIs, gráficos de barra, tabelas, etc.).
+    - Abstrai a complexidade da criação de HTML dos scripts de análise, promovendo a separação de responsabilidades.
+
+## 4. Scripts Auxiliares
 
 #### Script: `src/selecionar_arquivos.py`
 - **Responsabilidade:** Ordenar cronologicamente múltiplos arquivos `.csv` com base na data mais recente encontrada na coluna `sys_created_on`.
@@ -175,16 +183,16 @@ Para garantir a integridade da análise, o script `analisar_alertas.py` realiza 
 
 O processo é totalmente automatizado e segue esta sequência:
 
-1.  **Usuário:** Executa o comando `./scripts/gerar_relatorio.sh`.
+1.  **Usuário:** Executa `./scripts/gerar_relatorio.sh` ou `.\scripts\gerar_relatorio.ps1`.
 2.  **Orquestrador:** Identifica os arquivos `.csv` em `data/put_csv_here/`.
 3.  **Condição: Análise Comparativa (>1 arquivo CSV):**
     a. **`selecionar_arquivos.py`** é executado para determinar os arquivos `atual` e `anterior`.
     b. **Primeira Análise (Otimizada):** `analisar_alertas.py` é executado para o arquivo `anterior` com a flag `--resumo-only`. Isso gera apenas o `resumo_problemas.json` e o salva em um diretório temporário.
-    c. **Segunda Análise (Completa):** `analisar_alertas.py` é executado para o arquivo `atual` sem flags, gerando o ecossistema completo de dashboards e o `resumo_problemas.json` do período atual.
+    c. **Segunda Análise (Completa):** `analisar_alertas.py` é executado para o arquivo `atual` sem flags, gerando os arquivos de dados (`.csv`, `.json`) e os relatórios HTML (`.html`) através do `gerador_html.py`.
     d. **Coleta de Metadados:** `get_date_range.py` é executado para ambos os arquivos (`atual` e `anterior`) para obter os períodos de análise.
     e. **Análise de Tendência:** `analise_tendencia.py` é executado, consumindo os dois arquivos `.json`, os nomes dos arquivos originais e os intervalos de datas para gerar o `resumo_tendencia.html`.
 4.  **Condição: Análise Simples (1 arquivo CSV):**
-    a. **Análise Completa:** `analisar_alertas.py` é executado para o único arquivo, gerando todo o ecossistema de dashboards.
+    a. **Análise Completa:** `analisar_alertas.py` é executado para o único arquivo, gerando todo o ecossistema de dashboards e arquivos de dados.
 5.  **Finalização (Ambos os modos):**
     a. O **Orquestrador** consolida os artefatos no diretório de resultados final.
     b. O `atuar.csv` gerado é usado para popular o `editor_template.html` e criar o `editor_atuacao.html`.

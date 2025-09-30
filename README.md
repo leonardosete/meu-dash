@@ -15,11 +15,13 @@ Para gerar o relatório completo, siga os passos abaixo:
     *   Salve-os no diretório: `data/put_csv_here/`.
 
 2.  **Execute o script de análise:**
-    *   Abra seu terminal.
+    *   Abra seu terminal (Bash para Linux/macOS, PowerShell para Windows).
     *   Navegue até a raiz do projeto.
-    *   Execute o comando: `bash scripts/gerar_relatorio.sh`.
+    *   Execute o comando correspondente ao seu sistema:
+        *   **Linux/macOS:** `bash scripts/gerar_relatorio.sh`
+        *   **Windows:** `.\scripts\gerar_relatorio.ps1`
 
-O script cuidará de todo o resto: ele prepara o ambiente, processa os dados e gera os relatórios em formato HTML e CSV. Ao final, ele exibirá um link `file://` para o dashboard principal, que você pode abrir no seu navegador.
+O script cuidará de todo o resto: ele prepara o ambiente Python (criando um ambiente virtual `.venv` se necessário), instala as dependências (`pandas`, `openpyxl`), processa os dados e gera os relatórios. Ao final, ele exibirá um link `file://` para o dashboard principal, que você pode abrir no seu navegador.
 
 ---
 
@@ -43,16 +45,19 @@ A criticidade de um caso é calculada pela fórmula:
 -   **Ineficiência:** A automação de correção falhou? (Casos onde a automação não funcionou recebem um peso maior).
 -   **Impacto:** Qual o volume de ruído operacional? (Casos que geram muitos alertas também são priorizados).
 
+A lógica detalhada do cálculo está disponível na seção "Conceitos" do dashboard principal.
+
 ---
 
 ### 📁 Estrutura do Projeto
 
-*   `scripts/gerar_relatorio.sh`: O script principal que orquestra todo o processo.
-*   `src/`: Contém os scripts Python de análise e processamento de dados.
+*   `scripts/`: Contém os scripts orquestradores (`gerar_relatorio.sh`, `gerar_relatorio.ps1`).
+*   `src/`: Contém os scripts Python de análise (`analisar_alertas.py`, `analise_tendencia.py`) e o módulo de geração de HTML (`gerador_html.py`).
 *   `data/put_csv_here/`: Onde você deve colocar seus arquivos CSV de entrada.
 *   `reports/`: O diretório de saída onde todos os relatórios gerados são salvos.
 *   `templates/`: Modelos HTML para a criação dos relatórios.
 *   `docs/`: Contém a documentação técnica e gerencial do projeto.
+*   `GEMINI.md`: Documentação interna para a IA assistente de desenvolvimento.
 
 ---
 
@@ -60,6 +65,6 @@ A criticidade de um caso é calculada pela fórmula:
 
 1.  **Análise Inteligente**: Identifica problemas únicos (Casos) e os prioriza com base em Risco, Ineficiência e Impacto.
 2.  **Geração de Relatórios**: Cria dashboards HTML interativos com KPIs e gráficos. O dashboard principal (`resumo_geral.html`) inclui uma seção "Conceitos" que explica a lógica da análise para todos os usuários.
-3.  **Planos de Ação**: Gera arquivos (`atuar.csv`, `editor_atuacao.html`) focados nos casos que exigem intervenção manual.
+3.  **Planos de Ação**: Gera arquivos (`atuar.csv`, `editor_atuacao.html`) focados nos casos que exigem intervenção manual, além de páginas HTML por squad.
 4.  **Análise de Tendências**: Ao processar mais de um arquivo, compara o período atual com o anterior e gera o `resumo_tendencia.html`, mostrando a evolução dos problemas, a taxa de resolução e os problemas persistentes.
 5.  **Validação da Qualidade dos Dados**: Detecta e isola alertas com dados de remediação inválidos (`invalid_self_healing_status.csv`), garantindo a confiabilidade da análise e notificando no dashboard principal.

@@ -225,12 +225,12 @@
         <section id="arquitetura">
             <h2>3. Arquitetura e Componentes</h2>
             
-            <h3>Orquestrador Principal</h3>
+            <h3>Orquestradores Principais</h3>
             <div class="card">
-                <h4><code>scripts/gerar_relatorio.sh</code></h4>
+                <h4><code>scripts/gerar_relatorio.sh</code> e <code>scripts/gerar_relatorio.ps1</code></h4>
                 <ul>
-                    <li><strong>Responsabilidade:</strong> Único ponto de entrada do projeto. Orquestra todo o fluxo.</li>
-                    <li><strong>Detalhes:</strong> Prepara o ambiente Python, detecta o número de arquivos <code>.csv</code> para decidir o modo de execução, invoca os scripts Python na ordem correta com as flags apropriadas (ex: <code>--resumo-only</code>), e finaliza o processo consolidando os relatórios.</li>
+                    <li><strong>Responsabilidade:</strong> Único ponto de entrada do projeto para ambientes Linux/macOS (`.sh`) e Windows (`.ps1`). Orquestra todo o fluxo.</li>
+                    <li><strong>Detalhes:</strong> Prepara o ambiente Python (venv), instala dependências (`pandas`, `openpyxl`), detecta o número de arquivos <code>.csv</code> para decidir o modo de execução, invoca os scripts Python na ordem correta com as flags apropriadas (ex: <code>--resumo-only</code>), e finaliza o processo consolidando os relatórios.</li>
                 </ul>
             </div>
 
@@ -238,10 +238,10 @@
             <div class="card">
                 <h4><code>src/analisar_alertas.py</code></h4>
                 <ul>
-                    <li><strong>Responsabilidade:</strong> Processar um único arquivo de alertas e gerar o ecossistema de dashboards.</li>
+                    <li><strong>Responsabilidade:</strong> Processar um único arquivo de alertas, realizar a análise principal e orquestrar a geração dos relatórios HTML para aquele período.</li>
                     <li><strong>Entradas:</strong> Um arquivo <code>.csv</code> e flags de linha de comando (<code>--output-json</code>, <code>--plan-dir</code>, etc.).</li>
                     <li><strong>Artefato Central Gerado:</strong> <code>resumo_problemas.json</code>.</li>
-                    <li><strong>Detalhes:</strong> É o principal motor de análise. Agrupa alertas em <strong>Casos</strong>, calcula o <strong>Score de Prioridade Ponderado</strong>, gera a maior parte dos relatórios e contém uma seção de "Conceitos" embutida no <code>resumo_geral.html</code> para explicar a lógica aos usuários.</li>
+                    <li><strong>Detalhes:</strong> É o principal motor de análise. Agrupa alertas em <strong>Casos</strong>, calcula o <strong>Score de Prioridade Ponderado</strong>, e invoca o módulo <code>gerador_html.py</code> para criar a maior parte dos relatórios. Contém uma seção de "Conceitos" embutida no <code>resumo_geral.html</code> para explicar a lógica aos usuários.</li>
                 </ul>
                 <h4><code>src/analise_tendencia.py</code></h4>
                 <ul>
@@ -249,6 +249,15 @@
                     <li><strong>Entradas:</strong> Dois arquivos <code>resumo_problemas.json</code> (atual e anterior), nomes dos arquivos CSV originais e os intervalos de datas de cada período.</li>
                     <li><strong>Saída:</strong> <code>resumo_tendencia.html</code>.</li>
                     <li><strong>Detalhes:</strong> Apresenta um "Funil de Resolução" que mostra o fluxo de casos (resolvidos, persistentes, novos), calcula a "Taxa de Resolução" e organiza a análise em abas interativas para detalhar a variação por squad e tipo de problema.</li>
+                </ul>
+            </div>
+
+            <h3>Módulo de Geração de HTML</h3>
+            <div class="card">
+                <h4><code>src/gerador_html.py</code></h4>
+                <ul>
+                    <li><strong>Responsabilidade:</strong> Centralizar toda a lógica de renderização de HTML.</li>
+                    <li><strong>Detalhes:</strong> Contém funções específicas para renderizar cada componente do dashboard (KPIs, gráficos de barra, tabelas, etc.), recebendo dados dos scripts de análise. Abstrai a complexidade da criação de HTML, promovendo a separação de responsabilidades.</li>
                 </ul>
             </div>
 
@@ -265,7 +274,7 @@
             <h2>4. Fluxo de Execução Lógico</h2>
             <ol class="flow-diagram">
                 <li>
-                    <strong>Execução Inicial:</strong> O usuário executa <code>./scripts/gerar_relatorio.sh</code>.
+                    <strong>Execução Inicial:</strong> O usuário executa <code>./scripts/gerar_relatorio.sh</code> ou <code>.\scripts\gerar_relatorio.ps1</code>.
                 </li>
                 <li>
                     <strong>Seleção de Arquivos (Modo Comparativo):</strong> Se houver mais de um CSV, <strong><code>selecionar_arquivos.py</code></strong> determina o arquivo <code>atual</code> e o <code>anterior</code>.
@@ -299,7 +308,8 @@
                     <li><strong><code>sucesso_automacao.html</code>:</strong> Visualizador de casos resolvidos por automação.</li>
                     <li><strong><code>instabilidade_cronica.html</code>:</strong> Visualizador de casos que são remediados, mas ocorrem com alta frequência.</li>
                     <li><strong><code>visualizador_logs_invalidos.html</code>:</strong> (Condicional) Visualizador para os alertas com status de remediação inválido.</li>
-                    <li><strong>Outros:</strong> Planos de ação por squad, visualizador de JSON, páginas de detalhes, etc.</li>
+                    <li><strong><code>visualizador_json.html</code>:</strong> Ferramenta de depuração para visualizar o <code>resumo_problemas.json</code>.</li>
+                    <li><strong>Outros:</strong> Planos de ação por squad, visualizador de squads, páginas de detalhes, etc.</li>
                 </ul>
             </div>
             <h3>Arquivos de Dados</h3>
