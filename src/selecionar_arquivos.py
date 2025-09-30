@@ -7,9 +7,21 @@ from datetime import datetime
 NOME_DA_COLUNA_DE_DATA = 'sys_created_on' 
 
 def get_max_date_from_file(filepath):
-    """
-    Lê um arquivo CSV e retorna a data máxima encontrada.
-    Retorna None se o arquivo não puder ser lido ou a coluna de data não for encontrada.
+    """Extrai a data máxima de uma coluna específica em um arquivo CSV.
+
+    Lê um arquivo CSV, converte a coluna de data para o formato datetime e
+    identifica a data mais recente. A função é robusta contra erros de
+    leitura, colunas de data ausentes e formatos de data inválidos,
+    imprimindo avisos no stderr para esses casos.
+
+    Args:
+        filepath (str): O caminho para o arquivo CSV a ser processado.
+
+    Returns:
+        Optional[pd.Timestamp]: A data máxima encontrada no arquivo como um
+        objeto Timestamp do pandas. Retorna None se o arquivo não puder ser
+        lido, a coluna de data não for encontrada, ou se não houver
+        datas válidas no arquivo.
     """
     try:
         # Tenta ler o CSV com separador ponto e vírgula, comum no Brasil
@@ -36,9 +48,21 @@ def get_max_date_from_file(filepath):
         return None
 
 def main():
-    """
-    Função principal que processa os arquivos passados como argumentos,
-    os ordena pela data interna e imprime os dois mais recentes.
+    """Ponto de entrada do script para selecionar os dois arquivos mais recentes.
+
+    Este script processa uma lista de caminhos de arquivos CSV fornecidos como
+    argumentos de linha de comando. Para cada arquivo, ele extrai a data
+    mais recente de uma coluna específica. Em seguida, ordena os arquivos
+    com base nessas datas e imprime os caminhos dos dois arquivos com as
+    datas mais recentes na saída padrão.
+
+    O script espera pelo menos dois caminhos de arquivo como argumentos. Se
+    menos de dois arquivos válidos com datas puderem ser processados, uma
+e    rro é emitido no stderr e o script termina com um código de status 1.
+
+    A saída consiste em duas linhas:
+    1. O caminho do arquivo mais recente.
+    2. O caminho do segundo arquivo mais recente.
     """
     files = sys.argv[1:]
     if len(files) < 2:
