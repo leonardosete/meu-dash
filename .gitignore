@@ -219,3 +219,6 @@ reports/
 .DS_Store
 
 meu-dash.code-workspace
+
+# Ignore all csv files
+*.csv

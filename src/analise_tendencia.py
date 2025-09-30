@@ -6,288 +6,6 @@ from html import escape
 import re
 from string import Template
 
-HTML_TEMPLATE = '''
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>$title</title>
-    <style>
-        :root {
-            --bg-color: #1a1c2f;
-            --card-color: #2c2f48;
-            --text-color: #f0f0f0;
-            --text-secondary-color: #a0a0b0;
-            --border-color: #404466;
-            --success-color: #1cc88a;
-            --warning-color: #f6c23e;
-            --danger-color: #e74a3b;
-            --info-color: #4e73df;
-            --persistent-color: #D89F3B;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: auto;
-        }
-        h1, h2, h3 {
-            color: var(--text-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            font-weight: 500;
-        }
-        h1 { font-size: 2em; margin-bottom: 20px; }
-        h2 { font-size: 1.5em; margin-top: 40px; border: none; }
-        h3 {
-            font-size: 1.2em;
-            margin-top: 20px;
-            margin-bottom: 15px;
-            border-bottom: none;
-            color: var(--text-secondary-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .card {
-            background: var(--card-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            margin-bottom: 25px;
-        }
-        
-        .kpi-flow-container {
-            display: flex;
-            flex-wrap: nowrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            margin-bottom: 25px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-        .kpi-flow-item { flex: 1; min-width: 160px; text-align: center; }
-        .kpi-flow-connector { font-size: 2.5em; color: var(--border-color); font-weight: bold; flex: 0; text-align: center; }
-        .kpi-flow-group {
-            display: flex; flex-direction: column; gap: 15px;
-            border-left: 2px dashed var(--border-color); border-right: 2px dashed var(--border-color);
-            padding: 0 20px; margin: 0 10px;
-        }
-        .kpi-card-enhanced {
-            background: var(--card-color); border: 1px solid var(--border-color);
-            border-radius: 8px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center;
-        }
-        .kpi-card-enhanced .kpi-value { font-size: 2.8em; margin: 0; line-height: 1.1; font-weight: 700; }
-        .kpi-card-enhanced .kpi-label { font-size: 0.9em; font-weight: 500; margin: 5px 0 8px 0; color: var(--text-color); }
-        .kpi-card-enhanced .kpi-subtitle {
-            font-size: 0.8em; color: var(--text-secondary-color); margin: 0;
-            background-color: var(--bg-color); padding: 3px 8px; border-radius: 4px; display: inline-block;
-            cursor: help;
-        }
-        .icon-minus::before { content: "−"; color: var(--danger-color); }
-        .icon-plus::before { content: "+"; color: var(--success-color); }
-
-        .definition-box, .insight-box {
-            padding: 15px 20px; margin: 15px 0 25px 0; border-radius: 0 8px 8px 0;
-            color: var(--text-secondary-color); line-height: 1.7;
-        }
-        .definition-box { background-color: rgba(78, 115, 223, 0.1); border-left: 4px solid var(--info-color); }
-        .insight-box { background-color: rgba(246, 194, 62, 0.1); border-left: 4px solid var(--warning-color); }
-        
-        table { 
-            width: 100%; border-collapse: collapse; margin-top: 20px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;
-        }
-        th, td { 
-            padding: 12px 15px; text-align: left; 
-            border-bottom: 1px solid var(--border-color); vertical-align: middle;
-        }
-        th { background-color: #262940; font-weight: bold; }
-        tbody tr:nth-child(even) { background-color: #33365a; }
-        tr:not(.details-row):hover { background-color: #3c4062; }
-        tbody tr:last-child td { border-bottom: none; }
-        tfoot tr { background-color: #262940; font-weight: bold; border-top: 2px solid var(--info-color); }
-        .center { text-align: center; }
-        
-        .change-bar-container { display: flex; align-items: center; gap: 10px; }
-        .bar-wrapper { flex-grow: 1; background-color: var(--border-color); border-radius: 4px; height: 12px; }
-        .bar { height: 100%; border-radius: 4px; }
-        .bar.positive { background-color: var(--success-color); }
-        .bar.negative { background-color: var(--danger-color); }
-        .change-value { font-weight: bold; min-width: 45px; text-align: right; }
-
-        .kpi-split-layout { display: flex; flex-wrap: wrap; align-items: center; gap: 40px; padding: 20px 30px; }
-        .kpi-split-layout__text { flex: 1; min-width: 280px; }
-        .kpi-split-layout__text h2 { border: none; margin-top: 0; margin-bottom: 15px; font-size: 1.4em; }
-        .kpi-split-layout__text p { color: var(--text-secondary-color); margin-bottom: 15px; line-height: 1.7; font-size: 0.95em;}
-        .kpi-split-layout__text small { color: var(--text-secondary-color); opacity: 0.7; }
-        .kpi-split-layout__chart { flex-shrink: 0; margin: 0 auto; }
-
-        .progress-donut {
-            --p: 0; --c: var(--info-color); --b: 18px; --w: 160px;
-            width: var(--w); aspect-ratio: 1; position: relative; display: grid;
-            place-content: center; margin: 5px; border-radius: 50%;
-            background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--border-color) 0);
-        }
-        .progress-donut::before { content: ""; position: absolute; inset: var(--b); background: var(--card-color); border-radius: 50%; }
-        .progress-donut-text-content { position: relative; text-align: center; }
-        .progress-donut__value { font-size: 1.9em; font-weight: 700; line-height: 1; color: var(--c); }
-
-        a { color: var(--info-color); text-decoration: none; font-weight: 500; }
-        a:hover { text-decoration: underline; }
-        
-        .collapsible {
-            background-color: var(--card-color); color: var(--text-color); cursor: pointer; padding: 18px; width: 100%;
-            border: 1px solid var(--border-color); border-radius: 8px; text-align: left; outline: none; font-size: 1.3em;
-            font-weight: 500; transition: background-color 0.3s ease; display: flex; align-items: center; justify-content: space-between;
-        }
-        .collapsible:hover { background-color: #33365a; }
-        .collapsible.active { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-        .collapsible .chevron { transition: transform 0.3s ease; margin-left: 15px; }
-        .collapsible.active .chevron { transform: rotate(90deg); }
-        .collapsible-content {
-            padding: 0 25px; background-color: var(--card-color); border: 1px solid var(--border-color); border-top: none;
-            border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden; max-height: 0;
-            transition: max-height 0.3s ease-out, padding 0.3s ease-out; margin-bottom: 20px;
-        }
-        
-        .tab-container {
-            padding-top: 5px;
-        }
-        .tab-links {
-            display: flex;
-            border-bottom: 2px solid var(--border-color);
-            margin-bottom: 25px;
-        }
-        .tab-link {
-            padding: 12px 20px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            color: var(--text-secondary-color);
-            font-size: 1.05em;
-            font-weight: 500;
-            transition: color 0.3s, border-bottom 0.3s;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .tab-link:hover {
-            color: var(--text-color);
-        }
-        .tab-link.active {
-            color: var(--info-color);
-            border-bottom-color: var(--info-color);
-        }
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.5s;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .expandable-row { cursor: pointer; }
-        .details-row { display: none; }
-        .details-row.active { display: table-row; }
-        .details-row > td { padding: 0 !important; background-color: rgba(0,0,0,0.15); }
-        .details-row-content { padding: 20px 25px; }
-        .details-row-content h4 { margin-top: 0; color: var(--text-secondary-color); font-weight: 500; }
-        .sub-table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: none; border-radius: 4px; overflow: hidden; }
-        .sub-table th, .sub-table td { font-size: 0.9em; border-bottom: 1px solid var(--border-color); }
-        .sub-table tr:last-child td { border-bottom: none; }
-        .expandable-row .chevron { transition: transform 0.3s ease; }
-        .expandable-row.active .chevron { transform: rotate(90deg); }
-    </style>
-</head>
-<body>
-    <div class="container">
-        $body
-    </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            function updateParentHeights(element) {
-                let parentContent = element.closest('.collapsible-content');
-                if (parentContent && parentContent.style.maxHeight && parentContent.style.maxHeight !== '0px') {
-                    parentContent.style.maxHeight = parentContent.scrollHeight + 50 + 'px';
-                    updateParentHeights(parentContent);
-                }
-            }
-
-            document.querySelectorAll(".collapsible").forEach(button => {
-                button.addEventListener("click", function() {
-                    this.classList.toggle("active");
-                    const content = this.nextElementSibling;
-                    if (content.style.maxHeight && content.style.maxHeight !== '0px') {
-                        content.style.maxHeight = null;
-                    } else {
-                        content.style.maxHeight = content.scrollHeight + 50 + "px";
-                    }
-                    updateParentHeights(content);
-                });
-            });
-
-            setTimeout(() => {
-                document.querySelectorAll('.collapsible.active').forEach(button => {
-                    const content = button.nextElementSibling;
-                    if (content) {
-                        content.style.maxHeight = content.scrollHeight + 50 + "px";
-                        updateParentHeights(content);
-                    }
-                });
-            }, 150);
-
-            document.querySelectorAll('.tab-container').forEach(container => {
-                const tabLinks = container.querySelectorAll('.tab-link');
-                const tabContents = container.querySelectorAll('.tab-content');
-                tabLinks.forEach(link => {
-                    link.addEventListener('click', (event) => {
-                        const targetId = link.dataset.target;
-                        if (link.classList.contains('active')) return;
-                        tabLinks.forEach(l => l.classList.remove('active'));
-                        tabContents.forEach(c => c.classList.remove('active'));
-                        link.classList.add('active');
-                        const targetContent = container.querySelector('#' + targetId);
-                        if(targetContent) {
-                            targetContent.classList.add('active');
-                        }
-                        updateParentHeights(targetContent || link);
-                    });
-                });
-            });
-
-            document.querySelectorAll(".expandable-row").forEach(function(row) {
-                row.addEventListener("click", function() {
-                    this.classList.toggle("active");
-                    var targetId = this.dataset.target;
-                    var detailRow = document.getElementById(targetId);
-                    if (detailRow) {
-                        detailRow.classList.toggle("active");
-                        updateParentHeights(detailRow);
-                    }
-                });
-            });
-        });
-    </script>
-</body>
-</html>
-'''
-
 ACTION_NEEDED_FLAGS = [
     "Analisar intermitência na remediação",
     "Desenvolver remediação (nenhum sucesso registrado)",
@@ -415,7 +133,7 @@ def generate_kpis_html(kpis):
     
     gauge_color_var = "var(--success-color)"
     card_bg_style = "background-color: rgba(28, 200, 138, 0.1);"
-    if kpis['improvement_rate'] < 70:
+    if kpis['improvement_rate'] < 75:
         gauge_color_var = "var(--warning-color)"
         card_bg_style = "background-color: rgba(246, 194, 62, 0.1);"
     if kpis['improvement_rate'] < 50:
@@ -486,7 +204,6 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
         table_body += f"<tr class='expandable-row' data-target='{details_id}'>"
         table_body += f"<td><span style='display: flex; align-items: center; gap: 8px;'>{chevron_svg} {escape(str(name))}</span></td>"
         
-        # --- ORDEM DAS COLUNAS ALTERADA AQUI ---
         table_body += f"<td>{bar_html}</td><td class='center'>{p2_count}</td><td class='center'>{p1_count}</td><td class='center' style='font-weight: bold;'>{num_cases}</td></tr>"
         
         squad_cases_df = detailed_df[detailed_df['assignment_group'] == name]
@@ -506,7 +223,6 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
     table_footer = "<tfoot><tr>"
     table_footer += f"<td>Total</td>"
     
-    # --- ORDEM DAS COLUNAS DO RODAPÉ ALTERADA AQUI ---
     table_footer += f"<td><div class='change-bar-container'><span class='change-value' style='color: {total_change_color}; width: 100%; text-align: right;'>{total_change_sign}{total_change}</span></div></td>"
     table_footer += f"<td class='center'>{total_alerts_p2}</td>"
     table_footer += f"<td class='center'>{total_alerts_p1}</td>"
@@ -527,7 +243,13 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
     
     df_merged['change'] = df_merged['count_p2'] - df_merged['count_p1']
     df_merged['abs_change'] = df_merged['change'].abs()
-    df_sorted = df_merged.sort_values(by=['abs_change', 'count_p2'], ascending=[False, False])
+    
+    has_case_count = 'num_cases' in df_merged.columns
+    sort_columns = ['abs_change', 'count_p2']
+    if has_case_count:
+        sort_columns.append('num_cases')
+
+    df_sorted = df_merged.sort_values(by=sort_columns, ascending=[False, False, False])
     
     max_abs_change = df_sorted['abs_change'].max() if not df_sorted.empty else 1
     
@@ -535,31 +257,45 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
     total_p1 = df_sorted['count_p1'].sum()
     total_p2 = df_sorted['count_p2'].sum()
     total_change = df_sorted['change'].sum()
+    total_cases = df_sorted['num_cases'].sum() if has_case_count else 0
     
-    # --- GERAÇÃO DO CORPO DA TABELA ---
+    # --- CABEÇALHO ---
+    table_header = f"<thead><tr><th>Item</th><th style='width: 35%;'>Variação de Alertas</th><th class='center'>Alertas ({escape(label_p2)})</th><th class='center'>Alertas ({escape(label_p1)})</th>"
+    if has_case_count:
+        case_col_name = "Nº de Casos"
+        if total_p1 == 0 and total_p2 > 0:  # Contexto de "Novos Problemas"
+            case_col_name = "Nº de Casos (Novos)"
+        elif total_p2 == 0 and total_p1 > 0:  # Contexto de "Resolvidos"
+            case_col_name = "Nº de Casos (Resolvidos)"
+        table_header += f"<th class='center'>{case_col_name}</th>"
+    table_header += "</tr></thead>"
+    
+    # --- CORPO DA TABELA ---
     table_body = "<tbody>"
     for name, row in df_sorted.iterrows():
         p1_count, p2_count, change = row['count_p1'], row['count_p2'], row['change']
         bar_html = _generate_change_bar_html(change, max_abs_change)
-        table_body += f"<tr><td>{escape(str(name))}</td><td>{bar_html}</td><td class='center'>{int(p2_count)}</td><td class='center'>{int(p1_count)}</td></tr>"
+        table_body += f"<tr><td>{escape(str(name))}</td><td>{bar_html}</td><td class='center'>{int(p2_count)}</td><td class='center'>{int(p1_count)}</td>"
+        if has_case_count:
+            table_body += f"<td class='center' style='font-weight: bold;'>{int(row['num_cases'])}</td>"
+        table_body += "</tr>"
     table_body += "</tbody>"
 
-    # --- GERAÇÃO DO RODAPÉ (TFOOT) ---
+    # --- RODAPÉ (TFOOT) ---
     total_change_sign = "+" if total_change > 0 else ""
     total_change_color = "var(--danger-color)" if total_change > 0 else "var(--success-color)" if total_change < 0 else "var(--text-secondary-color)"
     
     table_footer = "<tfoot><tr>"
     table_footer += f"<td>Total</td>"
-    table_footer += f"<td><div class='change-bar-container'><span class='change-value' style='color: {total_change_color}; width: 100%; text-align: right;'>{total_change_sign}{total_change}</span></div></td>"
+    table_footer += f"<td><div class='change-bar-container'><span class='change-value' style='color: {total_change_color}; width: 100%; text-align: right;'>{total_change_sign}{int(total_change)}</span></div></td>"
     table_footer += f"<td class='center'>{int(total_p2)}</td>"
     table_footer += f"<td class='center'>{int(total_p1)}</td>"
+    if has_case_count:
+        table_footer += f"<td class='center'>{int(total_cases)}</td>"
     table_footer += "</tr></tfoot>"
 
     # --- MONTAGEM FINAL DA TABELA ---
-    table_html = f"<table><thead><tr><th>Item</th><th style='width: 35%;'>Variação de Alertas</th><th class='center'>Alertas ({escape(label_p2)})</th><th class='center'>Alertas ({escape(label_p1)})</th></tr></thead>"
-    table_html += table_body
-    table_html += table_footer
-    table_html += "</table>"
+    table_html = f"<table>{table_header}{table_body}{table_footer}</table>"
     
     return table_html
 
@@ -580,27 +316,49 @@ def main():
     if df_p1 is None or df_p2 is None:
         sys.exit("❌ Não foi possível continuar devido a erros na análise dos arquivos de resumo JSON.")
 
+    # DataFrames base de casos que precisam de atuação para cada período
+    df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACTION_NEEDED_FLAGS)].copy()
+    df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACTION_NEEDED_FLAGS)].copy()
+
     kpis, merged_df = calculate_kpis_and_merged_df(df_p1, df_p2)
     
+    # --- Novos Problemas ---
     new_cases_df = merged_df[merged_df['_merge'] == 'right_only'].copy()
-    new_problems_summary = new_cases_df.groupby('short_description').agg(count_p2=('alert_count_p2', 'sum')).reset_index()
+    new_problems_summary = new_cases_df.groupby('short_description', observed=True).agg(
+        count_p2=('alert_count_p2', 'sum'),
+        num_cases=('short_description', 'size') # Conta os casos novos por tipo de problema
+    ).reset_index()
     new_problems_summary['count_p1'] = 0
 
+    # --- Problemas Resolvidos ---
     resolved_cases_df = merged_df[merged_df['_merge'] == 'left_only'].copy()
-    resolved_problems_summary = resolved_cases_df.groupby('short_description').agg(count_p1=('alert_count_p1', 'sum')).reset_index()
+    resolved_problems_summary = resolved_cases_df.groupby('short_description', observed=True).agg(
+        count_p1=('alert_count_p1', 'sum'),
+        num_cases=('short_description', 'size') # Conta os casos resolvidos por tipo de problema
+    ).reset_index()
     resolved_problems_summary['count_p2'] = 0
 
+    # --- Variação por Problema (Persistentes) ---
     both_cases_df = merged_df[merged_df['_merge'] == 'both'].copy()
-    varying_problems_summary = both_cases_df.groupby('short_description').agg(
+    varying_problems_summary = both_cases_df.groupby('short_description', observed=True).agg(
         count_p1=('alert_count_p1', 'sum'),
-        count_p2=('alert_count_p2', 'sum')
+        count_p2=('alert_count_p2', 'sum'),
+        num_cases=('short_description', 'size') # Conta casos persistentes por tipo de problema
     ).reset_index()
 
     persistent_squads_summary = analyze_persistent_cases(merged_df)
 
-    squad_trends_p1 = df_p1[df_p1["acao_sugerida"].isin(ACTION_NEEDED_FLAGS)].groupby('assignment_group')['alert_count'].sum().reset_index().rename(columns={'alert_count': 'count_p1'})
-    squad_trends_p2 = df_p2[df_p2["acao_sugerida"].isin(ACTION_NEEDED_FLAGS)].groupby('assignment_group')['alert_count'].sum().reset_index().rename(columns={'alert_count': 'count_p2'})
+    # --- Variação por Squad ---
+    squad_trends_p1 = df_p1_atuacao.groupby('assignment_group', observed=True).agg(
+        count_p1=('alert_count', 'sum')
+    ).reset_index()
+    squad_trends_p2 = df_p2_atuacao.groupby('assignment_group', observed=True).agg(
+        count_p2=('alert_count', 'sum'),
+        num_cases=('assignment_group', 'size') # Conta os casos atuais por squad
+    ).reset_index()
     squad_trends_merged = pd.merge(squad_trends_p1, squad_trends_p2, on='assignment_group', how='outer').fillna(0)
+    squad_trends_merged['num_cases'] = squad_trends_merged['num_cases'].astype(int)
+
 
     title = "📊 Análise de Tendência de Alertas"
     body = f'<p><a href="resumo_geral.html">&larr; Voltar para o Dashboard</a></p><h1>Análise Comparativa de Alertas</h1>'
@@ -667,15 +425,29 @@ def main():
     body += '</div>'
     body += '</div></div>'
 
-    template = Template(HTML_TEMPLATE)
-    final_report = template.substitute(title=title, body=body)
-    output_path = "resumo_tendencia.html"
     try:
+        # Constrói um caminho robusto para o arquivo de template
+        script_dir = os.path.dirname(__file__)
+        template_path = os.path.abspath(os.path.join(script_dir, '..', 'templates', 'tendencia_template.html'))
+        
+        with open(template_path, 'r', encoding='utf-8') as f:
+            html_template_content = f.read()
+        
+        template = Template(html_template_content)
+        final_report = template.substitute(title=title, body=body)
+        output_path = "resumo_tendencia.html"
+        
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(final_report)
-        print(f"✅ Relatório de tendência aprimorado (com totais) gerado em: {output_path}")
+        print(f"✅ Relatório de tendência aprimorado gerado em: {output_path}")
+
+    except FileNotFoundError:
+        print(f"❌ Erro: O arquivo de template não foi encontrado no caminho esperado: {template_path}", file=sys.stderr)
     except IOError as e:
-        print(f"❌ Erro ao escrever o arquivo {output_path}: {e}")
+        print(f"❌ Erro ao ler ou escrever o arquivo: {e}", file=sys.stderr)
+    except Exception as e:
+        print(f"❌ Ocorreu um erro inesperado: {e}", file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()
