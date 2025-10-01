@@ -337,7 +337,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
             <div class="text">
                 <strong>Aviso de Qualidade de Dados:</strong> Foram encontrados <strong>{num_logs_invalidos} alertas</strong> com status de remediação inválido.
             </div>
-            <a href="visualizador_logs_invalidos.html" class="details-link">Detalhes &rarr;</a>
+            <a href="qualidade_dados_remediacao.html" class="details-link">Detalhes &rarr;</a>
         </div>
         '''
 

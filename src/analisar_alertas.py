@@ -258,7 +258,7 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
         )
         if has_invalid_status_mask.any():
             alerts_atuacao.loc[has_invalid_status_mask, 'acao_sugerida'] = (
-                "⚠️ Analise o status da remediação | " + alerts_atuacao.loc[has_invalid_status_mask, 'acao_sugerida']
+                "⚠️🔍 Analise o status da remediação 🔍⚠️ | " + alerts_atuacao.loc[has_invalid_status_mask, 'acao_sugerida']
             )
     # --- FIM DA MODIFICAÇÃO ---
 
@@ -389,7 +389,7 @@ def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_
                             formatted_chronology.append(f"{status_emoji_map.get(status, '⚪')} {escape(status)}")
                         else:
                             link_html = (
-                                f'<a href="../visualizador_logs_invalidos.html" class="tooltip-container invalid-status-link">'
+                                f'<a href="../qualidade_dados_remediacao.html" class="tooltip-container invalid-status-link">'
                                 f'  ⚪ {escape(status)}'
                                 f'  <div class="tooltip-content" style="width: 280px; left: 50%; margin-left: -140px;">'
                                 f'    Status inválido. Clique para ver o log de erros.'
@@ -654,7 +654,7 @@ def gerar_pagina_instabilidade(output_dir: str, instability_csv_path: str, templ
 def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_path: str):
     """Gera uma página HTML para visualização dos Check last columm ."""
     print(f"📄 Gerando página de visualização para '{os.path.basename(log_csv_path)}'...")
-    output_path = os.path.join(output_dir, "visualizador_logs_invalidos.html")
+    output_path = os.path.join(output_dir, "qualidade_dados_remediacao.html")
     try:
         with open(log_csv_path, 'r', encoding='utf-8') as f:
             csv_content = f.read().lstrip()
@@ -665,7 +665,7 @@ def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_pat
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
-        final_html = gerador_html.renderizar_pagina_csv_viewer(template_content, csv_content, "Logs de Status Inválido", log_csv_path)
+        final_html = gerador_html.renderizar_pagina_csv_viewer(template_content, csv_content, "Qualidade de Dados", log_csv_path)
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
     except FileNotFoundError:

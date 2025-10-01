@@ -93,7 +93,7 @@ A sequência desses status ao longo do tempo para um mesmo **Caso** define a **A
 Para garantir a integridade da análise, o script `analisar_alertas.py` realiza uma validação na coluna `self_healing_status`.
 - **Valores Esperados:** `REM_OK`, `REM_NOT_OK`, ou valores nulos/vazios.
 - **Ação em caso de Inconsistência:** Se um valor diferente dos esperados for encontrado, a linha inteira do alerta é registrada no arquivo `invalid_self_healing_status.csv`.
-- **Notificação:** O dashboard principal (`resumo_geral.html`) exibirá um aviso e um link para o `visualizador_logs_invalidos.html`, permitindo a fácil depuração e identificação de problemas na coleta de dados.
+- **Notificação:** O dashboard principal (`resumo_geral.html`) exibirá um aviso e um link para o `qualidade_dados_remediacao.html`, permitindo a fácil depuração e identificação de problemas na coleta de dados.
 
 ---
 
@@ -209,7 +209,7 @@ O processo é totalmente automatizado e segue esta sequência:
 - **`sucesso_automacao.html`**: Visualizador de casos resolvidos por automação.
 - **`instabilidade_cronica.html`**: Visualizador de casos que são remediados, mas ocorrem com alta frequência.
 - **`visualizador_json.html`**: Ferramenta de depuração para visualizar o `resumo_problemas.json`.
-- **`visualizador_logs_invalidos.html`**: (Condicional) Visualizador para os alertas que possuem um `self_healing_status` inválido, facilitando a depuração da qualidade dos dados.
+- **`qualidade_dados_remediacao.html`**: (Condicional) Visualizador para os alertas que possuem um `self_healing_status` inválido, facilitando a depuração da qualidade dos dados.
 - **`plano-de-acao-[TIME].html`**: Relatórios detalhados por time/squad.
 - **`todas_as_squads.html`**: Página de drill-down com a lista completa de squads com ações pendentes.
 - **`detalhes_problemas/`**: Diretório com páginas de detalhes para cada problema específico.

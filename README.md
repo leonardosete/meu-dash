@@ -65,6 +65,6 @@ A lógica detalhada do cálculo está disponível na seção "Conceitos" do dash
 
 1.  🧠 **Análise Inteligente**: Identifica problemas únicos (Casos) e os prioriza com base em Risco, Ineficiência e Impacto.
 2.  📊 **Geração de Relatórios**: Cria dashboards HTML interativos com KPIs e gráficos. O dashboard principal (`resumo_geral.html`) inclui uma seção "Conceitos" que explica a lógica da análise para todos os usuários.
-3.  📋 **Planos de Ação**: Gera arquivos (`atuar.csv`, `editor_atuacao.html`) focados nos casos que exigem intervenção manual, além de páginas HTML por squad.
+3.  📋 **Planos de Ação**: Gera arquivos (`editor_atuacao.html`=> `atuar.csv`) focados nos casos que exigem intervenção manual, além de páginas HTML por squad.
 4.  📈 **Análise de Tendências**: Ao processar mais de um arquivo, compara o período atual com o anterior e gera o `resumo_tendencia.html`, mostrando a evolução dos problemas, a taxa de resolução e os problemas persistentes.
-5.  ✅ **Validação da Qualidade dos Dados**: Detecta e isola alertas com dados de remediação inválidos (`invalid_self_healing_status.csv`), garantindo a confiabilidade da análise e notificando no dashboard principal.
+5.  ✅ **Validação da Qualidade dos Dados**: Detecta e isola alertas com dados de remediação inválidos (`qualidade_dados_remediacao.html`=> `invalid_self_healing_status.csv`), garantindo a confiabilidade da análise e notificando no dashboard principal.
