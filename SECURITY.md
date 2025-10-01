@@ -9,6 +9,15 @@ Atualmente, apenas a última versão do projeto recebe atualizações de seguran
 | latest | :white_check_mark: |
 | < latest | :x:              |
 
+## Práticas de Segurança
+
+Este projeto utiliza o [GitHub CodeQL](https://docs.github.com/pt/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning-with-codeql) para realizar Análise Estática de Segurança de Aplicação (SAST) de forma automatizada. As varreduras são executadas:
+
+- **Em cada push e pull request**: Para as branches `main` e `develop`, garantindo que novas alterações sejam analisadas continuamente.
+- **Semanalmente**: Para detectar proativamente quaisquer vulnerabilidades que possam ter surgido.
+
+Essa abordagem nos ajuda a identificar e corrigir possíveis falhas de segurança de forma precoce no ciclo de desenvolvimento.
+
 ## Reportando uma Vulnerabilidade
 
 A segurança do projeto é levada a sério. Se você descobrir uma vulnerabilidade de segurança, por favor reporte-a de forma responsável.
