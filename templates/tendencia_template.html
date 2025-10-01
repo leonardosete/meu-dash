@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>$title</title>
+    <style>
+        :root {
+            --bg-color: #1a1c2f;
+            --card-color: #2c2f48;
+            --text-color: #f0f0f0;
+            --text-secondary-color: #a0a0b0;
+            --border-color: #404466;
+            --success-color: #1cc88a;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --info-color: #4e73df;
+            --persistent-color: #D89F3B;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+        h1, h2, h3 {
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            font-weight: 500;
+        }
+        h1 { font-size: 2em; margin-bottom: 20px; }
+        h2 { font-size: 1.5em; margin-top: 40px; border: none; }
+        h3 {
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            border-bottom: none;
+            color: var(--text-secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card {
+            background: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 25px;
+        }
+        
+        .kpi-flow-container {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 25px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .kpi-flow-item { flex: 1; min-width: 160px; text-align: center; }
+        .kpi-flow-connector { font-size: 2.5em; color: var(--border-color); font-weight: bold; flex: 0; text-align: center; }
+        .kpi-flow-group {
+            display: flex; flex-direction: column; gap: 15px;
+            border-left: 2px dashed var(--border-color); border-right: 2px dashed var(--border-color);
+            padding: 0 20px; margin: 0 10px;
+        }
+        .kpi-card-enhanced {
+            background: var(--card-color); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center;
+        }
+        .kpi-card-enhanced .kpi-value { font-size: 2.8em; margin: 0; line-height: 1.1; font-weight: 700; }
+        .kpi-card-enhanced .kpi-label { font-size: 0.9em; font-weight: 500; margin: 5px 0 8px 0; color: var(--text-color); }
+        .kpi-card-enhanced .kpi-subtitle {
+            font-size: 0.8em; color: var(--text-secondary-color); margin: 0;
+            background-color: var(--bg-color); padding: 3px 8px; border-radius: 4px; display: inline-block;
+            cursor: help;
+        }
+        .icon-minus::before { content: "−"; color: var(--danger-color); }
+        .icon-plus::before { content: "+"; color: var(--success-color); }
+
+        .definition-box, .insight-box {
+            padding: 15px 20px; margin: 15px 0 25px 0; border-radius: 0 8px 8px 0;
+            color: var(--text-secondary-color); line-height: 1.7;
+        }
+        .definition-box { background-color: rgba(78, 115, 223, 0.1); border-left: 4px solid var(--info-color); }
+        .insight-box { background-color: rgba(246, 194, 62, 0.1); border-left: 4px solid var(--warning-color); }
+        
+        table { 
+            width: 100%; border-collapse: collapse; margin-top: 20px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;
+        }
+        th, td { 
+            padding: 12px 15px; text-align: left; 
+            border-bottom: 1px solid var(--border-color); vertical-align: middle;
+        }
+        th { background-color: #262940; font-weight: bold; }
+        tbody tr:nth-child(even) { background-color: #33365a; }
+        tr:not(.details-row):hover { background-color: #3c4062; }
+        tbody tr:last-child td { border-bottom: none; }
+        tfoot tr { background-color: #262940; font-weight: bold; border-top: 2px solid var(--info-color); }
+        .center { text-align: center; }
+        
+        .change-bar-container { display: flex; align-items: center; gap: 10px; }
+        .bar-wrapper { flex-grow: 1; background-color: var(--border-color); border-radius: 4px; height: 12px; }
+        .bar { height: 100%; border-radius: 4px; }
+        .bar.positive { background-color: var(--success-color); }
+        .bar.negative { background-color: var(--danger-color); }
+        .change-value { font-weight: bold; min-width: 45px; text-align: right; }
+
+        .kpi-split-layout { display: flex; flex-wrap: wrap; align-items: center; gap: 40px; padding: 20px 30px; }
+        .kpi-split-layout__text { flex: 1; min-width: 280px; }
+        .kpi-split-layout__text h2 { border: none; margin-top: 0; margin-bottom: 15px; font-size: 1.4em; }
+        .kpi-split-layout__text p { color: var(--text-secondary-color); margin-bottom: 15px; line-height: 1.7; font-size: 0.95em;}
+        .kpi-split-layout__text small { color: var(--text-secondary-color); opacity: 0.7; }
+        .kpi-split-layout__chart { flex-shrink: 0; margin: 0 auto; }
+
+        .progress-donut {
+            --p: 0; --c: var(--info-color); --b: 18px; --w: 160px;
+            width: var(--w); aspect-ratio: 1; position: relative; display: grid;
+            place-content: center; margin: 5px; border-radius: 50%;
+            background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--border-color) 0);
+        }
+        .progress-donut::before { content: ""; position: absolute; inset: var(--b); background: var(--card-color); border-radius: 50%; }
+        .progress-donut-text-content { position: relative; text-align: center; }
+        .progress-donut__value { font-size: 1.9em; font-weight: 700; line-height: 1; color: var(--c); }
+
+        a { color: var(--info-color); text-decoration: none; font-weight: 500; }
+        a:hover { text-decoration: underline; }
+        
+        .collapsible {
+            background-color: var(--card-color); color: var(--text-color); cursor: pointer; padding: 18px; width: 100%;
+            border: 1px solid var(--border-color); border-radius: 8px; text-align: left; outline: none; font-size: 1.3em;
+            font-weight: 500; transition: background-color 0.3s ease; display: flex; align-items: center; justify-content: space-between;
+        }
+        .collapsible:hover { background-color: #33365a; }
+        .collapsible.active { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+        .collapsible .chevron { transition: transform 0.3s ease; margin-left: 15px; }
+        .collapsible.active .chevron { transform: rotate(90deg); }
+        .collapsible-content {
+            padding: 0 25px; background-color: var(--card-color); border: 1px solid var(--border-color); border-top: none;
+            border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden; max-height: 0;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out; margin-bottom: 20px;
+        }
+        
+        .tab-container {
+            padding-top: 5px;
+        }
+        .tab-links {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 25px;
+        }
+        .tab-link {
+            padding: 12px 20px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--text-secondary-color);
+            font-size: 1.05em;
+            font-weight: 500;
+            transition: color 0.3s, border-bottom 0.3s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-link:hover {
+            color: var(--text-color);
+        }
+        .tab-link.active {
+            color: var(--info-color);
+            border-bottom-color: var(--info-color);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .expandable-row { cursor: pointer; }
+        .details-row { display: none; }
+        .details-row.active { display: table-row; }
+        .details-row > td { padding: 0 !important; background-color: rgba(0,0,0,0.15); }
+        .details-row-content { padding: 20px 25px; }
+        .details-row-content h4 { margin-top: 0; color: var(--text-secondary-color); font-weight: 500; }
+        .sub-table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: none; border-radius: 4px; overflow: hidden; }
+        .sub-table th, .sub-table td { font-size: 0.9em; border-bottom: 1px solid var(--border-color); }
+        .sub-table tr:last-child td { border-bottom: none; }
+        .expandable-row .chevron { transition: transform 0.3s ease; }
+        .expandable-row.active .chevron { transform: rotate(90deg); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        $body
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            function updateParentHeights(element) {
+                let parentContent = element.closest('.collapsible-content');
+                if (parentContent && parentContent.style.maxHeight && parentContent.style.maxHeight !== '0px') {
+                    parentContent.style.maxHeight = parentContent.scrollHeight + 50 + 'px';
+                    updateParentHeights(parentContent);
+                }
+            }
+
+            document.querySelectorAll(".collapsible").forEach(button => {
+                button.addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    const content = this.nextElementSibling;
+                    if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                        content.style.maxHeight = null;
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + 50 + "px";
+                    }
+                    updateParentHeights(content);
+                });
+            });
+
+            setTimeout(() => {
+                document.querySelectorAll('.collapsible.active').forEach(button => {
+                    const content = button.nextElementSibling;
+                    if (content) {
+                        content.style.maxHeight = content.scrollHeight + 50 + "px";
+                        updateParentHeights(content);
+                    }
+                });
+            }, 150);
+
+            document.querySelectorAll('.tab-container').forEach(container => {
+                const tabLinks = container.querySelectorAll('.tab-link');
+                const tabContents = container.querySelectorAll('.tab-content');
+                tabLinks.forEach(link => {
+                    link.addEventListener('click', (event) => {
+                        const targetId = link.dataset.target;
+                        if (link.classList.contains('active')) return;
+                        tabLinks.forEach(l => l.classList.remove('active'));
+                        tabContents.forEach(c => c.classList.remove('active'));
+                        link.classList.add('active');
+                        const targetContent = container.querySelector('#' + targetId);
+                        if(targetContent) {
+                            targetContent.classList.add('active');
+                        }
+                        updateParentHeights(targetContent || link);
+                    });
+                });
+            });
+
+            document.querySelectorAll(".expandable-row").forEach(function(row) {
+                row.addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var targetId = this.dataset.target;
+                    var detailRow = document.getElementById(targetId);
+                    if (detailRow) {
+                        detailRow.classList.toggle("active");
+                        updateParentHeights(detailRow);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

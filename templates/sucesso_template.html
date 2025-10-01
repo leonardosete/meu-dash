@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Sucesso da Automação</title>
+    <link href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #798ea4;
+            --card-color: #ffffff;
+            --text-color: #212529;
+            --text-secondary-color: #6c757d;
+            --border-color: #dee2e6;
+            --accent-color: #0d6efd;
+            --accent-color-light: #e6efff;
+            --success-color: #198754;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 95%;
+            margin: auto;
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            font-weight: 500;
+        }
+        a, button {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+            background-color: var(--card-color);
+            border: 1px solid var(--accent-color);
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 1em;
+        }
+        a:hover, button:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        .btn-download {
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+        .btn-download:hover {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        #table-container {
+            margin-top: 20px;
+        }
+        .handsontable .wtHolder { background-color: var(--card-color); }
+        .handsontable td, .handsontable th { color: var(--text-color); background-color: var(--card-color); border-color: var(--border-color); }
+        .handsontable th { background-color: #f8f9fa; font-weight: 600; }
+        .handsontable .currentRow, .handsontable .currentCol { background-color: var(--accent-color-light) !important; }
+        .handsontable td {
+            white-space: pre-wrap;
+        }
+        /* Estilos para a nova caixa de somatória manual */
+        .summary-display {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #e9eef3;
+            color: #212529;
+            font-weight: bold;
+            text-align: right;
+            border-radius: 4px;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.2s ease-in-out;
+        }
+        .summary-display.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <h1>Sucesso da Automação - remediados.csv</h1>
+            <div>
+                <a href="resumo_geral.html" style="margin-right: 15px;">&larr; Voltar para o Dashboard</a>
+                <button id="download-button" class="btn-download">Download</button>
+            </div>
+        </div>
+        <div id="status-message" style="color: var(--text-secondary-color); margin-bottom: 15px;">Carregando dados...</div>
+        <div id="table-container"></div>
+        <div id="manual-summary" class="summary-display"></div> </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
+
+    <script>
+        const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`;
+    </script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('table-container');
+        const downloadButton = document.getElementById('download-button');
+        const statusMessage = document.getElementById('status-message');
+        const csvFilename = 'remediados.csv';
+        let hot; // Definir a variável hot aqui
+
+        Papa.parse(csvDataPayload, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                if (results.errors.length > 0) {
+                    statusMessage.textContent = 'Erro ao processar os dados do CSV embutido.';
+                    return;
+                }
+                statusMessage.textContent = 'Exibindo ' + results.data.length + ' registros de sucesso.';
+                
+                const headers = results.meta.fields;
+
+                const columnSettings = headers.map(header => {
+                    const colConfig = {
+                        data: header
+                    };
+                    if (header === 'alert_numbers' || header === 'status_chronology') {
+                        colConfig.width = 400;
+                    }
+                    if (header === 'alert_count' || header.includes('score')) {
+                        colConfig.type = 'numeric';
+                    }
+                    return colConfig;
+                });
+                
+                hot = new Handsontable(container, { // Atribuir a instância à variável hot
+                    data: results.data,
+                    colHeaders: headers,
+                    columns: columnSettings,
+                    rowHeaders: true,
+                    width: '100%',
+                    height: '70vh',
+                    stretchH: 'last',
+                    autoRowSize: true,
+                    wordWrap: true,
+                    licenseKey: 'non-commercial-and-evaluation',
+                    readOnly: true,
+                    columnSorting: true,
+                    manualColumnResize: true,
+                    manualRowResize: true,
+                    dropdownMenu: ['filter_by_condition', 'filter_by_value', 'filter_action_bar'],
+                    filters: true,
+                });
+
+                // ====================== INÍCIO DA NOVA LÓGICA MANUAL ======================
+                const summaryElement = document.getElementById('manual-summary');
+
+                hot.addHook('afterSelection', (r, c, r2, c2) => {
+                    summaryElement.classList.remove('visible');
+                    // Não calcular se for seleção de uma única célula ou múltiplas colunas
+                    if (c !== c2 || r === r2) { return; }
+
+                    const columnName = hot.getColHeader(c);
+                    // Verificar se a coluna é uma das que queremos somar
+                    if (typeof columnName !== 'string' || !(columnName === 'alert_count' || columnName.includes('score'))) {
+                        return;
+                    }
+
+                    let sum = 0;
+                    // Iterar sobre as linhas selecionadas
+                    for (let i = Math.min(r, r2); i <= Math.max(r, r2); i++) {
+                        const cellValue = hot.getDataAtCell(i, c);
+                        if (typeof cellValue === 'number') {
+                            sum += cellValue;
+                        }
+                    }
+                    
+                    summaryElement.textContent = `Soma da Seleção: ${sum.toLocaleString()}`;
+                    summaryElement.classList.add('visible');
+                });
+
+                hot.addHook('afterDeselection', () => {
+                    summaryElement.classList.remove('visible');
+                });
+                // ======================= FIM DA NOVA LÓGICA MANUAL ========================
+            }
+        });
+
+    downloadButton.addEventListener('click', () => {
+                if (hot) {
+                    const columnHeaders = hot.getColHeader();
+                    const dataRows = hot.getData(); // Pega apenas os dados visíveis/filtrados
+                    
+                    // Transforma os dados de volta para um formato que o PapaParse entende
+                    const dataToExport = dataRows.map(row => {
+                        let obj = {};
+                        columnHeaders.forEach((header, index) => {
+                            obj[header] = row[index];
+                        });
+                        return obj;
+                    });
+                
+                    // Converte os dados filtrados para um novo texto CSV
+                    const newCsvText = Papa.unparse(dataToExport, { header: true, delimiter: ",", quotes: true });
+                    
+                    // Cria o Blob e o link para download a partir do novo CSV
+                    const blob = new Blob([newCsvText], { type: 'text/csv;charset=utf-8-sig;' });
+                    const link = document.createElement("a");
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", csvFilename);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+name: "CodeQL default configuration"
+
+# Specify the query suite to use.
+# Options are: 'security-extended', 'security-and-quality'
+queries:
+  - uses: security-and-quality
+
+# Exclude specific paths from analysis.
+paths-ignore:
+  - 'docs/'

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação Técnica - Dash Alertas</title>
+    <style>
+        :root {
+            --bg-color: #1a1c2f;
+            --card-color: #2c2f48;
+            --text-color: #f0f0f0;
+            --text-secondary-color: #a0a0b0;
+            --border-color: #404466;
+            --accent-color: #4e73df;
+            --success-color: #1cc88a;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        h1, h2, h3, h4 {
+            color: var(--text-color);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        h1 { font-size: 2.5em; margin-bottom: 20px; }
+        h2 { font-size: 1.8em; margin-top: 50px; }
+        h3 { font-size: 1.4em; margin-top: 40px; border-bottom-style: dashed; }
+        h4 { font-size: 1.1em; margin-top: 30px; border-bottom: none; color: var(--accent-color); }
+        p { color: var(--text-secondary-color); }
+        a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+        a:hover { text-decoration: underline; }
+        code {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 0.9em;
+            color: var(--warning-color);
+        }
+        pre {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--text-secondary-color);
+        }
+        .card {
+            background: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        ul, ol {
+            padding-left: 20px;
+            color: var(--text-secondary-color);
+        }
+        li { margin-bottom: 10px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background-color: #262940;
+            font-weight: bold;
+            text-align: center;
+        }
+        td {
+            background-color: #33365a;
+        }
+        td:first-child {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        td:nth-child(2) { text-align: center; }
+        .flow-diagram {
+            list-style: none;
+            padding: 0;
+            position: relative;
+        }
+        .flow-diagram li {
+            padding: 20px;
+            background: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .flow-diagram li::after {
+            content: '↓';
+            position: absolute;
+            bottom: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5em;
+            color: var(--accent-color);
+        }
+        .flow-diagram li:last-child::after {
+            content: '';
+        }
+        .flow-diagram strong {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Documentação Técnica - Dash Alertas</h1>
+        <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados e lógica de análise do projeto <code>meu-dash</code>.</p>
+
+        <section id="descricao">
+            <h2>1. Descrição do Projeto</h2>
+            <div class="card">
+                <p>O projeto <strong>Dash Alertas</strong> automatiza a análise de alertas de monitoramento (extraídos de arquivos <code>.csv</code>), gera um ecossistema de dashboards HTML interativos para gestão e identifica tendências de problemas ao longo do tempo.</p>
+                <p>O principal diferencial do sistema é a sua capacidade de classificar problemas com base em um <strong>Score de Prioridade Ponderado</strong>, que considera o risco para o negócio, a ineficiência da automação e o impacto operacional (volume de alertas), permitindo que as equipes foquem no que é mais crítico.</p>
+            </div>
+        </section>
+
+        <section id="logica">
+            <h2>2. Lógica de Análise e Priorização</h2>
+            <p>A análise se baseia em conceitos-chave para transformar "ruído" (milhares de alertas) em insights acionáveis (casos priorizados).</p>
+            
+            <h3>Casos vs. Alertas</h3>
+            <div class="card">
+                <p>Para focar na causa raiz, a análise distingue <strong>Alertas</strong> de <strong>Casos</strong>:</p>
+                <ul>
+                    <li><strong>Alerta:</strong> Uma notificação individual de um evento de monitoramento.</li>
+                    <li><strong>Caso:</strong> A causa raiz de um problema. Ele agrupa múltiplos alertas do mesmo tipo que ocorrem em um mesmo recurso (CI/Nó), representando uma única frente de trabalho.</li>
+                </ul>
+                <pre><code>Exemplo: Um servidor com pouco espaço em disco pode gerar 100 alertas de "disco cheio". No entanto, como todos se referem à mesma causa raiz no mesmo recurso, eles são agrupados em apenas 1 Caso.</code></pre>
+            </div>
+
+            <h3>Score de Prioridade Ponderado</h3>
+            <div class="card">
+                <p>A criticidade de um caso é calculada pela fórmula:</p>
+                <pre><code>Score Final = (Pilar 1: Risco) * (Pilar 2: Ineficiência) * (Pilar 3: Impacto)</code></pre>
+                
+                <h4>Pilar 1: Score de Risco (Criticidade Base)</h4>
+                <p>Mede a gravidade inerente do problema. É a soma dos pesos da <strong>Severidade</strong> e <strong>Prioridade</strong> do alerta, extraídos das colunas <code>severity</code> e <code>sn_priority_group</code>.</p>
+                <table>
+                    <thead><tr><th>Severidade</th><th>Peso</th><th>Prioridade</th><th>Peso</th></tr></thead>
+                    <tbody>
+                        <tr><td>Crítico</td><td>10</td><td>Urgente</td><td>10</td></tr>
+                        <tr><td>Alto / Major</td><td>8</td><td>Alto(a)</td><td>8</td></tr>
+                        <tr><td>Médio / Minor</td><td>5</td><td>Moderado(a)</td><td>5</td></tr>
+                        <tr><td>Aviso / Baixo</td><td>2-3</td><td>Baixo(a)</td><td>2</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Pilar 2: Multiplicador de Ineficiência (Falha da Automação)</h4>
+                <p>Penaliza casos onde a automação de remediação falhou.</p>
+                <table>
+                    <thead><tr><th>Resultado da Automação</th><th>Multiplicador</th></tr></thead>
+                    <tbody>
+                        <tr><td>Falha Persistente (nunca funcionou)</td><td>x 1.5</td></tr>
+                        <tr><td>Intermitente (falha às vezes)</td><td>x 1.2</td></tr>
+                        <tr><td>Status Ausente / Inconsistente</td><td>x 1.1</td></tr>
+                        <tr><td>Funcionou no final (Estabilizada / OK)</td><td>x 1.0</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Pilar 3: Multiplicador de Impacto (Volume de Alertas)</h4>
+                <p>Penaliza o "ruído" operacional. O cálculo usa a fórmula <code>1 + ln(N)</code> (logaritmo natural).</p>
+                <table>
+                    <thead><tr><th>Nº de Alertas no Caso</th><th>Multiplicador Aprox.</th></tr></thead>
+                    <tbody>
+                        <tr><td>1 alerta</td><td>x 1.0</td></tr>
+                        <tr><td>10 alertas</td><td>x 3.3</td></tr>
+                        <tr><td>50 alertas</td><td>x 4.9</td></tr>
+                        <tr><td>100 alertas</td><td>x 5.6</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Contabilização da Remediação</h3>
+            <div class="card">
+                <p>A análise da remediação se baseia na coluna <code>self_healing_status</code>. O script <code>analisar_alertas.py</code> verifica o valor para cada alerta:</p>
+                <ul>
+                    <li><code>REM_OK</code>: Sucesso.</li>
+                    <li><code>REM_NOT_OK</code>: Falha.</li>
+                    <li>Ausente ou outro valor: Status desconhecido ou inválido.</li>
+                </ul>
+                <p>A sequência desses status ao longo do tempo para um mesmo <strong>Caso</strong> define a <strong>Ação Sugerida</strong> (ex: "Falha Persistente", "Intermitente", "Estabilizada").</p>
+            </div>
+
+            <h3>Qualidade dos Dados: Status de Remediação</h3>
+            <div class="card">
+                <p>Para garantir a integridade da análise, o script <code>analisar_alertas.py</code> realiza uma validação na coluna <code>self_healing_status</code>.</p>
+                <ul>
+                    <li><strong>Valores Esperados:</strong> <code>REM_OK</code>, <code>REM_NOT_OK</code>, ou valores nulos/vazios.</li>
+                    <li><strong>Ação em caso de Inconsistência:</strong> Se um valor diferente dos esperados for encontrado, a linha inteira do alerta é registrada no arquivo <code>invalid_self_healing_status.csv</code>.</li>
+                    <li><strong>Notificação:</strong> O dashboard principal (<code>resumo_geral.html</code>) exibirá um aviso e um link para o <code>visualizador_logs_invalidos.html</code>, permitindo a fácil depuração e identificação de problemas na coleta de dados.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="arquitetura">
+            <h2>3. Arquitetura e Componentes</h2>
+            
+            <h3>Orquestradores Principais</h3>
+            <div class="card">
+                <h4><code>scripts/gerar_relatorio.sh</code> e <code>scripts/gerar_relatorio.ps1</code></h4>
+                <ul>
+                    <li><strong>Responsabilidade:</strong> Único ponto de entrada do projeto para ambientes Linux/macOS (`.sh`) e Windows (`.ps1`). Orquestra todo o fluxo.</li>
+                    <li><strong>Detalhes:</strong> Prepara o ambiente Python (venv), instala dependências (`pandas`, `openpyxl`), detecta o número de arquivos <code>.csv</code> para decidir o modo de execução, invoca os scripts Python na ordem correta com as flags apropriadas (ex: <code>--resumo-only</code>), e finaliza o processo consolidando os relatórios.</li>
+                </ul>
+            </div>
+
+            <h3>Motores de Análise</h3>
+            <div class="card">
+                <h4><code>src/analisar_alertas.py</code></h4>
+                <ul>
+                    <li><strong>Responsabilidade:</strong> Processar um único arquivo de alertas, realizar a análise principal e orquestrar a geração dos relatórios HTML para aquele período.</li>
+                    <li><strong>Entradas:</strong> Um arquivo <code>.csv</code> e flags de linha de comando (<code>--output-json</code>, <code>--plan-dir</code>, etc.).</li>
+                    <li><strong>Artefato Central Gerado:</strong> <code>resumo_problemas.json</code>.</li>
+                    <li><strong>Detalhes:</strong> É o principal motor de análise. Agrupa alertas em <strong>Casos</strong>, calcula o <strong>Score de Prioridade Ponderado</strong>, e invoca o módulo <code>gerador_html.py</code> para criar a maior parte dos relatórios. Contém uma seção de "Conceitos" embutida no <code>resumo_geral.html</code> para explicar a lógica aos usuários. Adicionalmente, se um caso de atuação apresentar um status inválido em sua cronologia, a <code>acao_sugerida</code> no arquivo <code>atuar.csv</code> é prefixada com um aviso para forçar a análise.</li>
+                </ul>
+                <h4><code>src/analise_tendencia.py</code></h4>
+                <ul>
+                    <li><strong>Responsabilidade:</strong> Comparar dois períodos e gerar um relatório de tendência interativo e detalhado sobre a evolução dos problemas.</li>
+                    <li><strong>Entradas:</strong> Dois arquivos <code>resumo_problemas.json</code> (atual e anterior), nomes dos arquivos CSV originais e os intervalos de datas de cada período.</li>
+                    <li><strong>Saída:</strong> <code>resumo_tendencia.html</code>.</li>
+                    <li><strong>Detalhes:</strong> Apresenta um "Funil de Resolução" que mostra o fluxo de casos (resolvidos, persistentes, novos), calcula a "Taxa de Resolução" e organiza a análise em abas interativas para detalhar a variação por squad e tipo de problema.</li>
+                </ul>
+            </div>
+
+            <h3>Módulo de Geração de HTML</h3>
+            <div class="card">
+                <h4><code>src/gerador_html.py</code></h4>
+                <ul>
+                    <li><strong>Responsabilidade:</strong> Centralizar toda a lógica de renderização de HTML.</li>
+                    <li><strong>Detalhes:</strong> Contém funções específicas para renderizar cada componente do dashboard (KPIs, gráficos de barra, tabelas, etc.), recebendo dados dos scripts de análise. Abstrai a complexidade da criação de HTML, promovendo a separação de responsabilidades.</li>
+                </ul>
+            </div>
+
+            <h3>Scripts Auxiliares</h3>
+            <div class="card">
+                <h4><code>src/selecionar_arquivos.py</code></h4>
+                <p>Ordena cronologicamente múltiplos arquivos <code>.csv</code> com base na data mais recente na coluna <code>sys_created_on</code> e imprime os dois mais recentes (atual e anterior) para o shell.</p>
+                <h4><code>src/get_date_range.py</code></h4>
+                <p>Extrai e imprime o intervalo de datas (primeira e última) de um único arquivo <code>.csv</code>. A saída é usada pelo script de tendência.</p>
+            </div>
+        </section>
+
+        <section id="fluxo">
+            <h2>4. Fluxo de Execução Lógico</h2>
+            <ol class="flow-diagram">
+                <li>
+                    <strong>Execução Inicial:</strong> O usuário executa <code>./scripts/gerar_relatorio.sh</code> ou <code>.\scripts\gerar_relatorio.ps1</code>.
+                </li>
+                <li>
+                    <strong>Seleção de Arquivos (Modo Comparativo):</strong> Se houver mais de um CSV, <strong><code>selecionar_arquivos.py</code></strong> determina o arquivo <code>atual</code> e o <code>anterior</code>.
+                </li>
+                <li>
+                    <strong>Análise do Período Anterior (Otimizada):</strong> <strong><code>analisar_alertas.py --resumo-only</code></strong> é executado para o arquivo <code>anterior</code>. Gera apenas o <code>resumo_problemas.json</code> de base.
+                </li>
+                <li>
+                    <strong>Análise do Período Atual (Completa):</strong> <strong><code>analisar_alertas.py</code></strong> é executado para o arquivo <code>atual</code>, gerando o ecossistema completo de dashboards e o <code>resumo_problemas.json</code> do período.
+                </li>
+                <li>
+                    <strong>Coleta de Metadados:</strong> <strong><code>get_date_range.py</code></strong> é executado para ambos os arquivos para obter os períodos de análise.
+                </li>
+                <li>
+                    <strong>Análise de Tendência:</strong> <strong><code>analise_tendencia.py</code></strong> consome os dois arquivos <code>.json</code> e os intervalos de data para gerar o <code>resumo_tendencia.html</code>.
+                </li>
+                <li>
+                    <strong>Finalização:</strong> O orquestrador consolida os artefatos, cria o editor interativo <code>editor_atuacao.html</code> e move o log <code>invalid_self_healing_status.csv</code> (se existir) para o diretório de resultados.
+                </li>
+            </ol>
+        </section>
+
+        <section id="artefatos">
+            <h2>5. Artefatos Gerados (Outputs)</h2>
+            <h3>Dashboards HTML Interativos</h3>
+            <div class="card">
+                <ul>
+                    <li><strong><code>resumo_geral.html</code>:</strong> Visão geral gerencial. Contém uma seção "Conceitos" que explica a metodologia da análise.</li>
+                    <li><strong><code>resumo_tendencia.html</code>:</strong> (Modo comparativo) Relatório de evolução entre os períodos.</li>
+                    <li><strong><code>editor_atuacao.html</code>:</strong> Editor interativo para o time atuar sobre os problemas que precisam de ação.</li>
+                    <li><strong><code>sucesso_automacao.html</code>:</strong> Visualizador de casos resolvidos por automação.</li>
+                    <li><strong><code>instabilidade_cronica.html</code>:</strong> Visualizador de casos que são remediados, mas ocorrem com alta frequência.</li>
+                    <li><strong><code>visualizador_logs_invalidos.html</code>:</strong> (Condicional) Visualizador para os alertas com status de remediação inválido.</li>
+                    <li><strong><code>visualizador_json.html</code>:</strong> Ferramenta de depuração para visualizar o <code>resumo_problemas.json</code>.</li>
+                    <li><strong>Outros:</strong> Planos de ação por squad, visualizador de squads, páginas de detalhes, etc.</li>
+                </ul>
+            </div>
+            <h3>Arquivos de Dados</h3>
+            <div class="card">
+                <ul>
+                    <li><strong><code>resumo_problemas.json</code>:</strong> A base de dados principal, com a análise completa do período.</li>
+                    <li><strong><code>atuar.csv</code>:</strong> Lista de problemas que exigem ação manual.</li>
+                    <li><strong><code>remediados.csv</code>:</strong> Lista de problemas resolvidos por automação.</li>
+                    <li><strong><code>remediados_frequentes.csv</code>:</strong> Lista de problemas que indicam instabilidade crônica.</li>
+                    <li><strong><code>invalid_self_healing_status.csv</code>:</strong> (Condicional) Log com os alertas que possuem um valor de status inesperado.</li>
+                </ul>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

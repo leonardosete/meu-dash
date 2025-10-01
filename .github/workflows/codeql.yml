@@ -1,0 +1,60 @@
+# Workflow para Análise Estática de Segurança de Aplicação (SAST) com GitHub CodeQL.
+# Documentação: https://docs.github.com/pt/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning-with-codeql
+name: "CodeQL Advanced"
+
+on:
+  # Dispara o workflow em pushes ou pull requests para as branches principais,
+  # garantindo análise contínua em cada alteração.
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+  # Agenda uma varredura semanal para detectar vulnerabilidades de forma proativa.
+  schedule:
+    - cron: '43 22 * * 1'
+
+jobs:
+  # Job principal que executa a análise do CodeQL para cada linguagem da matriz.
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    # Define o runner com base na linguagem. Swift, por exemplo, requer macOS.
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    permissions:
+      security-events: write # Permite que o CodeQL crie alertas de segurança.
+      packages: read        # Permite o download de pacotes do CodeQL.
+      actions: read         # Permite que a action leia metadados de outras actions.
+      contents: read        # Permite que a action faça o checkout do código-fonte.
+
+    strategy:
+      # Impede que a falha em um job da matriz cancele os demais.
+      fail-fast: false
+      # Define as linguagens a serem analisadas.
+      matrix:
+        include:
+        # Para linguagens interpretadas como Python e JS/TS, o 'build-mode' não é necessário.
+        - language: python
+          build-mode: none
+        - language: javascript-typescript
+          build-mode: none
+
+    steps:
+    # 1. Checkout do código: Baixa o código do repositório para o runner.
+    - name: Checkout repository
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+
+    # 2. Inicialização do CodeQL: Prepara o ambiente para a análise.
+    #    Usa um arquivo de configuração para especificar as queries e os paths a serem ignorados,
+    #    otimizando a precisão e o desempenho da varredura.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+        config-file: ./.github/codeql/codeql-config.yml
+
+    # 3. Análise do CodeQL: Executa as queries de segurança no código-fonte.
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+      with:
+        # Anexa a linguagem como categoria ao alerta, facilitando a triagem e a atribuição.
+        category: "/language:${{matrix.language}}"
