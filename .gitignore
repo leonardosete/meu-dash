@@ -211,7 +211,7 @@ LEMBRETE.md
 
 # data
 data/put_csv_here/*
-!data/put_csv_here/example.md
+!data/put_csv_here/README.md
 
 # reports
 reports/
