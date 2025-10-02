@@ -61,6 +61,15 @@ A lógica detalhada do cálculo está disponível na seção "Conceitos" do dash
 
 ---
 
+### 📖 Documentação
+
+A documentação técnica e gerencial do projeto está disponível publicamente e pode ser acessada online através dos links abaixo:
+
+- **Documentação Gerencial:** [https://leonardosete.github.io/meu-dash/doc_gerencial.html](https://leonardosete.github.io/meu-dash/doc_gerencial.html)
+- **Documentação Técnica:** [https://leonardosete.github.io/meu-dash/doc_tecnica.html](https://leonardosete.github.io/meu-dash/doc_tecnica.html)
+
+---
+
 ### ✨ Principais Funcionalidades
 
 1.  🧠 **Análise Inteligente**: Identifica problemas únicos (Casos) e os prioriza com base em Risco, Ineficiência e Impacto.
