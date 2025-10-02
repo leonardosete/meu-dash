@@ -124,6 +124,7 @@ Para garantir a integridade da análise, o script `analisar_alertas.py` realiza 
     - Um único arquivo `.csv` de alertas (via argumento posicional).
     - Argumentos de linha de comando para especificar os caminhos de saída de todos os artefatos (e.g., `--output-json`, `--output-actuation`, `--plan-dir`, etc.).
     - A flag `--resumo-only` para o modo de análise otimizada.
+    - Constantes de lógica de negócio (pesos, ações) importadas de `src/constants.py`.
 - **Saídas (Outputs):**
     - **`resumo_problemas.json` (Artefato Central)**
     - Arquivos de dados CSV (`atuar.csv`, `remediados.csv`, `remediados_frequentes.csv`).
@@ -141,6 +142,7 @@ Para garantir a integridade da análise, o script `analisar_alertas.py` realiza 
     - `resumo_problemas.json` (período anterior).
     - Nomes dos arquivos CSV originais (para rótulos no relatório).
     - Intervalos de datas (output de `get_date_range.py`) para os dois períodos.
+    - Constantes de flags de atuação importadas de `src/constants.py`.
 - **Saídas (Outputs):**
     - `resumo_tendencia.html`.
 - **Detalhes Chave:**
@@ -162,6 +164,14 @@ Para garantir a integridade da análise, o script `analisar_alertas.py` realiza 
     - Abstrai a complexidade da criação de HTML dos scripts de análise, promovendo a separação de responsabilidades.
 
 ## 4. Scripts Auxiliares
+
+#### Script: `src/constants.py`
+- **Responsabilidade:** Centralizar todas as constantes de lógica de negócio.
+- **Detalhes Chave:**
+    - **Ações Sugeridas:** Mapeamento de ações (`ACAO_FALHA_PERSISTENTE`, `ACAO_INTERMITENTE`, etc.).
+    - **Flags de Atuação:** Listas de ações que definem se um caso precisa de atuação manual (`ACAO_FLAGS_ATUACAO`), se está OK (`ACAO_FLAGS_OK`) ou se representa instabilidade (`ACAO_FLAGS_INSTABILIDADE`).
+    - **Pesos de Criticidade:** Dicionários com os pesos para cálculo do score (`SEVERITY_WEIGHTS`, `PRIORITY_GROUP_WEIGHTS`, `ACAO_WEIGHTS`).
+    - **Propósito:** Isolar a lógica de negócio da implementação dos scripts, facilitando a manutenção e garantindo consistência entre os diferentes componentes que precisam da mesma lógica.
 
 #### Script: `src/selecionar_arquivos.py`
 - **Responsabilidade:** Ordenar cronologicamente múltiplos arquivos `.csv` com base na data mais recente encontrada na coluna `sys_created_on`.

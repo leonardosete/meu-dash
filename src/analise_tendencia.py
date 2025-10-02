@@ -6,12 +6,7 @@ from html import escape
 import re
 from string import Template
 
-ACTION_NEEDED_FLAGS = [
-    "Analisar intermitência na remediação",
-    "Desenvolver remediação (nenhum sucesso registrado)",
-    "Verificar coleta de dados da remediação (status ausente)",
-    "Analisar causa raiz das falhas (remediação inconsistente)"
-]
+from constants import ACAO_FLAGS_ATUACAO
 
 CASE_ID_COLS = ['assignment_group', 'short_description', 'node', 'cmdb_ci', 'source', 'metric_name', 'cmdb_ci.sys_class_name']
 
@@ -32,8 +27,8 @@ def calculate_kpis_and_merged_df(df_p1, df_p2):
     """
     Calcula os KPIs e retorna o DataFrame mesclado que é a base para toda a análise.
     """
-    df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACTION_NEEDED_FLAGS)].copy()
-    df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACTION_NEEDED_FLAGS)].copy()
+    df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
+    df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
     
     valid_case_id_cols = [c for c in CASE_ID_COLS if c in df_p1_atuacao.columns and c in df_p2_atuacao.columns]
     merged_df = pd.merge(df_p1_atuacao, df_p2_atuacao, on=valid_case_id_cols, how='outer', suffixes=('_p1', '_p2'), indicator=True)
@@ -317,8 +312,8 @@ def main():
         sys.exit("❌ Não foi possível continuar devido a erros na análise dos arquivos de resumo JSON.")
 
     # DataFrames base de casos que precisam de atuação para cada período
-    df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACTION_NEEDED_FLAGS)].copy()
-    df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACTION_NEEDED_FLAGS)].copy()
+    df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
+    df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
 
     kpis, merged_df = calculate_kpis_and_merged_df(df_p1, df_p2)
     
