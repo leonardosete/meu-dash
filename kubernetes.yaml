@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: meu-dash-alertas
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: meu-dash-data-pvc
+  namespace: meu-dash-alertas
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meu-dash-web
+  namespace: meu-dash-alertas
+spec:
+  replicas: 1 # Using 1 replica because we are using a hostPath volume
+  selector:
+    matchLabels:
+      app: meu-dash-web
+  template:
+    metadata:
+      labels:
+        app: meu-dash-web
+    spec:
+      containers:
+      - name: meu-dash-web
+        image: sevenleo/meu-dash-web:latest
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: meu-dash-data
+          mountPath: /app/data
+      volumes:
+      - name: meu-dash-data
+        persistentVolumeClaim:
+          claimName: meu-dash-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meu-dash-web
+  namespace: meu-dash-alertas
+spec:
+  type: LoadBalancer
+  selector:
+    app: meu-dash-web
+  ports:
+  - port: 80
+    targetPort: 5000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: meu-dash-web-ingress
+  namespace: meu-dash-alertas
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: meu-dash-web.devops-master.shop
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: meu-dash-web
+            port:
+              number: 80

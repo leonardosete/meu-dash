@@ -76,4 +76,40 @@ A documentação técnica e gerencial do projeto está disponível publicamente 
 2.  📊 **Geração de Relatórios**: Cria dashboards HTML interativos com KPIs e gráficos. O dashboard principal (`resumo_geral.html`) inclui uma seção "Conceitos" que explica a lógica da análise para todos os usuários.
 3.  📋 **Planos de Ação**: Gera arquivos (`editor_atuacao.html`=> `atuar.csv`) focados nos casos que exigem intervenção manual, além de páginas HTML por squad.
 4.  📈 **Análise de Tendências**: Ao processar mais de um arquivo, compara o período atual com o anterior e gera o `resumo_tendencia.html`, mostrando a evolução dos problemas, a taxa de resolução e os problemas persistentes.
-5.  ✅ **Validação da Qualidade dos Dados**: Detecta e isola alertas com dados de remediação inválidos (`qualidade_dados_remediacao.html`=> `invalid_self_healing_status.csv`), garantindo a confiabilidade da análise e notificando no dashboard principal.
+5.  â **ValidaÃ§Ã£o da Qualidade dos Dados**: Detecta e isola alertas com dados de remediaÃ§Ã£o invÃ¡lidos (`qualidade_dados_remediacao.html`=> `invalid_self_healing_status.csv`), garantindo a confiabilidade da anÃ¡lise e notificando no dashboard principal.
+
+---
+
+### ð³ Docker e Kubernetes
+
+Esta aplicaÃ§Ã£o estÃ¡ totalmente containerizada e pronta para ser implantada em um ambiente Kubernetes.
+
+#### Construindo a Imagem Docker
+
+Para construir a imagem Docker localmente, execute o seguinte comando na raiz do projeto:
+
+```bash
+docker build -t meu-dash-web:latest .
+```
+
+#### Executando com Docker Compose
+
+Para iniciar a aplicaÃ§Ã£o usando Docker Compose, execute:
+
+```bash
+docker compose up --build
+```
+
+A aplicaÃ§Ã£o estarÃ¡ disponÃ­vel em `http://localhost:5001`.
+
+#### Implantando no Kubernetes
+
+Os manifestos de implantaÃ§Ã£o para o Kubernetes estÃ£o localizados na raiz do projeto. Para implantar a aplicaÃ§Ã£o, execute:
+
+```bash
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+```
+
+Isso irÃ¡ criar um `Deployment` com 2 rÃ©plicas da aplicaÃ§Ã£o e um `Service` do tipo `LoadBalancer` para expor a aplicaÃ§Ã£o.
+

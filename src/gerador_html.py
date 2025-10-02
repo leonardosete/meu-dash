@@ -34,7 +34,7 @@ def renderizar_pagina_html(template: str, title: str, body: str, footer_timestam
 
 def renderizar_pagina_csv_viewer(template: str, csv_content: str, page_title: str, csv_filename: str) -> str:
     """Renderiza um template de visualizador de CSV (como Handsontable)."""
-    csv_payload = csv_content.replace('`', '\\`')
+    csv_payload = csv_content.replace('`', '\`')
     
     # Usa um placeholder improvável para evitar colisões
     placeholder = "___CSV_DATA_PAYLOAD_PLACEHOLDER___"
@@ -122,7 +122,7 @@ def renderizar_visualizador_json(json_data_str: str) -> str:
     </div>
 
     <script>
-        // Os dados do JSON são injetados aqui pelo script Python
+        // Os dados do JSON sÃ£o injetados aqui pelo script Python
         const jsonData = {json_data_str};
         
         try {{
@@ -178,6 +178,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     </style>
     '''
     body_content = list_card_styles
+    body_content += '<a href="/" style="display: inline-block; margin-bottom: 20px; padding: 10px 15px; background-color: var(--accent-color); color: white; text-decoration: none; border-radius: 5px;">&larr; Voltar para o Upload</a>'
     body_content += f'<p style="font-size: 1.1em; color: var(--text-secondary-color); margin-top: -15px;">{date_range_text}</p>'
     body_content += f'''
                 <div style="margin-bottom: 25px;">
@@ -190,11 +191,11 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
                                 <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--accent-color); color: var(--text-secondary-color);">
                                     Para focar no que é mais importante, os gráficos distinguem entre <strong>Alertas</strong> e <strong>Casos</strong>.
                                     <br><br>
-                                    Um <strong>Alerta</strong> é uma notificação individual — pense nele como o &#34;ruído&#34; que você recebe.
+                                    Um <strong>Alerta</strong> é uma notificação individual — pense nele como o "ruído" que você recebe.
                                     <br><br>
                                     Um <strong>Caso</strong> é a causa raiz de um problema. Ele agrupa todos os alertas do mesmo tipo em um único recurso.
                                     <br><br>
-                                    <strong>Exemplo:</strong> Um servidor com pouco espaço em disco pode gerar 100 <strong>Alertas</strong> de &#34;disco cheio&#34;. No entanto, como todos esses alertas são sobre o mesmo problema, eles são agrupados em apenas <strong>1 Caso</strong>. Se esse servidor também apresentar um problema de CPU, isso será um <strong>2º Caso</strong>, porque exige uma ação diferente.
+                                    <strong>Exemplo:</strong> Um servidor com pouco espaço em disco pode gerar 100 <strong>Alertas</strong> de "disco cheio". No entanto, como todos esses alertas são sobre o mesmo problema, eles são agrupados em apenas <strong>1 Caso</strong>. Se esse servidor também apresentar um problema de CPU, isso será um <strong>2º Caso</strong>, porque exige uma ação diferente.
                                 </div>
                             </div>
 
@@ -367,7 +368,11 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         gauge_color_class = "var(--warning-color)"
         automation_card_class = "card-neon-warning"
     
-    view_icon_html = f'<a href="editor_atuacao.html" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>' if grupos_atuacao > 0 else f'<span class="download-link" title="Nenhum arquivo de atuação gerado." style="cursor: not-allowed;">{VIEW_ICON_SVG.replace("<svg", "<svg style=\'opacity: 0.4;\'")}</span>'
+    if grupos_atuacao > 0:
+        view_icon_html = f'<a href="editor_atuacao.html" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
+    else:
+        disabled_svg = VIEW_ICON_SVG.replace('<svg', '<svg style="opacity: 0.4;">')
+        view_icon_html = f'<span class="download-link" title="Nenhum arquivo de atuação gerado." style="cursor: not-allowed;">{disabled_svg}</span>'
     card_class = 'card-fire-shake' if grupos_atuacao > 0 else 'card-neon card-neon-blue'
     tooltip_text = 'Casos que precisam de revisão: Remediação Pendente.' if grupos_atuacao > 0 else 'Tudo certo! Nenhum caso precisa de intervenção manual.'
     status_icon_html = f'''<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{'flashing-icon' if grupos_atuacao > 0 else ''}" style="font-size: 1.5em;">{'🚨' if grupos_atuacao > 0 else '✅'}</span><div class="tooltip-content" style="width: 240px; left: 0; margin-left: 0;">{escape(tooltip_text)}</div></div>'''
@@ -381,7 +386,11 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     </div>
     '''
 
-    instabilidade_view_icon_html = f'<a href="instabilidade_cronica.html" class="download-link" title="Visualizar detalhes dos casos de instabilidade">{VIEW_ICON_SVG}</a>' if grupos_instabilidade > 0 else f'<span class="download-link" title="Nenhum caso de instabilidade crônica detectado." style="cursor: not-allowed;">{VIEW_ICON_SVG.replace("<svg", "<svg style=\'opacity: 0.4;\'")}</span>'
+    if grupos_instabilidade > 0:
+        instabilidade_view_icon_html = f'<a href="instabilidade_cronica.html" class="download-link" title="Visualizar detalhes dos casos de instabilidade">{VIEW_ICON_SVG}</a>'
+    else:
+        disabled_svg = VIEW_ICON_SVG.replace('<svg', '<svg style="opacity: 0.4;">')
+        instabilidade_view_icon_html = f'<span class="download-link" title="Nenhum caso de instabilidade crônica detectado." style="cursor: not-allowed;">{disabled_svg}</span>'
     instabilidade_card_class = 'card-neon card-neon-warning' if grupos_instabilidade > 0 else 'card-neon card-neon-blue'
     instabilidade_kpi_color = 'color: var(--warning-color);' if grupos_instabilidade > 0 else 'color: var(--accent-color);'
     tooltip_instabilidade_text = "Casos que são remediados, mas ocorrem com alta frequência. Oportunidades para análise de causa raiz." if grupos_instabilidade > 0 else "Nenhum ponto de alta recorrência crônica detectado."
@@ -399,7 +408,11 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     casos_sucesso = total_grupos - grupos_atuacao
     tooltip_gauge = f"Percentual e contagem de Casos resolvidos automaticamente: {casos_sucesso} de {total_grupos} problemas tiveram a remediação executada com sucesso."
     sucesso_page_name = "sucesso_automacao.html"
-    sucesso_view_icon_html = f'<a href="{sucesso_page_name}" class="download-link" title="Visualizar detalhes dos casos resolvidos">{VIEW_ICON_SVG}</a>' if casos_sucesso > 0 else f'<span class="download-link" title="Nenhum caso resolvido automaticamente." style="cursor: not-allowed;">{VIEW_ICON_SVG.replace("<svg", "<svg style=\'opacity: 0.4;\'")}</span>'
+    if casos_sucesso > 0:
+        sucesso_view_icon_html = f'<a href="{sucesso_page_name}" class="download-link" title="Visualizar detalhes dos casos resolvidos">{VIEW_ICON_SVG}</a>'
+    else:
+        disabled_svg = VIEW_ICON_SVG.replace('<svg', '<svg style="opacity: 0.4;">')
+        sucesso_view_icon_html = f'<span class="download-link" title="Nenhum caso resolvido automaticamente." style="cursor: not-allowed;">{disabled_svg}</span>'
     body_content += f'''
     <div class="card kpi-card card-neon {automation_card_class}">
         <div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span style="font-size: 1.5em;">🤖</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_gauge)}</div></div>
