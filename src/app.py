@@ -73,6 +73,10 @@ def serve_planos(run_folder, filename):
 def serve_detalhes(run_folder, filename):
     return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder, 'detalhes'), filename)
 
+@app.route('/reports/<run_folder>/editor_atuacao.html')
+def serve_editor_atuacao(run_folder):
+    return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), 'editor_atuacao.html')
+
 # Rota genérica para servir arquivos na raiz do diretório do run (ex: resumo_geral.html, editor_atuacao.html).
 # Esta rota deve ser a ÚLTIMA para evitar conflitos com as rotas de subdiretórios mais específicas.
 @app.route('/reports/<run_folder>/<path:filename>')
