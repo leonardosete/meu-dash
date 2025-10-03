@@ -34,22 +34,30 @@ def renderizar_pagina_html(template: str, title: str, body: str, footer_timestam
 
 def renderizar_pagina_csv_viewer(template: str, csv_content: str, page_title: str, csv_filename: str) -> str:
     """Renderiza um template de visualizador de CSV (como Handsontable)."""
-    # Escapa o caractere ` (backtick) para injeção segura em um template string JavaScript.
     csv_payload = csv_content.replace('`', '\`')
     
-    # Renderiza o template usando .format() para segurança e clareza.
-    # O template HTML deve ter {csv_payload}, {page_title} e {csv_filename} como placeholders.
-    final_html = template.format(
-        csv_payload=csv_payload,
-        page_title=escape(page_title),
-        csv_filename=escape(csv_filename)
+    # Usa um placeholder improvável para evitar colisões
+    placeholder = "___CSV_DATA_PAYLOAD_PLACEHOLDER___"
+    
+    # Substitui o placeholder no template
+    template_com_placeholder = template.replace(
+        'const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`',
+        f'const csvDataPayload = `{placeholder}`'
     )
+    
+    # Injeta o payload real
+    final_html = template_com_placeholder.replace(placeholder, csv_payload)
+    
+    # Ajusta títulos e nomes de arquivo
+    final_html = final_html.replace('Detalhes do Sucesso da Automação', page_title)
+    final_html = final_html.replace('Sucesso da Automação - remediados.csv', f'{page_title} - {csv_filename}')
+    final_html = final_html.replace('remediados.csv', csv_filename)
+    
     return final_html
 
 def renderizar_visualizador_json(json_data_str: str) -> str:
     """Cria um arquivo HTML estático para visualizar o JSON de forma formatada."""
-    # Usa .format() para injetar o JSON de forma segura.
-    template = '''
+    return f'''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -114,8 +122,8 @@ def renderizar_visualizador_json(json_data_str: str) -> str:
     </div>
 
     <script>
-        // Os dados do JSON são injetados aqui pelo script Python
-        const jsonData = {json_payload};
+        // Os dados do JSON sÃ£o injetados aqui pelo script Python
+        const jsonData = {json_data_str};
         
         try {{
             const formattedJson = JSON.stringify(jsonData, null, 2);
@@ -130,7 +138,6 @@ def renderizar_visualizador_json(json_data_str: str) -> str:
 </body>
 </html>
 '''
-    return template.format(json_payload=json_data_str)
 
 # =============================================================================
 # RENDERIZAÇÃO DE COMPONENTES E PÁGINAS
