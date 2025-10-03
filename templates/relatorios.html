@@ -139,7 +139,7 @@
                         <tr>
                             <td>{{ report.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
                             <td>{{ report.original_filename }}</td>
-                            <td><a href="{{ url_for('serve_report', run_folder=report.report_path.split('/')[-2], filename=report.report_path.split('/')[-1]) }}" class="action-link">Visualizar</a></td>
+                            <td><a href="{{ report.url }}" class="action-link">Visualizar</a></td>
                         </tr>
                         {% endfor %}
                     </tbody>
