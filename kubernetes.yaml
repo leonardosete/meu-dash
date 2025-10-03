@@ -3,25 +3,28 @@ kind: Namespace
 metadata:
   name: meu-dash-alertas
 ---
+# Headless service para governar o StatefulSet
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: Service
 metadata:
-  name: meu-dash-data-pvc
+  name: meu-dash-headless
   namespace: meu-dash-alertas
 spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: standard
+  clusterIP: None
+  selector:
+    app: meu-dash-web
+  ports:
+  - port: 80
+    targetPort: 5000
 ---
+# StatefulSet para fornecer armazenamento estável para cada réplica
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: meu-dash-web
   namespace: meu-dash-alertas
 spec:
+  serviceName: "meu-dash-headless"
   replicas: 2
   selector:
     matchLabels:
@@ -39,11 +42,17 @@ spec:
         volumeMounts:
         - name: meu-dash-data
           mountPath: /app/data
-      volumes:
-      - name: meu-dash-data
-        persistentVolumeClaim:
-          claimName: meu-dash-data-pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: meu-dash-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 1Gi
 ---
+# Service LoadBalancer para acesso externo
 apiVersion: v1
 kind: Service
 metadata:
