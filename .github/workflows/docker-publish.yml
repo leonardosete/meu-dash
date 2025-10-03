@@ -1,4 +1,3 @@
-# TESTE
 # Workflow para automatizar o build e push da imagem Docker para o Docker Hub.
 name: Docker Publish - Build and Push Image
 
