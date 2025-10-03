@@ -35,6 +35,7 @@ os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 os.makedirs(app.config['REPORTS_FOLDER'], exist_ok=True)
 
 @app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     return render_template('upload.html')
 
@@ -49,21 +50,26 @@ def upload_file():
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-
-        report_path = analisar_arquivo_csv(filepath, app.config['REPORTS_FOLDER'])
-        
-        # Save report metadata to the database
-        new_report = Report(
-            original_filename=filename,
-            report_path=report_path
-        )
-        db.session.add(new_report)
-        db.session.commit()
-
-        report_filename = os.path.basename(report_path)
-        run_folder = os.path.basename(os.path.dirname(report_path))
-
-        return redirect(url_for('serve_report', run_folder=run_folder, filename=report_filename))
+        try:
+            report_path = analisar_arquivo_csv(filepath, app.config['REPORTS_FOLDER'])
+            
+            # Save report metadata to the database
+            new_report = Report(
+                original_filename=filename,
+                report_path=report_path
+            )
+            db.session.add(new_report)
+            db.session.commit()
+    
+            report_filename = os.path.basename(report_path)
+            run_folder = os.path.basename(os.path.dirname(report_path))
+    
+            return redirect(url_for('serve_report', run_folder=run_folder, filename=report_filename))
+        except Exception as e:
+            # Se a análise falhar, redireciona para a página inicial com uma mensagem de erro.
+            # Isso evita o erro 404 com a URL malformada.
+            print(f"Erro ao analisar o arquivo {filename}: {e}")
+            return render_template('upload.html', error="Ocorreu um erro ao processar o arquivo. Verifique se o formato do CSV está correto.")
 
 @app.route('/reports/<run_folder>/planos_de_acao/<filename>')
 def serve_planos(run_folder, filename):
