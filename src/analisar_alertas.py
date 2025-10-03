@@ -650,75 +650,69 @@ def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_pat
         return
     print(f"✅ Página de visualização de logs inválidos gerada: {output_path}")
 
+def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, template_path: str):
+    """Gera uma página HTML para edição do arquivo de atuação."""
+    print(f"📄 Gerando página de edição para '{os.path.basename(actuation_csv_path)}'...")
+    output_path = os.path.join(output_dir, "editor_atuacao.html")
+    try:
+        with open(actuation_csv_path, 'r', encoding='utf-8') as f:
+            csv_content = f.read().lstrip()
+    except FileNotFoundError:
+        csv_content = ""
+        print(f"⚠️ Aviso: Arquivo '{actuation_csv_path}' não encontrado. Gerando página de edição vazia.")
+
+    try:
+        with open(template_path, 'r', encoding='utf-8') as f_template:
+            template_content = f_template.read()
+        
+        # Substitui o placeholder com os dados do CSV
+        final_html = template_content.replace('`__CSV_DATA_PLACEHOLDER__`', f'`{csv_content.replace("`", r"\\`")}`')
+
+        with open(output_path, 'w', encoding='utf-8') as f_out:
+            f_out.write(final_html)
+    except FileNotFoundError:
+        print(f"❌ Erro: Template '{template_path}' não encontrado.", file=sys.stderr)
+        return
+    print(f"✅ Página de edição gerada: {output_path}")
+
 # =============================================================================
 # EXECUÇÃO PRINCIPAL
 # =============================================================================
 
-def main():
-    """
-    Ponto de entrada principal do script.
-    Analisa os argumentos da linha de comando e orquestra o fluxo de análise e geração de relatórios.
-    """
-    parser = argparse.ArgumentParser(description="Analisa um arquivo CSV de alertas para identificar grupos que necessitam de atuação.")
-    parser.add_argument("input_file", help="Caminho para o arquivo CSV de entrada.")
-    
-    parser.add_argument("--output-summary", default="resumo_geral.html", help="Caminho para o resumo executivo HTML.")
-    parser.add_argument("--output-actuation", help="Caminho para o CSV de atuação geral.")
-    parser.add_argument("--output-ok", help="Caminho para o CSV de alertas OK ou estabilizados.")
-    parser.add_argument("--output-instability", help="Caminho para o CSV de casos de instabilidade.")
-    parser.add_argument("--plan-dir", help="Diretório para os planos de ação por squad.")
-    parser.add_argument("--details-dir", help="Diretório para as páginas de detalhe dos problemas.")
-    parser.add_argument("--output-json", required=True, help="Caminho para o resumo em JSON.")
-    parser.add_argument("--resumo-only", action='store_true', help="Se especificado, gera apenas o arquivo de resumo JSON.")
-    parser.add_argument("--trend-report-path", help="Caminho opcional para um relatório de tendência.")
-    
-    args = parser.parse_args()
-
-    if not args.resumo_only:
-        required_for_full_run = [
-            args.output_actuation,
-            args.output_ok,
-            args.output_instability,
-            args.plan_dir,
-            args.details_dir
-        ]
-        if not all(required_for_full_run):
-            parser.error(
-                "para o modo de análise completa, os argumentos --output-actuation, --output-ok, "
-                "--output-instability, --plan-dir e --details-dir são obrigatórios."
-            )
-
+def analisar_arquivo_csv(input_file: str, reports_base_dir: str, trend_report_path: str = None) -> str:
+    """Função principal para ser chamada pela aplicação Flask."""
     timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
+    run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    output_dir = os.path.join(reports_base_dir, run_folder_name)
+    os.makedirs(output_dir, exist_ok=True)
 
-    df, num_logs_invalidos = carregar_dados(args.input_file)
+    # Define todos os caminhos de saída
+    output_summary = os.path.join(output_dir, "resumo_geral.html")
+    output_actuation = os.path.join(output_dir, "atuar.csv")
+    output_ok = os.path.join(output_dir, "remediados.csv")
+    output_instability = os.path.join(output_dir, "remediados_frequentes.csv")
+    plan_dir = os.path.join(output_dir, "planos_de_acao")
+    details_dir = os.path.join(output_dir, "detalhes")
+    output_json = os.path.join(output_dir, "resumo_problemas.json")
+
+    df, num_logs_invalidos = carregar_dados(input_file)
     summary = analisar_grupos(df)
-    export_summary_to_json(summary.copy(), args.output_json)
+    export_summary_to_json(summary.copy(), output_json)
 
-    if not args.resumo_only:
-        output_dir = os.path.dirname(args.output_summary) or '.'
-        summary_filename = os.path.basename(args.output_summary)
-        
-        df_atuacao = gerar_relatorios_csv(summary, args.output_actuation, args.output_ok, args.output_instability)
-        
-        gerar_resumo_executivo(
-            summary, df_atuacao, num_logs_invalidos, args.output_summary, args.plan_dir,
-            args.details_dir, timestamp_str, args.trend_report_path
-        )
-        
-        gerar_planos_por_squad(df_atuacao, args.plan_dir, timestamp_str)
-        all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
-        gerar_pagina_squads(all_squads, args.plan_dir, output_dir, summary_filename, timestamp_str)
-        
-        sucesso_template_file = "templates/sucesso_template.html"
-        gerar_pagina_sucesso(output_dir, args.output_ok, sucesso_template_file)
-        gerar_pagina_instabilidade(output_dir, args.output_instability, sucesso_template_file)
+    summary_filename = os.path.basename(output_summary)
+    df_atuacao = gerar_relatorios_csv(summary, output_actuation, output_ok, output_instability)
+    
+    gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary, plan_dir, details_dir, timestamp_str, trend_report_path)
+    gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
+    all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
+    gerar_pagina_squads(all_squads, plan_dir, output_dir, summary_filename, timestamp_str)
+    
+    sucesso_template_file = "templates/sucesso_template.html"
+    gerar_pagina_sucesso(output_dir, output_ok, sucesso_template_file)
+    gerar_pagina_instabilidade(output_dir, output_instability, sucesso_template_file)
+    gerar_pagina_editor_atuacao(output_dir, output_actuation, "templates/editor_template.html")
+    
+    if num_logs_invalidos > 0:
+        gerar_pagina_logs_invalidos(output_dir, LOG_INVALIDOS_FILENAME, sucesso_template_file)
 
-        # Adiciona a geração da página do editor de atuação
-        gerar_pagina_editor_atuacao(output_dir, args.output_actuation, "templates/editor_template.html")
-        
-        if num_logs_invalidos > 0:
-            gerar_pagina_logs_invalidos(output_dir, LOG_INVALIDOS_FILENAME, sucesso_template_file)
-
-
-if __name__ == "__main__":
-    main()
+    return output_summary
