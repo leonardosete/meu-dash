@@ -277,7 +277,6 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
 
     kpis, merged_df = calculate_kpis_and_merged_df(df_p1, df_p2)
     
-    # --- Análises Específicas ---
     new_cases_df = merged_df[merged_df['_merge'] == 'right_only'].copy()
     new_problems_summary = new_cases_df.groupby('short_description', observed=True).agg(count_p2=('alert_count_p2', 'sum'), num_cases=('short_description', 'size')).reset_index()
     new_problems_summary['count_p1'] = 0
@@ -296,7 +295,6 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
     squad_trends_merged = pd.merge(squad_trends_p1, squad_trends_p2, on='assignment_group', how='outer').fillna(0)
     squad_trends_merged['num_cases'] = squad_trends_merged['num_cases'].astype(int)
 
-    # --- Construção do HTML ---
     title = "📊 Análise de Tendência de Alertas"
     body = f'<p><a href="resumo_geral.html">&larr; Voltar para o Dashboard</a></p><h1>Análise Comparativa de Alertas</h1>'
     

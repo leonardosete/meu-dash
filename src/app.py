@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
+from .get_date_range import get_date_range_from_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -28,6 +29,7 @@ class Report(db.Model):
     original_filename = db.Column(db.String(255))
     report_path = db.Column(db.String(255))
     json_summary_path = db.Column(db.String(255))
+    date_range = db.Column(db.String(100), nullable=True) # Novo campo para o intervalo de datas
 
     def __repr__(self):
         return f'<Report {self.original_filename}>'
@@ -44,9 +46,7 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    """
-    Orquestra o processo de upload, análise e comparação automática de tendências.
-    """
+    """Orquestra o processo de upload, análise e comparação automática de tendências."""
     if 'file_atual' not in request.files:
         return render_template('upload.html', error="Nenhum arquivo enviado.")
         
@@ -56,26 +56,24 @@ def upload_file():
         return render_template('upload.html', error="Nenhum arquivo selecionado.")
 
     try:
-        # --- ETAPA 1: Salva o arquivo atual e prepara o diretório de saída ---
+        # --- ETAPA 1: Salva o arquivo e extrai o intervalo de datas ---
         filename_atual = secure_filename(file_atual.filename)
         filepath_atual = os.path.join(app.config['UPLOAD_FOLDER'], f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_atual}")
         file_atual.save(filepath_atual)
+        date_range_atual = get_date_range_from_file(filepath_atual)
 
         run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         output_dir = os.path.join(app.config['REPORTS_FOLDER'], run_folder_name)
         os.makedirs(output_dir, exist_ok=True)
 
         # --- ETAPA 2: Busca o relatório anterior no histórico ---
-        # A consulta busca o segundo relatório mais recente, assumindo que o mais recente será o que estamos prestes a criar.
-        # Ou, se for o primeiro, não encontrará nada, o que é o comportamento esperado.
         last_report = Report.query.order_by(Report.timestamp.desc()).first()
         trend_report_path_relative = None
 
         # --- ETAPA 3: Gera o relatório de tendência (se houver um anterior) ---
         if last_report and last_report.json_summary_path and os.path.exists(last_report.json_summary_path):
-            print(f"📈 Relatório anterior encontrado: '{last_report.original_filename}'. Iniciando análise de tendência.")
+            print(f"📈 Relatório anterior encontrado. Iniciando análise de tendência.")
             
-            # Executa uma análise leve no arquivo atual apenas para obter o JSON para comparação
             temp_analysis_results = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=True)
             json_path_atual = temp_analysis_results['json_path']
             
@@ -86,15 +84,16 @@ def upload_file():
                 json_atual=json_path_atual,
                 csv_anterior_name=last_report.original_filename,
                 csv_atual_name=filename_atual,
-                output_path=output_trend_path
+                output_path=output_trend_path,
+                date_range_anterior=last_report.date_range,
+                date_range_atual=date_range_atual
             )
             trend_report_path_relative = os.path.basename(output_trend_path)
-            print(f"✅ Relatório de tendência gerado em: {output_trend_path}")
+            print(f"✅ Relatório de tendência gerado.")
         else:
-            print("⚠️ Nenhum relatório anterior encontrado no histórico. Apenas a análise principal será executada.")
+            print("⚠️ Nenhum relatório anterior encontrado.")
 
         # --- ETAPA 4: Executa a análise completa no arquivo atual ---
-        # Passa o caminho para o relatório de tendência, se ele foi gerado
         final_analysis_results = analisar_arquivo_csv(
             input_file=filepath_atual, 
             output_dir=output_dir, 
@@ -108,7 +107,8 @@ def upload_file():
         new_report = Report(
             original_filename=filename_atual,
             report_path=report_path_final,
-            json_summary_path=json_path_final
+            json_summary_path=json_path_final,
+            date_range=date_range_atual
         )
         db.session.add(new_report)
         db.session.commit()
@@ -144,13 +144,12 @@ def relatorios():
     reports = Report.query.order_by(Report.timestamp.desc()).all()
     report_data = []
     for report in reports:
-        # Prepara os dados para o template, incluindo a URL pronta
         report_data.append({
             'timestamp': report.timestamp,
             'original_filename': report.original_filename,
             'url': url_for('serve_report', 
-                           run_folder=os.path.basename(os.path.dirname(report.report_path)), 
-                           filename=os.path.basename(report.report_path))
+                        run_folder=os.path.basename(os.path.dirname(report.report_path)), 
+                        filename=os.path.basename(report.report_path))
         })
     return render_template('relatorios.html', reports=report_data)
 
@@ -160,4 +159,3 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
