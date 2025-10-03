@@ -15,12 +15,12 @@ jobs:
     steps:
       # 1. Checkout do código: Baixa o código do repositório para o runner.
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       # 2. Login no Docker Hub: Autentica no registry para poder enviar a imagem.
       #    Utiliza segredos configurados no repositório do GitHub para segurança.
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -30,7 +30,7 @@ jobs:
       #    para rastreabilidade e versionamento preciso.
       - name: Build and push Docker image
         id: build-and-push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0
         with:
           context: .
           push: true
