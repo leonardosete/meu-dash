@@ -30,7 +30,6 @@
             min-height: 100vh;
             margin: 0;
             padding: 20px;
-            /* Alterado para permitir o conteúdo extra */
             flex-direction: column;
         }
         .container {
@@ -65,7 +64,8 @@
             transition: background-color 0.3s, border-color 0.3s;
             margin-bottom: 30px;
         }
-        .file-input-wrapper:hover {
+        /* Adicionado .drag-active para feedback visual */
+        .file-input-wrapper:hover, .file-input-wrapper.drag-active {
             background-color: #24273A;
             border-color: var(--accent-color);
         }
@@ -123,7 +123,6 @@
             text-align: left;
         }
 
-        /* --- CSS ADICIONADO PARA A SEÇÃO DE DOCUMENTAÇÃO --- */
         .docs-section {
             display: flex;
             gap: 20px;
@@ -220,8 +219,36 @@
             const text = document.getElementById(textId);
             const name = document.getElementById(nameId);
 
+            // Abre a janela de seleção ao clicar
             wrapper.addEventListener('click', () => input.click());
             
+            // --- NOVA LÓGICA DE DRAG AND DROP ---
+
+            // 1. Previne o comportamento padrão do navegador ao arrastar
+            wrapper.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                wrapper.classList.add('drag-active');
+            });
+
+            // 2. Remove o feedback visual quando o arquivo sai da área
+            wrapper.addEventListener('dragleave', () => {
+                wrapper.classList.remove('drag-active');
+            });
+
+            // 3. Lida com o arquivo quando ele é solto na área
+            wrapper.addEventListener('drop', (event) => {
+                event.preventDefault(); // Impede o navegador de abrir o arquivo
+                wrapper.classList.remove('drag-active');
+                
+                // Pega os arquivos do evento e os atribui ao input
+                if (event.dataTransfer.files.length > 0) {
+                    input.files = event.dataTransfer.files;
+                    // Dispara o evento 'change' manualmente para atualizar a UI
+                    input.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            // Atualiza a UI quando um arquivo é selecionado (por clique OU por drop)
             input.addEventListener('change', () => {
                 if (input.files.length > 0) {
                     name.textContent = input.files[0].name;
