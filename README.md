@@ -105,10 +105,10 @@ A aplicação estará disponível em `http://localhost:5001`.
 #### Implantando no Kubernetes
 
 Os manifestos de implantação para o Kubernetes estão localizados na raiz do projeto. Para implantar a aplicação, execute:
+Os manifestos de implantação para o Kubernetes foram consolidados no arquivo `kubernetes.yaml`. Para implantar a aplicação, execute:
 
 ```bash
-kubectl apply -f deployment.yaml
-kubectl apply -f service.yaml
+kubectl apply -f kubernetes.yaml
 ```
 
 Isso irá criar um `Deployment` com 2 réplicas da aplicação e um `Service` do tipo `LoadBalancer` para expor a aplicação.
