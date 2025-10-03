@@ -1,9 +1,11 @@
+# --- Namespace para organizar os recursos da aplicação ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: meu-dash-alertas
+
 ---
-# Headless service para governar o StatefulSet
+# --- Headless Service: Necessário para o StatefulSet ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -16,8 +18,38 @@ spec:
   ports:
   - port: 80
     targetPort: 5000
+
 ---
-# StatefulSet para fornecer armazenamento estável para cada réplica
+# --- Service ClusterIP: Ponto de acesso interno para o Ingress ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meu-dash-web
+  namespace: meu-dash-alertas
+spec:
+  type: ClusterIP
+  selector:
+    app: meu-dash-web
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5000
+
+---
+# --- PodDisruptionBudget (PDB): Garante a alta disponibilidade ---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: meu-dash-pdb
+  namespace: meu-dash-alertas
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: meu-dash-web
+
+---
+# --- StatefulSet: Orquestração dos Pods da aplicação ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -34,45 +66,70 @@ spec:
       labels:
         app: meu-dash-web
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 2001
       containers:
       - name: meu-dash-web
-        image: sevenleo/meu-dash-web:latest
+        image: sevenleo/meu-dash-web:v1.0.0 # Lembre-se de usar uma tag de imagem específica
         ports:
-        - containerPort: 5000
+        - name: http
+          containerPort: 5000
+        readinessProbe:
+          httpGet:
+            path: /health # Substitua pelo endpoint de health check da sua aplicação
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health # Substitua pelo endpoint de health check
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
         volumeMounts:
         - name: meu-dash-data
           mountPath: /app/data
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - "ALL"
   volumeClaimTemplates:
   - metadata:
       name: meu-dash-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "standard"
+      storageClassName: "standard" # Verifique se este storageClass existe no seu cluster
       resources:
         requests:
           storage: 1Gi
+
 ---
-# Service LoadBalancer para acesso externo
-apiVersion: v1
-kind: Service
-metadata:
-  name: meu-dash-web
-  namespace: meu-dash-alertas
-spec:
-  type: LoadBalancer
-  selector:
-    app: meu-dash-web
-  ports:
-  - port: 80
-    targetPort: 5000
----
+# --- Ingress: Ponto de entrada para o tráfego externo via HTTPS ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: meu-dash-web-ingress
   namespace: meu-dash-alertas
+  annotations:
+    # CONFIRMADO: Usando o seu ClusterIssuer 'letsencrypt-prod' para gerar o certificado TLS.
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - meu-dash-web.devops-master.shop
+    secretName: meu-dash-tls-secret # O cert-manager criará e gerenciará este Secret
   rules:
   - host: meu-dash-web.devops-master.shop
     http:

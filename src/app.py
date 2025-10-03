@@ -6,7 +6,7 @@ from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+from flask_migrate import Migrate # type: ignore
 
 app = Flask(__name__, template_folder='../templates')
 
