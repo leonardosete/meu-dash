@@ -32,9 +32,17 @@
             padding: 20px;
             flex-direction: column;
         }
+        .main-layout {
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            width: 100%;
+            justify-content: center;
+        }
         .container {
             max-width: 600px;
             width: 100%;
+            flex-shrink: 0;
         }
         .card {
             background: var(--card-color);
@@ -129,7 +137,7 @@
             justify-content: center;
             margin-top: 30px;
             width: 100%;
-            max-width: 600px;
+            max-width: 1030px;
         }
         .doc-card {
             display: flex;
@@ -166,33 +174,93 @@
             font-size: 0.85em;
             opacity: 0.8;
         }
+
+        /* --- CSS PARA O CARD DA ÚLTIMA ANÁLISE --- */
+        .last-analysis-section {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 0;
+        }
+        .last-analysis-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 16px;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--success-color);
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .last-analysis-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .last-analysis-card svg {
+            width: 32px;
+            height: 32px;
+            color: var(--success-color);
+            flex-shrink: 0;
+        }
+        .last-analysis-text h3 {
+            margin: 0 0 4px 0;
+            color: var(--primary-text-color);
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        .last-analysis-text p {
+            margin: 0;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <h1>Análise de Alertas e Tendências</h1>
+    <div class="main-layout">
+        <div class="container">
+            <div class="card">
+                <h1>Análise de Alertas e Tendências</h1>
 
-            {% if error %}
-                <div class="error-message">{{ error }}</div>
-            {% endif %}
+                {% if error %}
+                    <div class="error-message">{{ error }}</div>
+                {% endif %}
 
-            <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
-                
-                <label for="file_atual">Selecione o arquivo de dados mais recente:</label>
-                <div class="file-input-wrapper" id="wrapper_atual">
-                    <input type="file" name="file_atual" id="file_atual" required>
-                    <span class="file-input-text" id="text_atual">Clique ou arraste o arquivo aqui</span>
-                    <span class="file-name" id="name_atual"></span>
-                </div>
+                <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+                    
+                    <label for="file_atual">Selecione o arquivo de dados mais recente:</label>
+                    <div class="file-input-wrapper" id="wrapper_atual">
+                        <input type="file" name="file_atual" id="file_atual" required>
+                        <span class="file-input-text" id="text_atual">Clique ou arraste o arquivo aqui</span>
+                        <span class="file-name" id="name_atual"></span>
+                    </div>
 
-                <button type="submit" id="submit-btn">Analisar e Comparar</button>
+                    <button type="submit" id="submit-btn">Analisar e Comparar</button>
 
-                <div class="button-group">
-                    <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico de Análises</button>
-                </div>
-            </form>
+                    <div class="button-group">
+                        <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico de Análises</button>
+                    </div>
+                </form>
+            </div>
         </div>
+
+        <!-- --- CARD DA ÚLTIMA ANÁLISE DE TENDÊNCIA (CONDICIONAL) --- -->
+        {% if last_trend_analysis %}
+        <div class="last-analysis-section">
+            <a href="{{ last_trend_analysis.url }}" target="_blank" class="last-analysis-card">
+                <!-- Ícone de Tendência -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                <div class="last-analysis-text">
+                    <h3>Ver Última Análise de Tendência</h3>
+                    <p>Gerada em: {{ last_trend_analysis.date }}</p>
+                </div>
+            </a>
+        </div>
+        {% endif %}
     </div>
 
     <div class="docs-section">
