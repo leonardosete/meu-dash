@@ -64,16 +64,6 @@ def upload_file():
 
         return redirect(url_for('serve_report', run_folder=run_folder, filename=report_filename))
 
-@app.route('/reports/<run_folder>/<filename>')
-def serve_report(run_folder, filename):
-    return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), filename)
-
-# Rota genérica para servir outros arquivos HTML na raiz do diretório do run
-# como editor_atuacao.html, sucesso_automacao.html, etc.
-@app.route('/reports/<run_folder>/<path:filename>')
-def serve_run_files(run_folder, filename):
-    return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), filename)
-
 @app.route('/reports/<run_folder>/planos_de_acao/<filename>')
 def serve_planos(run_folder, filename):
     return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder, 'planos_de_acao'), filename)
@@ -81,6 +71,12 @@ def serve_planos(run_folder, filename):
 @app.route('/reports/<run_folder>/detalhes/<filename>')
 def serve_detalhes(run_folder, filename):
     return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder, 'detalhes'), filename)
+
+# Rota genérica para servir arquivos na raiz do diretório do run (ex: resumo_geral.html, editor_atuacao.html).
+# Esta rota deve ser a ÚLTIMA para evitar conflitos com as rotas de subdiretórios mais específicas.
+@app.route('/reports/<run_folder>/<path:filename>')
+def serve_report(run_folder, filename):
+    return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), filename)
 
 @app.route('/relatorios')
 def relatorios():
