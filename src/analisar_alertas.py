@@ -665,8 +665,9 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
         
-        # Substitui o placeholder com os dados do CSV
-        final_html = template_content.replace('`__CSV_DATA_PLACEHOLDER__`', f'`{csv_content.replace("`", r"\\`")}`')
+        # Escapa o caractere ` (backtick) para injeção segura em um template string JavaScript.
+        csv_payload = csv_content.replace('`', r'\`')
+        final_html = template_content.replace('`__CSV_DATA_PLACEHOLDER__`', f'`{csv_payload}`')
 
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
