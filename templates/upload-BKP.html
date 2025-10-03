@@ -20,6 +20,7 @@
             --success-color: #1cc88a;
             --danger-color: #e74a3b;
         }
+        /* ... (Estilos CSS existentes) ... */
         body {
             font-family: var(--font-family);
             background-color: var(--bg-color);
@@ -32,7 +33,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 600px;
+            max-width: 650px;
             width: 100%;
         }
         .card {
@@ -48,6 +49,9 @@
             font-weight: 600;
             margin-bottom: 30px;
         }
+        .upload-section {
+            margin-bottom: 25px;
+        }
         label {
             display: block;
             font-weight: 500;
@@ -58,10 +62,9 @@
         .file-input-wrapper {
             border: 2px dashed var(--border-color);
             border-radius: 10px;
-            padding: 35px;
+            padding: 30px;
             cursor: pointer;
             transition: background-color 0.3s, border-color 0.3s;
-            margin-bottom: 30px;
         }
         .file-input-wrapper:hover {
             background-color: #24273A;
@@ -83,19 +86,18 @@
             display: flex;
             gap: 15px;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 30px;
         }
         button {
             background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 14px 30px;
+            padding: 12px 25px;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 1.1em;
+            font-weight: 500;
+            font-size: 1em;
             transition: background-color 0.2s;
-            width: 100%;
         }
         button:hover {
             background-color: var(--accent-color-hover);
@@ -103,13 +105,18 @@
         #history-btn {
             background-color: transparent;
             border: 1px solid var(--border-color);
-            font-weight: 500;
-            font-size: 1em;
-            padding: 12px 25px;
-            width: auto;
         }
         #history-btn:hover {
             background-color: var(--border-color);
+        }
+        .info-box {
+            text-align: left;
+            font-size: 0.9em;
+            color: #a0a0b0;
+            background-color: #24273A;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
         }
         .error-message {
             color: var(--danger-color);
@@ -118,7 +125,6 @@
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
-            text-align: left;
         }
     </style>
 </head>
@@ -133,17 +139,27 @@
 
             <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
                 
-                <label for="file_atual">Selecione o arquivo de dados mais recente:</label>
-                <div class="file-input-wrapper" id="wrapper_atual">
-                    <input type="file" name="file_atual" id="file_atual" required>
-                    <span class="file-input-text" id="text_atual">Clique ou arraste o arquivo aqui</span>
-                    <span class="file-name" id="name_atual"></span>
+                <div class="upload-section">
+                    <label for="file_atual">1. Arquivo Atual (Novo Período)</label>
+                    <div class="file-input-wrapper" id="wrapper_atual">
+                        <input type="file" name="file_atual" id="file_atual" required>
+                        <span class="file-input-text" id="text_atual">Clique para selecionar o arquivo</span>
+                        <span class="file-name" id="name_atual"></span>
+                    </div>
                 </div>
 
-                <button type="submit" id="submit-btn">Analisar e Comparar</button>
+                <div class="upload-section">
+                    <label for="file_anterior">2. Arquivo Anterior (Opcional para Comparação)</label>
+                    <div class="file-input-wrapper" id="wrapper_anterior">
+                        <input type="file" name="file_anterior" id="file_anterior">
+                        <span class="file-input-text" id="text_anterior">Clique para selecionar ou deixe em branco para comparar com o histórico</span>
+                        <span class="file-name" id="name_anterior"></span>
+                    </div>
+                </div>
 
                 <div class="button-group">
-                    <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico de Análises</button>
+                    <button type="submit" id="submit-btn">Analisar</button>
+                    <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico</button>
                 </div>
             </form>
         </div>
@@ -170,16 +186,13 @@
         }
 
         setupFileInput('file_atual', 'wrapper_atual', 'text_atual', 'name_atual');
+        setupFileInput('file_anterior', 'wrapper_anterior', 'text_anterior', 'name_anterior');
 
         document.getElementById('upload-form').addEventListener('submit', function() {
             const submitBtn = document.getElementById('submit-btn');
-            const fileInput = document.getElementById('file_atual');
-            if(fileInput.files.length > 0) {
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Processando...';
-            }
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processando...';
         });
     </script>
 </body>
 </html>
-
