@@ -72,7 +72,7 @@ spec:
         fsGroup: 2001
       containers:
       - name: meu-dash-web
-        image: sevenleo/meu-dash-web:v1.0.0 # Lembre-se de usar uma tag de imagem específica
+        image: sevenleo/meu-dash-web:latest # Lembre-se de usar uma tag de imagem específica
         ports:
         - name: http
           containerPort: 5000

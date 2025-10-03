@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
@@ -36,6 +36,27 @@ class Report(db.Model):
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['REPORTS_FOLDER'], exist_ok=True)
+
+# --- ROTAS DE HEALTH CHECK PARA KUBERNETES ---
+
+@app.route('/health')
+def health_check():
+    """Verifica a saúde da aplicação, incluindo banco de dados e permissões de arquivo."""
+    try:
+        # 1. Verifica a conexão com o banco de dados
+        db.session.execute('SELECT 1')
+
+        # 2. Verifica se os diretórios essenciais existem e têm permissão de escrita
+        if not os.path.exists(app.config['UPLOAD_FOLDER']) or not os.access(app.config['UPLOAD_FOLDER'], os.W_OK):
+            raise Exception(f"Diretório de upload não acessível: {app.config['UPLOAD_FOLDER']}")
+        
+        if not os.path.exists(app.config['REPORTS_FOLDER']) or not os.access(app.config['REPORTS_FOLDER'], os.W_OK):
+            raise Exception(f"Diretório de relatórios não acessível: {app.config['REPORTS_FOLDER']}")
+
+        return jsonify({'status': 'ok'}), 200
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'details': str(e)}), 503
 
 # --- ROTAS PRINCIPAIS DA APLICAÇÃO ---
 
