@@ -38,7 +38,6 @@ A lógica detalhada do cálculo está disponível na seção "Conceitos" do dash
 
 ### 📁 Estrutura do Projeto
 
-*   `scripts/`: Contém os scripts orquestradores (`gerar_relatorio.sh`, `gerar_relatorio.ps1`).
 *   `src/`: Contém o código-fonte da aplicação Flask (`app.py`), os motores de análise (`analisar_alertas.py`, `analise_tendencia.py`) e módulos auxiliares.
 *   `data/`: Diretório persistido no Kubernetes para armazenar uploads e relatórios.
 *   `templates/`: Modelos HTML para a criação dos relatórios.

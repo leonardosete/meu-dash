@@ -73,6 +73,7 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
     - `original_filename`: Nome do arquivo `.csv` que foi enviado.
     - `report_path`: Caminho para o relatório HTML principal (`resumo_geral.html`).
     - `json_summary_path`: **Crucial para a análise de tendência.** Caminho para o arquivo `resumo_problemas.json` daquela análise.
+    - `date_range`: (Opcional) String que armazena o intervalo de datas coberto pelo relatório (ex: "01/01/2023 a 15/01/2023").
 - **Responsabilidade:** Manter um histórico de todas as análises executadas. Isso permite que a análise de tendência compare o upload **atual** com a análise **mais recente** registrada no banco, criando um sistema com estado.
 
 ## 3. Motores de Análise (Invocados como Bibliotecas)
@@ -104,19 +105,19 @@ O processo é iniciado pela interação do usuário e orquestrado integralmente 
 
 1.  **Usuário:** Acessa a rota `/` e vê a página de upload.
 2.  **Upload:** O usuário seleciona um arquivo `.csv` (`file_atual`) e o envia através do formulário (`POST /upload`).
-3.  **Orquestração (`app.py`):**
-    a. **Salvar Arquivo:** O arquivo `.csv` enviado é salvo em `data/uploads/` com um timestamp. Um diretório de saída para a execução (`run_<timestamp>`) é criado em `data/reports/`.
+3.  **Orquestração (`app.py`):
+    a. **Salvar e Extrair Datas:** O arquivo `.csv` enviado é salvo em `data/uploads/`. O novo módulo `get_date_range.py` é usado para extrair o intervalo de datas do arquivo. Um diretório de saída (`run_<timestamp>`) é criado em `data/reports/`.
     b. **Buscar Histórico:** O `app.py` consulta o banco de dados para encontrar o relatório mais recente (`Report.query.order_by(Report.timestamp.desc()).first()`).
     c. **Condição: Análise de Tendência (se um relatório anterior existe):**
-        i. **Análise Leve:** A função `analisar_arquivo_csv` é chamada com `light_analysis=True` para o arquivo **atual**. Isso gera rapidamente apenas o `resumo_problemas.json` necessário para a comparação.
-        ii. **Geração da Tendência:** A função `gerar_relatorio_tendencia` é chamada, recebendo o JSON do relatório **anterior** (do banco de dados) e o JSON do relatório **atual** (da análise leve). Ela gera o `resumo_tendencia.html`.
+        i. **Análise Leve:** A função `analisar_arquivo_csv` é chamada com `light_analysis=True` para o arquivo **atual**, gerando rapidamente o `resumo_problemas.json`.
+        ii. **Geração da Tendência:** A função `gerar_relatorio_tendencia` é chamada, recebendo os JSONs (anterior e atual) e também os intervalos de datas (anterior e atual) para enriquecer o relatório de tendência.
     d. **Análise Principal (Completa):**
         i. A função `analisar_arquivo_csv` é chamada novamente para o arquivo **atual**, com `light_analysis=False`.
         ii. O caminho para o `resumo_tendencia.html` (se gerado) é passado para esta função, para que o link de navegação seja injetado no relatório principal.
-        iii. Esta execução gera o ecossistema completo de dashboards e arquivos de dados.
+        iii. Esta execução gera o ecossistema completo de dashboards.
     e. **Persistência e Redirecionamento:**
-        i. Um novo registro `Report` é criado no banco de dados com os metadados da análise, incluindo os caminhos para o `resumo_geral.html` e o `resumo_problemas.json`.
-        ii. O `app.py` redireciona o navegador do usuário para a rota `serve_report`, que exibe o `resumo_geral.html` recém-criado.
+        i. Um novo registro `Report` é criado no banco de dados, agora incluindo o `date_range` extraído.
+        ii. O `app.py` redireciona o navegador do usuário para exibir o `resumo_geral.html` recém-criado.
 
 ---
 

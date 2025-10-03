@@ -252,7 +252,7 @@
             <div class="card">
                 <ul>
                     <li><strong>Tecnologia:</strong> SQLite, gerenciado pelo SQLAlchemy.</li>
-                    <li><strong>Modelo de Dados (<code>Report</code>):</strong> Armazena metadados de cada análise, incluindo o nome do arquivo original, o timestamp e os caminhos para os artefatos gerados (<code>resumo_geral.html</code> e <code>resumo_problemas.json</code>).</li>
+                    <li><strong>Modelo de Dados (<code>Report</code>):</strong> Armazena metadados de cada análise, incluindo o nome do arquivo original, o timestamp, os caminhos para os artefatos gerados (<code>resumo_geral.html</code> e <code>resumo_problemas.json</code>) e o intervalo de datas da análise.</li>
                     <li><strong>Responsabilidade:</strong> Manter um histórico persistente de todas as análises. Este histórico é <strong>crucial</strong> para a análise de tendência, pois permite que a aplicação compare o upload atual com a análise mais recente registrada.</li>
                 </ul>
             </div>
@@ -280,6 +280,8 @@
                 <p>Centraliza a lógica de renderização de HTML, transformando os dados da análise em dashboards interativos.</p>
                 <h4><code>src/constants.py</code></h4>
                 <p>Centraliza todas as constantes de lógica de negócio (pesos, ações, etc.) para garantir consistência.</p>
+                <h4><code>src/get_date_range.py</code></h4>
+                <p>Responsável por ler um arquivo de alertas e extrair a data mais antiga e a mais recente, retornando um intervalo de datas formatado.</p>
             </div>
         </section>
 
@@ -293,7 +295,7 @@
                 <li>
                     <strong>Orquestração (<code>app.py</code>):</strong>
                     <ul>
-                        <li>a. <strong>Salvar Arquivo:</strong> O <code>.csv</code> é salvo em <code>data/uploads/</code> e um diretório de saída (<code>run_&lt;timestamp&gt;</code>) é criado em <code>data/reports/</code>.</li>
+                        <li>a. <strong>Salvar e Extrair Datas:</strong> O <code>.csv</code> é salvo em <code>data/uploads/</code>. O módulo <code>get_date_range.py</code> é usado para extrair o intervalo de datas do arquivo. Um diretório de saída (<code>run_&lt;timestamp&gt;</code>) é criado em <code>data/reports/</code>.</li>
                         <li>b. <strong>Buscar Histórico:</strong> O app consulta o banco de dados (via SQLAlchemy) para encontrar o relatório mais recente.</li>
                     </ul>
                 </li>
@@ -301,7 +303,7 @@
                     <strong>Análise de Tendência (Condicional):</strong> Se um relatório anterior existe, o <code>app.py</code>:
                     <ul>
                         <li>i. <strong>Executa Análise Leve:</strong> Chama a função <code>analisar_arquivo_csv</code> com <code>light_analysis=True</code> para gerar rapidamente o <code>resumo_problemas.json</code> do arquivo atual.</li>
-                        <li>ii. <strong>Gera Relatório de Tendência:</strong> Chama a função <code>gerar_relatorio_tendencia</code>, passando o JSON anterior (do banco de dados) e o JSON atual (da análise leve).</li>
+                        <li>ii. <strong>Gera Relatório de Tendência:</strong> Chama a função <code>gerar_relatorio_tendencia</code>, passando os JSONs (anterior e atual) e também os intervalos de datas (anterior e atual) para enriquecer o relatório.</li>
                     </ul>
                 </li>
                 <li>
@@ -310,7 +312,7 @@
                 <li>
                     <strong>Persistência e Redirecionamento:</strong>
                     <ul>
-                        <li>i. Um novo registro <code>Report</code> é criado no banco de dados com os metadados da análise recém-concluída.</li>
+                        <li>i. Um novo registro <code>Report</code> é criado no banco de dados com os metadados da análise, incluindo o novo campo <code>date_range</code>.</li>
                         <li>ii. O <code>app.py</code> redireciona o navegador do usuário para a rota que serve o <code>resumo_geral.html</code> recém-criado.</li>
                     </ul>
                 </li>
