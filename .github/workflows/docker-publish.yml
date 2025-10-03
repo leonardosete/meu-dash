@@ -6,6 +6,9 @@ on:
   push:
     branches: [ "minha-feature" ]
 
+  # Permite a execução manual do workflow a partir da aba "Actions" do GitHub.
+  workflow_dispatch:
+
 jobs:
   build-and-push:
     name: Build and Push to Docker Hub
