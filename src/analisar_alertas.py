@@ -1,12 +1,10 @@
 import pandas as pd
-import argparse
 import sys
 import os
 import re
 import json
-import math
 import numpy as np
-from typing import Set, List, Dict, Callable, Tuple
+from typing import List, Tuple, Dict
 from html import escape
 from datetime import datetime
 from .constants import (
@@ -36,13 +34,8 @@ COL_PRIORITY_GROUP = "sn_priority_group"
 
 # Colunas que definem um grupo único de alertas
 GROUP_COLS: List[str] = [
-    COL_ASSIGNMENT_GROUP,
-    COL_SHORT_DESCRIPTION,
-    COL_NODE,
-    COL_CMDB_CI,
-    COL_SOURCE,
-    COL_METRIC_NAME,
-    COL_CMDB_CI_SYS_CLASS_NAME,
+    COL_ASSIGNMENT_GROUP, COL_SHORT_DESCRIPTION, COL_NODE, COL_CMDB_CI,
+    COL_SOURCE, COL_METRIC_NAME, COL_CMDB_CI_SYS_CLASS_NAME,
 ]
 
 # Colunas essenciais para o funcionamento do script
@@ -59,6 +52,8 @@ LOG_INVALIDOS_FILENAME = "invalid_self_healing_status.csv"
 
 LIMIAR_ALERTAS_RECORRENTES = 5
 
+# Carrega o template principal de forma robusta
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def carregar_template_html(filepath: str) -> str:
     """Carrega o conteúdo de um arquivo de template HTML de forma segura."""
@@ -67,89 +62,60 @@ def carregar_template_html(filepath: str) -> str:
         with open(filepath, 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
-        print(f"❌ Erro Fatal: O arquivo de template HTML '{filepath}' não foi encontrado.", file=sys.stderr)
-        sys.exit(1)
+        raise FileNotFoundError(f"O arquivo de template HTML '{filepath}' não foi encontrado.")
     except Exception as e:
-        print(f"❌ Erro inesperado ao ler o arquivo de template '{filepath}': {e}", file=sys.stderr)
-        sys.exit(1)
+        raise IOError(f"Erro inesperado ao ler o arquivo de template '{filepath}': {e}")
 
-TEMPLATE_FILE = "templates/template.html"
+TEMPLATE_FILE = os.path.join(SCRIPT_DIR, '..', 'templates', 'template.html')
 HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
+
 
 # =============================================================================
 # PROCESSAMENTO E ANÁLISE DE DADOS
 # =============================================================================
-def carregar_dados(filepath: str) -> Tuple[pd.DataFrame, int]:
-    """
-    Carrega os dados de um arquivo CSV, valida, limpa, pré-processa e
-    retorna a contagem de Check last columm .
 
-    Args:
-        filepath: O caminho para o arquivo CSV de entrada.
-
-    Returns:
-        Uma tupla contendo:
-        - Um DataFrame do pandas pronto para análise.
-        - Um inteiro com a contagem de linhas de log inválidas.
-    """
+def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
+    """Carrega, valida e pré-processa os dados de um arquivo CSV."""
     print(f"⚙️  Carregando e preparando dados de '{filepath}'...")
     try:
         df = pd.read_csv(filepath, encoding="utf-8-sig", sep=None, engine='python')
     except FileNotFoundError:
-        print(f"❌ Erro Fatal: O arquivo '{filepath}' não foi encontrado.", file=sys.stderr)
-        sys.exit(1)
+        raise FileNotFoundError(f"O arquivo de entrada '{filepath}' não foi encontrado.")
     except Exception as e:
-        print(f"❌ Erro inesperado ao ler o arquivo '{filepath}': {e}", file=sys.stderr)
-        sys.exit(1)
-
-    # Garante a remoção de espaços em branco antes da validação
-    if COL_SELF_HEALING_STATUS in df.columns:
-        df[COL_SELF_HEALING_STATUS] = df[COL_SELF_HEALING_STATUS].astype(str).str.strip()
-
-    valid_statuses = {STATUS_OK, STATUS_NOT_OK}
-    mask_invalidos = df[COL_SELF_HEALING_STATUS].notna() & ~df[COL_SELF_HEALING_STATUS].isin(valid_statuses)
-    df_invalidos = df[mask_invalidos]
-    num_invalidos = len(df_invalidos)
-
-    if not df_invalidos.empty:
-        print(f"⚠️  Detectadas {num_invalidos} linhas com status de remediação inesperado. Registrando em '{LOG_INVALIDOS_FILENAME}'...")
-        header = not os.path.exists(LOG_INVALIDOS_FILENAME)
-        df_invalidos.to_csv(LOG_INVALIDOS_FILENAME, mode='a', index=False, header=header, encoding='utf-8-sig')
+        raise ValueError(f"Erro ao ler ou processar o arquivo CSV '{filepath}'. Verifique o formato e a codificação. Detalhe: {e}")
 
     missing_cols = [col for col in ESSENTIAL_COLS if col not in df.columns]
     if missing_cols:
-        print(f"❌ Erro Fatal: Faltam as seguintes colunas essenciais no arquivo: {missing_cols}", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f"O arquivo CSV não contém as colunas essenciais: {', '.join(missing_cols)}")
+
+    num_invalidos = 0
+    if COL_SELF_HEALING_STATUS in df.columns:
+        df[COL_SELF_HEALING_STATUS] = df[COL_SELF_HEALING_STATUS].astype(str).str.strip()
+        valid_statuses = {STATUS_OK, STATUS_NOT_OK}
+        mask_invalidos = df[COL_SELF_HEALING_STATUS].notna() & ~df[COL_SELF_HEALING_STATUS].isin(valid_statuses)
+        df_invalidos = df[mask_invalidos]
+        num_invalidos = len(df_invalidos)
+        if not df_invalidos.empty:
+            log_invalidos_path = os.path.join(output_dir, LOG_INVALIDOS_FILENAME)
+            print(f"⚠️  Detectadas {num_invalidos} linhas com status de remediação inesperado. Registrando em '{log_invalidos_path}'...")
+            df_invalidos.to_csv(log_invalidos_path, index=False, encoding='utf-8-sig')
 
     for col in GROUP_COLS:
         df[col] = df[col].fillna(UNKNOWN).replace("", UNKNOWN)
-
     df[COL_CREATED_ON] = pd.to_datetime(df[COL_CREATED_ON], errors='coerce', format='mixed')
     df[COL_SELF_HEALING_STATUS] = df[COL_SELF_HEALING_STATUS].fillna(NO_STATUS)
-
     df['severity_score'] = df[COL_SEVERITY].map(SEVERITY_WEIGHTS).fillna(0)
     df['priority_group_score'] = df[COL_PRIORITY_GROUP].map(PRIORITY_GROUP_WEIGHTS).fillna(0)
     df['score_criticidade_final'] = df['severity_score'] + df['priority_group_score']
 
-    categorical_cols = GROUP_COLS + [COL_SELF_HEALING_STATUS, COL_SEVERITY, COL_PRIORITY_GROUP]
-    for col in categorical_cols:
+    for col in GROUP_COLS + [COL_SELF_HEALING_STATUS, COL_SEVERITY, COL_PRIORITY_GROUP]:
         if col in df.columns and df[col].dtype == 'object':
             df[col] = df[col].astype('category')
-
     print("✅ Dados carregados e preparados com sucesso.")
     return df, num_invalidos
 
-
 def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Adiciona uma coluna com ações sugeridas de forma vetorizada para melhor performance.
-
-    Args:
-        df: O DataFrame de resumo contendo a coluna 'status_chronology'.
-
-    Returns:
-        O mesmo DataFrame com a coluna 'acao_sugerida' adicionada.
-    """
+    """Adiciona a coluna 'acao_sugerida' com base na cronologia dos status."""
     last_status = df['status_chronology'].str[-1].fillna(NO_STATUS)
     has_ok = df['status_chronology'].apply(lambda c: STATUS_OK in c)
     has_only_no_status = df['status_chronology'].apply(lambda c: not c or all(s == NO_STATUS for s in c))
@@ -167,21 +133,11 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
         ACAO_STATUS_AUSENTE, ACAO_INSTABILIDADE_CRONICA, ACAO_ESTABILIZADA,
         ACAO_SEMPRE_OK, ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE
     ]
-
     df['acao_sugerida'] = np.select(conditions, choices, default=UNKNOWN)
     return df
 
-
 def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Agrupa e analisa os alertas para criar um sumário de problemas únicos.
-
-    Args:
-        df: O DataFrame completo de alertas carregado.
-
-    Returns:
-        Um DataFrame de resumo, com cada linha representando um problema único.
-    """
+    """Agrupa e analisa os alertas para criar um sumário de problemas únicos."""
     print("\n⏳ Analisando e agrupando alertas...")
     aggregations = {
         COL_CREATED_ON: ['min', 'max'],
@@ -198,6 +154,8 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
         sorted_df = df.sort_values(by=GROUP_COLS + [COL_CREATED_ON])
         chronology = sorted_df.groupby(GROUP_COLS, observed=True, dropna=False)[COL_SELF_HEALING_STATUS].apply(list).reset_index(name='status_chronology')
         summary = pd.merge(summary, chronology, on=GROUP_COLS, how='left')
+    else:
+        summary['status_chronology'] = [[] for _ in range(len(summary))]
 
     summary = adicionar_acao_sugerida(summary)
     summary['fator_peso_remediacao'] = summary['acao_sugerida'].map(ACAO_WEIGHTS).fillna(1.0)
@@ -213,9 +171,7 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
 # =============================================================================
 
 def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok: str, output_instability: str) -> pd.DataFrame:
-    """
-    Filtra os resultados em categorias, salva em arquivos CSV e retorna o dataframe de atuação.
-    """
+    """Filtra os resultados, salva em CSV e retorna o dataframe de atuação."""
     print("\n📑 Gerando relatórios CSV...")
     alerts_atuacao = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
     alerts_ok = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)].copy()
@@ -226,8 +182,6 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
         ACAO_INSTABILIDADE_CRONICA: "🔁"
     }
 
-    # --- LÓGICA DE MODIFICAÇÃO MOVIDA PARA O LOCAL CORRETO ---
-    # Somente no dataframe que irá para o atuar.csv, verifica por status inválidos.
     if not alerts_atuacao.empty:
         VALID_STATUSES_FOR_CHRONOLOGY = {STATUS_OK, STATUS_NOT_OK, NO_STATUS}
         has_invalid_status_mask = alerts_atuacao['status_chronology'].apply(
@@ -237,19 +191,17 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
             alerts_atuacao.loc[has_invalid_status_mask, 'acao_sugerida'] = (
                 "⚠️🔍 Analise o status da remediação 🔍⚠️ | " + alerts_atuacao.loc[has_invalid_status_mask, 'acao_sugerida']
             )
-    # --- FIM DA MODIFICAÇÃO ---
 
     def save_csv(df, path, sort_by, ascending=False):
         if not df.empty:
             df_to_save = df.copy()
-            # Esta linha agora lida corretamente tanto com os casos normais quanto os modificados.
             df_to_save['acao_sugerida'] = df_to_save['acao_sugerida'].apply(lambda x: f"{full_emoji_map.get(x, '')} {x}".strip())
             df_to_save = df_to_save.sort_values(by=sort_by, ascending=ascending)
             if 'atuar' in path:
                 df_to_save['status_tratamento'] = 'Pendente'
                 df_to_save['responsavel'] = ''
                 df_to_save['data_previsao_solucao'] = ''
-            df_to_save.to_csv(path, index=False, encoding="utf-8")
+            df_to_save.to_csv(path, index=False, encoding="utf-8-sig")
             print(f"✅ Relatório CSV gerado: {path}")
 
     save_csv(alerts_atuacao, output_actuation, "score_ponderado_final", False)
@@ -268,9 +220,13 @@ def export_summary_to_json(summary: pd.DataFrame, output_path: str):
     print(f"✅ Resumo salvo em: {output_path}")
 
 # =============================================================================
-# GERAÇÃO DE PÁGINAS HTML
+# GERAÇÃO DE PÁGINAS HTML (Lógica de negócio inalterada)
 # =============================================================================
-
+# Todas as funções `gerar_...` permanecem aqui, exatamente como no seu original.
+# Elas são a lógica de negócio para a apresentação e não devem ser removidas.
+# ... (COPIE TODAS AS FUNÇÕES `gerar_planos_por_squad`, `gerar_pagina_squads`,
+# `gerar_paginas_detalhe_problema`, `gerar_resumo_executivo`, etc., aqui) ...
+# Omitido por brevidade, mas devem estar presentes no arquivo final.
 def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_str: str):
     """Gera arquivos de plano de ação HTML para cada squad com casos que precisam de atuação."""
     print("\n📋 Gerando planos de ação por squad...")
@@ -419,7 +375,6 @@ def gerar_pagina_squads(all_squads: pd.Series, plan_dir: str, output_dir: str, s
         f.write(html_content)
     print(f"✅ Página de squads gerada: {output_path}")
 
-
 def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Index, output_dir: str, summary_filename: str, file_prefix: str, plan_dir_name: str, timestamp_str: str):
     """Gera páginas de detalhe para uma lista de problemas específicos."""
     if problem_list.empty:
@@ -462,7 +417,6 @@ def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Ind
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
     print(f"✅ {len(problem_list)} páginas de detalhe do contexto '{file_prefix}' geradas.")
-
 
 def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: pd.Index, output_dir: str, summary_filename: str, plan_dir_name: str, timestamp_str: str):
     """Gera páginas de detalhe para categorias de métricas com casos em aberto."""
@@ -537,14 +491,11 @@ def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, n
 
     title = "Dashboard - Análise de Alertas"
     
-    # Adicionando o período da análise
     start_date = summary_df['first_event'].min() if not summary_df.empty else None
     end_date = summary_df['last_event'].max() if not summary_df.empty else None
     date_range_text = "Período da Análise: Dados Indisponíveis"
     if start_date and end_date:
-        start_date_formatted = start_date.strftime('%d/%m/%Y')
-        end_date_formatted = end_date.strftime('%d/%m/%Y')
-        date_range_text = f"Período da Análise: {start_date_formatted} a {end_date_formatted}"
+        date_range_text = f"Período da Análise: {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}"
     squads_prioritarias = df_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True).agg(
         score_acumulado=('score_ponderado_final', 'sum'),
         total_casos=('score_ponderado_final', 'size')
@@ -566,7 +517,6 @@ def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, n
     }
 
     body_content = gerador_html.renderizar_resumo_executivo(context)
-
     footer_text = f"Relatório gerado em {timestamp_str}"
     html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -594,7 +544,6 @@ def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):
     except FileNotFoundError:
         csv_content = ""
         print(f"⚠️ Aviso: Arquivo '{ok_csv_path}' não encontrado. Gerando página vazia.")
-
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
@@ -602,10 +551,8 @@ def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
     except FileNotFoundError:
-        print(f"❌ Erro: Template '{template_path}' não encontrado.", file=sys.stderr)
-        return
+        raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
     print(f"✅ Página de visualização de sucesso gerada: {output_path}")
-
 
 def gerar_pagina_instabilidade(output_dir: str, instability_csv_path: str, template_path: str):
     """Gera uma página HTML para visualização dos casos de instabilidade crônica."""
@@ -617,7 +564,6 @@ def gerar_pagina_instabilidade(output_dir: str, instability_csv_path: str, templ
     except FileNotFoundError:
         csv_content = ""
         print(f"⚠️ Aviso: Arquivo '{instability_csv_path}' não encontrado. Gerando página vazia.")
-
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
@@ -625,12 +571,11 @@ def gerar_pagina_instabilidade(output_dir: str, instability_csv_path: str, templ
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
     except FileNotFoundError:
-        print(f"❌ Erro: Template '{template_path}' não encontrado.", file=sys.stderr)
-        return
+        raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
     print(f"✅ Página de visualização de instabilidade gerada: {output_path}")
 
 def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_path: str):
-    """Gera uma página HTML para visualização dos Check last columm ."""
+    """Gera uma página HTML para visualização dos logs com status inválido."""
     print(f"📄 Gerando página de visualização para '{os.path.basename(log_csv_path)}'...")
     output_path = os.path.join(output_dir, "qualidade_dados_remediacao.html")
     try:
@@ -639,16 +584,14 @@ def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_pat
     except FileNotFoundError:
         csv_content = ""
         print(f"⚠️ Aviso: Arquivo '{log_csv_path}' não encontrado. Gerando página vazia.")
-    
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
-        final_html = gerador_html.renderizar_pagina_csv_viewer(template_content, csv_content, "Qualidade de Dados", log_csv_path)
+        final_html = gerador_html.renderizar_pagina_csv_viewer(template_content, csv_content, "Qualidade de Dados", os.path.basename(log_csv_path))
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
     except FileNotFoundError:
-        print(f"❌ Erro: Template '{template_path}' não encontrado.", file=sys.stderr)
-        return
+        raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
     print(f"✅ Página de visualização de logs inválidos gerada: {output_path}")
 
 def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, template_path: str):
@@ -661,77 +604,66 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
     except FileNotFoundError:
         csv_content = ""
         print(f"⚠️ Aviso: Arquivo '{actuation_csv_path}' não encontrado. Gerando página de edição vazia.")
-
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
-        
-        # --- INÍCIO DA CORREÇÃO ---
-        # 1. Escapa os caracteres especiais para injeção segura no JavaScript
         csv_payload = csv_content.replace('\\', r'\\').replace('`', r'\`')
-
-        # 2. Usa um placeholder temporário e seguro
         placeholder = "___CSV_DATA_PAYLOAD_EDITOR___"
-
-        # 3. Substitui a linha inteira de declaração da variável JavaScript para garantir
-        #    que a sintaxe `const nome = `...`;` seja sempre preservada.
-        template_com_placeholder = template_content.replace(
-            'const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`',
-            f'const csvDataPayload = `{placeholder}`'
-        )
-
-        # 4. Injeta o conteúdo real do CSV no placeholder seguro
+        template_com_placeholder = template_content.replace('const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`', f'const csvDataPayload = `{placeholder}`')
         final_html = template_com_placeholder.replace(placeholder, csv_payload)
-        # --- FIM DA CORREÇÃO ---
-
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
-
     except FileNotFoundError:
-        print(f"❌ Erro: Template '{template_path}' não encontrado.", file=sys.stderr)
-        return
-        
+        raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
     print(f"✅ Página de edição gerada: {output_path}")
 
-
 # =============================================================================
-# EXECUÇÃO PRINCIPAL
+# NOVA EXECUÇÃO PRINCIPAL (WEB-FOCUSED)
 # =============================================================================
 
-def analisar_arquivo_csv(input_file: str, reports_base_dir: str, trend_report_path: str = None) -> str:
-    """Função principal para ser chamada pela aplicação Flask."""
+def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool = False, trend_report_path: str = None) -> Dict[str, str]:
+    """
+    Função principal, otimizada para uso web, que orquestra a análise de um arquivo CSV.
+    """
     timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
-    run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    output_dir = os.path.join(reports_base_dir, run_folder_name)
     os.makedirs(output_dir, exist_ok=True)
 
-    # Define todos os caminhos de saída
-    output_summary = os.path.join(output_dir, "resumo_geral.html")
-    output_actuation = os.path.join(output_dir, "atuar.csv")
-    output_ok = os.path.join(output_dir, "remediados.csv")
-    output_instability = os.path.join(output_dir, "remediados_frequentes.csv")
+    # Define caminhos
+    output_summary_html = os.path.join(output_dir, "resumo_geral.html")
+    output_actuation_csv = os.path.join(output_dir, "atuar.csv")
+    output_ok_csv = os.path.join(output_dir, "remediados.csv")
+    output_instability_csv = os.path.join(output_dir, "remediados_frequentes.csv")
     plan_dir = os.path.join(output_dir, "planos_de_acao")
     details_dir = os.path.join(output_dir, "detalhes")
     output_json = os.path.join(output_dir, "resumo_problemas.json")
 
-    df, num_logs_invalidos = carregar_dados(input_file)
+    df, num_logs_invalidos = carregar_dados(input_file, output_dir)
     summary = analisar_grupos(df)
     export_summary_to_json(summary.copy(), output_json)
 
-    summary_filename = os.path.basename(output_summary)
-    df_atuacao = gerar_relatorios_csv(summary, output_actuation, output_ok, output_instability)
+    if light_analysis:
+        print("💡 Análise leve concluída. Apenas o resumo JSON foi gerado.")
+        return {'html_path': None, 'json_path': output_json}
+
+    df_atuacao = gerar_relatorios_csv(summary, output_actuation_csv, output_ok_csv, output_instability_csv)
     
-    gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary, plan_dir, details_dir, timestamp_str, trend_report_path)
+    gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary_html, plan_dir, details_dir, timestamp_str, trend_report_path)
+    
     gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
     all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
-    gerar_pagina_squads(all_squads, plan_dir, output_dir, summary_filename, timestamp_str)
+    gerar_pagina_squads(all_squads, plan_dir, output_dir, os.path.basename(output_summary_html), timestamp_str)
     
-    sucesso_template_file = "templates/sucesso_template.html"
-    gerar_pagina_sucesso(output_dir, output_ok, sucesso_template_file)
-    gerar_pagina_instabilidade(output_dir, output_instability, sucesso_template_file)
-    gerar_pagina_editor_atuacao(output_dir, output_actuation, "templates/editor_template.html")
+    base_template_dir = os.path.join(SCRIPT_DIR, '..', 'templates')
+    sucesso_template_file = os.path.join(base_template_dir, 'sucesso_template.html')
+    editor_template_file = os.path.join(base_template_dir, 'editor_template.html')
+
+    gerar_pagina_sucesso(output_dir, output_ok_csv, sucesso_template_file)
+    gerar_pagina_instabilidade(output_dir, output_instability_csv, sucesso_template_file)
+    gerar_pagina_editor_atuacao(output_dir, output_actuation_csv, editor_template_file)
     
     if num_logs_invalidos > 0:
-        gerar_pagina_logs_invalidos(output_dir, LOG_INVALIDOS_FILENAME, sucesso_template_file)
+        log_invalidos_path = os.path.join(output_dir, LOG_INVALIDOS_FILENAME)
+        gerar_pagina_logs_invalidos(output_dir, log_invalidos_path, sucesso_template_file)
 
-    return output_summary
+    print(f"✅ Análise completa finalizada. Relatório principal em: {output_summary_html}")
+    return {'html_path': output_summary_html, 'json_path': output_json}

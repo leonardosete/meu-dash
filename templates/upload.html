@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload de Arquivo Moderno</title>
+    <title>Análise de Alertas - Upload</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,188 +15,184 @@
             --primary-text-color: #FFFFFF;
             --border-color: #3A3D5A;
             --accent-color: #6A5AF9;
-            --accent-hover-color: #5848d8;
-            --success-color: #28a745;
-            --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --accent-color-hover: #5848d8;
+            --font-family: 'Poppins', sans-serif;
+            --success-color: #1cc88a;
+            --danger-color: #e74a3b;
         }
+        /* ... (Estilos CSS existentes) ... */
         body {
             font-family: var(--font-family);
-            line-height: 1.6;
-            color: var(--text-color);
             background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            color: var(--text-color);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            margin: 0;
+            padding: 20px;
         }
         .container {
-            max-width: 500px;
+            max-width: 650px;
             width: 100%;
-            margin: auto;
-        }
-        h1 {
-            color: var(--primary-text-color);
-            margin-bottom: 25px;
-            font-weight: 600;
-            font-size: 1.8em;
-            text-align: center;
         }
         .card {
             background: var(--card-color);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 35px;
+            padding: 40px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            text-align: center;
         }
-        
-        /* --- MUDANÇA PRINCIPAL AQUI --- */
-        /* 1. Escondemos completamente o input de arquivo real */
-        #file-input {
+        h1 {
+            color: var(--primary-text-color);
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 15px;
+            text-align: left;
+            font-size: 1.1em;
+        }
+        .file-input-wrapper {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 30px;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .file-input-wrapper:hover {
+            background-color: #24273A;
+            border-color: var(--accent-color);
+        }
+        .file-input-wrapper input[type="file"] {
             display: none;
         }
-
-        /* 2. O LABEL agora é a nossa área de upload clicável e visível */
-        .upload-area {
-            display: block; /* Garante que o label se comporte como um bloco */
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background-color: #24273A;
-        }
-        .upload-area:hover, .upload-area.drag-over {
-            border-color: var(--accent-color);
-            background-color: #2a2e41;
-        }
-
-        .upload-icon {
-            margin-bottom: 15px;
-            color: var(--accent-color);
-        }
-        .upload-text {
-            font-weight: 500;
-            font-size: 1.1em;
-            color: var(--primary-text-color);
-        }
-        .upload-hint {
-            font-size: 0.9em;
+        .file-input-text {
             color: var(--text-color);
         }
-        .file-info {
-            display: none;
-            margin-top: 15px;
+        .file-name {
+            display: block;
+            margin-top: 10px;
             font-weight: 500;
             color: var(--success-color);
-            word-break: break-all;
         }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(90deg, var(--accent-color) 0%, #8A7FFF 100%);
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        button {
+            background-color: var(--accent-color);
             color: white;
             border: none;
+            padding: 12px 25px;
             border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: 600;
             cursor: pointer;
-            text-align: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(106, 90, 249, 0.2);
-            margin-top: 25px;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(106, 90, 249, 0.3);
-            background: linear-gradient(90deg, var(--accent-hover-color) 0%, #7A6FE9 100%);
-        }
-        .history-link {
-            display: block;
-            text-align: center;
-            margin-top: 25px;
-            color: var(--text-color);
-            text-decoration: none;
             font-weight: 500;
-            transition: color 0.3s ease;
+            font-size: 1em;
+            transition: background-color 0.2s;
         }
-        .history-link:hover {
-            color: var(--accent-color);
+        button:hover {
+            background-color: var(--accent-color-hover);
+        }
+        #history-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+        }
+        #history-btn:hover {
+            background-color: var(--border-color);
+        }
+        .info-box {
+            text-align: left;
+            font-size: 0.9em;
+            color: #a0a0b0;
+            background-color: #24273A;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .error-message {
+            color: var(--danger-color);
+            background-color: rgba(231, 74, 59, 0.1);
+            border: 1px solid var(--danger-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h1>Análise de Arquivo CSV</h1>
-            <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+            <h1>Análise de Alertas e Tendências</h1>
+
+            {% if error %}
+                <div class="error-message">{{ error }}</div>
+            {% endif %}
+
+            <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
                 
-                <label for="file-input" class="upload-area">
-                    <div class="upload-icon">
-                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <div class="upload-section">
+                    <label for="file_atual">1. Arquivo Atual (Novo Período)</label>
+                    <div class="file-input-wrapper" id="wrapper_atual">
+                        <input type="file" name="file_atual" id="file_atual" required>
+                        <span class="file-input-text" id="text_atual">Clique para selecionar o arquivo</span>
+                        <span class="file-name" id="name_atual"></span>
                     </div>
-                    <p class="upload-text">Arraste e solte o arquivo ou clique para selecionar</p>
-                    <p class="upload-hint">Apenas arquivos .csv são permitidos</p>
-                    <p id="file-info" class="file-info"></p>
-                </label>
-                
-                <input type="file" id="file-input" name="file" accept=".csv" required>
-                
-                <button type="submit" class="btn">Enviar para Análise</button>
+                </div>
+
+                <div class="upload-section">
+                    <label for="file_anterior">2. Arquivo Anterior (Opcional para Comparação)</label>
+                    <div class="file-input-wrapper" id="wrapper_anterior">
+                        <input type="file" name="file_anterior" id="file_anterior">
+                        <span class="file-input-text" id="text_anterior">Clique para selecionar ou deixe em branco para comparar com o histórico</span>
+                        <span class="file-name" id="name_anterior"></span>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" id="submit-btn">Analisar</button>
+                    <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico</button>
+                </div>
             </form>
-            <a href="/relatorios" class="history-link">Ver Histórico de Relatórios</a>
         </div>
     </div>
 
     <script>
-        // Selecionamos o LABEL como nossa área de drop e o INPUT escondido
-        const uploadArea = document.querySelector('.upload-area');
-        const fileInput = document.getElementById('file-input');
-        const fileInfo = document.getElementById('file-info');
+        function setupFileInput(inputId, wrapperId, textId, nameId) {
+            const input = document.getElementById(inputId);
+            const wrapper = document.getElementById(wrapperId);
+            const text = document.getElementById(textId);
+            const name = document.getElementById(nameId);
 
-        // Eventos de Drag and Drop continuam no LABEL (a área visível)
-        uploadArea.addEventListener('dragover', (event) => {
-            event.preventDefault();
-            uploadArea.classList.add('drag-over');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('drag-over');
-        });
-
-        uploadArea.addEventListener('drop', (event) => {
-            event.preventDefault();
-            uploadArea.classList.remove('drag-over');
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                if (files[0].name.toLowerCase().endsWith('.csv')) {
-                    // Atribui os arquivos arrastados diretamente ao input escondido
-                    fileInput.files = files;
-                    updateFileInfo();
+            wrapper.addEventListener('click', () => input.click());
+            
+            input.addEventListener('change', () => {
+                if (input.files.length > 0) {
+                    name.textContent = input.files[0].name;
+                    text.style.display = 'none';
                 } else {
-                    alert('Por favor, selecione apenas arquivos .csv');
+                    name.textContent = '';
+                    text.style.display = 'block';
                 }
-            }
-        });
-
-        // O evento de 'change' continua no INPUT. Ele é acionado quando o usuário
-        // seleciona um arquivo pela janela de diálogo (aberta ao clicar no LABEL)
-        fileInput.addEventListener('change', updateFileInfo);
-
-        function updateFileInfo() {
-            if (fileInput.files.length > 0) {
-                const fileName = fileInput.files[0].name;
-                fileInfo.textContent = `Arquivo selecionado: ${fileName}`;
-                fileInfo.style.display = 'block';
-            } else {
-                fileInfo.style.display = 'none';
-            }
+            });
         }
+
+        setupFileInput('file_atual', 'wrapper_atual', 'text_atual', 'name_atual');
+        setupFileInput('file_anterior', 'wrapper_anterior', 'text_anterior', 'name_anterior');
+
+        document.getElementById('upload-form').addEventListener('submit', function() {
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processando...';
+        });
     </script>
 </body>
 </html>
