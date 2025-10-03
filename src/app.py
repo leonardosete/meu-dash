@@ -5,14 +5,13 @@ from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-
 app = Flask(__name__, template_folder='../templates')
 
-# Use caminhos absolutos para compatibilidade com contêineres e PVs
-DATA_BASE_DIR = os.environ.get('DATA_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-UPLOAD_FOLDER = os.path.join(DATA_BASE_DIR, 'data', 'uploads')
-REPORTS_FOLDER = os.path.join(DATA_BASE_DIR, 'reports')
-DB_PATH = os.path.join(DATA_BASE_DIR, 'data', 'meu_dash.db')
+# Define caminhos absolutos e fixos para garantir consistência dentro do contêiner.
+BASE_DIR = '/app'
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'data', 'uploads')
+REPORTS_FOLDER = os.path.join(BASE_DIR, 'data', 'reports')
+DB_PATH = os.path.join(BASE_DIR, 'data', 'meu_dash.db')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['REPORTS_FOLDER'] = REPORTS_FOLDER
