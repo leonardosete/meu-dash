@@ -79,27 +79,6 @@ def serve_detalhes(run_folder, filename):
 def serve_report(run_folder, filename):
     return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), filename)
 
-@app.route('/editor_atuacao/<run_folder>')
-def editor_atuacao(run_folder):
-    """
-    Gera dinamicamente a página do editor de atuação lendo o CSV correspondente.
-    """
-    csv_filename = 'atuar.csv'
-    csv_path = os.path.join(app.config['REPORTS_FOLDER'], run_folder, csv_filename)
-    try:
-        # Lê o conteúdo do CSV para injetar no template
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            csv_content = f.read()
-    except FileNotFoundError:
-        return "Arquivo de atuação não encontrado para esta execução.", 404
-
-    # Renderiza o template do editor com os dados do CSV
-    return render_template(
-        'editor_template.html',
-        csv_data=csv_content,
-        csv_filename=csv_filename
-    )
-
 @app.route('/relatorios')
 def relatorios():
     reports = Report.query.order_by(Report.timestamp.desc()).all()

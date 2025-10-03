@@ -1,4 +1,5 @@
 import pandas as pd
+import argparse
 import sys
 import os
 import re
@@ -8,12 +9,12 @@ import numpy as np
 from typing import Set, List, Dict, Callable, Tuple
 from html import escape
 from datetime import datetime
-from .constants import (
+from constants import (
     ACAO_ESTABILIZADA, ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_STATUS_AUSENTE,
     ACAO_SEMPRE_OK, ACAO_INCONSISTENTE, ACAO_INSTABILIDADE_CRONICA, ACAO_FLAGS_ATUACAO,
     ACAO_FLAGS_OK, ACAO_FLAGS_INSTABILIDADE, SEVERITY_WEIGHTS, PRIORITY_GROUP_WEIGHTS, ACAO_WEIGHTS
 )
-from . import gerador_html
+import gerador_html
 
 # =============================================================================
 # CONFIGURAÇÃO E CONSTANTES
@@ -72,7 +73,7 @@ def carregar_template_html(filepath: str) -> str:
         print(f"❌ Erro inesperado ao ler o arquivo de template '{filepath}': {e}", file=sys.stderr)
         sys.exit(1)
 
-TEMPLATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'templates', 'template.html')
+TEMPLATE_FILE = "templates/template.html"
 HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
 
 # =============================================================================
@@ -572,13 +573,11 @@ def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, n
         f.write(html_content)
     print(f"✅ Resumo executivo gerado: {output_path}")
 
-    # Adicionado para gerar o visualizador de JSON
     try:
-        run_output_dir = os.path.dirname(output_path)
-        with open(os.path.join(run_output_dir, 'resumo_dados.json'), 'r', encoding='utf-8') as f:
+        with open(os.path.join(output_dir, 'resumo_problemas.json'), 'r', encoding='utf-8') as f:
             json_content = f.read()
         html_visualizador = gerador_html.renderizar_visualizador_json(json_content)
-        with open(os.path.join(run_output_dir, "visualizador_json.html"), 'w', encoding='utf-8') as f:
+        with open(os.path.join(output_dir, "visualizador_json.html"), 'w', encoding='utf-8') as f:
             f.write(html_visualizador)
         print(f"✅ Visualizador de JSON gerado: visualizador_json.html")
     except Exception as e:
@@ -655,54 +654,71 @@ def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_pat
 # EXECUÇÃO PRINCIPAL
 # =============================================================================
 
-def analisar_arquivo_csv(input_filepath: str, output_dir: str) -> str:
+def main():
     """
-    Orquestra a análise de um arquivo CSV de alertas e gera os relatórios.
-
-    Args:
-        input_filepath: O caminho para o arquivo CSV de entrada.
-        output_dir: O diretório onde os relatÃ³rios serão salvos.
-
-    Returns:
-        O caminho para o principal arquivo de relatório HTML gerado.
+    Ponto de entrada principal do script.
+    Analisa os argumentos da linha de comando e orquestra o fluxo de análise e geração de relatórios.
     """
-    os.makedirs(output_dir, exist_ok=True)
+    parser = argparse.ArgumentParser(description="Analisa um arquivo CSV de alertas para identificar grupos que necessitam de atuação.")
+    parser.add_argument("input_file", help="Caminho para o arquivo CSV de entrada.")
     
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_output_dir = os.path.join(output_dir, f"run_{timestamp_str}")
-    os.makedirs(run_output_dir, exist_ok=True)
-
-    plan_dir = os.path.join(run_output_dir, "planos_de_acao")
-    details_dir = os.path.join(run_output_dir, "detalhes")
+    parser.add_argument("--output-summary", default="resumo_geral.html", help="Caminho para o resumo executivo HTML.")
+    parser.add_argument("--output-actuation", help="Caminho para o CSV de atuação geral.")
+    parser.add_argument("--output-ok", help="Caminho para o CSV de alertas OK ou estabilizados.")
+    parser.add_argument("--output-instability", help="Caminho para o CSV de casos de instabilidade.")
+    parser.add_argument("--plan-dir", help="Diretório para os planos de ação por squad.")
+    parser.add_argument("--details-dir", help="Diretório para as páginas de detalhe dos problemas.")
+    parser.add_argument("--output-json", required=True, help="Caminho para o resumo em JSON.")
+    parser.add_argument("--resumo-only", action='store_true', help="Se especificado, gera apenas o arquivo de resumo JSON.")
+    parser.add_argument("--trend-report-path", help="Caminho opcional para um relatório de tendência.")
     
-    output_summary = os.path.join(run_output_dir, "resumo_geral.html")
-    output_actuation = os.path.join(run_output_dir, "para_atuar.csv")
-    output_ok = os.path.join(run_output_dir, "remediados_ok.csv")
-    output_instability = os.path.join(run_output_dir, "instabilidade.csv")
-    output_json = os.path.join(run_output_dir, "resumo_dados.json")
+    args = parser.parse_args()
 
-    df, num_logs_invalidos = carregar_dados(input_filepath)
+    if not args.resumo_only:
+        required_for_full_run = [
+            args.output_actuation,
+            args.output_ok,
+            args.output_instability,
+            args.plan_dir,
+            args.details_dir
+        ]
+        if not all(required_for_full_run):
+            parser.error(
+                "para o modo de análise completa, os argumentos --output-actuation, --output-ok, "
+                "--output-instability, --plan-dir e --details-dir são obrigatórios."
+            )
+
+    timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
+
+    df, num_logs_invalidos = carregar_dados(args.input_file)
     summary = analisar_grupos(df)
-    export_summary_to_json(summary.copy(), output_json)
+    export_summary_to_json(summary.copy(), args.output_json)
 
-    summary_filename = os.path.basename(output_summary)
-    
-    df_atuacao = gerar_relatorios_csv(summary, output_actuation, output_ok, output_instability)
-    
-    gerar_resumo_executivo(
-        summary, df_atuacao, num_logs_invalidos, output_summary, plan_dir,
-        details_dir, timestamp_str
-    )
-    
-    gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
-    all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
-    gerar_pagina_squads(all_squads, plan_dir, run_output_dir, summary_filename, timestamp_str)
-    
-    sucesso_template_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'templates', 'sucesso_template.html')
-    gerar_pagina_sucesso(run_output_dir, output_ok, sucesso_template_file)
-    gerar_pagina_instabilidade(run_output_dir, output_instability, sucesso_template_file)
-    
-    if num_logs_invalidos > 0:
-        gerar_pagina_logs_invalidos(run_output_dir, LOG_INVALIDOS_FILENAME, sucesso_template_file)
+    if not args.resumo_only:
+        output_dir = os.path.dirname(args.output_summary) or '.'
+        summary_filename = os.path.basename(args.output_summary)
+        
+        df_atuacao = gerar_relatorios_csv(summary, args.output_actuation, args.output_ok, args.output_instability)
+        
+        gerar_resumo_executivo(
+            summary, df_atuacao, num_logs_invalidos, args.output_summary, args.plan_dir,
+            args.details_dir, timestamp_str, args.trend_report_path
+        )
+        
+        gerar_planos_por_squad(df_atuacao, args.plan_dir, timestamp_str)
+        all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
+        gerar_pagina_squads(all_squads, args.plan_dir, output_dir, summary_filename, timestamp_str)
+        
+        sucesso_template_file = "templates/sucesso_template.html"
+        gerar_pagina_sucesso(output_dir, args.output_ok, sucesso_template_file)
+        gerar_pagina_instabilidade(output_dir, args.output_instability, sucesso_template_file)
 
-    return output_summary
+        # Adiciona a geração da página do editor de atuação
+        gerar_pagina_editor_atuacao(output_dir, args.output_actuation, "templates/editor_template.html")
+        
+        if num_logs_invalidos > 0:
+            gerar_pagina_logs_invalidos(output_dir, LOG_INVALIDOS_FILENAME, sucesso_template_file)
+
+
+if __name__ == "__main__":
+    main()
