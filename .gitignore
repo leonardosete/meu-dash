@@ -222,3 +222,5 @@ meu-dash.code-workspace
 
 # Ignore all csv files
 *.csv
+
+TODO.md
