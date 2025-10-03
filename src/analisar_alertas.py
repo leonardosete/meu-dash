@@ -666,17 +666,33 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
         
-        # Escapa o caractere ` (backtick) para injeção segura em um template string JavaScript
-        # e também o caractere de barra invertida para evitar problemas de escape duplo.
+        # --- INÍCIO DA CORREÇÃO ---
+        # 1. Escapa os caracteres especiais para injeção segura no JavaScript
         csv_payload = csv_content.replace('\\', r'\\').replace('`', r'\`')
-        final_html = template_content.replace('`__CSV_DATA_PLACEHOLDER__`', f'`{csv_payload}`')
+
+        # 2. Usa um placeholder temporário e seguro
+        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___"
+
+        # 3. Substitui a linha inteira de declaração da variável JavaScript para garantir
+        #    que a sintaxe `const nome = `...`;` seja sempre preservada.
+        template_com_placeholder = template_content.replace(
+            'const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`',
+            f'const csvDataPayload = `{placeholder}`'
+        )
+
+        # 4. Injeta o conteúdo real do CSV no placeholder seguro
+        final_html = template_com_placeholder.replace(placeholder, csv_payload)
+        # --- FIM DA CORREÇÃO ---
 
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
+
     except FileNotFoundError:
         print(f"❌ Erro: Template '{template_path}' não encontrado.", file=sys.stderr)
         return
+        
     print(f"✅ Página de edição gerada: {output_path}")
+
 
 # =============================================================================
 # EXECUÇÃO PRINCIPAL
