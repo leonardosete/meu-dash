@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+import pandas as pd
 app = Flask(__name__, template_folder='../templates')
 
 # Define caminhos absolutos e fixos para garantir consistência dentro do contêiner.
@@ -77,6 +78,26 @@ def serve_detalhes(run_folder, filename):
 @app.route('/reports/<run_folder>/<path:filename>')
 def serve_report(run_folder, filename):
     return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), filename)
+
+@app.route('/editor_atuacao/<run_folder>')
+def editor_atuacao(run_folder):
+    """
+    Gera dinamicamente a página do editor de atuação lendo o CSV correspondente.
+    """
+    csv_path = os.path.join(app.config['REPORTS_FOLDER'], run_folder, 'para_atuar.csv')
+    try:
+        # Lê o conteúdo do CSV para injetar no template
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            csv_content = f.read()
+    except FileNotFoundError:
+        return "Arquivo de atuação não encontrado para esta execução.", 404
+
+    # Renderiza o template do editor com os dados do CSV
+    return render_template(
+        'editor_template.html',
+        csv_data=csv_content,
+        csv_filename='para_atuar.csv'
+    )
 
 @app.route('/relatorios')
 def relatorios():
