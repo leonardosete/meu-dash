@@ -665,11 +665,8 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
-        
-        # Escapa o caractere ` (backtick) para injeção segura em um template string JavaScript.
-        csv_payload = csv_content.replace('`', r'\`')
-        final_html = template_content.replace('`__CSV_DATA_PLACEHOLDER__`', f'`{csv_payload}`')
 
+        final_html = gerador_html.renderizar_pagina_csv_viewer(template_content, csv_content, "Foco de Atuação", "atuar.csv")
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
     except FileNotFoundError:
