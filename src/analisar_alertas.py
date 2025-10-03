@@ -573,6 +573,7 @@ def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, n
         f.write(html_content)
     print(f"✅ Resumo executivo gerado: {output_path}")
 
+    output_dir = os.path.dirname(output_path)
     try:
         with open(os.path.join(output_dir, 'resumo_problemas.json'), 'r', encoding='utf-8') as f:
             json_content = f.read()
