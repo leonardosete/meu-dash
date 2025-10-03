@@ -68,6 +68,12 @@ def upload_file():
 def serve_report(run_folder, filename):
     return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), filename)
 
+# Rota genérica para servir outros arquivos HTML na raiz do diretório do run
+# como editor_atuacao.html, sucesso_automacao.html, etc.
+@app.route('/reports/<run_folder>/<path:filename>')
+def serve_run_files(run_folder, filename):
+    return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), filename)
+
 @app.route('/reports/<run_folder>/planos_de_acao/<filename>')
 def serve_planos(run_folder, filename):
     return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder, 'planos_de_acao'), filename)
