@@ -41,25 +41,8 @@ os.makedirs(app.config['REPORTS_FOLDER'], exist_ok=True)
 
 @app.route('/')
 def index():
-    """Renderiza a página inicial de upload e passa a última análise de tendência, se existir."""
-    last_trend_analysis = None
-    # Busca o último relatório registrado no banco de dados
-    last_report = Report.query.order_by(Report.timestamp.desc()).first()
-
-    if last_report:
-        run_folder_path = os.path.dirname(last_report.report_path)
-        # O relatório de tendência sempre tem o mesmo nome
-        trend_report_path = os.path.join(run_folder_path, 'resumo_tendencia.html')
-
-        # Verifica se o arquivo de tendência realmente existe no disco
-        if os.path.exists(trend_report_path):
-            run_folder_name = os.path.basename(run_folder_path)
-            last_trend_analysis = {
-                'url': url_for('serve_report', run_folder=run_folder_name, filename='resumo_tendencia.html'),
-                'date': last_report.timestamp.strftime('%d/%m/%Y às %H:%M')
-            }
-            
-    return render_template('upload.html', last_trend_analysis=last_trend_analysis)
+    """Renderiza a página inicial de upload."""
+    return render_template('upload.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
