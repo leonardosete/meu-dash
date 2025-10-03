@@ -1,27 +1,14 @@
-# 🕵️‍♂️📈 Análise de Alertas e Tendências com Priorização Inteligente
+# 🕵️‍♂️📈 Aplicação Web para Análise de Alertas e Tendências
 
-Este projeto automatiza a análise de alertas de monitoramento (`.csv`), gera um ecossistema de dashboards HTML interativos para gestão e identifica tendências de problemas ao longo do tempo.
+Esta é uma aplicação web, projetada para ser executada em um ambiente Kubernetes, que automatiza a análise de alertas de monitoramento. Através de uma interface simples, os usuários podem fazer upload de arquivos `.csv` para gerar dashboards interativos e identificar tendências de problemas.
 
 O principal diferencial do sistema é a sua capacidade de classificar problemas com base em um **Score de Prioridade Ponderado**, que considera o **Risco** para o negócio, a **Ineficiência** da automação e o **Impacto** operacional (volume de alertas), permitindo que as equipes foquem no que é mais crítico.
 
 ---
 
-### 🚀 Começando
+### 🚀 Como Usar
 
-Para gerar o relatório completo, siga os passos abaixo:
-
-1.  **Coloque os dados na pasta de entrada:**
-    *   Exporte um ou mais arquivos `.csv` com os dados de alerta.
-    *   Salve-os no diretório: `data/put_csv_here/`.
-
-2.  **Execute o script de análise:**
-    *   Abra seu terminal (Bash para Linux/macOS, PowerShell para Windows).
-    *   Navegue até a raiz do projeto.
-    *   Execute o comando correspondente ao seu sistema:
-        *   **Linux/macOS:** `bash scripts/gerar_relatorio.sh`
-        *   **Windows:** `.\scripts\gerar_relatorio.ps1`
-
-O script cuidará de todo o resto: ele prepara o ambiente Python (criando um ambiente virtual `.venv` se necessário), instala as dependências (`pandas`, `openpyxl`), processa os dados e gera os relatórios. Ao final, ele exibirá um link `file://` para o dashboard principal, que você pode abrir no seu navegador.
+Acesse a aplicação através do seu endereço web e faça o upload de um ou mais arquivos `.csv` contendo os dados de alerta. A aplicação processará os arquivos e gerará os relatórios automaticamente.
 
 ---
 
@@ -52,13 +39,12 @@ A lógica detalhada do cálculo está disponível na seção "Conceitos" do dash
 ### 📁 Estrutura do Projeto
 
 *   `scripts/`: Contém os scripts orquestradores (`gerar_relatorio.sh`, `gerar_relatorio.ps1`).
-*   `src/`: Contém os scripts Python de análise (`analisar_alertas.py`, `analise_tendencia.py`) e o módulo de geração de HTML (`gerador_html.py`).
-*   `data/put_csv_here/`: Onde você deve colocar seus arquivos CSV de entrada.
-*   `reports/`: O diretório de saída onde todos os relatórios gerados são salvos.
+*   `src/`: Contém o código-fonte da aplicação Flask (`app.py`), os motores de análise (`analisar_alertas.py`, `analise_tendencia.py`) e módulos auxiliares.
+*   `data/`: Diretório persistido no Kubernetes para armazenar uploads e relatórios.
 *   `templates/`: Modelos HTML para a criação dos relatórios.
 *   `docs/`: Contém a documentação técnica e gerencial do projeto.
 *   `GEMINI.md`: Documentação interna para a IA assistente de desenvolvimento.
-
+*   `kubernetes.yaml`: Manifesto de implantação para o Kubernetes.
 ---
 
 ### 📖 Documentação
@@ -80,32 +66,11 @@ A documentação técnica e gerencial do projeto está disponível publicamente 
 
 ---
 
-### 🐳 Docker e Kubernetes
+### 🐳 Implantação no Kubernetes
 
-Esta aplicação está totalmente containerizada e pronta para ser implantada em um ambiente Kubernetes.
+A aplicação está totalmente containerizada e pronta para ser implantada em um ambiente Kubernetes. Os manifestos de implantação foram consolidados no arquivo `kubernetes.yaml`.
 
-#### Construindo a Imagem Docker
-
-Para construir a imagem Docker localmente, execute o seguinte comando na raiz do projeto:
-
-```bash
-docker build -t meu-dash-web:latest .
-```
-
-#### Executando com Docker Compose
-
-Para iniciar a aplicação usando Docker Compose, execute:
-
-```bash
-docker compose up --build
-```
-
-A aplicação estará disponível em `http://localhost:5001`.
-
-#### Implantando no Kubernetes
-
-Os manifestos de implantação para o Kubernetes estão localizados na raiz do projeto. Para implantar a aplicação, execute:
-Os manifestos de implantação para o Kubernetes foram consolidados no arquivo `kubernetes.yaml`. Para implantar a aplicação, execute:
+Para implantar a aplicação, execute:
 
 ```bash
 kubectl apply -f kubernetes.yaml

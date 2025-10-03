@@ -1,6 +1,6 @@
 # Evolução do `meu-dash` para uma Aplicação Web Containerizada
 
-Este documento descreve a evolução da ferramenta `meu-dash` de um conjunto de scripts para uma aplicação web completa, containerizada e pronta para a nuvem.
+Este documento descreve a evolução da ferramenta `meu-dash` de um conjunto de scripts locais para uma aplicação web completa, containerizada e 100% operada via Kubernetes.
 
 ## Visão Geral do Projeto
 
@@ -22,7 +22,7 @@ Todas as fases do projeto foram concluídas com sucesso.
 ### ✅ Fase 1: Prova de Conceito (PoC) - A Aplicação Web Mínima
 **Status:** Concluída
 
-A estrutura inicial da aplicação Flask foi criada e containerizada com Docker. O ambiente de desenvolvimento com Docker Compose foi estabelecido.
+A estrutura inicial da aplicação Flask foi criada e containerizada com Docker.
 
 ### ✅ Fase 2: Integração do Core Logic e Frontend de Upload
 **Status:** Concluída
@@ -37,7 +37,7 @@ Um banco de dados SQLite foi integrado para armazenar metadados sobre os relató
 ### ✅ Fase 4: Preparação para Produção e Kubernetes
 **Status:** Concluída
 
-O `Dockerfile` foi otimizado para produção, utilizando um build multi-stage, um servidor WSGI (Gunicorn) e um usuário não-root. Os manifestos do Kubernetes (`deployment.yaml`, `service.yaml`, `ingress.yaml`) foram criados e consolidados em um único arquivo `kubernetes.yaml` para facilitar a implantação. A documentação (`README.md`) foi atualizada com as instruções de build e deploy.
+O `Dockerfile` foi otimizado para produção, utilizando um build multi-stage e um servidor WSGI (Gunicorn). Os manifestos do Kubernetes foram criados e consolidados em um único arquivo `kubernetes.yaml` para facilitar a implantação. A lógica de orquestração dos scripts foi migrada para dentro da aplicação Flask, tornando-a o único ponto de entrada.
 
 ---
 

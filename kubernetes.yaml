@@ -21,7 +21,7 @@ metadata:
   name: meu-dash-web
   namespace: meu-dash-alertas
 spec:
-  replicas: 1 # Using 1 replica because we are using a hostPath volume
+  replicas: 2
   selector:
     matchLabels:
       app: meu-dash-web
@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
       - name: meu-dash-web
-        image: sevenleo/meu-dash-web:v4
+        image: sevenleo/meu-dash-web:latest
         ports:
         - containerPort: 5000
         volumeMounts:
