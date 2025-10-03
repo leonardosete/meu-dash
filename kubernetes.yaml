@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
       - name: meu-dash-web
-        image: sevenleo/meu-dash-web:latest
+        image: sevenleo/meu-dash-web:v4
         ports:
         - containerPort: 5000
         volumeMounts:

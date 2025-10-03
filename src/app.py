@@ -7,14 +7,19 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 app = Flask(__name__, template_folder='../templates')
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'uploads')
-REPORTS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'reports')
+
+# Use caminhos absolutos para compatibilidade com contêineres e PVs
+DATA_BASE_DIR = os.environ.get('DATA_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+UPLOAD_FOLDER = os.path.join(DATA_BASE_DIR, 'data', 'uploads')
+REPORTS_FOLDER = os.path.join(DATA_BASE_DIR, 'reports')
+DB_PATH = os.path.join(DATA_BASE_DIR, 'data', 'meu_dash.db')
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['REPORTS_FOLDER'] = REPORTS_FOLDER
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'meu_dash.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-migrate = Migrate(app, db, directory='/app/migrations')
+migrate = Migrate(app, db, directory='migrations')
 
 class Report(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -26,6 +31,7 @@ class Report(db.Model):
         return f'<Report {self.original_filename}>'
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 os.makedirs(app.config['REPORTS_FOLDER'], exist_ok=True)
 
 @app.route('/')
@@ -75,4 +81,3 @@ def serve_detalhes(run_folder, filename):
 def relatorios():
     reports = Report.query.order_by(Report.timestamp.desc()).all()
     return render_template('relatorios.html', reports=reports)
-
