@@ -572,11 +572,13 @@ def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, n
         f.write(html_content)
     print(f"✅ Resumo executivo gerado: {output_path}")
 
+    # Adicionado para gerar o visualizador de JSON
     try:
-        with open(os.path.join(output_dir, 'resumo_problemas.json'), 'r', encoding='utf-8') as f:
+        run_output_dir = os.path.dirname(output_path)
+        with open(os.path.join(run_output_dir, 'resumo_dados.json'), 'r', encoding='utf-8') as f:
             json_content = f.read()
         html_visualizador = gerador_html.renderizar_visualizador_json(json_content)
-        with open(os.path.join(output_dir, "visualizador_json.html"), 'w', encoding='utf-8') as f:
+        with open(os.path.join(run_output_dir, "visualizador_json.html"), 'w', encoding='utf-8') as f:
             f.write(html_visualizador)
         print(f"✅ Visualizador de JSON gerado: visualizador_json.html")
     except Exception as e:
