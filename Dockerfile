@@ -37,7 +37,6 @@ COPY --from=base /home/nonroot/.local /home/nonroot/.local
 COPY --chown=nonroot:nonroot src/app.py src/app.py
 COPY --chown=nonroot:nonroot src/ src/
 COPY --chown=nonroot:nonroot templates/ templates/
-COPY --chown=nonroot:nonroot migrations/ migrations/
 
 # expose the port the app runs on
 EXPOSE 5000
