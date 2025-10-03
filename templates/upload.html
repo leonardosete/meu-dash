@@ -30,6 +30,8 @@
             min-height: 100vh;
             margin: 0;
             padding: 20px;
+            /* Alterado para permitir o conteúdo extra */
+            flex-direction: column;
         }
         .container {
             max-width: 600px;
@@ -120,6 +122,51 @@
             margin-bottom: 20px;
             text-align: left;
         }
+
+        /* --- CSS ADICIONADO PARA A SEÇÃO DE DOCUMENTAÇÃO --- */
+        .docs-section {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .doc-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            flex-grow: 1;
+        }
+        .doc-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .doc-card svg {
+            width: 28px;
+            height: 28px;
+            color: var(--accent-color);
+            flex-shrink: 0;
+        }
+        .doc-card-text h3 {
+            margin: 0 0 4px 0;
+            color: var(--primary-text-color);
+            font-size: 1em;
+            font-weight: 600;
+        }
+        .doc-card-text p {
+            margin: 0;
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -147,6 +194,23 @@
                 </div>
             </form>
         </div>
+    </div>
+
+    <div class="docs-section">
+        <a href="https://leonardosete.github.io/meu-dash/doc_gerencial.html" target="_blank" class="doc-card">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+            <div class="doc-card-text">
+                <h3>Documentação Gerencial</h3>
+                <p>Visão de negócio e conceitos.</p>
+            </div>
+        </a>
+        <a href="https://leonardosete.github.io/meu-dash/doc_tecnica.html" target="_blank" class="doc-card">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <div class="doc-card-text">
+                <h3>Documentação Técnica</h3>
+                <p>Detalhes da implementação.</p>
+            </div>
+        </a>
     </div>
 
     <script>
@@ -182,4 +246,3 @@
     </script>
 </body>
 </html>
-
