@@ -6,7 +6,7 @@ from html import escape
 import re
 from string import Template
 
-from constants import ACAO_FLAGS_ATUACAO
+from .constants import ACAO_FLAGS_ATUACAO
 
 CASE_ID_COLS = ['assignment_group', 'short_description', 'node', 'cmdb_ci', 'source', 'metric_name', 'cmdb_ci.sys_class_name']
 

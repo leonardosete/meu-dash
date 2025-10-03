@@ -9,12 +9,12 @@ import numpy as np
 from typing import Set, List, Dict, Callable, Tuple
 from html import escape
 from datetime import datetime
-from constants import (
+from .constants import (
     ACAO_ESTABILIZADA, ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_STATUS_AUSENTE,
     ACAO_SEMPRE_OK, ACAO_INCONSISTENTE, ACAO_INSTABILIDADE_CRONICA, ACAO_FLAGS_ATUACAO,
     ACAO_FLAGS_OK, ACAO_FLAGS_INSTABILIDADE, SEVERITY_WEIGHTS, PRIORITY_GROUP_WEIGHTS, ACAO_WEIGHTS
 )
-import gerador_html
+from . import gerador_html
 
 # =============================================================================
 # CONFIGURAÇÃO E CONSTANTES
