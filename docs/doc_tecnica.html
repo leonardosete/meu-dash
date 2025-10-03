@@ -224,77 +224,95 @@
 
         <section id="arquitetura">
             <h2>3. Arquitetura e Componentes</h2>
-            
-            <h3>Orquestradores Principais</h3>
+            <p>A arquitetura do projeto foi modernizada, migrando de um sistema baseado em scripts para uma <strong>aplicação web Flask</strong> que centraliza toda a lógica de orquestração e análise.</p>
+
+            <h3>Orquestrador Principal: Aplicação Flask (<code>src/app.py</code>)</h3>
             <div class="card">
-                <h4><code>scripts/gerar_relatorio.sh</code> e <code>scripts/gerar_relatorio.ps1</code></h4>
                 <ul>
-                    <li><strong>Responsabilidade:</strong> Único ponto de entrada do projeto para ambientes Linux/macOS (`.sh`) e Windows (`.ps1`). Orquestra todo o fluxo.</li>
-                    <li><strong>Detalhes:</strong> Prepara o ambiente Python (venv), instala dependências (`pandas`, `openpyxl`), detecta o número de arquivos <code>.csv</code> para decidir o modo de execução, invoca os scripts Python na ordem correta com as flags apropriadas (ex: <code>--resumo-only</code>), e finaliza o processo consolidando os relatórios.</li>
+                    <li><strong>Responsabilidade:</strong> Único ponto de entrada e cérebro do projeto. Gerencia as interações do usuário, o fluxo de análise, a persistência de dados e o roteamento para servir os relatórios gerados.</li>
+                    <li><strong>Componentes Internos:</strong>
+                        <ul>
+                            <li><strong>Flask:</strong> Microframework web que estrutura a aplicação.</li>
+                            <li><strong>SQLAlchemy:</strong> ORM para interagir com o banco de dados SQLite, gerenciando o histórico de relatórios.</li>
+                            <li><strong>Flask-Migrate:</strong> Ferramenta para gerenciar as migrações do esquema do banco de dados.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Rotas Principais:</strong>
+                        <ul>
+                            <li><code>GET /</code>: Exibe a página inicial de upload (<code>upload.html</code>).</li>
+                            <li><code>POST /upload</code>: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.</li>
+                            <li><code>GET /relatorios</code>: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.</li>
+                            <li><code>GET /reports/&lt;run_folder&gt;/&lt;filename&gt;</code>: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.</li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
 
-            <h3>Motores de Análise</h3>
+            <h3>Banco de Dados (<code>data/meu_dash.db</code>)</h3>
+            <div class="card">
+                <ul>
+                    <li><strong>Tecnologia:</strong> SQLite, gerenciado pelo SQLAlchemy.</li>
+                    <li><strong>Modelo de Dados (<code>Report</code>):</strong> Armazena metadados de cada análise, incluindo o nome do arquivo original, o timestamp e os caminhos para os artefatos gerados (<code>resumo_geral.html</code> e <code>resumo_problemas.json</code>).</li>
+                    <li><strong>Responsabilidade:</strong> Manter um histórico persistente de todas as análises. Este histórico é <strong>crucial</strong> para a análise de tendência, pois permite que a aplicação compare o upload atual com a análise mais recente registrada.</li>
+                </ul>
+            </div>
+
+            <h3>Motores de Análise (Invocados como Bibliotecas)</h3>
             <div class="card">
                 <h4><code>src/analisar_alertas.py</code></h4>
                 <ul>
                     <li><strong>Responsabilidade:</strong> Processar um único arquivo de alertas, realizar a análise principal e orquestrar a geração dos relatórios HTML para aquele período.</li>
-                    <li><strong>Entradas:</strong> Um arquivo <code>.csv</code> e flags de linha de comando (<code>--output-json</code>, <code>--plan-dir</code>, etc.).</li>
-                    <li><strong>Artefato Central Gerado:</strong> <code>resumo_problemas.json</code>.</li>
-                    <li><strong>Detalhes:</strong> É o principal motor de análise. Agrupa alertas em <strong>Casos</strong>, calcula o <strong>Score de Prioridade Ponderado</strong>, e invoca o módulo <code>gerador_html.py</code> para criar a maior parte dos relatórios. Contém uma seção de "Conceitos" embutida no <code>resumo_geral.html</code> para explicar a lógica aos usuários. Adicionalmente, se um caso de atuação apresentar um status inválido em sua cronologia, a <code>acao_sugerida</code> no arquivo <code>atuar.csv</code> é prefixada com um aviso para forçar a análise.</li>
+                    <li><strong>Invocação:</strong> É chamado como uma função Python (<code>analisar_arquivo_csv</code>) diretamente do <code>app.py</code>.</li>
+                    <li><strong>Entradas:</strong> Recebe o caminho do arquivo de input e o diretório de output como argumentos de função. A flag <code>light_analysis</code> controla a profundidade da análise.</li>
+                    <li><strong>Saídas:</strong> Retorna um dicionário contendo os caminhos para os artefatos gerados (HTML e JSON).</li>
                 </ul>
                 <h4><code>src/analise_tendencia.py</code></h4>
                 <ul>
-                    <li><strong>Responsabilidade:</strong> Comparar dois períodos e gerar um relatório de tendência interativo e detalhado sobre a evolução dos problemas.</li>
-                    <li><strong>Entradas:</strong> Dois arquivos <code>resumo_problemas.json</code> (atual e anterior), nomes dos arquivos CSV originais e os intervalos de datas de cada período.</li>
-                    <li><strong>Saída:</strong> <code>resumo_tendencia.html</code>.</li>
-                    <li><strong>Detalhes:</strong> Apresenta um "Funil de Resolução" que mostra o fluxo de casos (resolvidos, persistentes, novos), calcula a "Taxa de Resolução" e organiza a análise em abas interativas para detalhar a variação por squad e tipo de problema.</li>
+                    <li><strong>Responsabilidade:</strong> Comparar dois períodos (JSON atual vs. JSON anterior) e gerar o <code>resumo_tendencia.html</code>.</li>
+                    <li><strong>Invocação:</strong> É chamado como uma função Python (<code>gerar_relatorio_tendencia</code>) diretamente do <code>app.py</code>.</li>
+                    <li><strong>Entradas:</strong> Recebe os caminhos para os dois arquivos JSON (anterior e atual) e os nomes dos arquivos CSV originais como argumentos de função.</li>
                 </ul>
             </div>
 
-            <h3>Módulo de Geração de HTML</h3>
+            <h3>Módulos Auxiliares</h3>
             <div class="card">
                 <h4><code>src/gerador_html.py</code></h4>
-                <ul>
-                    <li><strong>Responsabilidade:</strong> Centralizar toda a lógica de renderização de HTML.</li>
-                    <li><strong>Detalhes:</strong> Contém funções específicas para renderizar cada componente do dashboard (KPIs, gráficos de barra, tabelas, etc.), recebendo dados dos scripts de análise. Abstrai a complexidade da criação de HTML, promovendo a separação de responsabilidades.</li>
-                </ul>
-            </div>
-
-            <h3>Scripts Auxiliares</h3>
-            <div class="card">
+                <p>Centraliza a lógica de renderização de HTML, transformando os dados da análise em dashboards interativos.</p>
                 <h4><code>src/constants.py</code></h4>
-                <p>Centraliza todas as constantes de lógica de negócio (pesos, ações, flags) para garantir consistência e facilitar a manutenção.</p>
-                <h4><code>src/selecionar_arquivos.py</code></h4>
-                <p>Ordena cronologicamente múltiplos arquivos <code>.csv</code> com base na data mais recente na coluna <code>sys_created_on</code> e imprime os dois mais recentes (atual e anterior) para o shell.</p>
-                <h4><code>src/get_date_range.py</code></h4>
-                <p>Extrai e imprime o intervalo de datas (primeira e última) de um único arquivo <code>.csv</code>. A saída é usada pelo script de tendência.</p>
+                <p>Centraliza todas as constantes de lógica de negócio (pesos, ações, etc.) para garantir consistência.</p>
             </div>
         </section>
 
         <section id="fluxo">
             <h2>4. Fluxo de Execução Lógico</h2>
+            <p>O processo é iniciado pela interação do usuário com a interface web e orquestrado integralmente pelo <code>app.py</code>.</p>
             <ol class="flow-diagram">
                 <li>
-                    <strong>Execução Inicial:</strong> O usuário executa <code>./scripts/gerar_relatorio.sh</code> ou <code>.\scripts\gerar_relatorio.ps1</code>.
+                    <strong>Upload do Usuário:</strong> O usuário acessa a rota <code>/</code> e envia um arquivo <code>.csv</code> através do formulário, que faz um <code>POST</code> para a rota <code>/upload</code>.
                 </li>
                 <li>
-                    <strong>Seleção de Arquivos (Modo Comparativo):</strong> Se houver mais de um CSV, <strong><code>selecionar_arquivos.py</code></strong> determina o arquivo <code>atual</code> e o <code>anterior</code>.
+                    <strong>Orquestração (<code>app.py</code>):</strong>
+                    <ul>
+                        <li>a. <strong>Salvar Arquivo:</strong> O <code>.csv</code> é salvo em <code>data/uploads/</code> e um diretório de saída (<code>run_&lt;timestamp&gt;</code>) é criado em <code>data/reports/</code>.</li>
+                        <li>b. <strong>Buscar Histórico:</strong> O app consulta o banco de dados (via SQLAlchemy) para encontrar o relatório mais recente.</li>
+                    </ul>
                 </li>
                 <li>
-                    <strong>Análise do Período Anterior (Otimizada):</strong> <strong><code>analisar_alertas.py --resumo-only</code></strong> é executado para o arquivo <code>anterior</code>. Gera apenas o <code>resumo_problemas.json</code> de base.
+                    <strong>Análise de Tendência (Condicional):</strong> Se um relatório anterior existe, o <code>app.py</code>:
+                    <ul>
+                        <li>i. <strong>Executa Análise Leve:</strong> Chama a função <code>analisar_arquivo_csv</code> com <code>light_analysis=True</code> para gerar rapidamente o <code>resumo_problemas.json</code> do arquivo atual.</li>
+                        <li>ii. <strong>Gera Relatório de Tendência:</strong> Chama a função <code>gerar_relatorio_tendencia</code>, passando o JSON anterior (do banco de dados) e o JSON atual (da análise leve).</li>
+                    </ul>
                 </li>
                 <li>
-                    <strong>Análise do Período Atual (Completa):</strong> <strong><code>analisar_alertas.py</code></strong> é executado para o arquivo <code>atual</code>, gerando o ecossistema completo de dashboards e o <code>resumo_problemas.json</code> do período.
+                    <strong>Análise Principal (Completa):</strong> A função <code>analisar_arquivo_csv</code> é chamada novamente, mas com <code>light_analysis=False</code>, para gerar o ecossistema completo de dashboards para o período atual. O link para o relatório de tendência é injetado no dashboard principal, se tiver sido gerado.
                 </li>
                 <li>
-                    <strong>Coleta de Metadados:</strong> <strong><code>get_date_range.py</code></strong> é executado para ambos os arquivos para obter os períodos de análise.
-                </li>
-                <li>
-                    <strong>Análise de Tendência:</strong> <strong><code>analise_tendencia.py</code></strong> consome os dois arquivos <code>.json</code> e os intervalos de data para gerar o <code>resumo_tendencia.html</code>.
-                </li>
-                <li>
-                    <strong>Finalização:</strong> O orquestrador consolida os artefatos, cria o editor interativo <code>editor_atuacao.html</code> e move o log <code>invalid_self_healing_status.csv</code> (se existir) para o diretório de resultados.
+                    <strong>Persistência e Redirecionamento:</strong>
+                    <ul>
+                        <li>i. Um novo registro <code>Report</code> é criado no banco de dados com os metadados da análise recém-concluída.</li>
+                        <li>ii. O <code>app.py</code> redireciona o navegador do usuário para a rota que serve o <code>resumo_geral.html</code> recém-criado.</li>
+                    </ul>
                 </li>
             </ol>
         </section>
