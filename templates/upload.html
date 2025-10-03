@@ -197,14 +197,14 @@
     </div>
 
     <div class="docs-section">
-        <a href="https://leonardosete.github.io/meu-dash/doc_gerencial.html" target="_blank" class="doc-card">
+        <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" target="_blank" class="doc-card">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
             <div class="doc-card-text">
                 <h3>Documentação Gerencial</h3>
                 <p>Visão de negócio e conceitos.</p>
             </div>
         </a>
-        <a href="https://leonardosete.github.io/meu-dash/doc_tecnica.html" target="_blank" class="doc-card">
+        <a href="{{ url_for('serve_docs', filename='doc_tecnica.html') }}" target="_blank" class="doc-card">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
             <div class="doc-card-text">
                 <h3>Documentação Técnica</h3>

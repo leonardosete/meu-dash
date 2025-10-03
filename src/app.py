@@ -124,7 +124,7 @@ def upload_file():
         traceback.print_exc()
         return render_template('upload.html', error="Ocorreu um erro ao processar o arquivo. Verifique se o formato do CSV está correto e tente novamente.")
 
-# --- ROTAS PARA SERVIR ARQUIVOS DE RELATÓRIO ---
+# --- ROTAS PARA SERVIR ARQUIVOS ESTÁTICOS ---
 
 @app.route('/reports/<run_folder>/planos_de_acao/<filename>')
 def serve_planos(run_folder, filename):
@@ -137,6 +137,14 @@ def serve_detalhes(run_folder, filename):
 @app.route('/reports/<run_folder>/<path:filename>')
 def serve_report(run_folder, filename):
     return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), filename)
+
+# --- ROTA ADICIONADA PARA DOCUMENTAÇÃO ---
+@app.route('/docs/<path:filename>')
+def serve_docs(filename):
+    """Serve os arquivos de documentação estática."""
+    # app.root_path aponta para /app/src, então usamos '..' para subir um nível
+    docs_dir = os.path.abspath(os.path.join(app.root_path, '..', 'docs'))
+    return send_from_directory(docs_dir, filename)
 
 @app.route('/relatorios')
 def relatorios():
