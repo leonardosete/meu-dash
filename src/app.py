@@ -84,7 +84,8 @@ def editor_atuacao(run_folder):
     """
     Gera dinamicamente a página do editor de atuação lendo o CSV correspondente.
     """
-    csv_path = os.path.join(app.config['REPORTS_FOLDER'], run_folder, 'para_atuar.csv')
+    csv_filename = 'atuar.csv'
+    csv_path = os.path.join(app.config['REPORTS_FOLDER'], run_folder, csv_filename)
     try:
         # Lê o conteúdo do CSV para injetar no template
         with open(csv_path, 'r', encoding='utf-8') as f:
@@ -96,7 +97,7 @@ def editor_atuacao(run_folder):
     return render_template(
         'editor_template.html',
         csv_data=csv_content,
-        csv_filename='para_atuar.csv'
+        csv_filename=csv_filename
     )
 
 @app.route('/relatorios')

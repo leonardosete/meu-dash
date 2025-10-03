@@ -369,7 +369,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         automation_card_class = "card-neon-warning"
     
     if grupos_atuacao > 0:
-        view_icon_html = f'<a href="/editor_atuacao/{os.path.basename(os.path.dirname(summary_filename))}/para_atuar.csv" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
+        view_icon_html = f'<a href="/editor_atuacao/{os.path.basename(os.path.dirname(summary_filename))}" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
     else:
         disabled_svg = VIEW_ICON_SVG.replace('<svg', '<svg style="opacity: 0.4;">')
         view_icon_html = f'<span class="download-link" title="Nenhum arquivo de atuação gerado." style="cursor: not-allowed;">{disabled_svg}</span>'
