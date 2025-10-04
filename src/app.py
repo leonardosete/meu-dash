@@ -1,12 +1,18 @@
 import os
 import json
 import shutil
+from dotenv import load_dotenv
+
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv()
+
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
-from .analisar_alertas import analisar_arquivo_csv
+from .analisar_alertas import analisar_arquivo_csv, atualizar_resumo_com_ia
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
+from .ai_agent import gerar_resumo_ia
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_migrate import Migrate
@@ -105,6 +111,7 @@ def processar_analise(self, filepath_atual, filename_atual, reports_folder):
         os.makedirs(output_dir, exist_ok=True)
 
         trend_report_path_relative = None
+        kpis_tendencia = None
 
         # --- ETAPA 3: Gera o relatório de tendência (se houver um anterior válido) ---
         if last_report and last_report.json_summary_path and os.path.exists(last_report.json_summary_path):
@@ -112,7 +119,7 @@ def processar_analise(self, filepath_atual, filename_atual, reports_folder):
             temp_analysis_results = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=True)
             json_path_atual = temp_analysis_results['json_path']
             output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
-            gerar_relatorio_tendencia(
+            kpis_tendencia = gerar_relatorio_tendencia(
                 json_anterior=last_report.json_summary_path,
                 json_atual=json_path_atual,
                 csv_anterior_name=last_report.original_filename,
@@ -135,6 +142,24 @@ def processar_analise(self, filepath_atual, filename_atual, reports_folder):
         )
         report_path_final = final_analysis_results['html_path']
         json_path_final = final_analysis_results['json_path']
+
+        # --- ETAPA 4.5: Gera e injeta o resumo da IA ---
+        if kpis_tendencia and json_path_final and report_path_final:
+            print("🤖 Gerando resumo executivo com IA...")
+            try:
+                with open(json_path_final, 'r', encoding='utf-8') as f:
+                    header_atual = json.load(f).get('header', {})
+                
+                if header_atual:
+                    ai_summary = gerar_resumo_ia(kpis_tendencia=kpis_tendencia, header_atual=header_atual)
+                    if ai_summary:
+                        atualizar_resumo_com_ia(report_path_final, ai_summary)
+                        print("✅ Resumo da IA injetado no relatório final.")
+                else:
+                    print("⚠️  Cabeçalho de dados não encontrado no JSON final. Resumo da IA não será gerado.")
+
+            except Exception as e:
+                print(f"❌ Erro ao gerar ou injetar o resumo da IA: {e}")
 
         # --- ETAPA 5: Salva o novo relatório no banco ---
         new_report = Report(

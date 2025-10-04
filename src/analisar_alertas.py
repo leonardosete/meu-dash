@@ -177,9 +177,9 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
     alerts_ok = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)].copy()
     alerts_instabilidade = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)].copy()
     full_emoji_map = {
-        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
-        ACAO_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "⚠️✅",
-        ACAO_INSTABILIDADE_CRONICA: "🔁"
+        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
+        acao_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "⚠️✅",
+        acao_INSTABILIDADE_CRONICA: "🔁"
     }
 
     if not alerts_atuacao.empty:
@@ -245,7 +245,7 @@ def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_
 
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌",
+        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌",
         ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
@@ -390,7 +390,7 @@ def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Ind
         return
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
+        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
         ACAO_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "✅",
         ACAO_INSTABILIDADE_CRONICA: "🔁"
     }
@@ -433,7 +433,7 @@ def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: 
         return
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
+        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
     print(f"\n📄 Gerando páginas de detalhe para Métricas em Aberto...")
@@ -465,7 +465,7 @@ def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: 
             f.write(html_content)
     print(f"✅ {len(metric_list)} páginas de detalhe de métricas geradas.")
 
-def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, num_logs_invalidos: int, output_path: str, plan_dir: str, details_dir: str, timestamp_str: str, trend_report_path: str = None):
+def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, num_logs_invalidos: int, output_path: str, plan_dir: str, details_dir: str, timestamp_str: str, trend_report_path: str = None, ai_summary: str = None):
     """Gera o dashboard principal em HTML com o resumo executivo da análise."""
     print("\n📊 Gerando Resumo Executivo estilo Dashboard...")
     
@@ -522,7 +522,8 @@ def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, n
         'top_5_squads_agrupadas': top_5_squads_agrupadas, 'num_logs_invalidos': num_logs_invalidos,
         'trend_report_path': trend_report_path, 'date_range_text': date_range_text,
         'summary_filename': summary_filename, 'plan_dir_base_name': plan_dir_base_name,
-        'details_dir_base_name': os.path.basename(details_dir)
+        'details_dir_base_name': os.path.basename(details_dir),
+        'ai_summary': ai_summary
     }
 
     body_content = gerador_html.renderizar_resumo_executivo(context)
@@ -617,7 +618,7 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
         csv_payload = csv_content.replace('\\', r'\\').replace('`', r'`')
-        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___"
+        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___"")
         template_com_placeholder = template_content.replace('const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`', f'const csvDataPayload = `{placeholder}`')
         final_html = template_com_placeholder.replace(placeholder, csv_payload)
         with open(output_path, 'w', encoding='utf-8') as f_out:
@@ -630,7 +631,7 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
 # NOVA EXECUÇÃO PRINCIPAL (WEB-FOCUSED)
 # =============================================================================
 
-def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool = False, trend_report_path: str = None) -> Dict[str, str]:
+def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool = False, trend_report_path: str = None, ai_summary: str = None) -> Dict[str, str]:
     """
     Função principal, otimizada para uso web, que orquestra a análise de um arquivo CSV.
     """
@@ -673,7 +674,7 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
 
     df_atuacao = gerar_relatorios_csv(summary, output_actuation_csv, output_ok_csv, output_instability_csv)
     
-    gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary_html, plan_dir, details_dir, timestamp_str, trend_report_path)
+    gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary_html, plan_dir, details_dir, timestamp_str, trend_report_path, ai_summary)
     
     gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
     all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
@@ -693,3 +694,33 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
 
     print(f"✅ Análise completa finalizada. Relatório principal em: {output_summary_html}")
     return {'html_path': output_summary_html, 'json_path': output_json}
+
+def atualizar_resumo_com_ia(summary_html_path: str, ai_summary: str):
+    """Atualiza o arquivo de resumo HTML com o sumário gerado pela IA."""
+    print(f"🔄 Atualizando o resumo com a análise da IA...")
+    try:
+        with open(summary_html_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Formata o resumo da IA para HTML
+        ai_summary_html = f'''
+        <div class="notification-banner trend" style="margin-top: 25px; border-left: 5px solid var(--accent-color); background: linear-gradient(145deg, rgba(78, 115, 223, 0.1), rgba(78, 115, 223, 0.05));">
+            <span class="icon" style="font-size: 1.8em; align-self: flex-start;">🤖</span>
+            <div class="text">
+                <h3 style="margin-top: 0; margin-bottom: 10px; color: var(--accent-color);">Resumo Executivo (IA)</h3>
+                <p style="margin: 0; font-size: 1.05em; line-height: 1.6;">{ai_summary}</p>
+            </div>
+        </div>
+        '''
+        
+        # Substitui o placeholder pelo conteúdo da IA
+        content = content.replace("<!-- AI_SUMMARY_PLACEHOLDER -->", ai_summary_html)
+        
+        with open(summary_html_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"✅ Resumo atualizado com sucesso em: {summary_html_path}")
+        
+    except FileNotFoundError:
+        print(f"❌ Erro: O arquivo de resumo '{summary_html_path}' não foi encontrado para atualização.")
+    except Exception as e:
+        print(f"❌ Erro ao atualizar o resumo com a análise da IA: {e}")

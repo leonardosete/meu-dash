@@ -1,8 +1,10 @@
 Flask
-pandas
-numpy
 Flask-SQLAlchemy
 Flask-Migrate
-gunicorn
-redis
+Werkzeug
+pandas
+numpy
 celery
+redis
+google-generativeai
+python-dotenv

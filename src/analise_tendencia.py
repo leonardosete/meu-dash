@@ -289,7 +289,7 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
 
     if df_p1 is None or df_p2 is None:
         print("❌ Não foi possível continuar a análise de tendência devido a erro no carregamento dos resumos JSON.", file=sys.stderr)
-        return
+        return None
 
     df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
     df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
@@ -355,9 +355,11 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(final_report)
         print(f"✅ Relatório de tendência gerado em: {output_path}")
+        return kpis
 
     except Exception as e:
         print(f"❌ Ocorreu um erro inesperado ao gerar o relatório de tendência: {e}", file=sys.stderr)
+        return None
 
 def main_cli():
     """Função para manter a compatibilidade com a execução via linha de comando."""
