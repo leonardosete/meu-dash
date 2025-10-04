@@ -285,7 +285,9 @@ def index():
         last_report_date=last_report.timestamp.strftime('%d/%m/%Y às %H:%M') if last_report else "Nenhuma análise encontrada",
         last_report=last_report, # Passa o objeto completo para o template
         last_action_plan=last_action_plan,
-        ai_enabled=AI_AGENT_ENABLED # Passa o status da IA para o template
+        ai_enabled=AI_AGENT_ENABLED, # Passa o status da IA para o template
+        doc_tecnica_url=url_for('serve_docs', filename='doc_tecnica.html'),
+        doc_gerencial_url=url_for('serve_docs', filename='doc_gerencial.html')
     )
 
 @app.route('/upload', methods=['POST'])

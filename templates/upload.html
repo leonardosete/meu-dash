@@ -291,6 +291,8 @@
             const lastTrendAnalysis = (lastTrendAnalysisJSON && lastTrendAnalysisJSON !== 'null') ? JSON.parse(lastTrendAnalysisJSON) : null;
             const lastActionPlan = (lastActionPlanJSON && lastActionPlanJSON !== 'null') ? JSON.parse(lastActionPlanJSON) : null;
             const aiEnabled = {{ ai_enabled | tojson }};
+            const docTecnicaUrl = '{{ doc_tecnica_url }}';
+            const docGerencialUrl = '{{ doc_gerencial_url }}';
 
 
             // --- FUNÇÕES ---
@@ -557,6 +559,22 @@
                 if (lastTrendAnalysis) links.push({title: "Ver Análise de Tendência", description: `Comparativo gerado em ${lastTrendAnalysis.date}`, url: lastTrendAnalysis.url, color: "green", icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>`});
                 links.push({title: "Histórico de Relatórios", description: "Acessar todos os relatórios gerados.", url: "{{ url_for('relatorios') }}", color: "gray", icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>`});
                 
+                // Adiciona os links de documentação de volta
+                links.push({
+                    title: "Doc. Gerencial",
+                    description: "Visão de alto nível e impacto para gestão.",
+                    url: docGerencialUrl,
+                    color: "blue",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`
+                });
+                links.push({
+                    title: "Doc. Técnica",
+                    description: "Detalhes da arquitetura e implementação.",
+                    url: docTecnicaUrl,
+                    color: "purple",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 12" /></svg>`
+                });
+
                 const colorMap = { red: 'border-red-500 text-red-500', green: 'border-green-500 text-green-500', gray: 'border-gray-500 text-gray-500' };
                 linksContainer.innerHTML = links.map(link => `
                     <a href="${link.url}" target="_blank" class="side-card card p-4 rounded-xl flex items-center gap-4 hover:border-indigo-500 hover:-translate-y-1 transition-all duration-300 border-l-4 ${colorMap[link.color]}">
