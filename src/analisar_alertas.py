@@ -177,9 +177,9 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
     alerts_ok = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)].copy()
     alerts_instabilidade = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)].copy()
     full_emoji_map = {
-        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
-        acao_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "⚠️✅",
-        acao_INSTABILIDADE_CRONICA: "🔁"
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
+        ACAO_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "⚠️✅",
+        ACAO_INSTABILIDADE_CRONICA: "🔁"
     }
 
     if not alerts_atuacao.empty:
@@ -245,7 +245,7 @@ def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_
 
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌",
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌",
         ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
@@ -390,7 +390,7 @@ def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Ind
         return
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
         ACAO_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "✅",
         ACAO_INSTABILIDADE_CRONICA: "🔁"
     }
@@ -433,7 +433,7 @@ def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: 
         return
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
     print(f"\n📄 Gerando páginas de detalhe para Métricas em Aberto...")
