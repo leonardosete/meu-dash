@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status do Processamento</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; text-align: center; padding: 40px; background-color: #f4f4f9; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.8em; margin-bottom: 20px; }
+        p { font-size: 1.1em; line-height: 1.6; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #status-pending { color: #007BFF; }
+        #status-success { color: #28a745; display: none; }
+        #status-failed { color: #dc3545; display: none; }
+        a.button { display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px; font-weight: 500; }
+        a.button:hover { background-color: #0056b3; }
+        a.button-success { background-color: #28a745; }
+        a.button-success:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="status-pending">
+            <h1>Processando...</h1>
+            <div class="spinner"></div>
+            <p>Sua análise está em andamento. Por favor, aguarde.</p>
+        </div>
+        <div id="status-success">
+            <h1>Análise Concluída!</h1>
+            <p>O seu relatório foi gerado com sucesso.</p>
+            <a id="report-link" href="#" class="button button-success">Ver Relatório</a>
+        </div>
+        <div id="status-failed">
+            <h1>Ocorreu um Erro</h1>
+            <p id="error-message"></p>
+            <a href="{{ url_for('index') }}" class="button">Tentar Novamente</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusPending = document.getElementById('status-pending');
+            const statusSuccess = document.getElementById('status-success');
+            const statusFailed = document.getElementById('status-failed');
+            const reportLink = document.getElementById('report-link');
+            const errorMessage = document.getElementById('error-message');
+
+            const taskId = '{{ task_id }}';
+            const pollInterval = 2000; // 2 segundos
+
+            function pollStatus() {
+                fetch(`/status/${taskId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.state === 'PENDING' || data.state === 'STARTED') {
+                            setTimeout(pollStatus, pollInterval);
+                        } else {
+                            statusPending.style.display = 'none';
+                            if (data.state === 'SUCCESS') {
+                                statusSuccess.style.display = 'block';
+                                reportLink.href = data.result.report_url;
+                            } else { // FAILURE or other error states
+                                statusFailed.style.display = 'block';
+                                errorMessage.textContent = data.result.error || 'Ocorreu um erro desconhecido durante o processamento.';
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro ao buscar status:", err);
+                        statusPending.style.display = 'none';
+                        statusFailed.style.display = 'block';
+                        errorMessage.textContent = 'Não foi possível conectar ao servidor para verificar o status da tarefa.';
+                    });
+            }
+
+            pollStatus();
+        });
+    </script>
+</body>
+</html>

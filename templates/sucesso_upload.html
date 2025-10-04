@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processamento Iniciado</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 40px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #4CAF50; }
+        p { font-size: 1.1em; }
+        a { display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px; }
+        a:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Processamento Iniciado!</h1>
+        <p>Seu arquivo foi recebido e a análise está sendo processada em segundo plano.</p>
+        <p>Você pode fechar esta página. O relatório aparecerá na página de relatórios quando estiver pronto.</p>
+        <a href="{{ url_for('index') }}">Voltar para a Página Inicial</a>
+    </div>
+</body>
+</html>
