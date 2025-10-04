@@ -110,12 +110,24 @@ def ask_question_to_agent(question: str, report_data_json: str) -> str:
         else:
             squad_summary = "Nenhum caso encontrado para resumir."
 
+        # NOVO: Cria um resumo dos 5 problemas mais críticos pelo score.
+        if records:
+            # Ordena todos os problemas pelo score de criticidade
+            sorted_problems = sorted(records, key=lambda x: x.get('score_criticidade_agregado', 0), reverse=True)
+            top_5_problems = sorted_problems[:5]
+            # Formata o resumo para o prompt
+            problems_summary = "\n".join([f"- \"{p.get('description', 'N/A')}\" (Time: {p.get('assignment_group', 'N/A')}, Score: {p.get('score_criticidade_agregado', 0):.1f})" for p in top_5_problems])
+        else:
+            problems_summary = "Nenhum problema encontrado para resumir."
+
         system_prompt = """Você é um analista de dados especialista em operações de TI. Responda perguntas sobre um relatório de alertas de forma concisa e direta, usando apenas os dados fornecidos como fonte da verdade. Se a pergunta não puder ser respondida com os dados, informe que não possui essa informação."""
 
         user_content = f"""
         **Contexto do Relatório:**
         - Distribuição por Time (Top 10 por número de casos):
 {squad_summary}
+        - Top 5 Problemas Mais Críticos (por Score):
+{problems_summary}
         - Resumo: Total de Alertas={header.get('total_alertas', 'N/A')}, Risco Médio={header.get('risco_medio', 0):.2f}, Ineficiência Média={header.get('ineficiencia_media', 0):.2f}, Impacto Médio={header.get('impacto_medio', 0):.2f}
         - Amostra de Dados (Primeiros 3 de {len(report_data.get('records', []))} casos):
           ```json
