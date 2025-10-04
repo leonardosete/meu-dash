@@ -177,9 +177,9 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
     alerts_ok = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)].copy()
     alerts_instabilidade = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)].copy()
     full_emoji_map = {
-        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
-        ACAO_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "⚠️✅",
-        ACAO_INSTABILIDADE_CRONICA: "🔁"
+        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
+        acao_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "⚠️✅",
+        acao_INSTABILIDADE_CRONICA: "🔁"
     }
 
     if not alerts_atuacao.empty:
@@ -209,14 +209,23 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
     save_csv(alerts_instabilidade, output_instability, "alert_count", False)
     return alerts_atuacao.sort_values(by="score_ponderado_final", ascending=False)
 
-def export_summary_to_json(summary: pd.DataFrame, output_path: str):
-    """Salva o dataframe de resumo em formato JSON."""
+def export_summary_to_json(summary: pd.DataFrame, header: Dict, output_path: str):
+    """Salva o dataframe de resumo e o cabeçalho em formato JSON."""
     print(f"\n💾 Exportando resumo para JSON...")
-    summary_json = summary.copy()
-    for col in ['first_event', 'last_event']:
-        if col in summary_json.columns:
-            summary_json[col] = summary_json[col].astype(str)
-    summary_json.to_json(output_path, orient='records', indent=4, date_format='iso')
+    
+    # Converte o DataFrame para uma lista de dicionários
+    records = summary.to_dict(orient='records')
+    
+    # Cria a estrutura final do JSON
+    json_data = {
+        "header": header,
+        "records": records
+    }
+    
+    # Salva o arquivo JSON
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(json_data, f, indent=4, default=str) # Usa default=str para lidar com tipos de data/numpy
+        
     print(f"✅ Resumo salvo em: {output_path}")
 
 # =============================================================================
@@ -236,7 +245,7 @@ def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_
 
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌",
+        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌",
         ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
@@ -323,11 +332,11 @@ def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_
                         else:
                             link_html = (
                                 f'<a href="../qualidade_dados_remediacao.html" class="tooltip-container invalid-status-link">'
-                                f'  ⚪ {escape(status)}'
-                                f'  <div class="tooltip-content" style="width: 280px; left: 50%; margin-left: -140px;">'
-                                f'    Status inválido. Clique para ver o log de erros.'
-                                f'  </div>'
-                                f'</a>'
+                                f'  ⚪ {escape(status)}
+'                                f'  <div class="tooltip-content" style="width: 280px; left: 50%; margin-left: -140px;">
+'                                f'    Status inválido. Clique para ver o log de erros.
+'                                f'  </div>
+'                                f'</a>'
                             )
                             formatted_chronology.append(link_html)
                     
@@ -381,9 +390,9 @@ def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Ind
         return
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
-        ACAO_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "✅",
-        ACAO_INSTABILIDADE_CRONICA: "🔁"
+        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
+        acao_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "✅",
+        acao_INSTABILIDADE_CRONICA: "🔁"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
     print(f"\n📄 Gerando páginas de detalhe para o contexto: '{file_prefix}'...")
@@ -424,7 +433,7 @@ def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: 
         return
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
+        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
     print(f"\n📄 Gerando páginas de detalhe para Métricas em Aberto...")
@@ -607,8 +616,8 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
-        csv_payload = csv_content.replace('\\', r'\\').replace('`', r'\`')
-        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___"
+        csv_payload = csv_content.replace('\\', r'\\').replace('`', r'`')
+        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___
         template_com_placeholder = template_content.replace('const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`', f'const csvDataPayload = `{placeholder}`')
         final_html = template_com_placeholder.replace(placeholder, csv_payload)
         with open(output_path, 'w', encoding='utf-8') as f_out:
@@ -639,7 +648,24 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
 
     df, num_logs_invalidos = carregar_dados(input_file, output_dir)
     summary = analisar_grupos(df)
-    export_summary_to_json(summary.copy(), output_json)
+
+    # Calcula os dados do cabeçalho para o dashboard
+    if not summary.empty:
+        header_data = {
+            "total_alertas": int(summary['alert_count'].sum()),
+            "risco_medio": summary['score_criticidade_agregado'].mean(),
+            "ineficiencia_media": summary['fator_peso_remediacao'].mean(),
+            "impacto_medio": summary['fator_volume'].mean(),
+        }
+    else:
+        header_data = {
+            "total_alertas": 0,
+            "risco_medio": 0,
+            "ineficiencia_media": 0,
+            "impacto_medio": 0,
+        }
+
+    export_summary_to_json(summary.copy(), header_data, output_json)
 
     if light_analysis:
         print("💡 Análise leve concluída. Apenas o resumo JSON foi gerado.")

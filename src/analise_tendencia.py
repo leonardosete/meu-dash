@@ -1,6 +1,7 @@
 import pandas as pd
 import sys
 import os
+import json
 from html import escape
 import re
 from string import Template
@@ -13,13 +14,31 @@ def sanitize_for_id(text):
     return re.sub(r'[^a-zA-Z0-9\-_]', '-', str(text)).lower()
 
 def load_summary_from_json(filepath: str):
-    """Carrega o resumo de problemas de um arquivo JSON."""
+    """
+    Carrega o resumo de problemas de um arquivo JSON,
+    suportando o novo formato com cabeçalho e o formato antigo (apenas records).
+    """
     try:
-        df = pd.read_json(filepath, orient='records')
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Verifica se o JSON tem o novo formato com 'header' e 'records'
+        if isinstance(data, dict) and 'records' in data:
+            df = pd.DataFrame(data['records'])
+        # Assume que é o formato antigo (uma lista de records)
+        else:
+            df = pd.DataFrame(data)
+
+        # Converte colunas de data que podem ter sido salvas como strings
+        if 'first_event' in df.columns:
+            df['first_event'] = pd.to_datetime(df['first_event'], errors='coerce')
+        if 'last_event' in df.columns:
+            df['last_event'] = pd.to_datetime(df['last_event'], errors='coerce')
+            
         print(f"✅ Resumo de problemas carregado de: {filepath}")
         return df
-    except (FileNotFoundError, ValueError) as e:
-        print(f"❌ Erro ao carregar o arquivo JSON '{filepath}': {e}", file=sys.stderr)
+    except (FileNotFoundError, ValueError, TypeError) as e:
+        print(f"❌ Erro ao carregar ou processar o arquivo JSON '{filepath}': {e}", file=sys.stderr)
         return None
 
 def calculate_kpis_and_merged_df(df_p1, df_p2):
