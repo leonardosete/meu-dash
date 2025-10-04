@@ -56,11 +56,19 @@
             </div>
             <div class="kpi-card rounded-xl p-6">
                 <h3 class="text-sm font-medium text-gray-400 mb-2">Taxa de Sucesso da Automação</h3>
-                <p class="text-4xl font-bold text-green-400">{{ '%.2f' % kpis.taxa_sucesso if kpis.taxa_sucesso is not none else 'N/A' }}%</p>
+                <p class="text-4xl font-bold text-green-400">{{ '%.1f' % kpis.taxa_sucesso if kpis.taxa_sucesso is not none else 'N/A' }}%</p>
             </div>
             <div class="kpi-card rounded-xl p-6">
                 <h3 class="text-sm font-medium text-gray-400 mb-2">Squads com Casos em Aberto</h3>
                 <p class="text-4xl font-bold text-yellow-400">{{ kpis.squads_com_casos or 'N/A' }}</p>
+            </div>
+        </div>
+
+        <!-- NOVO: Seção de Evolução Temporal -->
+        <div class="card rounded-xl p-6">
+            <h3 class="text-xl font-semibold mb-4">Evolução dos Alertas (Últimos Relatórios)</h3>
+            <div class="h-80">
+                <canvas id="timelineChart"></canvas>
             </div>
         </div>
 
@@ -116,6 +124,7 @@
             // --- Dados Injetados pelo Flask ---
             const squadsData = {{ squads_chart_data | tojson | safe }};
             const actionsData = {{ actions_chart_data | tojson | safe }};
+            const timelineData = {{ timeline_data | tojson | safe }};
 
             // --- Configurações Globais dos Gráficos ---
             Chart.defaults.color = 'rgba(224, 224, 224, 0.7)';
@@ -129,6 +138,50 @@
                     }
                 }
             };
+            
+            // --- Gráfico de Linha: Evolução dos Alertas ---
+            const timelineCtx = document.getElementById('timelineChart')?.getContext('2d');
+            if (timelineCtx && timelineData && timelineData.labels.length > 1) {
+                new Chart(timelineCtx, {
+                    type: 'line',
+                    data: {
+                        labels: timelineData.labels,
+                        datasets: [
+                            {
+                                label: 'Total de Grupos',
+                                data: timelineData.data_total,
+                                borderColor: 'rgba(79, 70, 229, 1)',
+                                backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Casos para Atuação',
+                                data: timelineData.data_atuacao,
+                                borderColor: 'rgba(239, 68, 68, 1)',
+                                backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                            y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, beginAtZero: true }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                align: 'end',
+                            }
+                        }
+                    }
+                });
+            }
+
 
             // --- Gráfico de Barras: Top Squads ---
             const squadsCtx = document.getElementById('squadsChart')?.getContext('2d');
@@ -193,3 +246,4 @@
 
 </body>
 </html>
+
