@@ -160,6 +160,9 @@ def processar_analise(self, filepath_atual, filename_atual, reports_folder):
                 ai_summary = gerar_resumo_ia(kpis_tendencia=kpis_tendencia, header_atual=header_atual)
             elif header_atual:
                 print("🤖 Gerando resumo executivo de ANÁLISE ÚNICA com IA...")
+                # CORREÇÃO: Adiciona o date_range ao dicionário antes de passar para a IA.
+                if date_range_atual:
+                    report_data['date_range'] = date_range_atual
                 ai_summary = gerar_resumo_analise_unica_ia(report_data=report_data)
 
             if ai_summary and report_path_final:
