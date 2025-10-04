@@ -241,8 +241,10 @@
                         <ul>
                             <li><code>GET /</code>: Exibe a página inicial de upload (<code>upload.html</code>).</li>
                             <li><code>POST /upload</code>: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.</li>
-                            <li><code>GET /relatorios</code>: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.</li>
-                            <li><code>GET /reports/&lt;run_folder&gt;/&lt;filename&gt;</code>: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.</li>
+                            <li><code>GET /relatorios</code>: Exibe um histórico de todos os relatórios gerados.</li>
+                            <li><code>GET /reports/&lt;run_folder&gt;/&lt;filename&gt;</code>: Serve os arquivos de relatório (HTML, CSV, etc.).</li>
+                            <li><code>GET /health</code>: Endpoint de health check para Kubernetes. Retorna <code>{'status': 'ok'}</code>.</li>
+                            <li><code>GET /docs/&lt;path:filename&gt;</code>: Serve a documentação estática do projeto.</li>
                         </ul>
                     </li>
                 </ul>
@@ -252,8 +254,16 @@
             <div class="card">
                 <ul>
                     <li><strong>Tecnologia:</strong> SQLite, gerenciado pelo SQLAlchemy.</li>
-                    <li><strong>Modelo de Dados (<code>Report</code>):</strong> Armazena metadados de cada análise, incluindo o nome do arquivo original, o timestamp, os caminhos para os artefatos gerados (<code>resumo_geral.html</code> e <code>resumo_problemas.json</code>) e o intervalo de datas da análise.</li>
-                    <li><strong>Responsabilidade:</strong> Manter um histórico persistente de todas as análises. Este histórico é <strong>crucial</strong> para a análise de tendência, pois permite que a aplicação compare o upload atual com a análise mais recente registrada.</li>
+                    <li><strong>Modelo de Dados (<code>Report</code>):</strong> Armazena metadados de cada análise. Os campos mais importantes são:
+                        <ul>
+                            <li><code>id</code>, <code>timestamp</code>, <code>original_filename</code>.</li>
+                            <li><code>report_path</code>: Caminho para o <code>resumo_geral.html</code>.</li>
+                            <li><code>json_summary_path</code>: Caminho para o <code>resumo_problemas.json</code>, usado na próxima análise de tendência.</li>
+                            <li><code>date_range</code>: O intervalo de datas coberto pelo relatório (extraído do CSV).</li>
+                            <li><code>max_date</code>: <strong>Campo fundamental.</strong> Armazena a data mais recente do *conteúdo* do arquivo de input.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Responsabilidade:</strong> Manter um histórico de todas as análises. A comparação para análise de tendência agora é mais inteligente: em vez de apenas pegar a última análise executada, o sistema usa o campo <code>max_date</code> para encontrar a análise anterior mais relevante, cujo conteúdo seja cronologicamente anterior ao do upload atual.</li>
                 </ul>
             </div>
 
@@ -270,7 +280,7 @@
                 <ul>
                     <li><strong>Responsabilidade:</strong> Comparar dois períodos (JSON atual vs. JSON anterior) e gerar o <code>resumo_tendencia.html</code>.</li>
                     <li><strong>Invocação:</strong> É chamado como uma função Python (<code>gerar_relatorio_tendencia</code>) diretamente do <code>app.py</code>.</li>
-                    <li><strong>Entradas:</strong> Recebe os caminhos para os dois arquivos JSON (anterior e atual) e os nomes dos arquivos CSV originais como argumentos de função.</li>
+                    <li><strong>Entradas:</strong> Recebe os caminhos para os dois arquivos JSON (anterior e atual), os nomes dos arquivos CSV originais e os intervalos de datas como argumentos de função.</li>
                 </ul>
             </div>
 
@@ -281,7 +291,7 @@
                 <h4><code>src/constants.py</code></h4>
                 <p>Centraliza todas as constantes de lógica de negócio (pesos, ações, etc.) para garantir consistência.</p>
                 <h4><code>src/get_date_range.py</code></h4>
-                <p>Responsável por ler um arquivo de alertas e extrair a data mais antiga e a mais recente, retornando um intervalo de datas formatado.</p>
+                <p>Responsável por ler um arquivo de alertas e extrair a data mais antiga e a mais recente. Retorna uma tupla contendo o intervalo de datas formatado e o objeto de data da data mais recente (<code>max_date</code>).</p>
             </div>
         </section>
 
@@ -295,12 +305,17 @@
                 <li>
                     <strong>Orquestração (<code>app.py</code>):</strong>
                     <ul>
-                        <li>a. <strong>Salvar e Extrair Datas:</strong> O <code>.csv</code> é salvo em <code>data/uploads/</code>. O módulo <code>get_date_range.py</code> é usado para extrair o intervalo de datas do arquivo. Um diretório de saída (<code>run_&lt;timestamp&gt;</code>) é criado em <code>data/reports/</code>.</li>
-                        <li>b. <strong>Buscar Histórico:</strong> O app consulta o banco de dados (via SQLAlchemy) para encontrar o relatório mais recente.</li>
+                        <li>a. <strong>Salvar e Extrair Datas:</strong> O <code>.csv</code> é salvo em <code>data/uploads/</code>. O módulo <code>get_date_range.py</code> é usado para extrair o intervalo de datas e a data máxima (<code>max_date</code>) do conteúdo do arquivo. Um diretório de saída (<code>run_&lt;timestamp&gt;</code>) é criado em <code>data/reports/</code>.</li>
+                        <li>b. <strong>Buscar Histórico Relevante:</strong> O app consulta o banco de dados para encontrar o relatório anterior mais apropriado para comparação. A lógica é:
+                            <ol>
+                                <li>Tenta encontrar o relatório cuja <code>max_date</code> seja a maior possível, mas ainda <strong>anterior</strong> à <code>max_date</code> do arquivo recém-enviado.</li>
+                                <li>Se nenhum relatório for encontrado com essa lógica (por exemplo, se for o primeiro upload ou se os dados forem mais antigos que todos os registros existentes), ele usa como fallback o último relatório inserido no banco, ordenado por <code>timestamp</code>.</li>
+                            </ol>
+                        </li>
                     </ul>
                 </li>
                 <li>
-                    <strong>Análise de Tendência (Condicional):</strong> Se um relatório anterior existe, o <code>app.py</code>:
+                    <strong>Análise de Tendência (Condicional):</strong> Se um relatório anterior relevante foi encontrado, o <code>app.py</code>:
                     <ul>
                         <li>i. <strong>Executa Análise Leve:</strong> Chama a função <code>analisar_arquivo_csv</code> com <code>light_analysis=True</code> para gerar rapidamente o <code>resumo_problemas.json</code> do arquivo atual.</li>
                         <li>ii. <strong>Gera Relatório de Tendência:</strong> Chama a função <code>gerar_relatorio_tendencia</code>, passando os JSONs (anterior e atual) e também os intervalos de datas (anterior e atual) para enriquecer o relatório.</li>
@@ -312,7 +327,7 @@
                 <li>
                     <strong>Persistência e Redirecionamento:</strong>
                     <ul>
-                        <li>i. Um novo registro <code>Report</code> é criado no banco de dados com os metadados da análise, incluindo o novo campo <code>date_range</code>.</li>
+                        <li>i. Um novo registro <code>Report</code> é criado no banco de dados com os metadados da análise, incluindo os novos campos <code>date_range</code> e <code>max_date</code>.</li>
                         <li>ii. O <code>app.py</code> redireciona o navegador do usuário para a rota que serve o <code>resumo_geral.html</code> recém-criado.</li>
                     </ul>
                 </li>

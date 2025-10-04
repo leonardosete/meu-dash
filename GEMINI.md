@@ -71,12 +71,13 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 - **Tecnologia:** SQLite, gerenciado pelo SQLAlchemy.
 - **Modelo (`Report`):**
     - `id`: Identificador único.
-    - `timestamp`: Data e hora da análise.
+    - `timestamp`: Data e hora da análise (quando o processo foi executado).
     - `original_filename`: Nome do arquivo `.csv` que foi enviado.
     - `report_path`: Caminho para o relatório HTML principal (`resumo_geral.html`).
     - `json_summary_path`: **Crucial para a análise de tendência.** Caminho para o arquivo `resumo_problemas.json` daquela análise.
     - `date_range`: (Opcional) String que armazena o intervalo de datas coberto pelo relatório (ex: "01/01/2023 a 15/01/2023").
-- **Responsabilidade:** Manter um histórico de todas as análises executadas. Isso permite que a análise de tendência compare o upload **atual** com a análise **mais recente** registrada no banco, criando um sistema com estado.
+    - `max_date`: (Opcional) **Novo campo fundamental.** Armazena o objeto de data correspondente à data mais recente do *conteúdo* do arquivo de input.
+- **Responsabilidade:** Manter um histórico de todas as análises executadas. A comparação para análise de tendência agora é mais inteligente: em vez de apenas pegar a última análise executada, o sistema usa o campo `max_date` para encontrar a análise anterior mais relevante cujo conteúdo seja cronologicamente anterior ao do upload atual.
 
 ## 3. Motores de Análise (Invocados como Bibliotecas)
 
