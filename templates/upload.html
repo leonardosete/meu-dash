@@ -324,9 +324,11 @@
                             if (data.state === 'SUCCESS') {
                                 clearInterval(intervalId);
                                 // Redireciona para a página inicial para recarregar o dashboard e mostrar o chat
-                                // Adiciona a URL do novo relatório como parâmetro para exibição imediata
+                                // Adiciona a URL do novo relatório e o resumo da IA como parâmetros para exibição imediata
                                 const reportUrl = data.result.report_url;
-                                window.location.href = `{{ url_for('index') }}?new_report_url=${encodeURIComponent(reportUrl)}`;
+                                const aiSummary = data.result.ai_summary || '';
+                                const redirectUrl = `{{ url_for('index') }}?new_report_url=${encodeURIComponent(reportUrl)}&ai_summary=${encodeURIComponent(aiSummary)}`;
+                                window.location.href = redirectUrl;
                             } else if (data.state === 'FAILURE') {
                                 clearInterval(intervalId);
                                 app.errorMessage.textContent = data.result.error || 'Ocorreu um erro desconhecido durante o processamento.';
@@ -607,22 +609,26 @@
             const urlParams = new URLSearchParams(window.location.search);
             const taskId = urlParams.get('task_id');
             const newReportUrl = urlParams.get('new_report_url');
+            const aiSummary = urlParams.get('ai_summary');
 
-            // Se a página foi recarregada após uma análise bem-sucedida, mostra um link para o novo relatório
-            if (newReportUrl) {
+            // Se a página foi recarregada após uma análise bem-sucedida, mostra o resumo da IA
+            if (newReportUrl && aiSummary) {
                 const summaryContainer = document.getElementById('summary-content');
-                const successBanner = document.createElement('div');
-                successBanner.className = 'bg-green-900/50 border border-green-600 text-green-300 p-4 rounded-lg mb-6 flex items-center justify-between';
-                successBanner.innerHTML = `
-                    <div>
-                        <h4 class="font-bold">Análise Concluída!</h4>
-                        <p class="text-sm">Seu novo relatório foi gerado com sucesso.</p>
+                const aiCard = document.createElement('div');
+                aiCard.className = 'bg-indigo-900/30 border border-indigo-600 text-indigo-200 p-6 rounded-2xl mb-8';
+                aiCard.innerHTML = `
+                    <div class="flex items-start gap-4">
+                        <span class="text-2xl mt-1">🤖</span>
+                        <div>
+                            <h4 class="font-bold text-lg text-white">Resumo Executivo da Análise (IA)</h4>
+                            <p class="mt-2 mb-4 text-indigo-300">${escape(aiSummary)}</p>
+                            <a href="${decodeURIComponent(newReportUrl)}" target="_blank" class="font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
+                                Ver relatório completo &rarr;
+                            </a>
+                        </div>
                     </div>
-                    <a href="${decodeURIComponent(newReportUrl)}" target="_blank" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
-                        Ver Relatório
-                    </a>
                 `;
-                summaryContainer.parentNode.insertBefore(successBanner, summaryContainer);
+                summaryContainer.parentNode.insertBefore(aiCard, summaryContainer);
                 // Limpa a URL para não mostrar o banner novamente em um refresh manual
                 window.history.replaceState({}, document.title, "{{ url_for('index') }}");
             }

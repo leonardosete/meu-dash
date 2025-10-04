@@ -146,6 +146,7 @@ def processar_analise(self, filepath_atual, filename_atual, reports_folder):
         # --- ETAPA 4.5: Gera e injeta o resumo da IA ---
         try:
             if not os.path.exists(json_path_final):
+                ai_summary = None # Garante que a variável exista
                 raise FileNotFoundError("Arquivo de resumo JSON final não encontrado.")
 
             with open(json_path_final, 'r', encoding='utf-8') as f:
@@ -213,7 +214,7 @@ def processar_analise(self, filepath_atual, filename_atual, reports_folder):
         except Exception as e_rotation:
             print(f"⚠️  Ocorreu um erro durante a rotação de relatórios: {e_rotation}")
 
-        return {"status": "success", "report_url": report_url}
+        return {"status": "success", "report_url": report_url, "ai_summary": ai_summary}
 
     except Exception as e:
         print(f"❌ Erro fatal na tarefa de análise: {e}")
