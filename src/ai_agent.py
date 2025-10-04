@@ -39,7 +39,8 @@ def get_docs_content() -> str:
 # =============================================================================
 
 # Modelo principal para raciocínio e análise
-MODEL_NAME = 'llama-3.3-70b-versatile' 
+#MODEL_NAME = 'llama-3.3-70b-versatile' 
+MODEL_NAME = 'openai/gpt-oss-120b' 
 # Modelo mais rápido para tarefas de classificação/roteamento
 ROUTER_MODEL_NAME = 'llama-3.1-8b-instant'
 
