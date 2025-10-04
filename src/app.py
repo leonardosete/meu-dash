@@ -202,7 +202,7 @@ def index():
     
     summary_data = None
     last_trend_analysis = None
-    editor_url = None
+    last_action_plan = None
 
     if last_report:
         # Normaliza o caminho do relatório para obter o diretório de execução de forma confiável
@@ -217,10 +217,13 @@ def index():
                 'date': last_report.timestamp.strftime('%d/%m/%Y às %H:%M')
             }
 
-        # Link para o editor de atuação, se existir
+        # Link para o Plano de Ação (editor_atuacao.html), se existir
         editor_path = os.path.join(run_folder_path, 'editor_atuacao.html')
         if os.path.exists(editor_path):
-            editor_url = url_for('serve_report', run_folder=run_folder_name, filename='editor_atuacao.html')
+            last_action_plan = {
+                'url': url_for('serve_report', run_folder=run_folder_name, filename='editor_atuacao.html'),
+                'date': last_report.timestamp.strftime('%d/%m/%Y às %H:%M')
+            }
 
         # Carregar dados do resumo JSON para o dashboard
         if last_report.json_summary_path:
@@ -242,7 +245,7 @@ def index():
         last_trend_analysis=last_trend_analysis,
         summary_data=summary_data,
         last_report_date=last_report.timestamp.strftime('%d/%m/%Y às %H:%M') if last_report else None,
-        editor_url=editor_url
+        last_action_plan=last_action_plan
     )
 
 @app.route('/upload', methods=['POST'])
