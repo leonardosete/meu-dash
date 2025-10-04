@@ -79,6 +79,8 @@ spec:
         # AINDA RECOMENDO: Trocar a tag :latest por uma versão específica (ex: v1.0.1)
         image: sevenleo/meu-dash-web:latest
         env:
+        - name: SERVER_NAME
+          value: "meu-dash-web-1.devops-master.shop"
         - name: CELERY_BROKER_URL
           value: "redis://redis-service:6379/0"
         - name: CELERY_RESULT_BACKEND
@@ -127,6 +129,8 @@ spec:
           - "-l"
           - "info"
         env:
+        - name: SERVER_NAME
+          value: "meu-dash-web-1.devops-master.shop"
         - name: CELERY_BROKER_URL
           value: "redis://redis-service:6379/0"
         - name: CELERY_RESULT_BACKEND
@@ -141,6 +145,8 @@ spec:
         volumeMounts:
         - name: meu-dash-data
           mountPath: /app/data
+        - name: temp-storage
+          mountPath: /tmp
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
