@@ -95,10 +95,10 @@ spec:
           periodSeconds: 20
         resources:
           requests:
-            cpu: "250m"
+            cpu: "100m"
             memory: "128Mi"
           limits:
-            cpu: "500m"
+            cpu: "100m"
             memory: "256Mi"
         volumeMounts:
         - name: meu-dash-data
@@ -135,10 +135,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - meu-dash-web.devops-master.shop
+    - meu-dash-web-1.devops-master.shop
     secretName: meu-dash-tls-secret # O cert-manager criará e gerenciará este Secret
   rules:
-  - host: meu-dash-web.devops-master.shop
+  - host: meu-dash-web-1.devops-master.shop
     http:
       paths:
       - path: /

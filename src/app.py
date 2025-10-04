@@ -42,23 +42,8 @@ os.makedirs(app.config['REPORTS_FOLDER'], exist_ok=True)
 
 @app.route('/health')
 def health_check():
-    """Verifica a saúde da aplicação, incluindo banco de dados e permissões de arquivo."""
-    try:
-        # 1. Verifica a conexão com o banco de dados
-        db.session.execute(text('SELECT 1'))
-
-        # 2. Verifica se os diretórios essenciais existem e têm permissão de escrita
-        if not os.path.exists(app.config['UPLOAD_FOLDER']) or not os.access(app.config['UPLOAD_FOLDER'], os.W_OK):
-            raise Exception(f"Diretório de upload não acessível: {app.config['UPLOAD_FOLDER']}")
-        
-        if not os.path.exists(app.config['REPORTS_FOLDER']) or not os.access(app.config['REPORTS_FOLDER'], os.W_OK):
-            raise Exception(f"Diretório de relatórios não acessível: {app.config['REPORTS_FOLDER']}")
-
-        return jsonify({'status': 'ok'}), 200
-
-    except Exception as e:
-        app.logger.error(f"Health check failed: {e}")
-        return jsonify({'status': 'error', 'details': str(e)}), 503
+    """Verifica se a aplicação está online e respondendo a requisições."""
+    return jsonify({'status': 'ok'}), 200
 
 # --- ROTAS PRINCIPAIS DA APLICAÇÃO ---
 

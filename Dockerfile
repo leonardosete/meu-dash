@@ -24,9 +24,10 @@ WORKDIR /app
 # create a non-root user
 RUN groupadd -r nonroot && useradd -r -g nonroot nonroot
 
-# create and chown directories
-RUN mkdir -p /app/data/uploads && chown -R nonroot:nonroot /app/data
-RUN mkdir -p /app/reports && chown -R nonroot:nonroot /app/reports
+# create and chown directories for uploads, reports, and the database
+RUN mkdir -p /app/data/uploads && \
+    mkdir -p /app/data/reports && \
+    chown -R nonroot:nonroot /app/data
 
 USER nonroot
 
