@@ -66,25 +66,30 @@ spec:
       labels:
         app: meu-dash-web
     spec:
+      # ADICIONADO: Declaração de um volume temporário (emptyDir).
+      volumes:
+      - name: temp-storage
+        emptyDir: {}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
         fsGroup: 2001
       containers:
       - name: meu-dash-web
-        image: sevenleo/meu-dash-web:latest # Lembre-se de usar uma tag de imagem específica
+        # AINDA RECOMENDO: Trocar a tag :latest por uma versão específica (ex: v1.0.1)
+        image: sevenleo/meu-dash-web:latest 
         ports:
         - name: http
           containerPort: 5000
         readinessProbe:
           httpGet:
-            path: /health # Substitua pelo endpoint de health check da sua aplicação
+            path: /health 
             port: http
           initialDelaySeconds: 10
           periodSeconds: 5
         livenessProbe:
           httpGet:
-            path: /health # Substitua pelo endpoint de health check
+            path: /health
             port: http
           initialDelaySeconds: 15
           periodSeconds: 20
@@ -98,6 +103,9 @@ spec:
         volumeMounts:
         - name: meu-dash-data
           mountPath: /app/data
+        # ADICIONADO: Montagem do volume temporário no diretório /tmp.
+        - name: temp-storage 
+          mountPath: /tmp
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -109,11 +117,10 @@ spec:
       name: meu-dash-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "standard" # Verifique se este storageClass existe no seu cluster
+      storageClassName: "standard"
       resources:
         requests:
           storage: 1Gi
-
 ---
 # --- Ingress: Ponto de entrada para o tráfego externo via HTTPS ---
 apiVersion: networking.k8s.io/v1
