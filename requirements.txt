@@ -6,6 +6,4 @@ pandas
 numpy
 celery
 redis
-google-generativeai
-python-dotenv
-gunicorn
+groq
