@@ -41,11 +41,21 @@ def ask_question_to_agent(question: str, report_data_json: str) -> str:
         header = report_data.get('header', {})
         records_preview = records[:3] # Mantém uma pequena amostra para exemplos
 
-        # NOVO: Cria um resumo da distribuição de casos por time (squad)
+        # ANÁLISE APROFUNDADA: Cria um resumo da distribuição de casos E alertas por time.
         if records:
-            squad_counts = Counter(record.get('assignment_group', 'DESCONHECIDO') for record in records)
-            # Formata o resumo para o prompt, mostrando os 10 principais times
-            squad_summary = "\n".join([f"- {squad}: {count} {'casos' if count > 1 else 'caso'}" for squad, count in squad_counts.most_common(10)])
+            squad_summary_data = {}
+            for record in records:
+                squad = record.get('assignment_group', 'DESCONHECIDO')
+                if squad not in squad_summary_data:
+                    squad_summary_data[squad] = {'casos': 0, 'alertas': 0}
+                squad_summary_data[squad]['casos'] += 1
+                squad_summary_data[squad]['alertas'] += record.get('alert_count', 0)
+            
+            # Ordena os times pelo número de casos e pega o Top 10
+            top_10_squads = sorted(squad_summary_data.items(), key=lambda item: item[1]['casos'], reverse=True)[:10]
+
+            # Formata o resumo para o prompt, tornando-o inequívoco
+            squad_summary = "\n".join([f"- {squad}: {data['casos']} casos (gerando {data['alertas']} alertas)" for squad, data in top_10_squads])
         else:
             squad_summary = "Nenhum caso encontrado para resumir."
 
@@ -53,7 +63,7 @@ def ask_question_to_agent(question: str, report_data_json: str) -> str:
 
         user_content = f"""
         **Contexto do Relatório:**
-        - Distribuição de Casos por Time (Top 10):
+        - Distribuição por Time (Top 10 por número de casos):
 {squad_summary}
         - Resumo: Total de Alertas={header.get('total_alertas', 'N/A')}, Risco Médio={header.get('risco_medio', 0):.2f}, Ineficiência Média={header.get('ineficiencia_media', 0):.2f}, Impacto Médio={header.get('impacto_medio', 0):.2f}
         - Amostra de Dados (Primeiros 3 de {len(report_data.get('records', []))} casos):
