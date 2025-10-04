@@ -232,10 +232,10 @@
             color: var(--success-color);
         }
         .action-plan-card {
-             border-left: 4px solid var(--accent-color);
+             border-left: 4px solid var(--danger-color);
         }
         .action-plan-card svg {
-             color: var(--accent-color);
+             color: var(--danger-color);
         }
 
         /* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
@@ -267,8 +267,8 @@
             {% if last_action_plan %}
             <div class="action-plan-section">
                 <a href="{{ last_action_plan.url }}" target="_blank" class="side-card action-plan-card">
-                    <!-- Ícone de Editar -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    <!-- Ícone de Alvo -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
                     <div class="side-card-text">
                         <h3>Editar Plano de Ação</h3>
                         <p>Gerado em: {{ last_action_plan.date }}</p>
@@ -396,4 +396,3 @@
     </script>
 </body>
 </html>
-
