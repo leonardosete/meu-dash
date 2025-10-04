@@ -3,645 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Análise de Alertas</title>
-    <!-- Tailwind CSS para uma estilização rápida e moderna -->
+    <title>Dashboard Analítico - MeuDash</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Poppins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Estilos personalizados e variáveis de cor para manter a consistência */
+        :root {
+            --bg-primary: #12141D;
+            --bg-secondary: #1B1E2C;
+            --border-color: #3A3D5A;
+            --text-primary: #E0E0E0;
+            --text-secondary: #a0aec0;
+            --accent-color: #4F46E5;
+        }
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #12141D;
-            color: #E0E0E0;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
         }
         .card {
-            background-color: #1B1E2C;
-            border: 1px solid #3A3D5A;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
         }
-        .stat-card {
+        .kpi-card {
             background-color: #24273A;
-            border: 1px solid #3A3D5A;
-        }
-        .file-input-wrapper {
-            border: 2px dashed #3A3D5A;
-        }
-        .file-input-wrapper.drag-active {
-            background-color: #24273A;
-            border-color: #6A5AF9;
-        }
-        /* Animação para o spinner */
-        .spinner {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Transições suaves para as telas */
-        .view {
-            transition: opacity 0.5s ease-in-out;
-        }
-        /* Estilos para o Modal do Chat */
-        .chat-modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-        }
-        .chat-modal {
-            height: 85vh;
-            max-height: 700px;
-            width: 90vw;
-            max-width: 600px;
-            background-color: #1B1E2C;
-            border: 1px solid #3A3D5A;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-        .chat-box {
-            background-color: #12141D;
-        }
-        .chat-message {
-            max-width: 85%;
-        }
-        .user-message {
-            background-color: #4F46E5; /* indigo-600 */
-            color: white;
-            align-self: flex-end;
-        }
-        .assistant-message {
-            background-color: #24273A;
-            color: #E0E0E0;
-            align-self: flex-start;
-        }
-        .dot-flashing {
-            position: relative; width: 8px; height: 8px; border-radius: 5px; background-color: #6B7280; color: #6B7280; animation: dotFlashing 1s infinite linear alternate; animation-delay: .5s;
-        }
-        .dot-flashing::before, .dot-flashing::after {
-            content: ''; display: inline-block; position: absolute; top: 0;
-        }
-        .dot-flashing::before {
-            left: -12px; width: 8px; height: 8px; border-radius: 5px; background-color: #6B7280; color: #6B7280; animation: dotFlashing 1s infinite alternate; animation-delay: 0s;
-        }
-        .dot-flashing::after {
-            left: 12px; width: 8px; height: 8px; border-radius: 5px; background-color: #6B7280; color: #6B7280; animation: dotFlashing 1s infinite alternate; animation-delay: 1s;
-        }
-        @keyframes dotFlashing {
-            0% { background-color: #6B7280; }
-            50%, 100% { background-color: #374151; }
-        }
-        /* Botão flutuante do Chat */
-        #chat-fab {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 50;
-            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
-        }
-        #chat-fab:hover {
-            transform: scale(1.1);
         }
     </style>
 </head>
-<body class="p-5 md:p-8 min-h-screen flex items-center justify-center">
-
-    <main id="app-container" class="w-full max-w-5xl mx-auto">
-
-        <!-- =============================================================== -->
-        <!-- VIEW: DASHBOARD (TELA INICIAL)                                  -->
-        <!-- =============================================================== -->
-        <div id="dashboard-view" class="view space-y-8">
-            <h1 class="text-4xl md:text-5xl font-bold text-white text-center">MeuDash</h1>
-
-            <!-- Seção do Resumo -->
-            <div class="dashboard-section card rounded-2xl p-6 md:p-8 shadow-2xl">
-                <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6">
-                    <h2 class="text-2xl font-semibold text-white">Resumo da Última Análise</h2>
-                    <p class="text-sm text-gray-400 mt-2 sm:mt-0">{{ last_report_date or 'Nenhuma análise encontrada' }}</p>
-                </div>
-                <div id="summary-content">
-                    <!-- Conteúdo do resumo será inserido aqui pelo JS -->
-                </div>
+<body class="p-5 md:p-8">
+    <div class="w-full max-w-7xl mx-auto space-y-8">
+        <header class="flex flex-col md:flex-row justify-between md:items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-white">Dashboard Analítico</h1>
+                <p class="text-gray-400">Análise do relatório: <span class="font-semibold text-indigo-400">{{ report_filename or 'Nenhum relatório carregado' }}</span></p>
             </div>
+            <a href="{{ url_for('index') }}" class="mt-4 md:mt-0 inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                &larr; Voltar para Home
+            </a>
+        </header>
 
-            <!-- Seção de Upload -->
-            <div class="upload-section max-w-2xl mx-auto">
-                <div class="card rounded-2xl p-6 md:p-10 shadow-2xl text-center">
-                    <h2 class="text-2xl font-semibold text-white mb-6">Nova Análise</h2>
-                    <div id="upload-error" class="hidden text-red-400 bg-red-900/20 border border-red-500 p-4 rounded-lg mb-6 text-left">
-                        <!-- Mensagem de erro -->
-                    </div>
-                    <form id="upload-form" method="POST" enctype="multipart/form-data">
-                        <label for="file_atual" class="block font-medium mb-4 text-left text-lg">Selecione o arquivo de dados:</label>
-                        <div id="file-wrapper" class="file-input-wrapper rounded-xl p-8 cursor-pointer transition-colors duration-300 mb-8">
-                            <input type="file" id="file_atual" name="file_atual" class="hidden" required>
-                            <div class="flex flex-col items-center justify-center">
-                                <svg class="w-12 h-12 text-gray-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3-3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" /></svg>
-                                <span id="file-text" class="text-gray-400">Clique ou arraste o arquivo aqui</span>
-                                <span id="file-name" class="hidden mt-2 font-medium text-green-400"></span>
-                            </div>
-                        </div>
-                        <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 text-lg disabled:bg-gray-600 disabled:cursor-not-allowed">
-                            Analisar Arquivo
-                        </button>
-                    </form>
-                </div>
+        <!-- Seção de KPIs Principais -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="kpi-card rounded-xl p-6">
+                <h3 class="text-sm font-medium text-gray-400 mb-2">Total de Grupos de Alertas</h3>
+                <p class="text-4xl font-bold text-white">{{ kpis.total_grupos or 'N/A' }}</p>
             </div>
-
-            <!-- Seção de Links -->
-            <div class="side-links grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Links serão inseridos aqui -->
+            <div class="kpi-card rounded-xl p-6">
+                <h3 class="text-sm font-medium text-gray-400 mb-2">Casos que Precisam de Atuação</h3>
+                <p class="text-4xl font-bold text-red-400">{{ kpis.casos_atuacao or 'N/A' }}</p>
+            </div>
+            <div class="kpi-card rounded-xl p-6">
+                <h3 class="text-sm font-medium text-gray-400 mb-2">Taxa de Sucesso da Automação</h3>
+                <p class="text-4xl font-bold text-green-400">{{ '%.2f' % kpis.taxa_sucesso if kpis.taxa_sucesso is not none else 'N/A' }}%</p>
+            </div>
+            <div class="kpi-card rounded-xl p-6">
+                <h3 class="text-sm font-medium text-gray-400 mb-2">Squads com Casos em Aberto</h3>
+                <p class="text-4xl font-bold text-yellow-400">{{ kpis.squads_com_casos or 'N/A' }}</p>
             </div>
         </div>
 
-        <!-- =============================================================== -->
-        <!-- VIEW: STATUS (PROCESSANDO, SUCESSO, ERRO)                       -->
-        <!-- =============================================================== -->
-        <div id="status-view" class="view hidden">
-            <div class="card rounded-2xl p-8 md:p-16 shadow-2xl text-center max-w-2xl mx-auto">
-                <!-- Status: Processando -->
-                <div id="status-pending">
-                    <div class="spinner border-4 border-gray-600 border-t-indigo-500 rounded-full w-16 h-16 mx-auto mb-6"></div>
-                    <h1 class="text-3xl font-bold text-white mb-3">Processando...</h1>
-                    <p class="text-gray-400 text-lg">Sua análise está em andamento. Por favor, aguarde um momento.</p>
-                </div>
-                <!-- Status: Sucesso -->
-                <div id="status-success" class="hidden">
-                    <svg class="w-20 h-20 text-green-500 mx-auto mb-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <h1 class="text-3xl font-bold text-white mb-3">Análise Concluída!</h1>
-                    <p class="text-gray-400 text-lg mb-8">O seu relatório foi gerado com sucesso e está pronto para visualização.</p>
-                    <a id="report-link" href="#" class="inline-block bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 text-lg">Ver Relatório</a>
-                </div>
-                <!-- Status: Erro -->
-                <div id="status-failed" class="hidden">
-                    <svg class="w-20 h-20 text-red-500 mx-auto mb-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
-                    <h1 class="text-3xl font-bold text-white mb-3">Ocorreu um Erro</h1>
-                    <p id="error-message" class="text-gray-400 text-lg mb-8">Não foi possível processar seu arquivo. Por favor, tente novamente.</p>
-                    <button id="retry-btn" class="inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 text-lg">Tentar Novamente</button>
+        <!-- Seção de Gráficos Principais -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="card rounded-xl p-6">
+                <h3 class="text-xl font-semibold mb-4">Top 5 Squads por Casos em Aberto</h3>
+                <canvas id="squadsChart"></canvas>
+            </div>
+            <div class="card rounded-xl p-6">
+                <h3 class="text-xl font-semibold mb-4">Distribuição dos Tipos de Problema</h3>
+                <div class="max-w-sm mx-auto">
+                    <canvas id="actionsChart"></canvas>
                 </div>
             </div>
         </div>
-
-    </main>
-
-    <!-- =============================================================== -->
-    <!-- BOTÃO FLUTUANTE E MODAL DO CHAT                                 -->
-    <!-- =============================================================== -->
-    <button id="chat-fab" title="Perguntar à IA sobre o último relatório" class="hidden w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-2xl">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
-            <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
-        </svg>
-    </button>
-
-    <div id="chat-modal" class="chat-modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="chat-modal rounded-2xl flex flex-col">
-            <!-- Cabeçalho do Chat -->
-            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-                <div>
-                    <h5 class="text-lg font-semibold text-white">Agente de Análise de IA</h5>
-                    <small id="chat-report-info" class="text-gray-400">Analisando o relatório...</small>
-                </div>
-                <button id="close-chat-btn" class="text-gray-400 hover:text-white">&times;</button>
-            </div>
-            <!-- Caixa de Mensagens -->
-            <div id="chat-box" class="chat-box flex-grow p-4 overflow-y-auto flex flex-col space-y-4">
-                <!-- Mensagens do chat serão inseridas aqui -->
-            </div>
-            <!-- Sugestões de Perguntas -->
-            <div id="chat-suggestions" class="p-4 border-t border-gray-700">
-                <p class="text-xs text-gray-400 mb-2">Sugestões:</p>
-                <div class="flex flex-wrap gap-2">
-                    <button class="chat-suggestion-btn">Qual time teve mais casos?</button>
-                    <button class="chat-suggestion-btn">Resuma os 3 principais problemas.</button>
-                    <button class="chat-suggestion-btn">Como o Docker é usado no projeto?</button>
-                </div>
-                <script>
-                    document.querySelectorAll('.chat-suggestion-btn').forEach(button => {
-                        button.addEventListener('click', () => { document.getElementById('chat-user-input').value = button.textContent; document.getElementById('chat-form').requestSubmit(); });
-                    });
-                </script>
-                <style>
-                    .chat-suggestion-btn { background-color: #24273A; color: #E0E0E0; border: 1px solid #3A3D5A; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; transition: all 0.2s; }
-                    .chat-suggestion-btn:hover { background-color: #4F46E5; border-color: #4F46E5; color: white; }
-                </style>
-            </div>
-            <!-- Input do Chat -->
-            <div class="p-4 border-t border-gray-700">
-                <div id="chat-loading-indicator" class="hidden mb-2"><div class="dot-flashing"></div></div>
-                <form id="chat-form" class="flex items-center space-x-3">
-                    <input type="text" id="chat-user-input" class="flex-grow bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder="Digite sua pergunta..." autocomplete="off" required>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-5 rounded-lg transition-colors">Enviar</button>
-                </form>
-            </div>
+        
+        <!-- Seção de Tabela de Detalhes -->
+        <div class="card rounded-xl p-6">
+             <h3 class="text-xl font-semibold mb-4">Problemas Mais Críticos para Atuação</h3>
+             <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="border-b border-gray-700">
+                        <tr>
+                            <th class="p-3">Prioridade</th>
+                            <th class="p-3">Descrição do Problema</th>
+                            <th class="p-3">Squad Responsável</th>
+                            <th class="p-3">Total de Alertas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for problema in top_problemas %}
+                        <tr class="border-b border-gray-800 hover:bg-gray-800/50">
+                            <td class="p-3 font-bold text-red-400">{{ '%.2f' % problema.score_ponderado_final }}</td>
+                            <td class="p-3">{{ problema.short_description }}</td>
+                            <td class="p-3 text-gray-400">{{ problema.assignment_group }}</td>
+                            <td class="p-3 font-medium">{{ problema.alert_count }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center p-6 text-gray-500">Nenhum problema crítico para atuação. Tudo em ordem!</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+             </div>
         </div>
+
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // --- VARIÁVEIS E ELEMENTOS DO DOM ---
-            const app = {
-                views: {
-                    dashboard: document.getElementById('dashboard-view'),
-                    status: document.getElementById('status-view'),
-                },
-                statusPanels: {
-                    pending: document.getElementById('status-pending'),
-                    success: document.getElementById('status-success'),
-                    failed: document.getElementById('status-failed'),
-                },
-                uploadForm: document.getElementById('upload-form'),
-                fileInput: document.getElementById('file_atual'),
-                fileWrapper: document.getElementById('file-wrapper'),
-                fileText: document.getElementById('file-text'),
-                fileName: document.getElementById('file-name'),
-                submitBtn: document.getElementById('submit-btn'),
-                retryBtn: document.getElementById('retry-btn'),
-                reportLink: document.getElementById('report-link'),
-                errorMessage: document.getElementById('error-message'),
-                uploadError: document.getElementById('upload-error'),
-                chat: {
-                    fab: document.getElementById('chat-fab'),
-                    modal: document.getElementById('chat-modal'),
-                    closeBtn: document.getElementById('close-chat-btn'),
-                    reportInfo: document.getElementById('chat-report-info'),
-                    box: document.getElementById('chat-box'),
-                    form: document.getElementById('chat-form'),
-                    input: document.getElementById('chat-user-input'),
-                    loading: document.getElementById('chat-loading-indicator'),
-                    suggestions: document.getElementById('chat-suggestions'),
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Dados Injetados pelo Flask ---
+            const squadsData = {{ squads_chart_data | tojson | safe }};
+            const actionsData = {{ actions_chart_data | tojson | safe }};
+
+            // --- Configurações Globais dos Gráficos ---
+            Chart.defaults.color = 'rgba(224, 224, 224, 0.7)';
+            Chart.defaults.font.family = "'Poppins', sans-serif";
+            
+            const chartPlugins = {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                    }
                 }
             };
 
-            // --- DADOS INICIAIS (PASSADOS PELO FLASK/JINJA2) ---
-            // CORREÇÃO: As variáveis Jinja são colocadas entre aspas para se tornarem strings JS.
-            // Isso evita erros de sintaxe se a variável não for passada pelo backend.
-            const summaryDataJSON = '{{ summary_data | tojson | safe }}';
-            const lastReportId = {{ last_report.id if last_report else 'null' }};
-            const lastReportFilename = '{{ last_report.original_filename if last_report else '' }}';
-            const lastTrendAnalysisJSON = '{{ last_trend_analysis | tojson | safe }}';
-            const lastActionPlanJSON = '{{ last_action_plan | tojson | safe }}';
-
-            // Em seguida, fazemos o parse da string JSON para um objeto JavaScript.
-            // Isso é mais robusto e lida com casos onde os dados são nulos ou ausentes.
-            const summaryData = (summaryDataJSON && summaryDataJSON !== 'null') ? JSON.parse(summaryDataJSON) : null;
-            const lastTrendAnalysis = (lastTrendAnalysisJSON && lastTrendAnalysisJSON !== 'null') ? JSON.parse(lastTrendAnalysisJSON) : null;
-            const lastActionPlan = (lastActionPlanJSON && lastActionPlanJSON !== 'null') ? JSON.parse(lastActionPlanJSON) : null;
-
-
-            // --- FUNÇÕES ---
-
-            // Troca entre a tela principal e a de status
-            function showView(viewName) {
-                Object.values(app.views).forEach(view => view.classList.add('hidden', 'opacity-0'));
-                if (app.views[viewName]) {
-                    app.views[viewName].classList.remove('hidden');
-                    setTimeout(() => app.views[viewName].classList.remove('opacity-0'), 50);
-                }
-            }
-
-            // Mostra o painel de status específico (processando, sucesso, erro)
-            function showStatusPanel(statusName) {
-                Object.values(app.statusPanels).forEach(panel => panel.classList.add('hidden'));
-                if (app.statusPanels[statusName]) {
-                    app.statusPanels[statusName].classList.remove('hidden');
-                }
-            }
-
-            // Função para verificar o status da tarefa no backend
-            function pollStatus(taskId) {
-                const pollInterval = 3000; // Verificar a cada 3 segundos
-
-                const intervalId = setInterval(() => {
-                    fetch(`/status/${taskId}`)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.state === 'SUCCESS') {
-                                clearInterval(intervalId);
-                                // Redireciona para a página inicial para recarregar o dashboard e mostrar o chat
-                                // Adiciona a URL do novo relatório e o resumo da IA como parâmetros para exibição imediata
-                                const reportUrl = data.result.report_url;
-                                const aiSummary = data.result.ai_summary || '';
-                                const redirectUrl = `{{ url_for('index') }}?new_report_url=${encodeURIComponent(reportUrl)}&ai_summary=${encodeURIComponent(aiSummary)}`;
-                                window.location.href = redirectUrl;
-                            } else if (data.state === 'FAILURE') {
-                                clearInterval(intervalId);
-                                app.errorMessage.textContent = data.result.error || 'Ocorreu um erro desconhecido durante o processamento.';
-                                showStatusPanel('failed');
-                            } // Se for PENDING ou STARTED, continua no loop
-                        })
-                        .catch(err => {
-                            clearInterval(intervalId);
-                            console.error("Erro ao buscar status:", err);
-                            app.errorMessage.textContent = 'Não foi possível conectar ao servidor para verificar o status da tarefa.';
-                            showStatusPanel('failed');
-                        });
-                }, pollInterval);
-            }
-
-            // Configura a interatividade do campo de upload (drag & drop)
-            function setupFileInput() {
-                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                    app.fileWrapper.addEventListener(eventName, e => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    });
-                });
-                ['dragenter', 'dragover'].forEach(eventName => {
-                    app.fileWrapper.addEventListener(eventName, () => app.fileWrapper.classList.add('drag-active'));
-                });
-                ['dragleave', 'drop'].forEach(eventName => {
-                    app.fileWrapper.addEventListener(eventName, () => app.fileWrapper.classList.remove('drag-active'));
-                });
-                app.fileWrapper.addEventListener('click', () => app.fileInput.click());
-                app.fileWrapper.addEventListener('drop', e => {
-                    if (e.dataTransfer.files.length > 0) {
-                        app.fileInput.files = e.dataTransfer.files;
-                        app.fileInput.dispatchEvent(new Event('change'));
-                    }
-                });
-                app.fileInput.addEventListener('change', () => {
-                    if (app.fileInput.files.length > 0) {
-                        app.fileName.textContent = app.fileInput.files[0].name;
-                        app.fileName.classList.remove('hidden');
-                        app.fileText.classList.add('hidden');
-                        app.uploadError.classList.add('hidden');
-                    } else {
-                        app.fileName.classList.add('hidden');
-                        app.fileText.classList.remove('hidden');
-                    }
-                });
-            }
-
-            // Lida com o envio do formulário
-            app.uploadForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                app.uploadError.classList.add('hidden');
-
-                if (app.fileInput.files.length === 0) {
-                    app.uploadError.textContent = "Por favor, selecione um arquivo para continuar.";
-                    app.uploadError.classList.remove('hidden');
-                    return;
-                }
-                
-                app.submitBtn.disabled = true;
-                app.submitBtn.textContent = 'Enviando...';
-
-                showView('status');
-                showStatusPanel('pending');
-
-                const formData = new FormData(app.uploadForm);
-                const uploadUrl = "{{ url_for('upload_file') }}";
-
-                fetch(uploadUrl, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (!response.ok) {
-                         // Tenta extrair o erro do JSON, senão usa o texto da resposta
-                         return response.json().then(errData => {
-                            throw new Error(errData.error || `Falha no upload: ${response.statusText}`);
-                        }).catch(() => {
-                            // Fallback se a resposta não for JSON
-                            throw new Error(`Falha no upload: ${response.status} ${response.statusText}`);
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.task_id) {
-                        pollStatus(data.task_id);
-                    } else {
-                        throw new Error('Não foi possível obter o ID da tarefa do servidor.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro no upload:', error);
-                    app.errorMessage.textContent = error.message || 'Ocorreu uma falha grave ao enviar o arquivo.';
-                    showStatusPanel('failed');
-                });
-            });
-            
-            // Lógica do botão "Tentar Novamente"
-            app.retryBtn.addEventListener('click', () => {
-                app.uploadForm.reset();
-                app.fileInput.dispatchEvent(new Event('change'));
-                app.submitBtn.disabled = false;
-                app.submitBtn.textContent = 'Analisar Arquivo';
-                showView('dashboard');
-            });
-
-            // --- LÓGICA DO CHAT ---
-
-            function appendChatMessage(text, sender) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `chat-message p-3 rounded-lg ${sender === 'user' ? 'user-message' : 'assistant-message'}`;
-
-                // Conversão mais robusta de Markdown para HTML
-                let formattedText = text
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Negrito
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>');       // Itálico
-
-                // Trata listas de forma mais segura
-                if (formattedText.includes('\n- ')) {
-                    const items = formattedText.split('\n- ').map(item => item.trim()).filter(Boolean);
-                    formattedText = '<ul>' + items.map(item => `<li>${item}</li>`).join('') + '</ul>';
-                }
-
-                messageDiv.innerHTML = formattedText; // innerHTML é seguro aqui pois o conteúdo vem do nosso backend
-                app.chat.box.appendChild(messageDiv);
-                app.chat.box.scrollTop = app.chat.box.scrollHeight;
-            }
-
-            function setupChat() {
-                // O botão de chat agora está sempre visível.
-                app.chat.fab.classList.remove('hidden');
-
-                app.chat.fab.addEventListener('click', () => {
-                    app.chat.modal.classList.remove('hidden');
-                    app.chat.modal.classList.add('flex');
-                    
-                    // A mensagem de boas-vindas se adapta ao contexto
-                    if (lastReportId) {
-                        app.chat.reportInfo.textContent = `Analisando: ${lastReportFilename}`;
-                    } else {
-                        app.chat.reportInfo.textContent = 'Pronto para responder sobre o projeto.';
-                    }
-
-                    if (app.chat.box.children.length === 0) { // Adiciona a saudação apenas na primeira vez
-                        let welcomeMessage = "Olá! Sou seu agente de IA. Como posso te ajudar?";
-                        if (lastReportId) {
-                            welcomeMessage = `Olá! Sou seu agente de IA. Estou com os dados do relatório '${lastReportFilename}' prontos para análise. O que você gostaria de saber?`;
+            // --- Gráfico de Barras: Top Squads ---
+            const squadsCtx = document.getElementById('squadsChart')?.getContext('2d');
+            if (squadsCtx && squadsData) {
+                new Chart(squadsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: squadsData.labels,
+                        datasets: [{
+                            label: 'Casos em Aberto',
+                            data: squadsData.data,
+                            backgroundColor: 'rgba(79, 70, 229, 0.6)',
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: {
+                            x: { grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                            y: { grid: { display: false } }
+                        },
+                        plugins: {
+                            legend: { display: false }
                         }
-                        appendChatMessage(welcomeMessage, 'assistant');
-                    }
-                });
-
-                app.chat.closeBtn.addEventListener('click', () => {
-                    app.chat.modal.classList.add('hidden');
-                    app.chat.modal.classList.remove('flex');
-                });
-
-                app.chat.form.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const userMessage = app.chat.input.value.trim();
-                    if (!userMessage) return;
-
-                    appendChatMessage(userMessage, 'user');
-                    // Adiciona a mensagem do usuário ao histórico do chat
-                    chatHistory.push({ role: 'user', content: userMessage });
-
-
-                    app.chat.input.value = '';
-                    app.chat.loading.classList.remove('hidden');
-                    app.chat.box.scrollTop = app.chat.box.scrollHeight;
-
-                    try {
-                        const response = await fetch("{{ url_for('ask_unified_chat_agent') }}", {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            // O ID do relatório é enviado se existir, senão é nulo.
-                            // O backend já sabe como lidar com isso, usando o modo "Especialista de Projeto".
-                            body: JSON.stringify({ 
-                                report_id: lastReportId || null, 
-                                question: userMessage,
-                                history: chatHistory // Envia o histórico
-                            }),
-                        });
-                        const data = await response.json();
-                        if (!response.ok) throw new Error(data.error || 'Erro na requisição.');
-                        
-                        // Adiciona a resposta do assistente ao histórico
-                        chatHistory.push({ role: 'assistant', content: data.answer });
-                        appendChatMessage(data.answer, 'assistant');
-                    } catch (error) {
-                        console.error('Erro ao contatar o agente de IA:', error);
-                        appendChatMessage(`Desculpe, ocorreu um erro: ${error.message}`, 'assistant');
-                    } finally {
-                        app.chat.loading.classList.add('hidden');
                     }
                 });
             }
 
-            let chatHistory = []; // Inicializa o histórico do chat
-            
-            // Popula o dashboard com os dados iniciais
-            function populateDashboard() {
-                // Popula o resumo
-                const summaryContainer = document.getElementById('summary-content');
-                if (summaryData && summaryData.header) {
-                    const stats = summaryData.header;
-                    summaryContainer.innerHTML = `
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                            <div class="stat-card p-5 rounded-xl border-l-4 border-indigo-500">
-                                <h3 class="text-sm font-medium text-gray-400 mb-1">Total de Alertas</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.total_alertas}</p>
-                            </div>
-                            <div class="stat-card p-5 rounded-xl border-l-4 border-red-500">
-                                <h3 class="text-sm font-medium text-gray-400 mb-1">Risco Médio</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${(stats.risco_medio || 0).toFixed(2)}</p>
-                            </div>
-                            <div class="stat-card p-5 rounded-xl border-l-4 border-yellow-500">
-                                <h3 class="text-sm font-medium text-gray-400 mb-1">Ineficiência Média</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${(stats.ineficiencia_media || 0).toFixed(2)}</p>
-                            </div>
-                            <div class="stat-card p-5 rounded-xl border-l-4 border-cyan-500">
-                                <h3 class="text-sm font-medium text-gray-400 mb-1">Impacto Médio</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${(stats.impacto_medio || 0).toFixed(2)}</p>
-                            </div>
-                        </div>`;
-                } else {
-                    summaryContainer.innerHTML = `<div class="text-center py-8"><p class="text-gray-400">Nenhum dado de análise encontrado. Envie um arquivo para gerar o primeiro relatório.</p></div>`;
-                }
-
-                // Popula os links laterais
-                const links = [];
-                if (lastActionPlan) {
-                    links.push({
-                        title: "Plano de Ação",
-                        description: `Referente à análise de ${lastActionPlan.date}`,
-                        url: lastActionPlan.url,
-                        color: "red",
-                        icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`
-                    });
-                }
-                if (lastTrendAnalysis) {
-                     links.push({
-                        title: "Ver Análise de Tendência",
-                        description: `Comparativo gerado em ${lastTrendAnalysis.date}`,
-                        url: lastTrendAnalysis.url,
-                        color: "green",
-                        icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>`
-                    });
-                }
-                links.push({
-                    title: "Histórico de Relatórios",
-                    description: "Acessar todos os relatórios gerados.",
-                    url: "{{ url_for('relatorios') }}",
-                    color: "gray",
-                    icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>`
+            // --- Gráfico de Donut: Ações Sugeridas ---
+            const actionsCtx = document.getElementById('actionsChart')?.getContext('2d');
+            if (actionsCtx && actionsData) {
+                new Chart(actionsCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: actionsData.labels,
+                        datasets: [{
+                            data: actionsData.data,
+                            backgroundColor: [
+                                'rgba(239, 68, 68, 0.7)',  // red
+                                'rgba(245, 158, 11, 0.7)', // amber
+                                'rgba(249, 115, 22, 0.7)', // orange
+                                'rgba(139, 92, 246, 0.7)', // violet
+                                'rgba(59, 130, 246, 0.7)'  // blue
+                            ],
+                            borderColor: 'var(--bg-secondary)',
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: chartPlugins,
+                    }
                 });
-
-                const linksContainer = document.querySelector('.side-links');
-                const colorMap = { red: 'border-red-500 text-red-500', green: 'border-green-500 text-green-500', gray: 'border-gray-500 text-gray-500' };
-                linksContainer.innerHTML = links.map(link => `
-                    <a href="${link.url}" target="_blank" class="side-card card p-4 rounded-xl flex items-center gap-4 hover:border-indigo-500 hover:-translate-y-1 transition-all duration-300 border-l-4 ${colorMap[link.color]}">
-                        <div class="icon ${colorMap[link.color]}">${link.icon}</div>
-                        <div>
-                            <h3 class="font-semibold text-white leading-tight">${link.title}</h3>
-                            <p class="text-sm text-gray-400">${link.description}</p>
-                        </div>
-                    </a>
-                `).join('');
-            }
-
-            // --- INICIALIZAÇÃO ---
-            populateDashboard();
-            setupFileInput();
-            setupChat();
-            // Verifica se a URL contém um task_id para iniciar o polling
-            const urlParams = new URLSearchParams(window.location.search);
-            const taskId = urlParams.get('task_id');
-            const newReportUrl = urlParams.get('new_report_url');
-            const aiSummary = urlParams.get('ai_summary');
-
-            // Se a página foi recarregada após uma análise bem-sucedida, mostra o resumo da IA
-            if (newReportUrl && aiSummary) {
-                const summaryContainer = document.getElementById('summary-content');
-                const aiCard = document.createElement('div');
-                aiCard.className = 'bg-indigo-900/30 border border-indigo-600 text-indigo-200 p-6 rounded-2xl mb-8';
-                aiCard.innerHTML = `
-                    <div class="flex items-start gap-4">
-                        <span class="text-2xl mt-1">🤖</span>
-                        <div>
-                            <h4 class="font-bold text-lg text-white">Resumo Executivo da Análise (IA)</h4>
-                            <p class="mt-2 mb-4 text-indigo-300">${decodeURIComponent(aiSummary)}</p>
-                            <a href="${decodeURIComponent(newReportUrl)}" target="_blank" class="font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
-                                Ver relatório completo &rarr;
-                            </a>
-                        </div>
-                    </div>
-                `;
-                summaryContainer.parentNode.insertBefore(aiCard, summaryContainer);
-                // Limpa a URL para não mostrar o banner novamente em um refresh manual
-                window.history.replaceState({}, document.title, "{{ url_for('index') }}");
-            }
-
-
-            if (taskId) {
-                showView('status');
-                showStatusPanel('pending');
-                pollStatus(taskId);
-            } else {
-                showView('dashboard'); // Define a tela inicial
             }
         });
     </script>
+
 </body>
 </html>
