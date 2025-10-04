@@ -44,6 +44,63 @@
         .view {
             transition: opacity 0.5s ease-in-out;
         }
+        /* Estilos para o Modal do Chat */
+        .chat-modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+        .chat-modal {
+            height: 85vh;
+            max-height: 700px;
+            width: 90vw;
+            max-width: 600px;
+            background-color: #1B1E2C;
+            border: 1px solid #3A3D5A;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .chat-box {
+            background-color: #12141D;
+        }
+        .chat-message {
+            max-width: 85%;
+        }
+        .user-message {
+            background-color: #4F46E5; /* indigo-600 */
+            color: white;
+            align-self: flex-end;
+        }
+        .assistant-message {
+            background-color: #24273A;
+            color: #E0E0E0;
+            align-self: flex-start;
+        }
+        .dot-flashing {
+            position: relative; width: 8px; height: 8px; border-radius: 5px; background-color: #6B7280; color: #6B7280; animation: dotFlashing 1s infinite linear alternate; animation-delay: .5s;
+        }
+        .dot-flashing::before, .dot-flashing::after {
+            content: ''; display: inline-block; position: absolute; top: 0;
+        }
+        .dot-flashing::before {
+            left: -12px; width: 8px; height: 8px; border-radius: 5px; background-color: #6B7280; color: #6B7280; animation: dotFlashing 1s infinite alternate; animation-delay: 0s;
+        }
+        .dot-flashing::after {
+            left: 12px; width: 8px; height: 8px; border-radius: 5px; background-color: #6B7280; color: #6B7280; animation: dotFlashing 1s infinite alternate; animation-delay: 1s;
+        }
+        @keyframes dotFlashing {
+            0% { background-color: #6B7280; }
+            50%, 100% { background-color: #374151; }
+        }
+        /* Botão flutuante do Chat */
+        #chat-fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+        }
+        #chat-fab:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body class="p-5 md:p-8 min-h-screen flex items-center justify-center">
@@ -127,6 +184,41 @@
 
     </main>
 
+    <!-- =============================================================== -->
+    <!-- BOTÃO FLUTUANTE E MODAL DO CHAT                                 -->
+    <!-- =============================================================== -->
+    <button id="chat-fab" title="Perguntar à IA sobre o último relatório" class="hidden w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-2xl">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+            <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+        </svg>
+    </button>
+
+    <div id="chat-modal" class="chat-modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="chat-modal rounded-2xl flex flex-col">
+            <!-- Cabeçalho do Chat -->
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <div>
+                    <h5 class="text-lg font-semibold text-white">Agente de Análise de IA</h5>
+                    <small id="chat-report-info" class="text-gray-400">Analisando o relatório...</small>
+                </div>
+                <button id="close-chat-btn" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <!-- Caixa de Mensagens -->
+            <div id="chat-box" class="chat-box flex-grow p-4 overflow-y-auto flex flex-col space-y-4">
+                <!-- Mensagens do chat serão inseridas aqui -->
+            </div>
+            <!-- Input do Chat -->
+            <div class="p-4 border-t border-gray-700">
+                <div id="chat-loading-indicator" class="hidden mb-2"><div class="dot-flashing"></div></div>
+                <form id="chat-form" class="flex items-center space-x-3">
+                    <input type="text" id="chat-user-input" class="flex-grow bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder="Digite sua pergunta..." autocomplete="off" required>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-5 rounded-lg transition-colors">Enviar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // --- VARIÁVEIS E ELEMENTOS DO DOM ---
@@ -150,12 +242,24 @@
                 reportLink: document.getElementById('report-link'),
                 errorMessage: document.getElementById('error-message'),
                 uploadError: document.getElementById('upload-error'),
+                chat: {
+                    fab: document.getElementById('chat-fab'),
+                    modal: document.getElementById('chat-modal'),
+                    closeBtn: document.getElementById('close-chat-btn'),
+                    reportInfo: document.getElementById('chat-report-info'),
+                    box: document.getElementById('chat-box'),
+                    form: document.getElementById('chat-form'),
+                    input: document.getElementById('chat-user-input'),
+                    loading: document.getElementById('chat-loading-indicator'),
+                }
             };
 
             // --- DADOS INICIAIS (PASSADOS PELO FLASK/JINJA2) ---
             // CORREÇÃO: As variáveis Jinja são colocadas entre aspas para se tornarem strings JS.
             // Isso evita erros de sintaxe se a variável não for passada pelo backend.
             const summaryDataJSON = '{{ summary_data | tojson | safe }}';
+            const lastReportId = '{{ last_report.id if last_report else '' }}';
+            const lastReportFilename = '{{ last_report.original_filename if last_report else '' }}';
             const lastTrendAnalysisJSON = '{{ last_trend_analysis | tojson | safe }}';
             const lastActionPlanJSON = '{{ last_action_plan | tojson | safe }}';
 
@@ -309,6 +413,68 @@
                 app.submitBtn.textContent = 'Analisar Arquivo';
                 showView('dashboard');
             });
+
+            // --- LÓGICA DO CHAT ---
+
+            function appendChatMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('chat-message', 'p-3', 'rounded-lg', sender === 'user' ? 'user-message' : 'assistant-message');
+                // Simples conversão de markdown para HTML para listas e negrito
+                let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                formattedText = formattedText.replace(/^\* (.*$)/gm, '<ul><li>$1</li></ul>');
+                formattedText = formattedText.replace(/<\/ul>\n<ul>/g, ''); // Junta listas
+                messageDiv.innerHTML = formattedText;
+                app.chat.box.appendChild(messageDiv);
+                app.chat.box.scrollTop = app.chat.box.scrollHeight;
+            }
+
+            function setupChat() {
+                if (!lastReportId) return;
+
+                app.chat.fab.classList.remove('hidden');
+
+                app.chat.fab.addEventListener('click', () => {
+                    app.chat.modal.classList.remove('hidden');
+                    app.chat.modal.classList.add('flex');
+                    app.chat.reportInfo.textContent = `Analisando: ${lastReportFilename}`;
+                    if (app.chat.box.children.length === 0) {
+                         appendChatMessage(`Olá! Sou seu agente de IA. Estou com os dados do relatório '${lastReportFilename}' prontos. Faça perguntas específicas sobre os resultados.`, 'assistant');
+                    }
+                });
+
+                app.chat.closeBtn.addEventListener('click', () => {
+                    app.chat.modal.classList.add('hidden');
+                    app.chat.modal.classList.remove('flex');
+                });
+
+                app.chat.form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const userMessage = app.chat.input.value.trim();
+                    if (!userMessage) return;
+
+                    appendChatMessage(userMessage, 'user');
+                    app.chat.input.value = '';
+                    app.chat.loading.classList.remove('hidden');
+                    app.chat.box.scrollTop = app.chat.box.scrollHeight;
+
+                    try {
+                        const response = await fetch("{{ url_for('ask_chat_agent') }}", {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ report_id: lastReportId, question: userMessage }),
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.error || 'Erro na requisição.');
+                        
+                        appendChatMessage(data.answer, 'assistant');
+                    } catch (error) {
+                        console.error('Erro ao contatar o agente de IA:', error);
+                        appendChatMessage(`Desculpe, ocorreu um erro: ${error.message}`, 'assistant');
+                    } finally {
+                        app.chat.loading.classList.add('hidden');
+                    }
+                });
+            }
             
             // Popula o dashboard com os dados iniciais
             function populateDashboard() {
@@ -383,6 +549,7 @@
             // --- INICIALIZAÇÃO ---
             populateDashboard();
             setupFileInput();
+            setupChat();
             // Verifica se a URL contém um task_id para iniciar o polling
             const urlParams = new URLSearchParams(window.location.search);
             const taskId = urlParams.get('task_id');

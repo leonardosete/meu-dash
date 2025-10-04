@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv, atualizar_resumo_com_ia
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
-from .ai_agent import gerar_resumo_ia
+from .ai_agent import gerar_resumo_ia, ask_question_to_agent
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_migrate import Migrate
@@ -365,6 +365,36 @@ def relatorios():
         })
     return render_template('relatorios.html', reports=report_data)
 
+@app.route('/chat/ask', methods=['POST'])
+def ask_chat_agent():
+    """
+    Recebe uma pergunta do usuário sobre um relatório específico e retorna a resposta da IA.
+    """
+    data = request.get_json()
+    if not data or 'report_id' not in data or 'question' not in data:
+        return jsonify({'error': 'Dados inválidos. É necessário "report_id" e "question".'}), 400
+
+    report_id = data['report_id']
+    question = data['question']
+
+    report = Report.query.get(report_id)
+    if not report:
+        return jsonify({'error': 'Relatório não encontrado.'}), 404
+
+    if not report.json_summary_path or not os.path.exists(report.json_summary_path):
+        return jsonify({'error': 'Arquivo de dados do relatório não encontrado no servidor.'}), 500
+
+    try:
+        with open(report.json_summary_path, 'r', encoding='utf-8') as f:
+            report_data_json = f.read()
+        
+        answer = ask_question_to_agent(question, report_data_json)
+        
+        return jsonify({'answer': answer})
+
+    except Exception as e:
+        print(f"❌ Erro ao processar pergunta para o agente de IA: {e}")
+        return jsonify({'error': 'Ocorreu um erro interno ao contatar o agente de IA.'}), 500
 # =============================================================================
 # INICIALIZAÇÃO
 # =============================================================================

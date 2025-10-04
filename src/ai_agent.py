@@ -1,5 +1,6 @@
 
 import os
+import json
 import google.generativeai as genai
 from typing import Dict, Any
 
@@ -14,6 +15,55 @@ try:
         genai.configure(api_key=api_key)
 except Exception as e:
     print(f"❌ Erro ao configurar a API do Gemini: {e}")
+
+
+def ask_question_to_agent(question: str, report_data_json: str) -> str:
+    """
+    Envia uma pergunta para a IA do Gemini com o contexto de um relatório.
+
+    Args:
+        question (str): A pergunta do usuário.
+        report_data_json (str): Uma string JSON contendo os dados do relatório ('header' e 'records').
+
+    Returns:
+        str: A resposta gerada pela IA.
+    """
+    if not os.environ.get("GEMINI_API_KEY"):
+        return "A funcionalidade de chat com IA está desativada pois a chave de API (GEMINI_API_KEY) não foi configurada."
+
+    try:
+        model = genai.GenerativeModel('gemini-pro')
+        
+        # Carrega o JSON para garantir que está bem formatado e para extrair informações
+        report_data = json.loads(report_data_json)
+        header = report_data.get('header', {})
+        records_preview = report_data.get('records', [])[:3] # Pega uma amostra dos registros
+
+        prompt = f"""
+        Você é um analista de dados especialista em operações de TI e está respondendo a perguntas sobre um relatório de alertas.
+        Seja conciso e direto ao ponto. Use os dados fornecidos como a única fonte da verdade para sua resposta.
+
+        **Contexto do Relatório (Resumo):**
+        - Total de Alertas no período: {header.get('total_alertas', 'N/A')}
+        - Risco Médio dos Casos: {header.get('risco_medio', 0):.2f}
+        - Ineficiência Média da Automação: {header.get('ineficiencia_media', 0):.2f}
+        - Impacto Médio (volume): {header.get('impacto_medio', 0):.2f}
+
+        **Amostra dos Dados (Primeiros 3 de {len(report_data.get('records', []))} casos):**
+        ```json
+        {json.dumps(records_preview, indent=2, default=str)}
+        ```
+
+        **Pergunta do Usuário:** "{question}"
+
+        Responda à pergunta do usuário com base nos dados fornecidos. Se a pergunta não puder ser respondida com os dados, informe que não possui essa informação.
+        """
+        response = model.generate_content(prompt)
+        return response.text
+
+    except Exception as e:
+        print(f"❌ Erro ao chamar a API do Gemini na função de chat: {e}")
+        return f"Ocorreu um erro ao processar sua pergunta com a IA. Detalhes: {e}"
 
 
 def gerar_resumo_ia(kpis_tendencia: Dict[str, Any], header_atual: Dict[str, Any]) -> str:
