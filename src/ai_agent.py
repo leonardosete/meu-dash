@@ -2,6 +2,7 @@
 import os
 import json
 from groq import Groq
+from collections import Counter
 from typing import Dict, Any
 
 # Configure the Groq API client
@@ -36,13 +37,24 @@ def ask_question_to_agent(question: str, report_data_json: str) -> str:
     try:
         # Carrega o JSON para garantir que está bem formatado e para extrair informações
         report_data = json.loads(report_data_json)
+        records = report_data.get('records', [])
         header = report_data.get('header', {})
-        records_preview = report_data.get('records', [])[:3] # Pega uma amostra dos registros
+        records_preview = records[:3] # Mantém uma pequena amostra para exemplos
+
+        # NOVO: Cria um resumo da distribuição de casos por time (squad)
+        if records:
+            squad_counts = Counter(record.get('assignment_group', 'DESCONHECIDO') for record in records)
+            # Formata o resumo para o prompt, mostrando os 10 principais times
+            squad_summary = "\n".join([f"- {squad}: {count} {'casos' if count > 1 else 'caso'}" for squad, count in squad_counts.most_common(10)])
+        else:
+            squad_summary = "Nenhum caso encontrado para resumir."
 
         system_prompt = """Você é um analista de dados especialista em operações de TI. Responda perguntas sobre um relatório de alertas de forma concisa e direta, usando apenas os dados fornecidos como fonte da verdade. Se a pergunta não puder ser respondida com os dados, informe que não possui essa informação."""
 
         user_content = f"""
         **Contexto do Relatório:**
+        - Distribuição de Casos por Time (Top 10):
+{squad_summary}
         - Resumo: Total de Alertas={header.get('total_alertas', 'N/A')}, Risco Médio={header.get('risco_medio', 0):.2f}, Ineficiência Média={header.get('ineficiencia_media', 0):.2f}, Impacto Médio={header.get('impacto_medio', 0):.2f}
         - Amostra de Dados (Primeiros 3 de {len(report_data.get('records', []))} casos):
           ```json
