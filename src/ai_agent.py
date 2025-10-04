@@ -4,8 +4,8 @@ import json
 import functools
 from groq import Groq
 from collections import Counter
-from typing import Dict, Any
- 
+from typing import Dict, Any, List, Callable, Optional, Union
+
 # Configure the Groq API client
 # A chave de API deve ser definida como uma variável de ambiente.
 try:
@@ -19,7 +19,7 @@ except Exception as e:
     print(f"❌ Erro ao configurar a API do Groq: {e}")
     client = None
 
-@functools.lru_cache(maxsize=1)
+@functools.lru_cache(maxsize=2) # Aumenta o cache para acomodar o histórico
 def get_docs_content() -> str:
     """Carrega e concatena o conteúdo dos arquivos de documentação, com cache."""
     docs_content = ""
@@ -34,130 +34,21 @@ def get_docs_content() -> str:
             print(f"⚠️  Arquivo de documentação não encontrado: {doc_file}")
     return docs_content
 
-# Modelo recomendado para velocidade e custo-benefício no Groq
-MODEL_NAME = 'llama-3.3-70b-versatile'
-# Modelo mais rápido para a tarefa simples de roteamento
+# =============================================================================
+# MODELOS E CONFIGURAÇÕES DA IA (APÓS APLICAÇÃO DA SUGESTÃO ANTERIOR)
+# =============================================================================
+
+# Modelo principal para raciocínio e análise
+MODEL_NAME = 'llama-3.1-70b-versatile' 
+# Modelo mais rápido para tarefas de classificação/roteamento
 ROUTER_MODEL_NAME = 'llama-3.1-8b-instant'
 
-def route_question(question: str) -> str:
-    """
-    Classifica a pergunta do usuário para direcioná-la ao agente correto.
-    Retorna 'data_analysis' ou 'project_documentation'.
-    """
-    if not client:
-        # Se o cliente não estiver configurado, assume o padrão de análise de dados
-        return "data_analysis"
- 
-    try:
-        system_prompt = """Sua tarefa é classificar a pergunta do usuário em uma de três categorias: 'data_analysis', 'project_documentation', ou 'greeting'.
-- Use 'greeting' para saudações, cumprimentos ou conversas informais como "oi", "olá", "tudo bem?".
-- Use 'data_analysis' para perguntas sobre dados, relatórios, KPIs, números, tendências, 'casos', 'alertas', 'times' ou 'squads'.
-- Use 'project_documentation' para perguntas sobre o funcionamento do projeto, arquitetura, código, 'Flask', 'Kubernetes', 'Docker', ou como usar a aplicação.
-Responda apenas com a categoria.
-"""
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": question},
-            ],
-            model=ROUTER_MODEL_NAME,
-        )
-        category = chat_completion.choices[0].message.content.strip().lower().replace("'", "").replace('"', '')
-        if category in ["data_analysis", "project_documentation", "greeting"]:
-            return category
-        return "data_analysis" # Padrão de segurança
-    except Exception as e:
-        print(f"⚠️ Erro ao rotear pergunta, usando padrão 'data_analysis'. Erro: {e}")
-        return "data_analysis"
-
-
-def ask_question_to_agent(question: str, report_data_json: str) -> str:
-    """
-    Envia uma pergunta para a IA do Gemini com o contexto de um relatório.
-
-    Args:
-        question (str): A pergunta do usuário.
-        report_data_json (str): Uma string JSON contendo os dados do relatório ('header' e 'records').
-
-    Returns:
-        str: A resposta gerada pela IA.
-    """
-    if not client:
-        return "A funcionalidade de chat com IA está desativada pois a chave de API (GROQ_API_KEY) não foi configurada."
-
-    try:
-        # Carrega o JSON para garantir que está bem formatado e para extrair informações
-        report_data = json.loads(report_data_json)
-        records = report_data.get('records', [])
-        header = report_data.get('header', {})
-        records_preview = records[:3] # Mantém uma pequena amostra para exemplos
-
-        # ANÁLISE APROFUNDADA: Cria um resumo da distribuição de casos E alertas por time.
-        if records:
-            squad_summary_data = {}
-            for record in records:
-                squad = record.get('assignment_group', 'DESCONHECIDO')
-                if squad not in squad_summary_data:
-                    squad_summary_data[squad] = {'casos': 0, 'alertas': 0}
-                squad_summary_data[squad]['casos'] += 1
-                squad_summary_data[squad]['alertas'] += record.get('alert_count', 0)
-            
-            # Ordena os times pelo número de casos e pega o Top 10
-            top_10_squads = sorted(squad_summary_data.items(), key=lambda item: item[1]['casos'], reverse=True)[:10]
-
-            # Formata o resumo para o prompt, tornando-o inequívoco
-            squad_summary = "\n".join([f"- {squad}: {data['casos']} casos (gerando {data['alertas']} alertas)" for squad, data in top_10_squads])
-        else:
-            squad_summary = "Nenhum caso encontrado para resumir."
-
-        # NOVO: Cria um resumo dos 5 problemas mais críticos pelo score.
-        if records:
-            # Ordena todos os problemas pelo score de criticidade
-            sorted_problems = sorted(records, key=lambda x: x.get('score_criticidade_agregado', 0), reverse=True)
-            top_5_problems = sorted_problems[:5]
-            # Formata o resumo para o prompt
-            problems_summary = "\n".join([f"- \"{p.get('description', 'N/A')}\" (Time: {p.get('assignment_group', 'N/A')}, Score: {p.get('score_criticidade_agregado', 0):.1f})" for p in top_5_problems])
-        else:
-            problems_summary = "Nenhum problema encontrado para resumir."
-
-        system_prompt = """Você é um analista de dados especialista em operações de TI. Responda perguntas sobre um relatório de alertas de forma concisa e direta, usando apenas os dados fornecidos como fonte da verdade. Se a pergunta não puder ser respondida com os dados, informe que não possui essa informação."""
-
-        user_content = f"""
-        **Contexto do Relatório:**
-        - Distribuição por Time (Top 10 por número de casos):
-{squad_summary}
-        - Top 5 Problemas Mais Críticos (por Score):
-{problems_summary}
-        - Resumo: Total de Alertas={header.get('total_alertas', 'N/A')}, Risco Médio={header.get('risco_medio', 0):.2f}, Ineficiência Média={header.get('ineficiencia_media', 0):.2f}, Impacto Médio={header.get('impacto_medio', 0):.2f}
-        - Amostra de Dados (Primeiros 3 de {len(report_data.get('records', []))} casos):
-          ```json
-          {json.dumps(records_preview, indent=2, default=str)}
-          ```
-
-        **Pergunta:** "{question}"
-        """
-
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content},
-            ],
-            model=MODEL_NAME,
-        )
-
-        return chat_completion.choices[0].message.content
-
-    except Exception as e:
-        print(f"❌ Erro ao chamar a API do Groq na função de chat: {e}")
-        return f"Ocorreu um erro ao processar sua pergunta com a IA. Detalhes: {e}"
-
-
-def gerar_resumo_ia(kpis_tendencia: Dict[str, Any], header_atual: Dict[str, Any]) -> str:
+def gerar_resumo_ia(kpis_tendencia: Dict[str, Any], header_atual: Dict[str, Any]) -> str: # Esta função permanece inalterada
     """
     Gera um resumo executivo em linguagem natural usando a API do Gemini.
 
     Args:
-        kpis_tendencia (Dict[str, Any]): Dicionário com os KPIs da análise de tendência.
+        kpis_tendencia (Dict[str, Any]): Dicionário com os KPIs da análise de tendência. # ... (código inalterado)
         header_atual (Dict[str, Any]): Dicionário com os dados do cabeçalho da análise atual.
 
     Returns:
@@ -206,61 +97,150 @@ def gerar_resumo_ia(kpis_tendencia: Dict[str, Any], header_atual: Dict[str, Any]
         print(f"❌ Erro ao chamar a API do Groq: {e}")
         return f"Ocorreu um erro ao gerar o resumo da IA. Detalhes: {e}"
 
-def ask_project_expert(question: str) -> str:
+# =============================================================================
+# ARQUITETURA DO AGENTE (BASEADA EM FERRAMENTAS)
+# =============================================================================
+
+def project_docs_tool(question: str, chat_history: List[Dict[str, str]]) -> str:
+    """Ferramenta para responder perguntas sobre o funcionamento e arquitetura do projeto."""
+    project_docs = get_docs_content()
+    system_prompt = """Você é um especialista sênior no projeto 'meu-dash'. Sua única fonte de conhecimento é a documentação fornecida. Responda às perguntas do usuário de forma clara e concisa, baseando-se estritamente neste contexto e no histórico da conversa. Se a resposta não estiver na documentação, informe que não possui essa informação."""
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    messages.extend(chat_history)
+    messages.append({"role": "user", "content": f"**Documentação do Projeto (Contexto):**\n{project_docs}\n\n**Nova Pergunta do Usuário:** \"{question}\""})
+
+    chat_completion = client.chat.completions.create(
+        messages=messages,
+        model=MODEL_NAME,
+    )
+    return chat_completion.choices[0].message.content
+
+def data_analysis_tool(question: str, report_id: Optional[int] = None, chat_history: List[Dict[str, str]] = []) -> str:
+    """Ferramenta para responder perguntas sobre os dados de um relatório de análise."""
+    from .app import Report # Importação local para evitar dependência circular
+
+    # Lógica para selecionar o relatório mais recente se nenhum ID for fornecido
+    if report_id:
+        report = Report.query.get(report_id)
+    else:
+        print("ℹ️ Nenhum report_id fornecido. Buscando o relatório mais recente.")
+        report = Report.query.order_by(Report.timestamp.desc()).first()
+
+    if not report or not report.json_summary_path or not os.path.exists(report.json_summary_path):
+        return "Não foi possível encontrar um relatório de análise para responder à sua pergunta. Por favor, processe um arquivo primeiro."
+
+    with open(report.json_summary_path, 'r', encoding='utf-8') as f:
+        report_data_json = f.read()
+
+    system_prompt = """Você é um analista de dados sênior especialista em operações de TI. Sua tarefa é responder perguntas sobre um relatório de análise de alertas, considerando o histórico da conversa.
+- Use apenas os dados do JSON fornecido como sua única fonte da verdade.
+- Responda de forma concisa e direta.
+- Se a pergunta não puder ser respondida com os dados, informe que não possui a informação no relatório.
+- Os dados estão em um JSON com duas chaves principais: 'header' (com KPIs gerais) e 'records' (uma lista de todos os 'casos' analisados).
+- Preste atenção aos campos de cada registro, como 'assignment_group' (time), 'score_ponderado_final' (criticidade), 'alert_count' (volume), e 'acao_sugerida'.
+"""
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    messages.extend(chat_history)
+    messages.append({"role": "user", "content": f"**Dados do Relatório (Contexto JSON):**\n```json\n{report_data_json}\n```\n\n**Nova Pergunta do Usuário:** \"{question}\""})
+    
+    chat_completion = client.chat.completions.create(
+        messages=messages,
+        model=MODEL_NAME,
+    )
+    return chat_completion.choices[0].message.content
+
+def get_tools() -> List[Dict[str, Any]]:
+    """Define a lista de ferramentas que o agente pode usar."""
+    return [
+        {
+            "name": "project_documentation_expert",
+            "description": "Use esta ferramenta para perguntas sobre o funcionamento do projeto, arquitetura, código, Flask, Kubernetes, Docker, ou como usar a aplicação.",
+            "function": project_docs_tool,
+        },
+        {
+            "name": "data_analysis_expert",
+            "description": "Use esta ferramenta para perguntas sobre dados, relatórios, KPIs, números, tendências, 'casos', 'alertas', 'times' ou 'squads'.",
+            "function": data_analysis_tool,
+        },
+    ]
+
+def route_to_tool(question: str, tools: List[Dict[str, Any]]) -> Optional[Union[Dict[str, Any], str]]:
     """
-    Responde a perguntas sobre o projeto com base na documentação.
+    Usa o LLM para decidir qual ferramenta é a mais apropriada para a pergunta.
+    """
+    if not client:
+        return None
+
+    tool_descriptions = "\n".join([f"- {tool['name']}: {tool['description']}" for tool in tools])
+    
+    system_prompt = f"""Sua tarefa é rotear a pergunta do usuário para a ferramenta correta.
+Responda apenas com o nome da ferramenta escolhida. As ferramentas disponíveis são:
+{tool_descriptions}
+
+Se a pergunta for uma saudação ou conversa informal (oi, olá, tudo bem?), responda com 'greeting'.
+Se nenhuma ferramenta parecer adequada, responda com 'fallback'.
+"""
+
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": question},
+            ],
+            model=ROUTER_MODEL_NAME,
+            temperature=0.0,
+        )
+        chosen_tool_name = chat_completion.choices[0].message.content.strip()
+        
+        for tool in tools:
+            if tool['name'] == chosen_tool_name:
+                return tool
+        
+        # Retorna uma string para casos especiais
+        if chosen_tool_name in ['greeting', 'fallback']:
+            return chosen_tool_name
+        
+        return "fallback" # Segurança
+
+    except Exception as e:
+        print(f"⚠️ Erro ao rotear pergunta, usando fallback. Erro: {e}")
+        return "fallback"
+
+def ask_unified_agent(question: str, report_id: Optional[int] = None, chat_history: List[Dict[str, str]] = []) -> str:
+    """
+    Ponto de entrada unificado que roteia a pergunta para a ferramenta correta e a executa.
     """
     if not client:
         return "A funcionalidade de chat com IA está desativada pois a chave de API (GROQ_API_KEY) não foi configurada."
 
+    tools = get_tools()
+    chosen_tool = route_to_tool(question, tools)
+
+    if not chosen_tool:
+        # Fallback caso o roteador falhe
+        return "Desculpe, não consegui decidir como processar sua pergunta. Tente reformulá-la."
+
+    tool_name = chosen_tool if isinstance(chosen_tool, str) else chosen_tool.get("name")
+    print(f"🤖 Pergunta roteada para a ferramenta: {tool_name}")
+
     try:
-        project_docs = get_docs_content()
-        
-        system_prompt = """Você é um especialista sênior no projeto 'meu-dash'. Sua única fonte de conhecimento é a documentação fornecida. Responda às perguntas do usuário de forma clara e concisa, baseando-se estritamente neste contexto. Se a resposta não estiver na documentação, informe que não possui essa informação."""
+        if tool_name == "greeting":
+            return ("Olá! Sou seu agente de IA. Estou pronto para ajudar. Você pode me fazer perguntas sobre os dados do relatório "
+                    "(ex: 'Qual time teve mais casos?') ou sobre o funcionamento do projeto (ex: 'Como o Kubernetes é usado aqui?'). "
+                    "Como posso te ajudar agora?")
 
-        user_content = f"""
-        **Documentação do Projeto:**
-        {project_docs}
+        elif isinstance(chosen_tool, dict) and tool_name == "project_documentation_expert":
+            return chosen_tool["function"](question, chat_history=chat_history)
 
-        **Pergunta do Usuário:** "{question}"
-        """
+        elif isinstance(chosen_tool, dict) and tool_name == "data_analysis_expert":
+            # Passa o report_id para a ferramenta de análise de dados
+            return chosen_tool["function"](question, report_id=report_id, chat_history=chat_history)
 
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content},
-            ],
-            model=MODEL_NAME,
-        )
-
-        return chat_completion.choices[0].message.content
+        else: # Fallback
+            return "Não tenho certeza de como responder a essa pergunta. Você pode perguntar sobre os dados do relatório ou sobre o funcionamento do projeto."
 
     except Exception as e:
-        print(f"❌ Erro ao chamar a API do Groq no agente especialista do projeto: {e}")
-        return f"Ocorreu um erro ao processar sua pergunta com o especialista do projeto. Detalhes: {e}"
-
-def ask_unified_agent(question: str, report_id: int = None) -> str:
-    """
-    Ponto de entrada unificado que primeiro roteia a pergunta e depois chama o agente especialista apropriado.
-    """
-    category = route_question(question)
-    print(f"🤖 Pergunta roteada para a categoria: {category}")
-
-    if category == 'greeting':
-        return ("Olá! Sou seu agente de IA. Estou pronto para ajudar. Você pode me fazer perguntas sobre os dados do relatório "
-                "(ex: 'Qual time teve mais casos?') ou sobre o funcionamento do projeto (ex: 'Como o Kubernetes é usado aqui?'). "
-                "Como posso te ajudar agora?")
-
-    if category == 'project_documentation':
-        return ask_project_expert(question)
-    
-    # Se for 'data_analysis', precisamos dos dados do relatório
-    if report_id:
-        from .app import Report # Importação local para evitar dependência circular
-        report = Report.query.get(report_id)
-        if report and report.json_summary_path and os.path.exists(report.json_summary_path):
-            with open(report.json_summary_path, 'r', encoding='utf-8') as f:
-                report_data_json = f.read()
-            return ask_question_to_agent(question, report_data_json)
-    
-    return "Para responder a perguntas sobre dados, por favor, certifique-se de que um relatório esteja carregado e selecionado. Se sua pergunta é sobre o projeto, tente reformulá-la."
+        print(f"❌ Erro ao executar a ferramenta '{tool_name}': {e}")
+        return f"Ocorreu um erro ao processar sua pergunta. Detalhes: {e}"

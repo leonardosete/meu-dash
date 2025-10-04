@@ -377,10 +377,13 @@ def ask_unified_chat_agent():
 
     question = data['question']
     # O report_id é opcional. Se não for fornecido, o agente lidará com isso.
-    report_id = data.get('report_id') if data.get('report_id') else None
+    report_id = data.get('report_id')
+    # NOVO: Recebe o histórico do chat do frontend
+    chat_history = data.get('history', [])
 
     try:
-        answer = ask_unified_agent(question, report_id)
+        # Passa o histórico para o agente
+        answer = ask_unified_agent(question, report_id, chat_history)
         
         return jsonify({'answer': answer})
 

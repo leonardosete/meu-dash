@@ -10,7 +10,7 @@
 
 - **Diretório Raiz do Projeto:** `~/meu-dash`
 - **Fonte Primária da Verdade:** **Este arquivo (`GEMINI.md`) é sua referência principal.** Sempre comece lendo-o para entender a arquitetura e o fluxo de dados. O código-fonte em `src/app.py` é a autoridade final sobre o fluxo de execução.
-- **Documentação para Humanos:**
+- **Documentação Externa (para Humanos):**
     - `docs/doc_tecnica.html`: Detalhes técnicos da implementação.
     - `docs/doc_gerencial.html`: Visão de alto nível e impacto para gestão.
 
@@ -25,7 +25,7 @@
 
 # 📝 DESCRIÇÃO DO PROJETO: Análise de Alertas e Tendências
 
-Este projeto é uma **aplicação web Flask** que automatiza a análise de alertas de monitoramento (`.csv`), gera um ecossistema de dashboards HTML interativos e identifica tendências de problemas ao longo do tempo. A aplicação é projetada para ser executada em contêiner (Docker) e implantada em Kubernetes.
+Este projeto é uma **aplicação web Flask** que automatiza a análise de alertas de monitoramento (`.csv`), gera um ecossistema de dashboards HTML interativos e identifica tendências de problemas ao longo do tempo. A aplicação utiliza **processamento assíncrono com Celery** para tarefas pesadas e integra um **agente de IA** para análise de dados e consulta à documentação. Foi projetada para ser executada em contêiner (Docker) e implantada em Kubernetes.
 
 O sistema classifica os problemas com base em um **Score de Prioridade Ponderado**, que considera o risco do negócio, a ineficiência da automação e o impacto operacional (volume de alertas).
 
@@ -53,20 +53,26 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 
 ## 1. Orquestrador Principal: Aplicação Flask (`src/app.py`)
 
-- **Responsabilidade:** Único ponto de entrada e cérebro do projeto. Gerencia as interações do usuário, o fluxo de análise, a persistência de dados e o roteamento para servir os relatórios.
+- **Responsabilidade:** Único ponto de entrada e cérebro do projeto. Gerencia as interações do usuário, dispara tarefas de análise assíncronas, gerencia a persistência de dados e serve os relatórios e a interface do chat.
 - **Componentes Internos:**
     - **Flask:** Microframework web.
     - **SQLAlchemy:** ORM para interagir com o banco de dados.
     - **Flask-Migrate:** Gerencia as migrações do esquema do banco de dados.
+    - **Celery:** Sistema de filas de tarefas para processamento assíncrono.
 - **Rotas Principais:**
     - `GET /`: Exibe a página inicial de upload (`upload.html`).
-    - `POST /upload`: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.
+    - `POST /upload`: Recebe o arquivo, salva-o e **dispara a tarefa assíncrona `processar_analise` no Celery**. Retorna um `task_id`.
+    - `GET /task/<task_id>` e `GET /status/<task_id>`: Permitem que o frontend consulte o status da tarefa em andamento.
     - `GET /relatorios`: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.
     - `GET /reports/<run_folder>/<filename>`: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.
     - `GET /health`: Endpoint de health check para Kubernetes. Retorna um JSON `{'status': 'ok'}`.
     - `GET /docs/<path:filename>`: Serve a documentação estática do projeto (e.g., `doc_tecnica.html`).
+    - `POST /chat/ask`: Endpoint unificado que recebe perguntas do usuário e as encaminha para o agente de IA.
 
-## 2. Banco de Dados (`data/meu_dash.db`)
+## 2. Processamento Assíncrono: Tarefa Celery (`processar_analise` em `src/app.py`)
+- **Responsabilidade:** Executar todo o pipeline de análise de forma desacoplada da requisição web. Isso inclui a validação do arquivo, análise de tendência, análise principal, geração de resumo por IA e rotação de relatórios antigos.
+
+## 3. Banco de Dados (`data/meu_dash.db`)
 
 - **Tecnologia:** SQLite, gerenciado pelo SQLAlchemy.
 - **Modelo (`Report`):**
@@ -79,7 +85,14 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
     - `max_date`: (Opcional) **Novo campo fundamental.** Armazena o objeto de data correspondente à data mais recente do *conteúdo* do arquivo de input.
 - **Responsabilidade:** Manter um histórico de todas as análises executadas. A comparação para análise de tendência agora é mais inteligente: em vez de apenas pegar a última análise executada, o sistema usa o campo `max_date` para encontrar a análise anterior mais relevante cujo conteúdo seja cronologicamente anterior ao do upload atual.
 
-## 3. Motores de Análise (Invocados como Bibliotecas)
+## 4. Agente de Inteligência Artificial (`src/ai_agent.py`)
+- **Responsabilidade:** Fornecer uma interface de linguagem natural para interagir com os dados e a documentação.
+- **Componentes:**
+    - **Roteador (`route_question`):** Classifica a pergunta do usuário para direcioná-la ao especialista correto (análise de dados ou documentação do projeto).
+    - **Especialista de Dados (`ask_question_to_agent`):** Responde perguntas sobre um relatório específico, usando o `resumo_problemas.json` como contexto.
+    - **Especialista de Projeto (`ask_project_expert`):** Responde perguntas sobre a arquitetura e funcionamento do projeto, usando `README.md`, `GEMINI.md` e outros arquivos de documentação como base de conhecimento.
+
+## 5. Motores de Análise (Invocados como Bibliotecas)
 
 #### Módulo: `src/analisar_alertas.py`
 - **Responsabilidade:** Processar um único arquivo de alertas, realizar a análise principal e orquestrar a geração dos relatórios HTML para aquele período.
@@ -94,7 +107,7 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 
 ## 4. Templates e Dados
 
-- **`templates/`:** Contém todos os templates HTML usados pelo Flask para renderizar as páginas da aplicação (`upload.html`, `relatorios.html`, etc.).
+- **`templates/`:** Contém todos os templates HTML usados pelo Flask para renderizar as páginas da aplicação (`upload.html`, `status.html`, `relatorios.html`, etc.).
 - **`data/`:** Diretório persistido que armazena:
     - `uploads/`: Cópias dos arquivos `.csv` originais enviados pelo usuário.
     - `reports/`: Subdiretórios para cada execução (`run_...`), contendo todos os artefatos gerados (HTML, JSON, CSV).
@@ -102,25 +115,23 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 
 ---
 
-# 🌊 FLUXO DE EXECUÇÃO LÓGICO
+# 🌊 FLUXO DE EXECUÇÃO LÓGICO (ASSÍNCRONO)
 
-O processo é iniciado pela interação do usuário e orquestrado integralmente pelo `app.py`.
+O processo é iniciado pela interação do usuário, mas a análise pesada é executada em segundo plano pelo Celery.
 
 1.  **Usuário:** Acessa a rota `/` e vê a página de upload.
 2.  **Upload:** O usuário seleciona um arquivo `.csv` (`file_atual`) e o envia através do formulário (`POST /upload`).
-3.  **Orquestração (`app.py`):
-    a. **Salvar e Extrair Datas:** O arquivo `.csv` enviado é salvo em `data/uploads/`. O módulo `get_date_range.py` é usado para extrair o intervalo de datas do arquivo. Um diretório de saída (`run_<timestamp>`) é criado em `data/reports/`.
-    b. **Buscar Histórico Relevante:** O `app.py` consulta o banco de dados para encontrar o relatório anterior mais apropriado para comparação, buscando pelo campo `max_date` (`Report.query.order_by(Report.max_date.desc()).first()`).
-    c. **Condição: Análise de Tendência (se um relatório anterior existe):**
-        i. **Análise Leve:** A função `analisar_arquivo_csv` é chamada com `light_analysis=True` para o arquivo **atual**, gerando rapidamente o `resumo_problemas.json`.
-        ii. **Geração da Tendência:** A função `gerar_relatorio_tendencia` é chamada, recebendo os JSONs (anterior e atual) e também os intervalos de datas (anterior e atual) para enriquecer o relatório de tendência.
-    d. **Análise Principal (Completa):**
-        i. A função `analisar_arquivo_csv` é chamada novamente para o arquivo **atual**, com `light_analysis=False`.
-        ii. O caminho para o `resumo_tendencia.html` (se gerado) é passado para esta função, para que o link de navegação seja injetado no relatório principal.
-        iii. Esta execução gera o ecossistema completo de dashboards.
-    e. **Persistência e Redirecionamento:**
-        i. Um novo registro `Report` é criado no banco de dados, agora incluindo o `date_range` extraído.
-        ii. O `app.py` redireciona o navegador do usuário para exibir o `resumo_geral.html` recém-criado.
+3.  **Disparo da Tarefa (`app.py`):**
+    a. O `app.py` salva o arquivo em `data/uploads/`.
+    b. A tarefa `processar_analise.delay()` é chamada, passando os caminhos necessários. Isso enfileira a tarefa no Celery.
+    c. O `app.py` retorna imediatamente um `task_id` para o frontend, que redireciona o usuário para a página de status (`/task/<task_id>`).
+4.  **Execução da Tarefa em Background (Worker Celery):**
+    a. **Validação:** A tarefa `processar_analise` inicia, extrai as datas do arquivo e valida a cronologia em relação ao último relatório no banco de dados.
+    b. **Análise de Tendência:** Se um relatório anterior existe, uma análise de tendência é executada e um resumo com IA é gerado.
+    c. **Análise Principal:** A análise completa do arquivo atual é executada.
+    d. **Persistência:** Um novo registro `Report` é salvo no banco de dados.
+    e. **Rotação:** A tarefa verifica se o número de relatórios excede o limite (`MAX_REPORTS`) e remove os diretórios e registros do banco de dados dos relatórios mais antigos.
+5.  **Feedback ao Usuário:** A página de status consulta periodicamente o endpoint `/status/<task_id>`. Quando a tarefa é concluída com sucesso, o frontend recebe a URL do novo relatório e redireciona o usuário. Em caso de falha, exibe a mensagem de erro.
 
 ---
 
