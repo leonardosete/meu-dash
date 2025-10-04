@@ -18,7 +18,7 @@ except Exception as e:
     client = None
 
 # Modelo recomendado para velocidade e custo-benefício no Groq
-MODEL_NAME = 'llama-3.1-70b-versatile'
+MODEL_NAME = 'llama-3.3-70b-versatile'
 def ask_question_to_agent(question: str, report_data_json: str) -> str:
     """
     Envia uma pergunta para a IA do Gemini com o contexto de um relatório.
