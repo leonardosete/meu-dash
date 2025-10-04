@@ -377,7 +377,7 @@ def ask_unified_chat_agent():
 
     question = data['question']
     # O report_id é opcional. Se não for fornecido, o agente lidará com isso.
-    report_id = data.get('report_id') 
+    report_id = data.get('report_id') if data.get('report_id') else None
 
     try:
         answer = ask_unified_agent(question, report_id)

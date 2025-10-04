@@ -460,7 +460,7 @@
                     app.chat.box.scrollTop = app.chat.box.scrollHeight;
 
                     try {
-                        const response = await fetch("{{ url_for('ask_chat_agent') }}", {
+                        const response = await fetch("{{ url_for('ask_unified_chat_agent') }}", {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ report_id: lastReportId, question: userMessage }),
