@@ -60,7 +60,7 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
     - **Flask-Migrate:** Gerencia as migrações do esquema do banco de dados. 
     - **Celery:** Sistema de filas de tarefas para processamento assíncrono.
 - **Rotas Principais:**
-    - `GET /`: Exibe a página inicial de upload (`upload.html`).
+    - `GET /`: Exibe a página inicial (`upload.html`), que serve como hub central, exibindo o resumo da última análise e links para relatórios e documentação.
     - `POST /upload`: Recebe o arquivo, salva-o e **dispara a tarefa assíncrona `processar_analise` no Celery**. Retorna um `task_id`.
     - `GET /task/<task_id>` e `GET /status/<task_id>`: Permitem que o frontend consulte o status da tarefa em andamento.
     - `GET /relatorios`: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.

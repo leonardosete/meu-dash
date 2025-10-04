@@ -239,7 +239,7 @@
                     </li>
                     <li><strong>Rotas Principais:</strong>
                         <ul>
-                            <li><code>GET /</code>: Exibe a página inicial de upload (<code>upload.html</code>).</li>
+                            <li><code>GET /</code>: Exibe a página inicial de upload (<code>upload.html</code>), que serve como hub central, exibindo o resumo da última análise e links para relatórios e documentação.</li>
                             <li><code>POST /upload</code>: Recebe o arquivo e a decisão do usuário sobre usar a IA (<code>use_ai_agent</code>). Dispara a tarefa assíncrona de análise.</li>
                             <li><code>GET /relatorios</code>: Exibe um histórico de todos os relatórios gerados.</li>
                             <li><code>GET /reports/&lt;run_folder&gt;/&lt;filename&gt;</code>: Serve os arquivos de relatório (HTML, CSV, etc.).</li>
