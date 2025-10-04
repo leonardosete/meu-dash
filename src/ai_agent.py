@@ -39,9 +39,9 @@ def get_docs_content() -> str:
 # =============================================================================
 
 # Modelo principal para raciocínio e análise
-MODEL_NAME = 'llama-3.1-70b-versatile' 
+MODEL_NAME = 'llama3-70b-8192' 
 # Modelo mais rápido para tarefas de classificação/roteamento
-ROUTER_MODEL_NAME = 'llama-3.1-8b-instant'
+ROUTER_MODEL_NAME = 'llama3-8b-8192'
 
 def gerar_resumo_ia(kpis_tendencia: Dict[str, Any], header_atual: Dict[str, Any]) -> str: # Esta função permanece inalterada
     """
