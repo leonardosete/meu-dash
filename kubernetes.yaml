@@ -85,6 +85,11 @@ spec:
           value: "redis://redis-service:6379/0"
         - name: CELERY_RESULT_BACKEND
           value: "redis://redis-service:6379/0"
+        - name: GEMINI_API_KEY # O nome da variável de ambiente que sua app espera
+          valueFrom:
+            secretKeyRef:
+              name: meu-dash-secrets   # O nome do Secret que você criou
+              key: GEMINI_API_KEY     # A chave dentro do Secret
         ports:
         - name: http
           containerPort: 5000
@@ -135,6 +140,11 @@ spec:
           value: "redis://redis-service:6379/0"
         - name: CELERY_RESULT_BACKEND
           value: "redis://redis-service:6379/0"
+        - name: GEMINI_API_KEY # O nome da variável de ambiente que sua app espera
+          valueFrom:
+            secretKeyRef:
+              name: meu-dash-secrets   # O nome do Secret que você criou
+              key: GEMINI_API_KEY     # A chave dentro do Secret
         resources:
           requests:
             cpu: "128m"
@@ -233,3 +243,12 @@ spec:
   - protocol: TCP
     port: 6379
     targetPort: 6379
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: meu-dash-secrets
+  namespace: meu-dash-alertas
+type: Opaque
+data:
+  GEMINI_API_KEY: QUl6YVN5Q3dtZXpOdExBSVZOd1NqQzA0cjQ4X0hHV1BnaU9QemJJ
