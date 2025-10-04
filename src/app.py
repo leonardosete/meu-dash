@@ -23,6 +23,9 @@ from celery import Celery
 # =============================================================================
 app = Flask(__name__, template_folder='../templates')
 
+# Variável para controlar a funcionalidade de IA
+AI_AGENT_ENABLED = os.environ.get('AI_AGENT_ENABLED', 'true').lower() == 'true'
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, '..', 'data', 'uploads')
 REPORTS_FOLDER = os.path.join(BASE_DIR, '..', 'data', 'reports')
@@ -144,33 +147,32 @@ def processar_analise(self, filepath_atual, filename_atual, reports_folder):
         json_path_final = final_analysis_results['json_path']
 
         # --- ETAPA 4.5: Gera e injeta o resumo da IA ---
-        try:
-            if not os.path.exists(json_path_final):
-                ai_summary = None # Garante que a variável exista
-                raise FileNotFoundError("Arquivo de resumo JSON final não encontrado.")
+        ai_summary = None
+        if AI_AGENT_ENABLED:
+            try:
+                if not os.path.exists(json_path_final):
+                    raise FileNotFoundError("Arquivo de resumo JSON final não encontrado.")
 
-            with open(json_path_final, 'r', encoding='utf-8') as f:
-                report_data = json.load(f)
+                with open(json_path_final, 'r', encoding='utf-8') as f:
+                    report_data = json.load(f)
+                
+                header_atual = report_data.get('header', {})
+
+                if kpis_tendencia and header_atual:
+                    print("🤖 Gerando resumo executivo de TENDÊNCIA com IA...")
+                    ai_summary = gerar_resumo_ia(kpis_tendencia=kpis_tendencia, header_atual=header_atual)
+                elif header_atual:
+                    print("🤖 Gerando resumo executivo de ANÁLISE ÚNICA com IA...")
+                    if date_range_atual:
+                        report_data['date_range'] = date_range_atual
+                    ai_summary = gerar_resumo_analise_unica_ia(report_data=report_data)
+
+                if ai_summary and report_path_final:
+                    atualizar_resumo_com_ia(report_path_final, ai_summary)
+                    print("✅ Resumo da IA injetado no relatório final.")
             
-            header_atual = report_data.get('header', {})
-            ai_summary = None
-
-            if kpis_tendencia and header_atual:
-                print("🤖 Gerando resumo executivo de TENDÊNCIA com IA...")
-                ai_summary = gerar_resumo_ia(kpis_tendencia=kpis_tendencia, header_atual=header_atual)
-            elif header_atual:
-                print("🤖 Gerando resumo executivo de ANÁLISE ÚNICA com IA...")
-                # CORREÇÃO: Adiciona o date_range ao dicionário antes de passar para a IA.
-                if date_range_atual:
-                    report_data['date_range'] = date_range_atual
-                ai_summary = gerar_resumo_analise_unica_ia(report_data=report_data)
-
-            if ai_summary and report_path_final:
-                atualizar_resumo_com_ia(report_path_final, ai_summary)
-                print("✅ Resumo da IA injetado no relatório final.")
-        
-        except Exception as e:
-            print(f"❌ Erro no bloco de geração de resumo da IA: {e}")
+            except Exception as e:
+                print(f"❌ Erro no bloco de geração de resumo da IA: {e}")
 
         # --- ETAPA 5: Salva o novo relatório no banco ---
         new_report = Report(
@@ -282,7 +284,8 @@ def index():
         summary_data=summary_data,
         last_report_date=last_report.timestamp.strftime('%d/%m/%Y às %H:%M') if last_report else "Nenhuma análise encontrada",
         last_report=last_report, # Passa o objeto completo para o template
-        last_action_plan=last_action_plan
+        last_action_plan=last_action_plan,
+        ai_enabled=AI_AGENT_ENABLED # Passa o status da IA para o template
     )
 
 @app.route('/upload', methods=['POST'])
@@ -409,6 +412,9 @@ def ask_unified_chat_agent():
     Recebe uma pergunta do usuário, roteia para o agente correto e retorna a resposta.
     """
     data = request.get_json()
+    if not AI_AGENT_ENABLED:
+        return jsonify({'answer': 'A funcionalidade de IA está desativada pelo administrador.'}), 200
+
     if not data or 'question' not in data:
         return jsonify({'error': 'Dados inválidos. É necessário "question".'}), 400
 

@@ -267,6 +267,7 @@
             const summaryData = (summaryDataJSON && summaryDataJSON !== 'null') ? JSON.parse(summaryDataJSON) : null;
             const lastTrendAnalysis = (lastTrendAnalysisJSON && lastTrendAnalysisJSON !== 'null') ? JSON.parse(lastTrendAnalysisJSON) : null;
             const lastActionPlan = (lastActionPlanJSON && lastActionPlanJSON !== 'null') ? JSON.parse(lastActionPlanJSON) : null;
+            const aiEnabled = {{ ai_enabled | tojson }};
 
 
             // --- FUNÇÕES ---
@@ -544,14 +545,17 @@
             // --- INICIALIZAÇÃO ---
             populateDashboard();
             setupFileInput();
-            setupChat();
+            if (aiEnabled) {
+                setupChat();
+            }
 
             const urlParams = new URLSearchParams(window.location.search);
             const taskId = urlParams.get('task_id');
             const newReportUrl = urlParams.get('new_report_url');
             const aiSummary = urlParams.get('ai_summary');
 
-            if (newReportUrl && aiSummary) {
+            // Mostra o card de resumo da IA apenas se a funcionalidade estiver ativa
+            if (aiEnabled && newReportUrl && aiSummary) {
                 const summaryContainer = document.getElementById('summary-content');
                 const aiCard = document.createElement('div');
                 aiCard.className = 'bg-indigo-900/30 border border-indigo-600 text-indigo-200 p-6 rounded-2xl mb-8';
