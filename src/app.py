@@ -357,7 +357,9 @@ def relatorios():
     reports = Report.query.order_by(Report.timestamp.desc()).all()
     report_data = []
     for report in reports:
+        # Adicionamos o 'id' para que o template possa construir o link de exclusão
         report_data.append({
+            'id': report.id,
             'timestamp': report.timestamp,
             'original_filename': report.original_filename,
             'url': url_for('serve_report', 
@@ -365,6 +367,30 @@ def relatorios():
                         filename=os.path.basename(report.report_path))
         })
     return render_template('relatorios.html', reports=report_data)
+
+@app.route('/report/delete/<int:report_id>', methods=['POST'])
+def delete_report(report_id):
+    """
+    Exclui um relatório específico, seus arquivos associados e o registro no banco de dados.
+    """
+    report = Report.query.get_or_404(report_id)
+    
+    try:
+        # O caminho do relatório aponta para um arquivo dentro da pasta 'run_...'
+        # Queremos remover a pasta 'run_...' inteira.
+        report_dir = os.path.dirname(report.report_path)
+        if report_dir and os.path.exists(report_dir):
+            shutil.rmtree(report_dir)
+            print(f"🗑️  Diretório de relatório removido: {report_dir}")
+        
+        db.session.delete(report)
+        db.session.commit()
+        
+        return jsonify({'status': 'success', 'message': f'Relatório {report_id} excluído com sucesso.'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao excluir o relatório {report_id}: {e}")
+        return jsonify({'status': 'error', 'message': 'Ocorreu um erro ao excluir o relatório.'}), 500
 
 @app.route('/chat/ask', methods=['POST']) # Endpoint unificado
 def ask_unified_chat_agent():
