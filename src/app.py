@@ -218,6 +218,10 @@ def index():
             try:
                 with open(last_report.json_summary_path, 'r', encoding='utf-8') as f:
                     summary_data = json.load(f)
+                # Valida a estrutura do JSON carregado para evitar erros no template
+                if not isinstance(summary_data, dict) or 'header' not in summary_data:
+                    print(f"⚠️  Arquivo de resumo JSON '{last_report.json_summary_path}' tem formato inválido ou não contém 'header'.")
+                    summary_data = None
             except (IOError, json.JSONDecodeError) as e:
                 print(f"⚠️  Não foi possível carregar o arquivo de resumo JSON: {e}")
                 summary_data = None
