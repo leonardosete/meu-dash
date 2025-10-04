@@ -371,7 +371,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     if grupos_atuacao > 0:
         view_icon_html = f'<a href="editor_atuacao.html" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
     else:
-        disabled_svg = VIEW_ICON_SVG.replace('<svg', '<svg style="opacity: 0.4;">')
+        disabled_svg = VIEW_ICON_SVG.replace('class="download-icon"', 'class="download-icon" style="opacity: 0.4;"')
         view_icon_html = f'<span class="download-link" title="Nenhum arquivo de atuação gerado." style="cursor: not-allowed;">{disabled_svg}</span>'
     card_class = 'card-fire-shake' if grupos_atuacao > 0 else 'card-neon card-neon-blue'
     tooltip_text = 'Casos que precisam de revisão: Remediação Pendente.' if grupos_atuacao > 0 else 'Tudo certo! Nenhum caso precisa de intervenção manual.'
@@ -389,7 +389,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     if grupos_instabilidade > 0:
         instabilidade_view_icon_html = f'<a href="instabilidade_cronica.html" class="download-link" title="Visualizar detalhes dos casos de instabilidade">{VIEW_ICON_SVG}</a>'
     else:
-        disabled_svg = VIEW_ICON_SVG.replace('<svg', '<svg style="opacity: 0.4;">')
+        disabled_svg = VIEW_ICON_SVG.replace('class="download-icon"', 'class="download-icon" style="opacity: 0.4;"')
         instabilidade_view_icon_html = f'<span class="download-link" title="Nenhum caso de instabilidade crônica detectado." style="cursor: not-allowed;">{disabled_svg}</span>'
     instabilidade_card_class = 'card-neon card-neon-warning' if grupos_instabilidade > 0 else 'card-neon card-neon-blue'
     instabilidade_kpi_color = 'color: var(--warning-color);' if grupos_instabilidade > 0 else 'color: var(--accent-color);'
@@ -411,7 +411,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     if casos_sucesso > 0:
         sucesso_view_icon_html = f'<a href="{sucesso_page_name}" class="download-link" title="Visualizar detalhes dos casos resolvidos">{VIEW_ICON_SVG}</a>'
     else:
-        disabled_svg = VIEW_ICON_SVG.replace('<svg', '<svg style="opacity: 0.4;">')
+        disabled_svg = VIEW_ICON_SVG.replace('class="download-icon"', 'class="download-icon" style="opacity: 0.4;"')
         sucesso_view_icon_html = f'<span class="download-link" title="Nenhum caso resolvido automaticamente." style="cursor: not-allowed;">{disabled_svg}</span>'
     body_content += f'''
     <div class="card kpi-card card-neon {automation_card_class}">
