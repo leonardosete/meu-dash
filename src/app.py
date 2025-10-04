@@ -254,12 +254,12 @@ def upload_file():
     Recebe o arquivo, salva, e dispara a tarefa assíncrona de análise.
     """
     if 'file_atual' not in request.files:
-        return render_template('upload.html', error="Nenhum arquivo enviado.")
+        return jsonify({'error': "Nenhum arquivo foi enviado."}), 400
     
     file_atual = request.files['file_atual']
 
     if file_atual.filename == '':
-        return render_template('upload.html', error="Nenhum arquivo selecionado.")
+        return jsonify({'error': "Nenhum arquivo foi selecionado."}), 400
 
     try:
         filename_atual = secure_filename(file_atual.filename)
@@ -273,13 +273,13 @@ def upload_file():
             reports_folder=app.config['REPORTS_FOLDER']
         )
         
-        return redirect(url_for('task_page', task_id=task.id))
+        return jsonify({'task_id': task.id})
 
     except Exception as e:
         print(f"❌ Erro fatal no processo de upload: {e}")
         import traceback
         traceback.print_exc()
-        return render_template('upload.html', error="Ocorreu um erro ao processar o arquivo. Verifique se o formato do CSV está correto e tente novamente.")
+        return jsonify({'error': "Ocorreu um erro inesperado no servidor ao processar o arquivo."}), 500
 
 @app.route('/task/<task_id>')
 def task_page(task_id):

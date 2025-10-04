@@ -60,7 +60,7 @@
             <div class="dashboard-section card rounded-2xl p-6 md:p-8 shadow-2xl">
                 <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6">
                     <h2 class="text-2xl font-semibold text-white">Resumo da Última Análise</h2>
-                    <p class="text-sm text-gray-400 mt-2 sm:mt-0">Dados de: 23/09/2025</p>
+                    <p class="text-sm text-gray-400 mt-2 sm:mt-0">{{ last_report_date or 'Nenhuma análise encontrada' }}</p>
                 </div>
                 <div id="summary-content">
                     <!-- Conteúdo do resumo será inserido aqui pelo JS -->
@@ -74,10 +74,10 @@
                     <div id="upload-error" class="hidden text-red-400 bg-red-900/20 border border-red-500 p-4 rounded-lg mb-6 text-left">
                         <!-- Mensagem de erro -->
                     </div>
-                    <form id="upload-form">
-                        <label for="file-input" class="block font-medium mb-4 text-left text-lg">Selecione o arquivo de dados:</label>
+                    <form id="upload-form" action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+                        <label for="file_atual" class="block font-medium mb-4 text-left text-lg">Selecione o arquivo de dados:</label>
                         <div id="file-wrapper" class="file-input-wrapper rounded-xl p-8 cursor-pointer transition-colors duration-300 mb-8">
-                            <input type="file" id="file-input" class="hidden" required>
+                            <input type="file" id="file_atual" name="file_atual" class="hidden" required>
                             <div class="flex flex-col items-center justify-center">
                                 <svg class="w-12 h-12 text-gray-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3-3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" /></svg>
                                 <span id="file-text" class="text-gray-400">Clique ou arraste o arquivo aqui</span>
@@ -129,7 +129,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- VARIÁVEIS E DADOS MOCKADOS ---
+            // --- VARIÁVEIS E ELEMENTOS DO DOM ---
             const app = {
                 views: {
                     dashboard: document.getElementById('dashboard-view'),
@@ -141,7 +141,7 @@
                     failed: document.getElementById('status-failed'),
                 },
                 uploadForm: document.getElementById('upload-form'),
-                fileInput: document.getElementById('file-input'),
+                fileInput: document.getElementById('file_atual'),
                 fileWrapper: document.getElementById('file-wrapper'),
                 fileText: document.getElementById('file-text'),
                 fileName: document.getElementById('file-name'),
@@ -152,41 +152,14 @@
                 uploadError: document.getElementById('upload-error'),
             };
 
-            // Dados mockados para popular a interface
-            const mockSummaryData = {
-                total_alertas: 184,
-                risco_medio: 7.42,
-                ineficiencia_media: 5.11,
-                impacto_medio: 6.89,
-            };
-
-            const mockLinks = [
-                {
-                    title: "Plano de Ação",
-                    description: "Editar casos que precisam de atuação.",
-                    url: "#",
-                    color: "red",
-                    icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`
-                },
-                {
-                    title: "Ver Análise de Tendência",
-                    description: "Comparativo com o período anterior.",
-                    url: "#",
-                    color: "green",
-                    icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`
-                },
-                {
-                    title: "Histórico de Relatórios",
-                    description: "Acessar todos os relatórios gerados.",
-                    url: "#",
-                    color: "gray",
-                    icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`
-                }
-            ];
+            // --- DADOS INICIAIS (PASSADOS PELO FLASK/JINJA2) ---
+            const summaryData = {{ summary_data | tojson }};
+            const lastTrendAnalysis = {{ last_trend_analysis | tojson }};
+            const lastActionPlan = {{ last_action_plan | tojson }};
 
             // --- FUNÇÕES ---
 
-            // Função para trocar entre as telas (views)
+            // Troca entre a tela principal e a de status
             function showView(viewName) {
                 Object.values(app.views).forEach(view => view.classList.add('hidden', 'opacity-0'));
                 if (app.views[viewName]) {
@@ -195,33 +168,47 @@
                 }
             }
 
-            // Função para trocar os painéis de status (pending, success, failed)
+            // Mostra o painel de status específico (processando, sucesso, erro)
             function showStatusPanel(statusName) {
                 Object.values(app.statusPanels).forEach(panel => panel.classList.add('hidden'));
                 if (app.statusPanels[statusName]) {
                     app.statusPanels[statusName].classList.remove('hidden');
                 }
             }
-            
-            // Simula uma chamada de API para verificar o status
-            function pollStatus() {
-                console.log("Verificando status...");
-                // Simula uma resposta da API após 3 segundos
-                setTimeout(() => {
-                    // Alterne entre 'success' e 'failure' para testar os dois cenários
-                    const outcome = Math.random() > 0.3 ? 'success' : 'failure'; 
-                    
-                    if (outcome === 'success') {
-                        showStatusPanel('success');
-                        app.reportLink.href = '/path/to/your/generated/report.pdf';
-                    } else {
-                        app.errorMessage.textContent = 'O formato do arquivo é incompatível ou os dados estão corrompidos.';
-                        showStatusPanel('failed');
-                    }
-                }, 3000);
+
+            // Função para verificar o status da tarefa no backend
+            function pollStatus(taskId) {
+                const pollInterval = 3000; // Verificar a cada 3 segundos
+
+                const intervalId = setInterval(() => {
+                    fetch(`/status/${taskId}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.state === 'SUCCESS') {
+                                clearInterval(intervalId);
+                                app.reportLink.href = data.result.report_url;
+                                showStatusPanel('success');
+                            } else if (data.state === 'FAILURE') {
+                                clearInterval(intervalId);
+                                app.errorMessage.textContent = data.result.error || 'Ocorreu um erro desconhecido durante o processamento.';
+                                showStatusPanel('failed');
+                            } // Se for PENDING ou STARTED, continua no loop
+                        })
+                        .catch(err => {
+                            clearInterval(intervalId);
+                            console.error("Erro ao buscar status:", err);
+                            app.errorMessage.textContent = 'Não foi possível conectar ao servidor para verificar o status da tarefa.';
+                            showStatusPanel('failed');
+                        });
+                }, pollInterval);
             }
 
-            // Lógica para o campo de upload
+            // Configura a interatividade do campo de upload (drag & drop)
             function setupFileInput() {
                 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                     app.fileWrapper.addEventListener(eventName, e => {
@@ -229,29 +216,25 @@
                         e.stopPropagation();
                     });
                 });
-
                 ['dragenter', 'dragover'].forEach(eventName => {
                     app.fileWrapper.addEventListener(eventName, () => app.fileWrapper.classList.add('drag-active'));
                 });
-
                 ['dragleave', 'drop'].forEach(eventName => {
                     app.fileWrapper.addEventListener(eventName, () => app.fileWrapper.classList.remove('drag-active'));
                 });
-
                 app.fileWrapper.addEventListener('click', () => app.fileInput.click());
-
                 app.fileWrapper.addEventListener('drop', e => {
                     if (e.dataTransfer.files.length > 0) {
                         app.fileInput.files = e.dataTransfer.files;
                         app.fileInput.dispatchEvent(new Event('change'));
                     }
                 });
-                
                 app.fileInput.addEventListener('change', () => {
                     if (app.fileInput.files.length > 0) {
                         app.fileName.textContent = app.fileInput.files[0].name;
                         app.fileName.classList.remove('hidden');
                         app.fileText.classList.add('hidden');
+                        app.uploadError.classList.add('hidden');
                     } else {
                         app.fileName.classList.add('hidden');
                         app.fileText.classList.remove('hidden');
@@ -259,7 +242,7 @@
                 });
             }
 
-            // Lógica para o envio do formulário
+            // Lida com o envio do formulário
             app.uploadForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 app.uploadError.classList.add('hidden');
@@ -271,16 +254,45 @@
                 }
                 
                 app.submitBtn.disabled = true;
-                app.submitBtn.textContent = 'Processando...';
+                app.submitBtn.textContent = 'Enviando...';
 
                 showView('status');
                 showStatusPanel('pending');
-                pollStatus(); // Inicia a verificação do status
+
+                const formData = new FormData(app.uploadForm);
+
+                fetch(app.uploadForm.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                         // Tenta extrair o erro do JSON, senão usa o texto da resposta
+                         return response.json().then(errData => {
+                            throw new Error(errData.error || `Falha no upload: ${response.statusText}`);
+                        }).catch(() => {
+                            // Fallback se a resposta não for JSON
+                            throw new Error(`Falha no upload: ${response.status} ${response.statusText}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.task_id) {
+                        pollStatus(data.task_id);
+                    } else {
+                        throw new Error('Não foi possível obter o ID da tarefa do servidor.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro no upload:', error);
+                    app.errorMessage.textContent = error.message || 'Ocorreu uma falha grave ao enviar o arquivo.';
+                    showStatusPanel('failed');
+                });
             });
             
             // Lógica do botão "Tentar Novamente"
             app.retryBtn.addEventListener('click', () => {
-                // Resetar o estado do formulário
                 app.uploadForm.reset();
                 app.fileInput.dispatchEvent(new Event('change'));
                 app.submitBtn.disabled = false;
@@ -288,38 +300,66 @@
                 showView('dashboard');
             });
             
-            // Função para popular o dashboard com dados
+            // Popula o dashboard com os dados iniciais
             function populateDashboard() {
                 // Popula o resumo
                 const summaryContainer = document.getElementById('summary-content');
-                if (mockSummaryData) {
+                if (summaryData && summaryData.header) {
+                    const stats = summaryData.header;
                     summaryContainer.innerHTML = `
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                             <div class="stat-card p-5 rounded-xl border-l-4 border-indigo-500">
                                 <h3 class="text-sm font-medium text-gray-400 mb-1">Total de Alertas</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${mockSummaryData.total_alertas}</p>
+                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.total_alertas_atuais}</p>
                             </div>
                             <div class="stat-card p-5 rounded-xl border-l-4 border-red-500">
                                 <h3 class="text-sm font-medium text-gray-400 mb-1">Risco Médio</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${mockSummaryData.risco_medio.toFixed(2)}</p>
+                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.risco_medio_geral.toFixed(2)}</p>
                             </div>
                             <div class="stat-card p-5 rounded-xl border-l-4 border-yellow-500">
                                 <h3 class="text-sm font-medium text-gray-400 mb-1">Ineficiência Média</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${mockSummaryData.ineficiencia_media.toFixed(2)}</p>
+                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.ineficiencia_media_geral.toFixed(2)}</p>
                             </div>
                             <div class="stat-card p-5 rounded-xl border-l-4 border-cyan-500">
                                 <h3 class="text-sm font-medium text-gray-400 mb-1">Impacto Médio</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${mockSummaryData.impacto_medio.toFixed(2)}</p>
+                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.impacto_medio_geral.toFixed(2)}</p>
                             </div>
                         </div>`;
                 } else {
                     summaryContainer.innerHTML = `<div class="text-center py-8"><p class="text-gray-400">Nenhum dado de análise encontrado. Envie um arquivo para gerar o primeiro relatório.</p></div>`;
                 }
 
-                // Popula os links
+                // Popula os links laterais
+                const links = [];
+                if (lastActionPlan) {
+                    links.push({
+                        title: "Plano de Ação",
+                        description: `Referente à análise de ${lastActionPlan.date}`,
+                        url: lastActionPlan.url,
+                        color: "red",
+                        icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`
+                    });
+                }
+                if (lastTrendAnalysis) {
+                     links.push({
+                        title: "Ver Análise de Tendência",
+                        description: `Comparativo gerado em ${lastTrendAnalysis.date}`,
+                        url: lastTrendAnalysis.url,
+                        color: "green",
+                        icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`
+                    });
+                }
+                links.push({
+                    title: "Histórico de Relatórios",
+                    description: "Acessar todos os relatórios gerados.",
+                    url: "{{ url_for('relatorios') }}",
+                    color: "gray",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`
+                });
+
                 const linksContainer = document.querySelector('.side-links');
                 const colorMap = { red: 'border-red-500 text-red-500', green: 'border-green-500 text-green-500', gray: 'border-gray-500 text-gray-500' };
-                linksContainer.innerHTML = mockLinks.map(link => `
+                linksContainer.innerHTML = links.map(link => `
                     <a href="${link.url}" target="_blank" class="side-card card p-4 rounded-xl flex items-center gap-4 hover:border-indigo-500 hover:-translate-y-1 transition-all duration-300 border-l-4 ${colorMap[link.color]}">
                         <div class="icon ${colorMap[link.color]}">${link.icon}</div>
                         <div>
