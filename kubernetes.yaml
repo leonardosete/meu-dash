@@ -78,6 +78,11 @@ spec:
       - name: meu-dash-web
         # AINDA RECOMENDO: Trocar a tag :latest por uma versão específica (ex: v1.0.1)
         image: sevenleo/meu-dash-web:latest 
+        env:
+        - name: CELERY_BROKER_URL
+          value: "redis://redis-service:6379/0"
+        - name: CELERY_RESULT_BACKEND
+          value: "redis://redis-service:6379/0"
         ports:
         - name: http
           containerPort: 5000
@@ -148,3 +153,47 @@ spec:
 #             name: meu-dash-web
 #             port:
 #               number: 80
+---
+# --- Deployment para o Redis ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: meu-dash-alertas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+
+---
+# --- Service para o Redis ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: meu-dash-alertas
+spec:
+  selector:
+    app: redis
+  ports:
+  - protocol: TCP
+    port: 6379
+    targetPort: 6379

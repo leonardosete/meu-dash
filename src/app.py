@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
@@ -26,8 +27,8 @@ app.config.from_mapping(
     REPORTS_FOLDER=REPORTS_FOLDER,
     SQLALCHEMY_DATABASE_URI=f'sqlite:///{DB_PATH}',
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    CELERY_BROKER_URL='redis://localhost:6379/0',
-    CELERY_RESULT_BACKEND='redis://localhost:6379/0'
+    CELERY_BROKER_URL=os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0'),
+    CELERY_RESULT_BACKEND=os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 )
 
 db = SQLAlchemy(app)
