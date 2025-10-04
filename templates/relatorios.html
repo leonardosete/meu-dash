@@ -148,7 +148,7 @@
                             <td>
                                 <div class="action-buttons">
                                     <a href="{{ report.url }}" class="btn action-link">Visualizar</a>
-                                    <button class="btn btn-danger" onclick="deleteReport({{ report.id }}, this)">Excluir</button>
+                                    <button class="btn btn-danger" onclick="deleteReport(Number('{{ report.id }}'), this)">Excluir</button>
                                 </div>
                             </td>
                         </tr>

@@ -216,6 +216,11 @@
                     <button class="chat-suggestion-btn">Resuma os 3 principais problemas.</button>
                     <button class="chat-suggestion-btn">Como o Docker é usado no projeto?</button>
                 </div>
+                <script>
+                    document.querySelectorAll('.chat-suggestion-btn').forEach(button => {
+                        button.addEventListener('click', () => { document.getElementById('chat-user-input').value = button.textContent; document.getElementById('chat-form').requestSubmit(); });
+                    });
+                </script>
                 <style>
                     .chat-suggestion-btn { background-color: #24273A; color: #E0E0E0; border: 1px solid #3A3D5A; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; transition: all 0.2s; }
                     .chat-suggestion-btn:hover { background-color: #4F46E5; border-color: #4F46E5; color: white; }
@@ -272,7 +277,7 @@
             // CORREÇÃO: As variáveis Jinja são colocadas entre aspas para se tornarem strings JS.
             // Isso evita erros de sintaxe se a variável não for passada pelo backend.
             const summaryDataJSON = '{{ summary_data | tojson | safe }}';
-            const lastReportId = '{{ last_report.id if last_report else '' }}';
+            const lastReportId = {{ last_report.id if last_report else 'null' }};
             const lastReportFilename = '{{ last_report.original_filename if last_report else '' }}';
             const lastTrendAnalysisJSON = '{{ last_trend_analysis | tojson | safe }}';
             const lastActionPlanJSON = '{{ last_action_plan | tojson | safe }}';
@@ -434,12 +439,20 @@
 
             function appendChatMessage(text, sender) {
                 const messageDiv = document.createElement('div');
-                messageDiv.classList.add('chat-message', 'p-3', 'rounded-lg', sender === 'user' ? 'user-message' : 'assistant-message');
-                // Simples conversão de markdown para HTML para listas e negrito
-                let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                formattedText = formattedText.replace(/^\* (.*$)/gm, '<ul><li>$1</li></ul>');
-                formattedText = formattedText.replace(/<\/ul>\n<ul>/g, ''); // Junta listas
-                messageDiv.innerHTML = formattedText;
+                messageDiv.className = `chat-message p-3 rounded-lg ${sender === 'user' ? 'user-message' : 'assistant-message'}`;
+
+                // Conversão mais robusta de Markdown para HTML
+                let formattedText = text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Negrito
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>');       // Itálico
+
+                // Trata listas de forma mais segura
+                if (formattedText.includes('\n- ')) {
+                    const items = formattedText.split('\n- ').map(item => item.trim()).filter(Boolean);
+                    formattedText = '<ul>' + items.map(item => `<li>${item}</li>`).join('') + '</ul>';
+                }
+
+                messageDiv.innerHTML = formattedText; // innerHTML é seguro aqui pois o conteúdo vem do nosso backend
                 app.chat.box.appendChild(messageDiv);
                 app.chat.box.scrollTop = app.chat.box.scrollHeight;
             }
@@ -460,7 +473,11 @@
                     }
 
                     if (app.chat.box.children.length === 0) { // Adiciona a saudação apenas na primeira vez
-                         appendChatMessage(`Olá! Sou seu agente de IA. Estou com os dados do relatório '${lastReportFilename}' prontos. Faça perguntas específicas sobre os resultados.`, 'assistant');
+                        let welcomeMessage = "Olá! Sou seu agente de IA. Como posso te ajudar?";
+                        if (lastReportId) {
+                            welcomeMessage = `Olá! Sou seu agente de IA. Estou com os dados do relatório '${lastReportFilename}' prontos para análise. O que você gostaria de saber?`;
+                        }
+                        appendChatMessage(welcomeMessage, 'assistant');
                     }
                 });
 
@@ -475,6 +492,10 @@
                     if (!userMessage) return;
 
                     appendChatMessage(userMessage, 'user');
+                    // Adiciona a mensagem do usuário ao histórico do chat
+                    chatHistory.push({ role: 'user', content: userMessage });
+
+
                     app.chat.input.value = '';
                     app.chat.loading.classList.remove('hidden');
                     app.chat.box.scrollTop = app.chat.box.scrollHeight;
@@ -487,11 +508,15 @@
                             // O backend já sabe como lidar com isso, usando o modo "Especialista de Projeto".
                             body: JSON.stringify({ 
                                 report_id: lastReportId || null, 
-                                question: userMessage }),
+                                question: userMessage,
+                                history: chatHistory // Envia o histórico
+                            }),
                         });
                         const data = await response.json();
                         if (!response.ok) throw new Error(data.error || 'Erro na requisição.');
                         
+                        // Adiciona a resposta do assistente ao histórico
+                        chatHistory.push({ role: 'assistant', content: data.answer });
                         appendChatMessage(data.answer, 'assistant');
                     } catch (error) {
                         console.error('Erro ao contatar o agente de IA:', error);
@@ -501,6 +526,8 @@
                     }
                 });
             }
+
+            let chatHistory = []; // Inicializa o histórico do chat
             
             // Popula o dashboard com os dados iniciais
             function populateDashboard() {
