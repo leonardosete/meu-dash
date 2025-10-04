@@ -77,7 +77,7 @@ spec:
       containers:
       - name: meu-dash-web
         # AINDA RECOMENDO: Trocar a tag :latest por uma versão específica (ex: v1.0.1)
-        image: sevenleo/meu-dash-web:latest 
+        image: sevenleo/meu-dash-web:latest
         env:
         - name: CELERY_BROKER_URL
           value: "redis://redis-service:6379/0"
@@ -88,7 +88,7 @@ spec:
           containerPort: 5000
         readinessProbe:
           httpGet:
-            path: /health 
+            path: /health
             port: http
           initialDelaySeconds: 10
           periodSeconds: 5
@@ -109,8 +109,38 @@ spec:
         - name: meu-dash-data
           mountPath: /app/data
         # ADICIONADO: Montagem do volume temporário no diretório /tmp.
-        - name: temp-storage 
+        - name: temp-storage
           mountPath: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - "ALL"
+      - name: meu-dash-worker
+        image: sevenleo/meu-dash-web:latest
+        command:
+          - "celery"
+          - "-A"
+          - "src.app:celery_app"
+          - "worker"
+          - "-l"
+          - "info"
+        env:
+        - name: CELERY_BROKER_URL
+          value: "redis://redis-service:6379/0"
+        - name: CELERY_RESULT_BACKEND
+          value: "redis://redis-service:6379/0"
+        resources:
+          requests:
+            cpu: "256m"
+            memory: "512Mi"
+          limits:
+            cpu: "256m"
+            memory: "512Mi"
+        volumeMounts:
+        - name: meu-dash-data
+          mountPath: /app/data
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
