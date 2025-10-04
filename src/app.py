@@ -269,7 +269,8 @@ def index():
         'upload.html', 
         last_trend_analysis=last_trend_analysis,
         summary_data=summary_data,
-        last_report_date=last_report.timestamp.strftime('%d/%m/%Y às %H:%M') if last_report else None,
+        last_report_date=last_report.timestamp.strftime('%d/%m/%Y às %H:%M') if last_report else "Nenhuma análise encontrada",
+        last_report=last_report, # Passa o objeto completo para o template
         last_action_plan=last_action_plan
     )
 
