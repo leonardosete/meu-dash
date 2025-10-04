@@ -5,7 +5,7 @@ name: Docker Publish - Build and Push Image
 on:
   # Dispara o workflow em cada push para a branch 'minha-feature'.
   push:
-    branches: [ "upload-web-2-csv-e-tendencia" ]
+    # branches: [ "upload-web-2-csv-e-tendencia" ]
 
   # Permite a execução manual do workflow a partir da aba "Actions" do GitHub.
   workflow_dispatch:
