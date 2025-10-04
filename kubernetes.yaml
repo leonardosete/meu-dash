@@ -100,8 +100,8 @@ spec:
           periodSeconds: 20
         resources:
           requests:
-            cpu: "256m"
-            memory: "512Mi"
+            cpu: "128m"
+            memory: "256Mi"
           limits:
             cpu: "256m"
             memory: "512Mi"
@@ -133,8 +133,8 @@ spec:
           value: "redis://redis-service:6379/0"
         resources:
           requests:
-            cpu: "256m"
-            memory: "512Mi"
+            cpu: "128m"
+            memory: "256Mi"
           limits:
             cpu: "256m"
             memory: "512Mi"
