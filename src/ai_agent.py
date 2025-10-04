@@ -36,6 +36,40 @@ def get_docs_content() -> str:
 
 # Modelo recomendado para velocidade e custo-benefício no Groq
 MODEL_NAME = 'llama-3.3-70b-versatile'
+# Modelo mais rápido para a tarefa simples de roteamento
+ROUTER_MODEL_NAME = 'llama-3.1-8b-instant'
+
+def route_question(question: str) -> str:
+    """
+    Classifica a pergunta do usuário para direcioná-la ao agente correto.
+    Retorna 'data_analysis' ou 'project_documentation'.
+    """
+    if not client:
+        # Se o cliente não estiver configurado, assume o padrão de análise de dados
+        return "data_analysis"
+
+    try:
+        system_prompt = """Sua tarefa é classificar a pergunta do usuário em uma de duas categorias: 'data_analysis' ou 'project_documentation'.
+- Use 'data_analysis' para perguntas sobre dados, relatórios, KPIs, números, tendências, 'casos', 'alertas', 'times' ou 'squads'.
+- Use 'project_documentation' para perguntas sobre o funcionamento do projeto, arquitetura, código, 'Flask', 'Kubernetes', 'Docker', ou como usar a aplicação.
+Responda apenas com a categoria.
+"""
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": question},
+            ],
+            model=ROUTER_MODEL_NAME,
+        )
+        category = chat_completion.choices[0].message.content.strip().lower()
+        if category in ["data_analysis", "project_documentation"]:
+            return category
+        return "data_analysis" # Padrão de segurança
+    except Exception as e:
+        print(f"⚠️ Erro ao rotear pergunta, usando padrão 'data_analysis'. Erro: {e}")
+        return "data_analysis"
+
+
 def ask_question_to_agent(question: str, report_data_json: str) -> str:
     """
     Envia uma pergunta para a IA do Gemini com o contexto de um relatório.
@@ -191,3 +225,24 @@ def ask_project_expert(question: str) -> str:
     except Exception as e:
         print(f"❌ Erro ao chamar a API do Groq no agente especialista do projeto: {e}")
         return f"Ocorreu um erro ao processar sua pergunta com o especialista do projeto. Detalhes: {e}"
+
+def ask_unified_agent(question: str, report_id: int = None) -> str:
+    """
+    Ponto de entrada unificado que primeiro roteia a pergunta e depois chama o agente especialista apropriado.
+    """
+    category = route_question(question)
+    print(f"🤖 Pergunta roteada para a categoria: {category}")
+
+    if category == 'project_documentation':
+        return ask_project_expert(question)
+    
+    # Se for 'data_analysis', precisamos dos dados do relatório
+    if report_id:
+        from .app import Report # Importação local para evitar dependência circular
+        report = Report.query.get(report_id)
+        if report and report.json_summary_path and os.path.exists(report.json_summary_path):
+            with open(report.json_summary_path, 'r', encoding='utf-8') as f:
+                report_data_json = f.read()
+            return ask_question_to_agent(question, report_data_json)
+    
+    return "Para responder a perguntas sobre dados, por favor, certifique-se de que um relatório esteja carregado e selecionado. Se sua pergunta é sobre o projeto, tente reformulá-la."
