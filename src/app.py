@@ -83,7 +83,7 @@ MAX_REPORTS = 20
 # TAREFA ASSÍNCRONA (CELERY)
 # =============================================================================
 @celery_app.task(bind=True)
-def processar_analise(self, filepath_atual, filename_atual, reports_folder):
+def processar_analise(self, filepath_atual, filename_atual, reports_folder, use_ai_agent):
     """
     Task Celery para executar o pipeline de análise completo de forma assíncrona.
     """
@@ -148,7 +148,7 @@ def processar_analise(self, filepath_atual, filename_atual, reports_folder):
 
         # --- ETAPA 4.5: Gera e injeta o resumo da IA ---
         ai_summary = None
-        if AI_AGENT_ENABLED:
+        if AI_AGENT_ENABLED and use_ai_agent:
             try:
                 if not os.path.exists(json_path_final):
                     raise FileNotFoundError("Arquivo de resumo JSON final não encontrado.")
@@ -306,11 +306,15 @@ def upload_file():
         filepath_atual = os.path.join(app.config['UPLOAD_FOLDER'], f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_atual}")
         file_atual.save(filepath_atual)
         
+        # Verifica se o usuário optou por usar a IA (o valor é 'true' se o checkbox estiver marcado)
+        use_ai = request.form.get('use_ai_agent') == 'true'
+
         # Dispara a tarefa em segundo plano
         task = processar_analise.delay(
             filepath_atual=filepath_atual,
             filename_atual=filename_atual,
-            reports_folder=app.config['REPORTS_FOLDER']
+            reports_folder=app.config['REPORTS_FOLDER'],
+            use_ai_agent=use_ai
         )
         
         return jsonify({'task_id': task.id})

@@ -116,6 +116,15 @@
             border-color: #4F46E5;
             color: white;
         }
+        /* Estilos para o novo Toggle Switch */
+        #ai-toggle-container input:checked ~ .dot {
+            transform: translateX(100%);
+            background-color: #818cf8; /* indigo-300 */
+        }
+        #ai-toggle-container input:checked ~ .block {
+            background-color: #4F46E5; /* indigo-600 */
+        }
+
     </style>
 </head>
 <body class="p-5 md:p-8 min-h-screen flex items-center justify-center">
@@ -149,6 +158,20 @@
                                 <span id="file-name" class="hidden mt-2 font-medium text-green-400"></span>
                             </div>
                         </label>
+                        
+                        {% if ai_enabled %}
+                        <div id="ai-toggle-container" class="flex items-center justify-center my-6">
+                            <label for="use-ai-toggle" class="flex items-center cursor-pointer">
+                                <span class="mr-4 text-gray-300">Gerar Resumo Executivo com IA</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="use-ai-toggle" name="use_ai_agent" class="sr-only" value="true" checked>
+                                    <div class="block bg-gray-700 w-14 h-8 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+                        {% endif %}
+
                         <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 text-lg disabled:bg-gray-600 disabled:cursor-not-allowed">
                             Analisar Arquivo
                         </button>
