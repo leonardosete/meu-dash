@@ -74,7 +74,7 @@
                     <div id="upload-error" class="hidden text-red-400 bg-red-900/20 border border-red-500 p-4 rounded-lg mb-6 text-left">
                         <!-- Mensagem de erro -->
                     </div>
-                    <form id="upload-form" action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+                    <form id="upload-form" method="POST" enctype="multipart/form-data">
                         <label for="file_atual" class="block font-medium mb-4 text-left text-lg">Selecione o arquivo de dados:</label>
                         <div id="file-wrapper" class="file-input-wrapper rounded-xl p-8 cursor-pointer transition-colors duration-300 mb-8">
                             <input type="file" id="file_atual" name="file_atual" class="hidden" required>
@@ -153,9 +153,18 @@
             };
 
             // --- DADOS INICIAIS (PASSADOS PELO FLASK/JINJA2) ---
-            const summaryData = {{ summary_data | tojson }};
-            const lastTrendAnalysis = {{ last_trend_analysis | tojson }};
-            const lastActionPlan = {{ last_action_plan | tojson }};
+            // CORREÇÃO: As variáveis Jinja são colocadas entre aspas para se tornarem strings JS.
+            // Isso evita erros de sintaxe se a variável não for passada pelo backend.
+            const summaryDataJSON = '{{ summary_data | tojson | safe }}';
+            const lastTrendAnalysisJSON = '{{ last_trend_analysis | tojson | safe }}';
+            const lastActionPlanJSON = '{{ last_action_plan | tojson | safe }}';
+
+            // Em seguida, fazemos o parse da string JSON para um objeto JavaScript.
+            // Isso é mais robusto e lida com casos onde os dados são nulos ou ausentes.
+            const summaryData = (summaryDataJSON && summaryDataJSON !== 'null') ? JSON.parse(summaryDataJSON) : null;
+            const lastTrendAnalysis = (lastTrendAnalysisJSON && lastTrendAnalysisJSON !== 'null') ? JSON.parse(lastTrendAnalysisJSON) : null;
+            const lastActionPlan = (lastActionPlanJSON && lastActionPlanJSON !== 'null') ? JSON.parse(lastActionPlanJSON) : null;
+
 
             // --- FUNÇÕES ---
 
@@ -260,8 +269,9 @@
                 showStatusPanel('pending');
 
                 const formData = new FormData(app.uploadForm);
+                const uploadUrl = "{{ url_for('upload_file') }}";
 
-                fetch(app.uploadForm.action, {
+                fetch(uploadUrl, {
                     method: 'POST',
                     body: formData
                 })
@@ -310,19 +320,19 @@
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                             <div class="stat-card p-5 rounded-xl border-l-4 border-indigo-500">
                                 <h3 class="text-sm font-medium text-gray-400 mb-1">Total de Alertas</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.total_alertas_atuais}</p>
+                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.total_alertas}</p>
                             </div>
                             <div class="stat-card p-5 rounded-xl border-l-4 border-red-500">
                                 <h3 class="text-sm font-medium text-gray-400 mb-1">Risco Médio</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.risco_medio_geral.toFixed(2)}</p>
+                                <p class="text-3xl lg:text-4xl font-bold text-white">${(stats.risco_medio || 0).toFixed(2)}</p>
                             </div>
                             <div class="stat-card p-5 rounded-xl border-l-4 border-yellow-500">
                                 <h3 class="text-sm font-medium text-gray-400 mb-1">Ineficiência Média</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.ineficiencia_media_geral.toFixed(2)}</p>
+                                <p class="text-3xl lg:text-4xl font-bold text-white">${(stats.ineficiencia_media || 0).toFixed(2)}</p>
                             </div>
                             <div class="stat-card p-5 rounded-xl border-l-4 border-cyan-500">
                                 <h3 class="text-sm font-medium text-gray-400 mb-1">Impacto Médio</h3>
-                                <p class="text-3xl lg:text-4xl font-bold text-white">${stats.impacto_medio_geral.toFixed(2)}</p>
+                                <p class="text-3xl lg:text-4xl font-bold text-white">${(stats.impacto_medio || 0).toFixed(2)}</p>
                             </div>
                         </div>`;
                 } else {
@@ -337,7 +347,7 @@
                         description: `Referente à análise de ${lastActionPlan.date}`,
                         url: lastActionPlan.url,
                         color: "red",
-                        icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`
+                        icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`
                     });
                 }
                 if (lastTrendAnalysis) {
@@ -346,7 +356,7 @@
                         description: `Comparativo gerado em ${lastTrendAnalysis.date}`,
                         url: lastTrendAnalysis.url,
                         color: "green",
-                        icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`
+                        icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>`
                     });
                 }
                 links.push({
@@ -354,7 +364,7 @@
                     description: "Acessar todos os relatórios gerados.",
                     url: "{{ url_for('relatorios') }}",
                     color: "gray",
-                    icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>`
                 });
 
                 const linksContainer = document.querySelector('.side-links');
@@ -373,7 +383,16 @@
             // --- INICIALIZAÇÃO ---
             populateDashboard();
             setupFileInput();
-            showView('dashboard'); // Define a tela inicial
+            // Verifica se a URL contém um task_id para iniciar o polling
+            const urlParams = new URLSearchParams(window.location.search);
+            const taskId = urlParams.get('task_id');
+            if (taskId) {
+                showView('status');
+                showStatusPanel('pending');
+                pollStatus(taskId);
+            } else {
+                showView('dashboard'); // Define a tela inicial
+            }
         });
     </script>
 </body>

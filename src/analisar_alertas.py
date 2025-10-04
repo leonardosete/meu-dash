@@ -245,7 +245,7 @@ def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_
 
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌",
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌",
         ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
@@ -390,9 +390,9 @@ def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Ind
         return
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
-        acao_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "✅",
-        acao_INSTABILIDADE_CRONICA: "🔁"
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
+        ACAO_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "✅",
+        ACAO_INSTABILIDADE_CRONICA: "🔁"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
     print(f"\n📄 Gerando páginas de detalhe para o contexto: '{file_prefix}'...")
@@ -433,7 +433,7 @@ def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: 
         return
     os.makedirs(output_dir, exist_ok=True)
     emoji_map = {
-        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
     print(f"\n📄 Gerando páginas de detalhe para Métricas em Aberto...")
