@@ -47,9 +47,10 @@ def route_question(question: str) -> str:
     if not client:
         # Se o cliente não estiver configurado, assume o padrão de análise de dados
         return "data_analysis"
-
+ 
     try:
-        system_prompt = """Sua tarefa é classificar a pergunta do usuário em uma de duas categorias: 'data_analysis' ou 'project_documentation'.
+        system_prompt = """Sua tarefa é classificar a pergunta do usuário em uma de três categorias: 'data_analysis', 'project_documentation', ou 'greeting'.
+- Use 'greeting' para saudações, cumprimentos ou conversas informais como "oi", "olá", "tudo bem?".
 - Use 'data_analysis' para perguntas sobre dados, relatórios, KPIs, números, tendências, 'casos', 'alertas', 'times' ou 'squads'.
 - Use 'project_documentation' para perguntas sobre o funcionamento do projeto, arquitetura, código, 'Flask', 'Kubernetes', 'Docker', ou como usar a aplicação.
 Responda apenas com a categoria.
@@ -61,8 +62,8 @@ Responda apenas com a categoria.
             ],
             model=ROUTER_MODEL_NAME,
         )
-        category = chat_completion.choices[0].message.content.strip().lower()
-        if category in ["data_analysis", "project_documentation"]:
+        category = chat_completion.choices[0].message.content.strip().lower().replace("'", "").replace('"', '')
+        if category in ["data_analysis", "project_documentation", "greeting"]:
             return category
         return "data_analysis" # Padrão de segurança
     except Exception as e:
@@ -232,6 +233,11 @@ def ask_unified_agent(question: str, report_id: int = None) -> str:
     """
     category = route_question(question)
     print(f"🤖 Pergunta roteada para a categoria: {category}")
+
+    if category == 'greeting':
+        return ("Olá! Sou seu agente de IA. Estou pronto para ajudar. Você pode me fazer perguntas sobre os dados do relatório "
+                "(ex: 'Qual time teve mais casos?') ou sobre o funcionamento do projeto (ex: 'Como o Kubernetes é usado aqui?'). "
+                "Como posso te ajudar agora?")
 
     if category == 'project_documentation':
         return ask_project_expert(question)

@@ -208,6 +208,19 @@
             <div id="chat-box" class="chat-box flex-grow p-4 overflow-y-auto flex flex-col space-y-4">
                 <!-- Mensagens do chat serão inseridas aqui -->
             </div>
+            <!-- Sugestões de Perguntas -->
+            <div id="chat-suggestions" class="p-4 border-t border-gray-700">
+                <p class="text-xs text-gray-400 mb-2">Sugestões:</p>
+                <div class="flex flex-wrap gap-2">
+                    <button class="chat-suggestion-btn">Qual time teve mais casos?</button>
+                    <button class="chat-suggestion-btn">Resuma os 3 principais problemas.</button>
+                    <button class="chat-suggestion-btn">Como o Docker é usado no projeto?</button>
+                </div>
+                <style>
+                    .chat-suggestion-btn { background-color: #24273A; color: #E0E0E0; border: 1px solid #3A3D5A; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; transition: all 0.2s; }
+                    .chat-suggestion-btn:hover { background-color: #4F46E5; border-color: #4F46E5; color: white; }
+                </style>
+            </div>
             <!-- Input do Chat -->
             <div class="p-4 border-t border-gray-700">
                 <div id="chat-loading-indicator" class="hidden mb-2"><div class="dot-flashing"></div></div>
@@ -251,6 +264,7 @@
                     form: document.getElementById('chat-form'),
                     input: document.getElementById('chat-user-input'),
                     loading: document.getElementById('chat-loading-indicator'),
+                    suggestions: document.getElementById('chat-suggestions'),
                 }
             };
 
