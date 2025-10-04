@@ -104,6 +104,12 @@
         .action-link:hover {
             background-color: #5848d8;
         }
+        .btn-danger { background-color: #e74a3b; color: white; }
+        .btn-danger:hover { background-color: #c23325; }
+        .btn { padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 0.9em; text-align: center; transition: background-color 0.2s ease; border: none; cursor: pointer; }
+        .action-buttons { display: flex; gap: 10px; }
+
+
         .back-link {
             display: inline-block;
             text-align: center;
@@ -139,7 +145,12 @@
                         <tr>
                             <td>{{ report.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
                             <td>{{ report.original_filename }}</td>
-                            <td><a href="{{ report.url }}" class="action-link">Visualizar</a></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{{ report.url }}" class="btn action-link">Visualizar</a>
+                                    <button class="btn btn-danger" onclick="deleteReport({{ report.id }}, this)">Excluir</button>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -150,5 +161,32 @@
             <a href="/" class="back-link">&larr; Voltar ao Upload</a>
         </div>
     </div>
+
+    <script>
+    function deleteReport(reportId, buttonElement) {
+        if (confirm(`Tem certeza de que deseja excluir o relatório ${reportId}? Esta ação não pode ser desfeita.`)) {
+            fetch(`/report/delete/${reportId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Relatório excluído com sucesso!');
+                    // Remove a linha da tabela da interface
+                    buttonElement.closest('tr').remove();
+                } else {
+                    alert('Erro ao excluir o relatório: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Ocorreu um erro de comunicação com o servidor.');
+            });
+        }
+    }
+    </script>
 </body>
 </html>
