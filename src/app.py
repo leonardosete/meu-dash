@@ -30,7 +30,8 @@ class Report(db.Model):
     original_filename = db.Column(db.String(255))
     report_path = db.Column(db.String(255))
     json_summary_path = db.Column(db.String(255))
-    date_range = db.Column(db.String(100), nullable=True) # Novo campo para o intervalo de datas
+    date_range = db.Column(db.String(100), nullable=True)
+    max_date = db.Column(db.DateTime, nullable=True) # Novo campo para a data máxima do conteúdo
 
     def __repr__(self):
         return f'<Report {self.original_filename}>'
@@ -98,19 +99,29 @@ def upload_file():
         filename_atual = secure_filename(file_atual.filename)
         filepath_atual = os.path.join(app.config['UPLOAD_FOLDER'], f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_atual}")
         file_atual.save(filepath_atual)
-        date_range_atual = get_date_range_from_file(filepath_atual)
+        
+        date_info = get_date_range_from_file(filepath_atual)
+        date_range_atual, max_date_atual = (date_info[0], date_info[1]) if date_info else (None, None)
 
         run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         output_dir = os.path.join(app.config['REPORTS_FOLDER'], run_folder_name)
         os.makedirs(output_dir, exist_ok=True)
 
-        # --- ETAPA 2: Busca o relatório anterior no histórico ---
-        last_report = Report.query.order_by(Report.timestamp.desc()).first()
+        # --- ETAPA 2: Busca o relatório anterior no histórico (LÓGICA ATUALIZADA) ---
+        last_report = None
+        if max_date_atual:
+            # Busca o relatório cuja data máxima é a maior, mas ainda anterior à data máxima do arquivo atual
+            last_report = Report.query.filter(Report.max_date < max_date_atual).order_by(Report.max_date.desc()).first()
+        
+        if not last_report:
+            # Fallback para a lógica antiga se não encontrar um relatório por data ou se o arquivo atual não tiver data
+            last_report = Report.query.order_by(Report.timestamp.desc()).first()
+
         trend_report_path_relative = None
 
         # --- ETAPA 3: Gera o relatório de tendência (se houver um anterior) ---
         if last_report and last_report.json_summary_path and os.path.exists(last_report.json_summary_path):
-            print(f"📈 Relatório anterior encontrado. Iniciando análise de tendência.")
+            print(f"📈 Relatório anterior encontrado ({last_report.original_filename}). Iniciando análise de tendência.")
             
             temp_analysis_results = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=True)
             json_path_atual = temp_analysis_results['json_path']
@@ -129,7 +140,7 @@ def upload_file():
             trend_report_path_relative = os.path.basename(output_trend_path)
             print(f"✅ Relatório de tendência gerado.")
         else:
-            print("⚠️ Nenhum relatório anterior encontrado.")
+            print("⚠️ Nenhum relatório anterior compatível encontrado para análise de tendência.")
 
         # --- ETAPA 4: Executa a análise completa no arquivo atual ---
         final_analysis_results = analisar_arquivo_csv(
@@ -146,7 +157,8 @@ def upload_file():
             original_filename=filename_atual,
             report_path=report_path_final,
             json_summary_path=json_path_final,
-            date_range=date_range_atual
+            date_range=date_range_atual,
+            max_date=max_date_atual
         )
         db.session.add(new_report)
         db.session.commit()

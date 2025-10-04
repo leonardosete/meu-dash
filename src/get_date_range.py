@@ -1,17 +1,18 @@
 import pandas as pd
 import sys
-from typing import Optional
+from typing import Optional, Tuple
+from datetime import datetime
 
-def get_date_range_from_file(filepath: str) -> Optional[str]:
+def get_date_range_from_file(filepath: str) -> Optional[Tuple[str, datetime]]:
     """
-    Extrai o intervalo de datas de um arquivo CSV e o retorna como uma string.
+    Extrai o intervalo de datas de um arquivo CSV e o retorna como uma string e objeto.
 
     Args:
         filepath (str): O caminho para o arquivo CSV.
 
     Returns:
-        Optional[str]: Uma string formatada 'DD/MM/YYYY a DD/MM/YYYY' ou None se não for possível
-        determinar o intervalo.
+        Optional[Tuple[str, datetime]]: Uma tupla contendo a string formatada 
+        'DD/MM/YYYY a DD/MM/YYYY' e o objeto datetime da data máxima, ou None.
     """
     try:
         df = pd.read_csv(filepath, usecols=['sys_created_on'], encoding="utf-8-sig", sep=None, engine='python')
@@ -23,7 +24,7 @@ def get_date_range_from_file(filepath: str) -> Optional[str]:
         else:
             min_date = valid_dates.min()
             max_date = valid_dates.max()
-            return f"{min_date.strftime('%d/%m/%Y')} a {max_date.strftime('%d/%m/%Y')}"
+            return (f"{min_date.strftime('%d/%m/%Y')} a {max_date.strftime('%d/%m/%Y')}", max_date)
             
     except (FileNotFoundError, ValueError, KeyError) as e:
         print(f"⚠️  Aviso: Não foi possível ler as datas do arquivo '{filepath}'. Erro: {e}", file=sys.stderr)
@@ -35,9 +36,10 @@ def main_cli():
         print("Uso: python get_date_range.py <caminho_para_o_csv>", file=sys.stderr)
         sys.exit(1)
     
-    date_range = get_date_range_from_file(sys.argv[1])
-    if date_range:
-        print(date_range)
+    result = get_date_range_from_file(sys.argv[1])
+    if result:
+        date_range_str, _ = result
+        print(date_range_str)
     else:
         print("N/A", file=sys.stderr)
         sys.exit(1)

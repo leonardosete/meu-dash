@@ -63,6 +63,8 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
     - `POST /upload`: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.
     - `GET /relatorios`: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.
     - `GET /reports/<run_folder>/<filename>`: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.
+    - `GET /health`: Endpoint de health check para Kubernetes. Retorna um JSON `{'status': 'ok'}`.
+    - `GET /docs/<path:filename>`: Serve a documentação estática do projeto (e.g., `doc_tecnica.html`).
 
 ## 2. Banco de Dados (`data/meu_dash.db`)
 
@@ -106,7 +108,7 @@ O processo é iniciado pela interação do usuário e orquestrado integralmente 
 1.  **Usuário:** Acessa a rota `/` e vê a página de upload.
 2.  **Upload:** O usuário seleciona um arquivo `.csv` (`file_atual`) e o envia através do formulário (`POST /upload`).
 3.  **Orquestração (`app.py`):
-    a. **Salvar e Extrair Datas:** O arquivo `.csv` enviado é salvo em `data/uploads/`. O novo módulo `get_date_range.py` é usado para extrair o intervalo de datas do arquivo. Um diretório de saída (`run_<timestamp>`) é criado em `data/reports/`.
+    a. **Salvar e Extrair Datas:** O arquivo `.csv` enviado é salvo em `data/uploads/`. O módulo `get_date_range.py` é usado para extrair o intervalo de datas do arquivo. Um diretório de saída (`run_<timestamp>`) é criado em `data/reports/`.
     b. **Buscar Histórico:** O `app.py` consulta o banco de dados para encontrar o relatório mais recente (`Report.query.order_by(Report.timestamp.desc()).first()`).
     c. **Condição: Análise de Tendência (se um relatório anterior existe):**
         i. **Análise Leve:** A função `analisar_arquivo_csv` é chamada com `light_analysis=True` para o arquivo **atual**, gerando rapidamente o `resumo_problemas.json`.
