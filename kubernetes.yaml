@@ -57,7 +57,7 @@ metadata:
   namespace: meu-dash-alertas
 spec:
   serviceName: "meu-dash-headless"
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: meu-dash-web
@@ -95,11 +95,11 @@ spec:
           periodSeconds: 20
         resources:
           requests:
-            cpu: "100m"
-            memory: "128Mi"
+            cpu: "256m"
+            memory: "512Mi"
           limits:
-            cpu: "100m"
-            memory: "256Mi"
+            cpu: "256m"
+            memory: "512Mi"
         volumeMounts:
         - name: meu-dash-data
           mountPath: /app/data

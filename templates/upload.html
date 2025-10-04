@@ -32,12 +32,17 @@
             padding: 20px;
             flex-direction: column;
         }
-        .main-layout {
+        .page-content {
             display: flex;
-            align-items: flex-start;
+            flex-direction: column;
+            align-items: center;
             gap: 30px;
             width: 100%;
-            justify-content: center;
+        }
+        .main-layout {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
         }
         .container {
             max-width: 600px;
@@ -72,7 +77,6 @@
             transition: background-color 0.3s, border-color 0.3s;
             margin-bottom: 30px;
         }
-        /* Adicionado .drag-active para feedback visual */
         .file-input-wrapper:hover, .file-input-wrapper.drag-active {
             background-color: #24273A;
             border-color: var(--accent-color);
@@ -135,7 +139,6 @@
             display: flex;
             gap: 20px;
             justify-content: center;
-            margin-top: 30px;
             width: 100%;
             max-width: 1030px;
         }
@@ -175,11 +178,11 @@
             opacity: 0.8;
         }
 
-        /* --- CSS PARA O CARD DA ÚLTIMA ANÁLISE --- */
         .last-analysis-section {
-            width: 100%;
-            max-width: 400px;
-            margin-top: 0;
+            position: absolute;
+            top: 0;
+            left: calc(100% + 30px);
+            width: 400px;
         }
         .last-analysis-card {
             display: flex;
@@ -218,67 +221,90 @@
             font-size: 0.9em;
             opacity: 0.8;
         }
+
+        /* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
+        @media (max-width: 1060px) {
+            .main-layout {
+                position: static;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+                max-width: 600px;
+            }
+            .last-analysis-section {
+                position: static;
+                width: 100%;
+                max-width: 600px;
+            }
+            .docs-section {
+                flex-direction: column;
+                max-width: 600px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="main-layout">
-        <div class="container">
-            <div class="card">
-                <h1>Análise de Alertas e Tendências</h1>
+    <main class="page-content">
+        <div class="main-layout">
+            <div class="container">
+                <div class="card">
+                    <h1>Análise de Alertas e Tendências</h1>
 
-                {% if error %}
-                    <div class="error-message">{{ error }}</div>
-                {% endif %}
+                    {% if error %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endif %}
 
-                <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
-                    
-                    <label for="file_atual">Selecione o arquivo de dados mais recente:</label>
-                    <div class="file-input-wrapper" id="wrapper_atual">
-                        <input type="file" name="file_atual" id="file_atual" required>
-                        <span class="file-input-text" id="text_atual">Clique ou arraste o arquivo aqui</span>
-                        <span class="file-name" id="name_atual"></span>
-                    </div>
+                    <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+                        
+                        <label for="file_atual">Selecione o arquivo de dados mais recente:</label>
+                        <div class="file-input-wrapper" id="wrapper_atual">
+                            <input type="file" name="file_atual" id="file_atual" required>
+                            <span class="file-input-text" id="text_atual">Clique ou arraste o arquivo aqui</span>
+                            <span class="file-name" id="name_atual"></span>
+                        </div>
 
-                    <button type="submit" id="submit-btn">Analisar e Comparar</button>
+                        <button type="submit" id="submit-btn">Analisar e Comparar</button>
 
-                    <div class="button-group">
-                        <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico de Análises</button>
-                    </div>
-                </form>
+                        <div class="button-group">
+                            <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico de Análises</button>
+                        </div>
+                    </form>
+                </div>
             </div>
+
+            <!-- --- CARD DA ÚLTIMA ANÁLISE DE TENDÊNCIA (POSICIONADO ABSOLUTAMENTE) --- -->
+            {% if last_trend_analysis %}
+            <div class="last-analysis-section">
+                <a href="{{ last_trend_analysis.url }}" target="_blank" class="last-analysis-card">
+                    <!-- Ícone de Tendência -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <div class="last-analysis-text">
+                        <h3>Ver Última Análise de Tendência</h3>
+                        <p>Gerada em: {{ last_trend_analysis.date }}</p>
+                    </div>
+                </a>
+            </div>
+            {% endif %}
         </div>
 
-        <!-- --- CARD DA ÚLTIMA ANÁLISE DE TENDÊNCIA (CONDICIONAL) --- -->
-        {% if last_trend_analysis %}
-        <div class="last-analysis-section">
-            <a href="{{ last_trend_analysis.url }}" target="_blank" class="last-analysis-card">
-                <!-- Ícone de Tendência -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                <div class="last-analysis-text">
-                    <h3>Ver Última Análise de Tendência</h3>
-                    <p>Gerada em: {{ last_trend_analysis.date }}</p>
+        <div class="docs-section">
+            <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" target="_blank" class="doc-card">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                <div class="doc-card-text">
+                    <h3>Documentação Gerencial</h3>
+                    <p>Visão de negócio e conceitos.</p>
+                </div>
+            </a>
+            <a href="{{ url_for('serve_docs', filename='doc_tecnica.html') }}" target="_blank" class="doc-card">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <div class="doc-card-text">
+                    <h3>Documentação Técnica</h3>
+                    <p>Detalhes da implementação.</p>
                 </div>
             </a>
         </div>
-        {% endif %}
-    </div>
-
-    <div class="docs-section">
-        <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" target="_blank" class="doc-card">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-            <div class="doc-card-text">
-                <h3>Documentação Gerencial</h3>
-                <p>Visão de negócio e conceitos.</p>
-            </div>
-        </a>
-        <a href="{{ url_for('serve_docs', filename='doc_tecnica.html') }}" target="_blank" class="doc-card">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            <div class="doc-card-text">
-                <h3>Documentação Técnica</h3>
-                <p>Detalhes da implementação.</p>
-            </div>
-        </a>
-    </div>
+    </main>
 
     <script>
         function setupFileInput(inputId, wrapperId, textId, nameId) {
