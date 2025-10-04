@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv, atualizar_resumo_com_ia
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
-from .ai_agent import gerar_resumo_ia, ask_question_to_agent
+from .ai_agent import gerar_resumo_ia, ask_question_to_agent, ask_project_expert
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_migrate import Migrate
@@ -396,6 +396,24 @@ def ask_chat_agent():
     except Exception as e:
         print(f"❌ Erro ao processar pergunta para o agente de IA: {e}")
         return jsonify({'error': 'Ocorreu um erro interno ao contatar o agente de IA.'}), 500
+
+@app.route('/chat/ask_project', methods=['POST'])
+def ask_project_chat_agent():
+    """
+    Recebe uma pergunta do usuário sobre o projeto e retorna a resposta da IA.
+    """
+    data = request.get_json()
+    if not data or 'question' not in data:
+        return jsonify({'error': 'Dados inválidos. É necessário "question".'}), 400
+
+    question = data['question']
+    try:
+        answer = ask_project_expert(question)
+        return jsonify({'answer': answer})
+    except Exception as e:
+        print(f"❌ Erro ao processar pergunta para o especialista do projeto: {e}")
+        return jsonify({'error': 'Ocorreu um erro interno ao contatar o especialista do projeto.'}), 500
+
 # =============================================================================
 # INICIALIZAÇÃO
 # =============================================================================

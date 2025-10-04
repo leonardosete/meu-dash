@@ -1,10 +1,11 @@
 
 import os
 import json
+import functools
 from groq import Groq
 from collections import Counter
 from typing import Dict, Any
-
+ 
 # Configure the Groq API client
 # A chave de API deve ser definida como uma variável de ambiente.
 try:
@@ -17,6 +18,21 @@ try:
 except Exception as e:
     print(f"❌ Erro ao configurar a API do Groq: {e}")
     client = None
+
+@functools.lru_cache(maxsize=1)
+def get_docs_content() -> str:
+    """Carrega e concatena o conteúdo dos arquivos de documentação, com cache."""
+    docs_content = ""
+    doc_files = ['README.md', 'GEMINI.md', 'docs/doc_gerencial.html']
+    base_path = os.path.join(os.path.dirname(__file__), '..')
+    
+    for doc_file in doc_files:
+        try:
+            with open(os.path.join(base_path, doc_file), 'r', encoding='utf-8') as f:
+                docs_content += f"\n\n--- CONTEÚDO DE {doc_file} ---\n\n{f.read()}"
+        except FileNotFoundError:
+            print(f"⚠️  Arquivo de documentação não encontrado: {doc_file}")
+    return docs_content
 
 # Modelo recomendado para velocidade e custo-benefício no Groq
 MODEL_NAME = 'llama-3.3-70b-versatile'
@@ -142,3 +158,36 @@ def gerar_resumo_ia(kpis_tendencia: Dict[str, Any], header_atual: Dict[str, Any]
     except Exception as e:
         print(f"❌ Erro ao chamar a API do Groq: {e}")
         return f"Ocorreu um erro ao gerar o resumo da IA. Detalhes: {e}"
+
+def ask_project_expert(question: str) -> str:
+    """
+    Responde a perguntas sobre o projeto com base na documentação.
+    """
+    if not client:
+        return "A funcionalidade de chat com IA está desativada pois a chave de API (GROQ_API_KEY) não foi configurada."
+
+    try:
+        project_docs = get_docs_content()
+        
+        system_prompt = """Você é um especialista sênior no projeto 'meu-dash'. Sua única fonte de conhecimento é a documentação fornecida. Responda às perguntas do usuário de forma clara e concisa, baseando-se estritamente neste contexto. Se a resposta não estiver na documentação, informe que não possui essa informação."""
+
+        user_content = f"""
+        **Documentação do Projeto:**
+        {project_docs}
+
+        **Pergunta do Usuário:** "{question}"
+        """
+
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            model=MODEL_NAME,
+        )
+
+        return chat_completion.choices[0].message.content
+
+    except Exception as e:
+        print(f"❌ Erro ao chamar a API do Groq no agente especialista do projeto: {e}")
+        return f"Ocorreu um erro ao processar sua pergunta com o especialista do projeto. Detalhes: {e}"
