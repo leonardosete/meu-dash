@@ -6,6 +6,7 @@ from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text # Adicionado para compatibilidade com SQLAlchemy 2.0
 from flask_migrate import Migrate # type: ignore
 
 app = Flask(__name__, template_folder='../templates')
@@ -44,7 +45,7 @@ def health_check():
     """Verifica a saúde da aplicação, incluindo banco de dados e permissões de arquivo."""
     try:
         # 1. Verifica a conexão com o banco de dados
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
 
         # 2. Verifica se os diretórios essenciais existem e têm permissão de escrita
         if not os.path.exists(app.config['UPLOAD_FOLDER']) or not os.access(app.config['UPLOAD_FOLDER'], os.W_OK):
@@ -56,6 +57,7 @@ def health_check():
         return jsonify({'status': 'ok'}), 200
 
     except Exception as e:
+        app.logger.error(f"Health check failed: {e}")
         return jsonify({'status': 'error', 'details': str(e)}), 503
 
 # --- ROTAS PRINCIPAIS DA APLICAÇÃO ---
