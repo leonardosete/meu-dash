@@ -33,6 +33,10 @@ USER nonroot
 # copy installed dependencies from base stage
 COPY --from=base /home/nonroot/.local /home/nonroot/.local
 
+# Add local bin and site-packages to path
+ENV PATH=/home/nonroot/.local/bin:$PATH
+ENV PYTHONPATH=/home/nonroot/.local/lib/python3.11/site-packages
+
 # copy application code
 COPY --chown=nonroot:nonroot src/app.py src/app.py
 COPY --chown=nonroot:nonroot src/ src/
@@ -43,4 +47,4 @@ COPY --chown=nonroot:nonroot docs/ /app/docs/
 EXPOSE 5000
 
 # run the application
-CMD ["/bin/sh", "-c", "python -c 'from src.app import app, db; app.app_context().push(); db.create_all()' && /home/nonroot/.local/bin/gunicorn --bind 0.0.0.0:5000 src.app:app"]
+CMD ["/bin/sh", "-c", "python -c 'from src.app import app, db; app.app_context().push(); db.create_all()' && gunicorn --bind 0.0.0.0:5000 src.app:app"]
