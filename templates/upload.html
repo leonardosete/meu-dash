@@ -178,13 +178,19 @@
             opacity: 0.8;
         }
 
-        .last-analysis-section {
+        .last-analysis-section, .action-plan-section {
             position: absolute;
             top: 0;
-            left: calc(100% + 30px);
             width: 400px;
         }
-        .last-analysis-card {
+        .last-analysis-section {
+            left: calc(100% + 30px);
+        }
+        .action-plan-section {
+            right: calc(100% + 30px);
+        }
+
+        .side-card {
             display: flex;
             align-items: center;
             gap: 15px;
@@ -195,44 +201,54 @@
             text-decoration: none;
             color: var(--text-color);
             transition: all 0.3s ease;
-            border-left: 4px solid var(--success-color);
             height: 100%;
             box-sizing: border-box;
         }
-        .last-analysis-card:hover {
+        .side-card:hover {
             transform: translateY(-5px);
             border-color: var(--accent-color);
             box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         }
-        .last-analysis-card svg {
-            width: 32px;
-            height: 32px;
-            color: var(--success-color);
-            flex-shrink: 0;
-        }
-        .last-analysis-text h3 {
+        .side-card-text h3 {
             margin: 0 0 4px 0;
             color: var(--primary-text-color);
             font-size: 1.1em;
             font-weight: 600;
         }
-        .last-analysis-text p {
+        .side-card-text p {
             margin: 0;
             font-size: 0.9em;
             opacity: 0.8;
         }
+        .side-card svg {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+        }
+        .last-analysis-card {
+             border-left: 4px solid var(--success-color);
+        }
+        .last-analysis-card svg {
+            color: var(--success-color);
+        }
+        .action-plan-card {
+             border-left: 4px solid var(--accent-color);
+        }
+        .action-plan-card svg {
+             color: var(--accent-color);
+        }
 
         /* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
-        @media (max-width: 1060px) {
+        @media (max-width: 1500px) {
             .main-layout {
                 position: static;
                 display: flex;
-                flex-direction: column;
+                flex-direction: column-reverse; /* Reverte a ordem para mostrar os cards laterais primeiro */
                 align-items: center;
                 gap: 30px;
                 max-width: 600px;
             }
-            .last-analysis-section {
+            .last-analysis-section, .action-plan-section {
                 position: static;
                 width: 100%;
                 max-width: 600px;
@@ -247,6 +263,20 @@
 <body>
     <main class="page-content">
         <div class="main-layout">
+            
+            {% if last_action_plan %}
+            <div class="action-plan-section">
+                <a href="{{ last_action_plan.url }}" target="_blank" class="side-card action-plan-card">
+                    <!-- Ícone de Editar -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    <div class="side-card-text">
+                        <h3>Editar Plano de Ação</h3>
+                        <p>Gerado em: {{ last_action_plan.date }}</p>
+                    </div>
+                </a>
+            </div>
+            {% endif %}
+
             <div class="container">
                 <div class="card">
                     <h1>Análise de Alertas e Tendências</h1>
@@ -273,13 +303,12 @@
                 </div>
             </div>
 
-            <!-- --- CARD DA ÚLTIMA ANÁLISE DE TENDÊNCIA (POSICIONADO ABSOLUTAMENTE) --- -->
             {% if last_trend_analysis %}
             <div class="last-analysis-section">
-                <a href="{{ last_trend_analysis.url }}" target="_blank" class="last-analysis-card">
+                <a href="{{ last_trend_analysis.url }}" target="_blank" class="side-card last-analysis-card">
                     <!-- Ícone de Tendência -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                    <div class="last-analysis-text">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <div class="side-card-text">
                         <h3>Ver Última Análise de Tendência</h3>
                         <p>Gerada em: {{ last_trend_analysis.date }}</p>
                     </div>
@@ -290,7 +319,7 @@
 
         <div class="docs-section">
             <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" target="_blank" class="doc-card">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                 <div class="doc-card-text">
                     <h3>Documentação Gerencial</h3>
                     <p>Visão de negócio e conceitos.</p>
@@ -367,3 +396,4 @@
     </script>
 </body>
 </html>
+
