@@ -445,15 +445,21 @@
             }
 
             function setupChat() {
-                if (!lastReportId) return;
-
+                // O botão de chat agora está sempre visível.
                 app.chat.fab.classList.remove('hidden');
 
                 app.chat.fab.addEventListener('click', () => {
                     app.chat.modal.classList.remove('hidden');
                     app.chat.modal.classList.add('flex');
-                    app.chat.reportInfo.textContent = `Analisando: ${lastReportFilename}`;
-                    if (app.chat.box.children.length === 0) {
+                    
+                    // A mensagem de boas-vindas se adapta ao contexto
+                    if (lastReportId) {
+                        app.chat.reportInfo.textContent = `Analisando: ${lastReportFilename}`;
+                    } else {
+                        app.chat.reportInfo.textContent = 'Pronto para responder sobre o projeto.';
+                    }
+
+                    if (app.chat.box.children.length === 0) { // Adiciona a saudação apenas na primeira vez
                          appendChatMessage(`Olá! Sou seu agente de IA. Estou com os dados do relatório '${lastReportFilename}' prontos. Faça perguntas específicas sobre os resultados.`, 'assistant');
                     }
                 });
@@ -477,7 +483,11 @@
                         const response = await fetch("{{ url_for('ask_unified_chat_agent') }}", {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ report_id: lastReportId, question: userMessage }),
+                            // O ID do relatório é enviado se existir, senão é nulo.
+                            // O backend já sabe como lidar com isso, usando o modo "Especialista de Projeto".
+                            body: JSON.stringify({ 
+                                report_id: lastReportId || null, 
+                                question: userMessage }),
                         });
                         const data = await response.json();
                         if (!response.ok) throw new Error(data.error || 'Erro na requisição.');

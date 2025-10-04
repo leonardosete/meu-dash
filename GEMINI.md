@@ -66,6 +66,7 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
     - `GET /relatorios`: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.
     - `GET /reports/<run_folder>/<filename>`: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.
     - `GET /health`: Endpoint de health check para Kubernetes. Retorna um JSON `{'status': 'ok'}`.
+    - `POST /report/delete/<int:report_id>`: Exclui um relatório específico, removendo seus arquivos e o registro do banco de dados.
     - `GET /docs/<path:filename>`: Serve a documentação estática do projeto (e.g., `doc_tecnica.html`).
     - `POST /chat/ask`: Endpoint unificado que recebe perguntas do usuário e as encaminha para o agente de IA.
 

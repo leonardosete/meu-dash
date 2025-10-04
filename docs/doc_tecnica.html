@@ -244,6 +244,7 @@
                             <li><code>GET /relatorios</code>: Exibe um histórico de todos os relatórios gerados.</li>
                             <li><code>GET /reports/&lt;run_folder&gt;/&lt;filename&gt;</code>: Serve os arquivos de relatório (HTML, CSV, etc.).</li>
                             <li><code>GET /health</code>: Endpoint de health check para Kubernetes. Retorna <code>{'status': 'ok'}</code>.</li>
+                            <li><code>POST /report/delete/&lt;report_id&gt;</code>: Exclui um relatório específico, seus arquivos associados e o registro no banco de dados.</li>
                             <li><code>GET /docs/&lt;path:filename&gt;</code>: Serve a documentação estática do projeto.</li>
                         </ul>
                     </li>
