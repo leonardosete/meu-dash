@@ -116,10 +116,11 @@ def gerar_resumo_analise_unica_ia(report_data: Dict[str, Any]) -> str:
             for p in top_5_problemas
         )
 
-        system_prompt = """Você é um analista de operações de TI sênior. Sua tarefa é escrever um resumo executivo conciso (máximo de 3 frases) para a gestão, baseado nos dados de uma única análise. Identifique o tema principal do período, o problema mais crítico e o time mais impactado. Seja direto e foque no que é acionável."""
+        system_prompt = """Você é um analista de operações de TI sênior. Sua tarefa é escrever um resumo executivo conciso (máximo de 3 frases) para a gestão, baseado nos dados de uma única análise. Comece mencionando o período analisado. Em seguida, identifique o tema principal, o problema mais crítico e o time mais impactado. Seja direto e foque no que é acionável."""
         
         user_content = f"""
         **Dados do Período Atual:**
+        - Período da Análise: {report_data.get('date_range', 'Não informado')}
         - Total de alertas analisados: {header.get('total_alertas', 'N/A')}
         - Total de casos únicos (problemas): {len(records)}
         - Risco médio dos casos: {header.get('risco_medio', 0):.2f}

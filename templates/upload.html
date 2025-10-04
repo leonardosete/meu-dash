@@ -258,11 +258,12 @@
 
             // --- DADOS INICIAIS (PASSADOS PELO FLASK/JINJA2) ---
             const summaryDataJSON = '{{ summary_data | tojson | safe }}';
-            const lastReportId = {{ last_report.id if last_report else 'null' }};
+            const lastReportIdString = '{{ last_report.id if last_report else "" }}';
             const lastReportFilename = '{{ last_report.original_filename if last_report else '' }}';
             const lastTrendAnalysisJSON = '{{ last_trend_analysis | tojson | safe }}';
             const lastActionPlanJSON = '{{ last_action_plan | tojson | safe }}';
             
+            const lastReportId = lastReportIdString ? parseInt(lastReportIdString, 10) : null;
             const summaryData = (summaryDataJSON && summaryDataJSON !== 'null') ? JSON.parse(summaryDataJSON) : null;
             const lastTrendAnalysis = (lastTrendAnalysisJSON && lastTrendAnalysisJSON !== 'null') ? JSON.parse(lastTrendAnalysisJSON) : null;
             const lastActionPlan = (lastActionPlanJSON && lastActionPlanJSON !== 'null') ? JSON.parse(lastActionPlanJSON) : null;
