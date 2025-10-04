@@ -240,7 +240,7 @@
                     <li><strong>Rotas Principais:</strong>
                         <ul>
                             <li><code>GET /</code>: Exibe a página inicial de upload (<code>upload.html</code>).</li>
-                            <li><code>POST /upload</code>: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.</li>
+                            <li><code>POST /upload</code>: Recebe o arquivo e a decisão do usuário sobre usar a IA (<code>use_ai_agent</code>). Dispara a tarefa assíncrona de análise.</li>
                             <li><code>GET /relatorios</code>: Exibe um histórico de todos os relatórios gerados.</li>
                             <li><code>GET /reports/&lt;run_folder&gt;/&lt;filename&gt;</code>: Serve os arquivos de relatório (HTML, CSV, etc.).</li>
                             <li><code>GET /health</code>: Endpoint de health check para Kubernetes. Retorna <code>{'status': 'ok'}</code>.</li>
@@ -266,6 +266,17 @@
                     </li>
                     <li><strong>Responsabilidade:</strong> Manter um histórico de todas as análises. A comparação para análise de tendência agora é mais inteligente: em vez de apenas pegar a última análise executada, o sistema usa o campo <code>max_date</code> para encontrar a análise anterior mais relevante, cujo conteúdo seja cronologicamente anterior ao do upload atual.</li>
                 </ul>
+            </div>
+
+            <h3>Agente de Inteligência Artificial (<code>src/ai_agent.py</code>)</h3>
+            <div class="card">
+                <p>O sistema integra um agente de IA com duas capacidades principais:</p>
+                <ul>
+                    <li><strong>Assistente de Chat (Reativo):</strong> Através de uma interface de chat na página principal, os usuários podem fazer perguntas em linguagem natural sobre os dados do último relatório ou sobre a documentação do projeto.</li>
+                    <li><strong>Gerador de Resumo (Proativo):</strong> Durante o processamento de uma análise, o agente pode ser invocado para gerar um resumo executivo. A lógica se adapta para criar um resumo comparativo (em análises de tendência) ou um resumo focado em pontos críticos (em análises únicas).</li>
+                </ul>
+                <h4>Controle de Ativação</h4>
+                <p>A funcionalidade de IA pode ser globalmente desativada através da variável de ambiente <code>AI_AGENT_ENABLED="false"</code>. Adicionalmente, o usuário pode escolher se deseja gerar o resumo da IA a cada upload através de um interruptor na interface.</p>
             </div>
 
             <h3>Motores de Análise (Invocados como Bibliotecas)</h3>

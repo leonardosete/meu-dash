@@ -63,6 +63,7 @@ A documentação técnica e gerencial do projeto está disponível publicamente 
 4.  📈 **Análise de Tendências**: Ao processar mais de um arquivo, compara o período atual com o anterior e gera o `resumo_tendencia.html`, mostrando a evolução dos problemas, a taxa de resolução e os problemas persistentes.
 5.  ✅ **Validação da Qualidade dos Dados**: Detecta e isola alertas com dados de remediação inválidos (`qualidade_dados_remediacao.html`=> `invalid_self_healing_status.csv`), garantindo a confiabilidade da análise e notificando no dashboard principal.
 6.  🗑️ **Gerenciamento de Relatórios**: Permite a exclusão de análises individuais diretamente pela interface de histórico, liberando espaço e mantendo o ambiente organizado.
+7.  🤖 **Resumos Executivos com IA**: Gera automaticamente um resumo executivo para cada análise, destacando os pontos mais críticos para a gestão. O usuário pode optar por habilitar ou desabilitar esta funcionalidade a cada upload.
 
 ---
 

@@ -57,7 +57,7 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 - **Componentes Internos:**
     - **Flask:** Microframework web.
     - **SQLAlchemy:** ORM para interagir com o banco de dados.
-    - **Flask-Migrate:** Gerencia as migrações do esquema do banco de dados.
+    - **Flask-Migrate:** Gerencia as migrações do esquema do banco de dados. 
     - **Celery:** Sistema de filas de tarefas para processamento assíncrono.
 - **Rotas Principais:**
     - `GET /`: Exibe a página inicial de upload (`upload.html`).
@@ -71,7 +71,10 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
     - `POST /chat/ask`: Endpoint unificado que recebe perguntas do usuário e as encaminha para o agente de IA.
 
 ## 2. Processamento Assíncrono: Tarefa Celery (`processar_analise` em `src/app.py`)
-- **Responsabilidade:** Executar todo o pipeline de análise de forma desacoplada da requisição web. Isso inclui a validação do arquivo, análise de tendência, análise principal, geração de resumo por IA e rotação de relatórios antigos.
+- **Responsabilidade:** Executar todo o pipeline de análise de forma desacoplada da requisição web.
+- **Fluxo:** Validação do arquivo, análise de tendência, análise principal, geração **condicional** de resumo por IA e rotação de relatórios antigos.
+- **Parâmetros:** Recebe `use_ai_agent` (booleano) do frontend para decidir se deve ou não invocar a IA para gerar o resumo executivo.
+- **Retorno:** Retorna um dicionário contendo a URL do relatório e o `ai_summary` (se gerado), que é usado pelo frontend para exibir o card de resumo na página inicial.
 
 ## 3. Banco de Dados (`data/meu_dash.db`)
 
@@ -88,10 +91,12 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 
 ## 4. Agente de Inteligência Artificial (`src/ai_agent.py`)
 - **Responsabilidade:** Fornecer uma interface de linguagem natural para interagir com os dados e a documentação.
-- **Componentes:**
-    - **Roteador (`route_question`):** Classifica a pergunta do usuário para direcioná-la ao especialista correto (análise de dados ou documentação do projeto).
-    - **Especialista de Dados (`ask_question_to_agent`):** Responde perguntas sobre um relatório específico, usando o `resumo_problemas.json` como contexto.
-    - **Especialista de Projeto (`ask_project_expert`):** Responde perguntas sobre a arquitetura e funcionamento do projeto, usando `README.md`, `GEMINI.md` e outros arquivos de documentação como base de conhecimento.
+- **Capacidades Principais:**
+    - **Assistente de Chat (Reativo):** Através da rota `/chat/ask`, o agente responde a perguntas do usuário sobre os dados de um relatório específico ou sobre a documentação do projeto, usando um sistema de ferramentas (`project_docs_tool`, `data_analysis_tool`).
+    - **Gerador de Resumo (Proativo):** Durante o processamento da análise, o agente é invocado para gerar um resumo executivo. Ele possui duas lógicas distintas:
+        - `gerar_resumo_ia`: Cria um resumo comparativo quando há uma análise de tendência.
+        - `gerar_resumo_analise_unica_ia`: Cria um resumo focado nos pontos críticos quando é uma análise única.
+- **Controle de Ativação:** A funcionalidade de IA pode ser globalmente desativada pela variável de ambiente `AI_AGENT_ENABLED="false"`. Além disso, a geração de resumo para cada análise pode ser controlada pelo usuário através de um interruptor na interface de upload.
 
 ## 5. Motores de Análise (Invocados como Bibliotecas)
 
@@ -119,20 +124,20 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 # 🌊 FLUXO DE EXECUÇÃO LÓGICO (ASSÍNCRONO)
 
 O processo é iniciado pela interação do usuário, mas a análise pesada é executada em segundo plano pelo Celery.
-
 1.  **Usuário:** Acessa a rota `/` e vê a página de upload.
-2.  **Upload:** O usuário seleciona um arquivo `.csv` (`file_atual`) e o envia através do formulário (`POST /upload`).
+2.  **Upload:** O usuário seleciona um arquivo `.csv` (`file_atual`), decide se quer o resumo da IA através de um interruptor na tela, e envia o formulário (`POST /upload`).
 3.  **Disparo da Tarefa (`app.py`):**
     a. O `app.py` salva o arquivo em `data/uploads/`.
-    b. A tarefa `processar_analise.delay()` é chamada, passando os caminhos necessários. Isso enfileira a tarefa no Celery.
+    b. A tarefa `processar_analise.delay()` é chamada, passando os caminhos necessários e a decisão do usuário sobre usar a IA (`use_ai_agent`). Isso enfileira a tarefa no Celery.
     c. O `app.py` retorna imediatamente um `task_id` para o frontend, que redireciona o usuário para a página de status (`/task/<task_id>`).
 4.  **Execução da Tarefa em Background (Worker Celery):**
     a. **Validação:** A tarefa `processar_analise` inicia, extrai as datas do arquivo e valida a cronologia em relação ao último relatório no banco de dados.
-    b. **Análise de Tendência:** Se um relatório anterior existe, uma análise de tendência é executada e um resumo com IA é gerado.
+    b. **Análise de Tendência:** Se um relatório anterior existe, uma análise de tendência é executada.
     c. **Análise Principal:** A análise completa do arquivo atual é executada.
-    d. **Persistência:** Um novo registro `Report` é salvo no banco de dados.
-    e. **Rotação:** A tarefa verifica se o número de relatórios excede o limite (`MAX_REPORTS`) e remove os diretórios e registros do banco de dados dos relatórios mais antigos.
-5.  **Feedback ao Usuário:** A página de status consulta periodicamente o endpoint `/status/<task_id>`. Quando a tarefa é concluída com sucesso, o frontend recebe a URL do novo relatório e redireciona o usuário. Em caso de falha, exibe a mensagem de erro.
+    d. **Geração de Resumo por IA (Condicional):** Se `use_ai_agent` for verdadeiro, o agente de IA é chamado para gerar um resumo executivo (de tendência ou de análise única).
+    e. **Persistência:** Um novo registro `Report` é salvo no banco de dados.
+    f. **Rotação:** A tarefa verifica se o número de relatórios excede o limite (`MAX_REPORTS`) e remove os diretórios e registros do banco de dados dos relatórios mais antigos.
+5.  **Feedback ao Usuário:** A página de status consulta periodicamente o endpoint `/status/<task_id>`. Quando a tarefa é concluída com sucesso, o frontend recebe a URL do novo relatório e o resumo da IA (se houver), e redireciona o usuário para a página inicial, onde um card com o resumo é exibido. Em caso de falha, exibe a mensagem de erro.
 
 ---
 
@@ -150,3 +155,9 @@ Todos os artefatos são gerados dentro de um subdiretório `run_<timestamp>` em 
 - **`resumo_problemas.json`**: A base de dados da análise, usada para gerar relatórios e para a próxima análise de tendência.
 - **`atuar.csv`**: Lista de problemas que exigem ação manual.
 - ... (e todos os outros arquivos de dados)
+
+---
+
+# 🎯 MELHORIAS FUTURAS E PONTOS DE ATENÇÃO
+
+- **Precisão do Agente de IA:** Embora funcional, o agente de IA que gera os resumos executivos ainda precisa de refinamento. Os resultados atuais, por vezes, carecem de precisão nos valores e na identificação dos temas mais relevantes. É necessário iterar nos prompts e, possivelmente, na forma como os dados de contexto são fornecidos para melhorar a qualidade e a confiabilidade dos insights gerados para a gestão.
