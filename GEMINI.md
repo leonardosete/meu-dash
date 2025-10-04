@@ -110,7 +110,7 @@ O processo é iniciado pela interação do usuário e orquestrado integralmente 
 2.  **Upload:** O usuário seleciona um arquivo `.csv` (`file_atual`) e o envia através do formulário (`POST /upload`).
 3.  **Orquestração (`app.py`):
     a. **Salvar e Extrair Datas:** O arquivo `.csv` enviado é salvo em `data/uploads/`. O módulo `get_date_range.py` é usado para extrair o intervalo de datas do arquivo. Um diretório de saída (`run_<timestamp>`) é criado em `data/reports/`.
-    b. **Buscar Histórico:** O `app.py` consulta o banco de dados para encontrar o relatório mais recente (`Report.query.order_by(Report.timestamp.desc()).first()`).
+    b. **Buscar Histórico Relevante:** O `app.py` consulta o banco de dados para encontrar o relatório anterior mais apropriado para comparação, buscando pelo campo `max_date` (`Report.query.order_by(Report.max_date.desc()).first()`).
     c. **Condição: Análise de Tendência (se um relatório anterior existe):**
         i. **Análise Leve:** A função `analisar_arquivo_csv` é chamada com `light_analysis=True` para o arquivo **atual**, gerando rapidamente o `resumo_problemas.json`.
         ii. **Geração da Tendência:** A função `gerar_relatorio_tendencia` é chamada, recebendo os JSONs (anterior e atual) e também os intervalos de datas (anterior e atual) para enriquecer o relatório de tendência.

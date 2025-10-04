@@ -306,11 +306,7 @@
                     <strong>Orquestração (<code>app.py</code>):</strong>
                     <ul>
                         <li>a. <strong>Salvar e Extrair Datas:</strong> O <code>.csv</code> é salvo em <code>data/uploads/</code>. O módulo <code>get_date_range.py</code> é usado para extrair o intervalo de datas e a data máxima (<code>max_date</code>) do conteúdo do arquivo. Um diretório de saída (<code>run_&lt;timestamp&gt;</code>) é criado em <code>data/reports/</code>.</li>
-                        <li>b. <strong>Buscar Histórico Relevante:</strong> O app consulta o banco de dados para encontrar o relatório anterior mais apropriado para comparação. A lógica é:
-                            <ol>
-                                <li>Tenta encontrar o relatório cuja <code>max_date</code> seja a maior possível, mas ainda <strong>anterior</strong> à <code>max_date</code> do arquivo recém-enviado.</li>
-                                <li>Se nenhum relatório for encontrado com essa lógica (por exemplo, se for o primeiro upload ou se os dados forem mais antigos que todos os registros existentes), ele usa como fallback o último relatório inserido no banco, ordenado por <code>timestamp</code>.</li>
-                            </ol>
+                        <li>b. <strong>Buscar Histórico Relevante:</strong> O app consulta o banco de dados para encontrar o relatório anterior mais apropriado para comparação. A lógica é encontrar o relatório cuja <code>max_date</code> seja a maior possível, mas ainda <strong>anterior</strong> à <code>max_date</code> do arquivo recém-enviado. Se nenhum relatório for encontrado com essa lógica, a análise de tendência não é executada para o período atual.
                         </li>
                     </ul>
                 </li>
