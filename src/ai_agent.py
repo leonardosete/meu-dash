@@ -97,6 +97,45 @@ def gerar_resumo_ia(kpis_tendencia: Dict[str, Any], header_atual: Dict[str, Any]
         print(f"❌ Erro ao chamar a API do Groq: {e}")
         return f"Ocorreu um erro ao gerar o resumo da IA. Detalhes: {e}"
 
+def gerar_resumo_analise_unica_ia(report_data: Dict[str, Any]) -> str:
+    """
+    Gera um resumo executivo para uma única análise, focando nos pontos mais críticos.
+    """
+    if not client:
+        return "A geração de resumo por IA está desativada."
+
+    try:
+        header = report_data.get('header', {})
+        records = report_data.get('records', [])
+        
+        # Extrai os top 5 problemas mais críticos para dar contexto à IA
+        top_5_problemas = sorted(records, key=lambda x: x.get('score_ponderado_final', 0), reverse=True)[:5]
+        
+        problemas_contexto = "\n".join(
+            f"- Problema: \"{p.get('short_description')}\", Time: {p.get('assignment_group')}, Score: {p.get('score_ponderado_final', 0):.1f}"
+            for p in top_5_problemas
+        )
+
+        system_prompt = """Você é um analista de operações de TI sênior. Sua tarefa é escrever um resumo executivo conciso (máximo de 3 frases) para a gestão, baseado nos dados de uma única análise. Identifique o tema principal do período, o problema mais crítico e o time mais impactado. Seja direto e foque no que é acionável."""
+        
+        user_content = f"""
+        **Dados do Período Atual:**
+        - Total de alertas analisados: {header.get('total_alertas', 'N/A')}
+        - Total de casos únicos (problemas): {len(records)}
+        - Risco médio dos casos: {header.get('risco_medio', 0):.2f}
+
+        **Top 5 Problemas Mais Críticos por Score:**
+        {problemas_contexto}
+
+        Gere o resumo executivo.
+        """
+
+        chat_completion = client.chat.completions.create(messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_content}], model=MODEL_NAME)
+        return chat_completion.choices[0].message.content
+    except Exception as e:
+        print(f"❌ Erro ao gerar resumo de análise única com IA: {e}")
+        return f"Ocorreu um erro ao gerar o resumo da IA para esta análise. Detalhes: {e}"
+
 # =============================================================================
 # ARQUITETURA DO AGENTE (BASEADA EM FERRAMENTAS)
 # =============================================================================

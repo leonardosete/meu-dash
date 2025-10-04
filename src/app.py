@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv, atualizar_resumo_com_ia
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
-from .ai_agent import gerar_resumo_ia, ask_unified_agent
+from .ai_agent import gerar_resumo_ia, ask_unified_agent, gerar_resumo_analise_unica_ia
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_migrate import Migrate
@@ -144,22 +144,29 @@ def processar_analise(self, filepath_atual, filename_atual, reports_folder):
         json_path_final = final_analysis_results['json_path']
 
         # --- ETAPA 4.5: Gera e injeta o resumo da IA ---
-        if kpis_tendencia and json_path_final and report_path_final:
-            print("🤖 Gerando resumo executivo com IA...")
-            try:
-                with open(json_path_final, 'r', encoding='utf-8') as f:
-                    header_atual = json.load(f).get('header', {})
-                
-                if header_atual:
-                    ai_summary = gerar_resumo_ia(kpis_tendencia=kpis_tendencia, header_atual=header_atual)
-                    if ai_summary:
-                        atualizar_resumo_com_ia(report_path_final, ai_summary)
-                        print("✅ Resumo da IA injetado no relatório final.")
-                else:
-                    print("⚠️  Cabeçalho de dados não encontrado no JSON final. Resumo da IA não será gerado.")
+        try:
+            if not os.path.exists(json_path_final):
+                raise FileNotFoundError("Arquivo de resumo JSON final não encontrado.")
 
-            except Exception as e:
-                print(f"❌ Erro ao gerar ou injetar o resumo da IA: {e}")
+            with open(json_path_final, 'r', encoding='utf-8') as f:
+                report_data = json.load(f)
+            
+            header_atual = report_data.get('header', {})
+            ai_summary = None
+
+            if kpis_tendencia and header_atual:
+                print("🤖 Gerando resumo executivo de TENDÊNCIA com IA...")
+                ai_summary = gerar_resumo_ia(kpis_tendencia=kpis_tendencia, header_atual=header_atual)
+            elif header_atual:
+                print("🤖 Gerando resumo executivo de ANÁLISE ÚNICA com IA...")
+                ai_summary = gerar_resumo_analise_unica_ia(report_data=report_data)
+
+            if ai_summary and report_path_final:
+                atualizar_resumo_com_ia(report_path_final, ai_summary)
+                print("✅ Resumo da IA injetado no relatório final.")
+        
+        except Exception as e:
+            print(f"❌ Erro no bloco de geração de resumo da IA: {e}")
 
         # --- ETAPA 5: Salva o novo relatório no banco ---
         new_report = Report(
