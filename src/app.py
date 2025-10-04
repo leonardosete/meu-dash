@@ -202,11 +202,14 @@ def index():
     
     summary_data = None
     last_trend_analysis = None
+    editor_url = None
 
     if last_report:
-        # Link para o relatório de tendência, se existir
-        run_folder_path = os.path.dirname(last_report.report_path)
+        # Normaliza o caminho do relatório para obter o diretório de execução de forma confiável
+        run_folder_path = os.path.dirname(os.path.abspath(last_report.report_path))
         run_folder_name = os.path.basename(run_folder_path)
+
+        # Link para o relatório de tendência, se existir
         trend_report_path = os.path.join(run_folder_path, 'resumo_tendencia.html')
         if os.path.exists(trend_report_path):
             last_trend_analysis = {
@@ -214,24 +217,32 @@ def index():
                 'date': last_report.timestamp.strftime('%d/%m/%Y às %H:%M')
             }
 
+        # Link para o editor de atuação, se existir
+        editor_path = os.path.join(run_folder_path, 'editor_atuacao.html')
+        if os.path.exists(editor_path):
+            editor_url = url_for('serve_report', run_folder=run_folder_name, filename='editor_atuacao.html')
+
         # Carregar dados do resumo JSON para o dashboard
-        if last_report.json_summary_path and os.path.exists(last_report.json_summary_path):
-            try:
-                with open(last_report.json_summary_path, 'r', encoding='utf-8') as f:
-                    summary_data = json.load(f)
-                # Valida a estrutura do JSON carregado para evitar erros no template
-                if not isinstance(summary_data, dict) or 'header' not in summary_data:
-                    print(f"⚠️  Arquivo de resumo JSON '{last_report.json_summary_path}' tem formato inválido ou não contém 'header'.")
+        if last_report.json_summary_path:
+            json_path = os.path.abspath(last_report.json_summary_path)
+            if os.path.exists(json_path):
+                try:
+                    with open(json_path, 'r', encoding='utf-8') as f:
+                        summary_data = json.load(f)
+                    # Valida a estrutura do JSON carregado para evitar erros no template
+                    if not isinstance(summary_data, dict) or 'header' not in summary_data:
+                        print(f"⚠️  Arquivo de resumo JSON '{json_path}' tem formato inválido ou não contém 'header'.")
+                        summary_data = None
+                except (IOError, json.JSONDecodeError) as e:
+                    print(f"⚠️  Não foi possível carregar o arquivo de resumo JSON: {e}")
                     summary_data = None
-            except (IOError, json.JSONDecodeError) as e:
-                print(f"⚠️  Não foi possível carregar o arquivo de resumo JSON: {e}")
-                summary_data = None
 
     return render_template(
         'upload.html', 
         last_trend_analysis=last_trend_analysis,
         summary_data=summary_data,
-        last_report_date=last_report.timestamp.strftime('%d/%m/%Y às %H:%M') if last_report else None
+        last_report_date=last_report.timestamp.strftime('%d/%m/%Y às %H:%M') if last_report else None,
+        editor_url=editor_url
     )
 
 @app.route('/upload', methods=['POST'])
