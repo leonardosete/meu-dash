@@ -207,11 +207,20 @@ def compare_files():
         
         run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}_compare"
         output_dir = os.path.join(app.config['REPORTS_FOLDER'], run_folder_name)
-        os.makedirs(output_dir, exist_ok=True)
+        
+        # Cria subdiretórios para cada análise para evitar conflitos de arquivos
+        output_dir_anterior = os.path.join(output_dir, 'anterior')
+        output_dir_atual = os.path.join(output_dir, 'atual')
+        os.makedirs(output_dir_anterior, exist_ok=True)
+        os.makedirs(output_dir_atual, exist_ok=True)
 
-        # Gera os resumos JSON para ambos os arquivos
-        results_atual = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=True)
-        results_anterior = analisar_arquivo_csv(filepath_anterior, output_dir, light_analysis=True)
+        # ALTERAÇÃO: Executa a análise completa (False) para garantir consistência total
+        # com o fluxo de upload padrão. Isso gera todos os relatórios para ambos os
+        # períodos, garantindo que os JSONs de resumo sejam 100% precisos.
+        print("⚙️  Executando análise completa para o arquivo ATUAL...")
+        results_atual = analisar_arquivo_csv(filepath_atual, output_dir_atual, light_analysis=False)
+        print("⚙️  Executando análise completa para o arquivo ANTERIOR...")
+        results_anterior = analisar_arquivo_csv(filepath_anterior, output_dir_anterior, light_analysis=False)
 
         # Gera o relatório de tendência
         output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
