@@ -180,10 +180,13 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     body_content = list_card_styles
     
     # NOVO: Substitui o botão "Voltar" por um ícone "Home" moderno e consistente.
-    # ALTERAÇÃO: Substituído ícone por um botão de texto mais claro e com melhor espaçamento.
-    body_content += '<a href="/" class="home-button">Página Inicial</a>'
-    
-    body_content += f'<p style="font-size: 1.1em; color: var(--text-secondary-color); margin-top: -15px;">{date_range_text}</p>'
+    # REVISÃO: Envolve o botão e a data em um contêiner de cabeçalho para melhor controle de layout e espaçamento.
+    body_content += f'''
+    <div class="report-header">
+        <a href="/" class="home-button">Página Inicial</a>
+        <p class="date-range-text">{date_range_text}</p>
+    </div>
+    '''
     
     # Placeholder para o resumo da IA
     body_content += "<!-- AI_SUMMARY_PLACEHOLDER -->"
