@@ -184,8 +184,9 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     body_content += f'''
     <div class="report-header">
         <a href="/" class="home-button">Página Inicial</a>
-        <p class="date-range-text">{date_range_text}</p>
+        <p class="date-range-text" style="font-size: 1.1em;">{date_range_text}</p>
     </div>
+    <h1>Dashboard - Análise de Alertas</h1>
     '''
     
     # Placeholder para o resumo da IA
