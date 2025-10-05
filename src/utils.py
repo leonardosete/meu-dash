@@ -18,7 +18,6 @@ def get_max_date_from_file(filepath: str) -> Optional[pd.Timestamp]:
         df = pd.read_csv(filepath, sep=';', on_bad_lines='skip', engine='python', usecols=[NOME_DA_COLUNA_DE_DATA])
         
         if NOME_DA_COLUNA_DE_DATA not in df.columns:
-            # Esta verificação é redundante com usecols, mas mantida por segurança
             print(f"Aviso: Coluna '{NOME_DA_COLUNA_DE_DATA}' não encontrada em '{filepath}'.", file=sys.stderr)
             return None
         

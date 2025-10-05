@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
-from .utils import sort_files_by_date # NOVO: Importando a função de ordenação
+from .utils import sort_files_by_date
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text 
 from flask_migrate import Migrate
