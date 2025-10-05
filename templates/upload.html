@@ -198,6 +198,49 @@
         .doc-gerencial-card svg { color: var(--accent-color); }
         .doc-tecnica-card svg { color: #38bdf8; }
 
+        /* --- NOVO: ESTILOS PARA ABAS --- */
+        .tab-container {
+            width: 100%;
+        }
+        .tab-links {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tab-link {
+            padding: 12px 20px;
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary-color);
+            font-size: 1.1em;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.3s;
+        }
+        .tab-link:hover {
+            color: var(--primary-text-color);
+        }
+        .tab-link.active {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        .tab-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--accent-color);
+            border-radius: 3px 3px 0 0;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
 
         /* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
         @media (max-width: 1024px) {
@@ -262,50 +305,51 @@
 
         <main class="main-content-column">
             <div class="card">
-                <h1>Análise de Alertas e Tendências</h1>
-
                 {% if error %}
                     <div class="error-message">{{ error }}</div>
                 {% endif %}
 
-                <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
-                    <label for="file_atual">Selecione o arquivo de dados mais recente:</label>
-                    <div class="file-input-wrapper" id="wrapper_atual">
-                        <input type="file" name="file_atual" id="file_atual" required>
-                        <span class="file-input-text" id="text_atual">Clique ou arraste o arquivo aqui</span>
-                        <span class="file-name" id="name_atual"></span>
+                <div class="tab-container">
+                    <div class="tab-links">
+                        <button class="tab-link active" data-target="tab-padrao">Análise Padrão</button>
+                        <button class="tab-link" data-target="tab-comparativa">Comparação Direta</button>
                     </div>
 
-                    <button type="submit" id="submit-btn">Analisar e Comparar</button>
-
-                    <div class="button-group">
-                        <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico de Análises</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- NOVO: Card para Análise Comparativa Direta -->
-            <div class="card" style="margin-top: 30px;">
-                <h1>Análise Comparativa Direta</h1>
-                <p style="color: var(--text-secondary-color); margin-top: -20px; margin-bottom: 30px;">Faça o upload de dois arquivos para gerar um relatório de tendência comparando-os diretamente.</p>
-
-                <form action="{{ url_for('compare_files') }}" method="post" enctype="multipart/form-data" id="compare-form">
-                    <label for="file1">Arquivo 1 (será ordenado por data):</label>
-                    <div class="file-input-wrapper" id="wrapper_file1">
-                        <input type="file" name="files" id="file1" required>
-                        <span class="file-input-text" id="text_file1">Clique ou arraste o arquivo aqui</span>
-                        <span class="file-name" id="name_file1"></span>
+                    <div id="tab-padrao" class="tab-content active">
+                        <h1>Análise de Alertas e Tendências</h1>
+                        <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+                            <label for="file_atual">Selecione o arquivo de dados mais recente:</label>
+                            <div class="file-input-wrapper" id="wrapper_atual">
+                                <input type="file" name="file_atual" id="file_atual" required>
+                                <span class="file-input-text" id="text_atual">Clique ou arraste o arquivo aqui</span>
+                                <span class="file-name" id="name_atual"></span>
+                            </div>
+                            <button type="submit" id="submit-btn">Analisar e Comparar com Histórico</button>
+                            <div class="button-group">
+                                <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico de Análises</button>
+                            </div>
+                        </form>
                     </div>
 
-                    <label for="file2">Arquivo 2 (será ordenado por data):</label>
-                    <div class="file-input-wrapper" id="wrapper_file2">
-                        <input type="file" name="files" id="file2" required>
-                        <span class="file-input-text" id="text_file2">Clique ou arraste o arquivo aqui</span>
-                        <span class="file-name" id="name_file2"></span>
+                    <div id="tab-comparativa" class="tab-content">
+                        <h1>Análise Comparativa Direta</h1>
+                        <form action="{{ url_for('compare_files') }}" method="post" enctype="multipart/form-data" id="compare-form">
+                            <label for="file1">Arquivo 1 (será ordenado por data):</label>
+                            <div class="file-input-wrapper" id="wrapper_file1">
+                                <input type="file" name="files" id="file1" required>
+                                <span class="file-input-text" id="text_file1">Clique ou arraste o arquivo aqui</span>
+                                <span class="file-name" id="name_file1"></span>
+                            </div>
+                            <label for="file2">Arquivo 2 (será ordenado por data):</label>
+                            <div class="file-input-wrapper" id="wrapper_file2">
+                                <input type="file" name="files" id="file2" required>
+                                <span class="file-input-text" id="text_file2">Clique ou arraste o arquivo aqui</span>
+                                <span class="file-name" id="name_file2"></span>
+                            </div>
+                            <button type="submit" id="compare-submit-btn">Comparar Arquivos</button>
+                        </form>
                     </div>
-
-                    <button type="submit" id="compare-submit-btn">Comparar Arquivos</button>
-                </form>
+                </div>
             </div>
 
         </main>
@@ -351,6 +395,22 @@
         // NOVO: Configuração para os novos inputs de comparação
         setupFileInput('file1', 'wrapper_file1', 'text_file1', 'name_file1');
         setupFileInput('file2', 'wrapper_file2', 'text_file2', 'name_file2');
+
+        // NOVO: Lógica para controlar as abas
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const targetId = link.getAttribute('data-target');
+                
+                tabLinks.forEach(l => l.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                link.classList.add('active');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
 
         document.getElementById('compare-form').addEventListener('submit', function() {
             const submitBtn = document.getElementById('compare-submit-btn');
