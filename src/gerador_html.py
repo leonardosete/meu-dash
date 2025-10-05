@@ -180,8 +180,8 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     body_content = list_card_styles
     
     # NOVO: Substitui o botão "Voltar" por um ícone "Home" moderno e consistente.
-    home_icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="home-icon"><path d="M3 9.5L12 4l9 5.5V20a2 2 0 01-2 2H5a2 2 0 01-2-2V9.5z"></path></svg>'
-    body_content += f'<a href="/" class="home-link" title="Voltar para a página inicial" style="margin-bottom: 20px;">{home_icon_svg}</a>'
+    # ALTERAÇÃO: Substituído ícone por um botão de texto mais claro e com melhor espaçamento.
+    body_content += '<a href="/" class="home-button">Página Inicial</a>'
     
     body_content += f'<p style="font-size: 1.1em; color: var(--text-secondary-color); margin-top: -15px;">{date_range_text}</p>'
     
