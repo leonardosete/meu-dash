@@ -1,6 +1,7 @@
 import pandas as pd
 import sys
 import os
+import json
 from html import escape
 import re
 from string import Template
@@ -13,13 +14,31 @@ def sanitize_for_id(text):
     return re.sub(r'[^a-zA-Z0-9\-_]', '-', str(text)).lower()
 
 def load_summary_from_json(filepath: str):
-    """Carrega o resumo de problemas de um arquivo JSON."""
+    """
+    Carrega o resumo de problemas de um arquivo JSON,
+    suportando o novo formato com cabeçalho e o formato antigo (apenas records).
+    """
     try:
-        df = pd.read_json(filepath, orient='records')
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Verifica se o JSON tem o novo formato com 'header' e 'records'
+        if isinstance(data, dict) and 'records' in data:
+            df = pd.DataFrame(data['records'])
+        # Assume que é o formato antigo (uma lista de records)
+        else:
+            df = pd.DataFrame(data)
+
+        # Converte colunas de data que podem ter sido salvas como strings
+        if 'first_event' in df.columns:
+            df['first_event'] = pd.to_datetime(df['first_event'], errors='coerce')
+        if 'last_event' in df.columns:
+            df['last_event'] = pd.to_datetime(df['last_event'], errors='coerce')
+            
         print(f"✅ Resumo de problemas carregado de: {filepath}")
         return df
-    except (FileNotFoundError, ValueError) as e:
-        print(f"❌ Erro ao carregar o arquivo JSON '{filepath}': {e}", file=sys.stderr)
+    except (FileNotFoundError, ValueError, TypeError) as e:
+        print(f"❌ Erro ao carregar ou processar o arquivo JSON '{filepath}': {e}", file=sys.stderr)
         return None
 
 def calculate_kpis_and_merged_df(df_p1, df_p2):
@@ -263,14 +282,14 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
 
     return f"<table>{table_header}{table_body}{table_footer}</table>"
 
-def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_name: str, csv_atual_name: str, output_path: str, date_range_anterior: str = None, date_range_atual: str = None):
+def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_name: str, csv_atual_name: str, output_path: str, date_range_anterior: str = None, date_range_atual: str = None, is_direct_comparison: bool = False):
     """Função principal para gerar o relatório de tendência."""
     df_p1 = load_summary_from_json(json_anterior)
     df_p2 = load_summary_from_json(json_atual)
 
     if df_p1 is None or df_p2 is None:
         print("❌ Não foi possível continuar a análise de tendência devido a erro no carregamento dos resumos JSON.", file=sys.stderr)
-        return
+        return None
 
     df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
     df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
@@ -296,7 +315,14 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
     squad_trends_merged['num_cases'] = squad_trends_merged['num_cases'].astype(int)
 
     title = "📊 Análise de Tendência de Alertas"
-    body = f'<p><a href="resumo_geral.html">&larr; Voltar para o Dashboard</a></p><h1>Análise Comparativa de Alertas</h1>'
+    
+    if is_direct_comparison:
+        # For direct comparisons, link back to the root/home page.
+        home_icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="home-icon"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'
+        back_link = f'<a href="/" class="home-link" title="Voltar para a página inicial">{home_icon_svg}</a>'
+    else:
+        back_link = '<a href="resumo_geral.html">&larr; Voltar para o Dashboard</a>'
+    body = f'<p>{back_link}</p><h1>Análise Comparativa de Alertas</h1>'
     
     periodo_anterior_text = f"<code>{escape(os.path.basename(csv_anterior_name))}</code>" + (f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>" if date_range_anterior else "")
     periodo_atual_text = f"<code>{escape(os.path.basename(csv_atual_name))}</code>" + (f" <span style='color: var(--text-secondary-color);'>({escape(date_range_atual)})</span>" if date_range_atual else "")
@@ -336,9 +362,11 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(final_report)
         print(f"✅ Relatório de tendência gerado em: {output_path}")
+        return kpis
 
     except Exception as e:
         print(f"❌ Ocorreu um erro inesperado ao gerar o relatório de tendência: {e}", file=sys.stderr)
+        return None
 
 def main_cli():
     """Função para manter a compatibilidade com a execução via linha de comando."""

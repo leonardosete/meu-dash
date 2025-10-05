@@ -222,7 +222,8 @@ def compare_files():
             csv_atual_name=filename_atual,
             output_path=output_trend_path,
             date_range_anterior=get_date_range_from_file(filepath_anterior),
-            date_range_atual=get_date_range_from_file(filepath_atual)
+            date_range_atual=get_date_range_from_file(filepath_atual),
+            is_direct_comparison=True # Informa que é uma comparação direta
         )
         
         return redirect(url_for('serve_report', run_folder=run_folder_name, filename='resumo_tendencia.html'))
