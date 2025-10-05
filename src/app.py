@@ -56,25 +56,35 @@ def index():
     last_trend_analysis = None
     last_action_plan = None
     
+    # Lógica para o plano de ação continua a mesma: sempre o mais recente.
     last_report = Report.query.order_by(Report.timestamp.desc()).first()
-
     if last_report:
         run_folder_path = os.path.dirname(last_report.report_path)
         run_folder_name = os.path.basename(run_folder_path)
-
-        trend_report_path = os.path.join(run_folder_path, 'resumo_tendencia.html')
-        if os.path.exists(trend_report_path):
-            last_trend_analysis = {
-                'url': url_for('serve_report', run_folder=run_folder_name, filename='resumo_tendencia.html'),
-                'date': last_report.timestamp.strftime('%d/%m/%Y às %H:%M')
-            }
-
         action_plan_path = os.path.join(run_folder_path, 'editor_atuacao.html')
         if os.path.exists(action_plan_path):
             last_action_plan = {
                 'url': url_for('serve_report', run_folder=run_folder_name, filename='editor_atuacao.html'),
                 'date': last_report.timestamp.strftime('%d/%m/%Y às %H:%M')
             }
+
+    # NOVA LÓGICA: Encontra o relatório de tendência mais recente, independentemente da última análise.
+    all_reports_desc = Report.query.order_by(Report.timestamp.desc()).all()
+    for report in all_reports_desc:
+        # Adicionado um bloco try/except para o caso de o report.report_path ser inválido
+        try:
+            run_folder_path = os.path.dirname(report.report_path)
+            trend_report_path = os.path.join(run_folder_path, 'resumo_tendencia.html')
+            if os.path.exists(trend_report_path):
+                run_folder_name = os.path.basename(run_folder_path)
+                last_trend_analysis = {
+                    'url': url_for('serve_report', run_folder=run_folder_name, filename='resumo_tendencia.html'),
+                    'date': report.timestamp.strftime('%d/%m/%Y às %H:%M')
+                }
+                break # Encontrou o mais recente, pode parar
+        except Exception:
+            # Ignora relatórios com caminhos inválidos que poderiam quebrar a página inicial
+            continue
             
     return render_template(
         'upload.html', 
