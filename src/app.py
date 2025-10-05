@@ -108,25 +108,35 @@ def upload_file():
 
         if last_report and last_report.json_summary_path and os.path.exists(last_report.json_summary_path):
             print(f"📈 Relatório anterior encontrado. Iniciando análise de tendência.")
-            
-            temp_analysis_results = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=True)
-            json_path_atual = temp_analysis_results['json_path']
-            
-            output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
-            
-            gerar_relatorio_tendencia(
-                json_anterior=last_report.json_summary_path,
-                json_atual=json_path_atual,
-                csv_anterior_name=last_report.original_filename,
-                csv_atual_name=filename_atual,
-                output_path=output_trend_path,
-                date_range_anterior=last_report.date_range,
-                date_range_atual=date_range_atual
-            )
-            trend_report_path_relative = os.path.basename(output_trend_path)
-            print(f"✅ Relatório de tendência gerado.")
+
+            # Salva o arquivo CSV anterior temporariamente para usar a função de ordenação
+            # Esta é uma simplificação. O ideal seria ter o arquivo original ou extrair a data do JSON.
+            # Por agora, vamos assumir que o date_range é suficiente.
+            date_range_anterior_obj = datetime.strptime(last_report.date_range.split(' a ')[0], '%d/%m/%Y') if last_report.date_range else None
+            date_range_atual_obj = datetime.strptime(date_range_atual.split(' a ')[0], '%d/%m/%Y') if date_range_atual else None
+
+            if date_range_anterior_obj and date_range_atual_obj and date_range_atual_obj > date_range_anterior_obj:
+                print("✅ Período do upload é mais recente que o último relatório. Gerando tendência...")
+                temp_analysis_results = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=True)
+                json_path_atual = temp_analysis_results['json_path']
+                
+                output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
+                
+                gerar_relatorio_tendencia(
+                    json_anterior=last_report.json_summary_path,
+                    json_atual=json_path_atual,
+                    csv_anterior_name=last_report.original_filename,
+                    csv_atual_name=filename_atual,
+                    output_path=output_trend_path,
+                    date_range_anterior=last_report.date_range,
+                    date_range_atual=date_range_atual
+                )
+                trend_report_path_relative = os.path.basename(output_trend_path)
+                print(f"✅ Relatório de tendência gerado.")
+            else:
+                print("⚠️  Aviso: O arquivo enviado não é cronologicamente mais recente que o último relatório. A análise de tendência será pulada.")
         else:
-            print("⚠️ Nenhum relatório anterior encontrado.")
+            print("⚠️ Nenhum relatório anterior encontrado para comparação.")
 
         final_analysis_results = analisar_arquivo_csv(
             input_file=filepath_atual, 
