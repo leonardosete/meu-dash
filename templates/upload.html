@@ -122,11 +122,11 @@
           <h3 class="text-lg font-semibold mb-3">Nova Análise</h3>
           <p class="text-sm muted mb-4">Envie um arquivo CSV/JSON e inicie a análise automática.</p>
 
-          <form id="upload-form" method="POST" enctype="multipart/form-data" class="space-y-4" aria-describedby="upload-error">
+          <form id="upload-form" method="POST" enctype="multipart/form-data" class="space-y-4" aria-describedby="upload-error" novalidate>
             <label for="file_atual" class="block text-sm font-medium">Arquivo de dados</label>
 
             <label id="file-wrapper" for="file_atual" class="file-drag rounded-xl p-4 block cursor-pointer">
-              <input type="file" id="file_atual" name="file_atual" class="hidden" required>
+              <input type="file" id="file_atual" name="file_atual" class="hidden" required aria-required="true">
               <div class="flex items-center gap-3">
                 <svg class="w-8 h-8 muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3-3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"/></svg>
                 <div>
@@ -140,7 +140,7 @@
             <div class="flex items-center justify-between">
               <div class="text-sm muted">Gerar Resumo Executivo com IA</div>
               <div class="flex items-center gap-2">
-                <input id="use-ai-toggle" class="sr-only" type="checkbox" name="use_ai_agent" value="true" checked>
+                <input id="use-ai-toggle" class="sr-only" type="checkbox" name="use_ai_agent" checked>
                 <label for="use-ai-toggle" class="switch" aria-hidden>
                   <span class="dot"></span>
                 </label>
@@ -158,7 +158,7 @@
         <div class="card rounded-2xl p-4">
           <h4 class="font-semibold mb-3">Acesso Rápido</h4>
           <nav class="flex flex-col gap-2">
-            <a class="flex items-center gap-3 p-3 rounded-md hover:bg-white/3 {% if not lastActionPlan %}pointer-events-none opacity-50{% endif %}" href="{{ lastActionPlan.url if lastActionPlan else 'javascript:void(0)' }}" target="_blank">
+            <a class="flex items-center gap-3 p-3 rounded-md hover:bg-white/3" href="{{ lastActionPlan.url if lastActionPlan else '#' }}" target="_blank">
               <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               <div>
                 <div class="text-sm font-medium">Plano de Ação</div>
@@ -166,7 +166,7 @@
               </div>
             </a>
 
-            <a class="flex items-center gap-3 p-3 rounded-md hover:bg-white/3 {% if not lastTrendAnalysis %}pointer-events-none opacity-50{% endif %}" href="{{ lastTrendAnalysis.url if lastTrendAnalysis else 'javascript:void(0)' }}" target="_blank">
+            <a class="flex items-center gap-3 p-3 rounded-md hover:bg-white/3" href="{{ lastTrendAnalysis.url if lastTrendAnalysis else '#' }}" target="_blank">
               <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
               <div><div class="text-sm font-medium">Análise de Tendência</div><div class="text-xs muted">{{ lastTrendAnalysis.date if lastTrendAnalysis else '—' }}</div></div>
             </a>
