@@ -153,14 +153,14 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         top_problemas_geral, top_problemas_instabilidade, total_alertas_remediados_ok,
         total_alertas_instabilidade, total_alertas_problemas, total_alertas_geral,
         all_squads, top_5_squads_agrupadas, num_logs_invalidos, trend_report_path,
-        date_range_text, summary_filename, plan_dir_base_name, details_dir_base_name
+        date_range_text, summary_filename, plan_dir_base_name, details_dir_base_name, ai_summary
     ) = [context.get(k) for k in [
         'total_grupos', 'grupos_atuacao', 'grupos_instabilidade', 'taxa_sucesso', 'casos_ok_estaveis',
         'top_squads', 'top_metrics', 'top_problemas_atuacao', 'top_problemas_remediados',
         'top_problemas_geral', 'top_problemas_instabilidade', 'total_alertas_remediados_ok',
         'total_alertas_instabilidade', 'total_alertas_problemas', 'total_alertas_geral',
         'all_squads', 'top_5_squads_agrupadas', 'num_logs_invalidos', 'trend_report_path',
-        'date_range_text', 'summary_filename', 'plan_dir_base_name', 'details_dir_base_name'
+        'date_range_text', 'summary_filename', 'plan_dir_base_name', 'details_dir_base_name', 'ai_summary'
     ]]
 
     list_card_styles = '''
@@ -178,8 +178,16 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     </style>
     '''
     body_content = list_card_styles
-    body_content += '<a href="/" style="display: inline-block; margin-bottom: 20px; padding: 10px 15px; background-color: var(--accent-color); color: white; text-decoration: none; border-radius: 5px;">&larr; Voltar para o Upload</a>'
+    
+    # NOVO: Substitui o botão "Voltar" por um ícone "Home" moderno e consistente.
+    home_icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="home-icon"><path d="M3 9.5L12 4l9 5.5V20a2 2 0 01-2 2H5a2 2 0 01-2-2V9.5z"></path></svg>'
+    body_content += f'<a href="/" class="home-link" title="Voltar para a página inicial" style="margin-bottom: 20px;">{home_icon_svg}</a>'
+    
     body_content += f'<p style="font-size: 1.1em; color: var(--text-secondary-color); margin-top: -15px;">{date_range_text}</p>'
+    
+    # Placeholder para o resumo da IA
+    body_content += "<!-- AI_SUMMARY_PLACEHOLDER -->"
+    
     body_content += f'''
                 <div style="margin-bottom: 25px;">
                     <button type="button" class="collapsible collapsible-main-header">{CHEVRON_SVG}Conceitos</button>

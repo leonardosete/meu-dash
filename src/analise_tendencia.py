@@ -318,7 +318,8 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
     
     if is_direct_comparison:
         # For direct comparisons, link back to the root/home page.
-        home_icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="home-icon"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'
+        # Ícone "Home" mais moderno e limpo
+        home_icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="home-icon"><path d="M3 9.5L12 4l9 5.5V20a2 2 0 01-2 2H5a2 2 0 01-2-2V9.5z"></path></svg>'
         back_link = f'<a href="/" class="home-link" title="Voltar para a página inicial">{home_icon_svg}</a>'
     else:
         back_link = '<a href="resumo_geral.html">&larr; Voltar para o Dashboard</a>'
