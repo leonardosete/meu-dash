@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
+from .utils import sort_files_by_date # NOVO: Importando a função de ordenação
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text 
 from flask_migrate import Migrate
@@ -155,6 +156,76 @@ def upload_file():
         import traceback
         traceback.print_exc()
         return render_template('upload.html', error="Ocorreu um erro ao processar o arquivo. Verifique se o formato do CSV está correto e tente novamente.")
+
+@app.route('/compare', methods=['POST'])
+def compare_files():
+    """
+    Orquestra a comparação direta entre dois arquivos enviados pelo usuário.
+    """
+    if 'files' not in request.files:
+        flash("Nenhum arquivo enviado.", "error")
+        return redirect(url_for('index'))
+
+    files = request.files.getlist('files')
+    
+    if len(files) != 2:
+        flash("Por favor, selecione exatamente dois arquivos para comparação.", "error")
+        return redirect(url_for('index'))
+
+    saved_filepaths = []
+    for f in files:
+        if f.filename == '':
+            # A validação de 'required' no HTML deve pegar isso, mas é uma segurança extra.
+            flash("Ambos os campos de arquivo devem ser preenchidos.", "error")
+            return redirect(url_for('index'))
+        
+        filename = secure_filename(f.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}")
+        f.save(filepath)
+        saved_filepaths.append(filepath)
+
+    try:
+        # Usa a lógica importada para determinar qual arquivo é o atual e qual é o anterior
+        sorted_paths = sort_files_by_date(saved_filepaths)
+        if not sorted_paths:
+            flash("Não foi possível determinar a ordem cronológica dos arquivos. Verifique se ambos contêm a coluna 'sys_created_on' com datas válidas.", "error")
+            return redirect(url_for('index'))
+
+        filepath_atual, filepath_anterior = sorted_paths
+        filename_atual = os.path.basename(filepath_atual).replace(f"temp_{os.path.basename(filepath_atual).split('_')[1]}_", "")
+        filename_anterior = os.path.basename(filepath_anterior).replace(f"temp_{os.path.basename(filepath_anterior).split('_')[1]}_", "")
+        
+        run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}_compare"
+        output_dir = os.path.join(app.config['REPORTS_FOLDER'], run_folder_name)
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Gera os resumos JSON para ambos os arquivos
+        results_atual = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=True)
+        results_anterior = analisar_arquivo_csv(filepath_anterior, output_dir, light_analysis=True)
+
+        # Gera o relatório de tendência
+        output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
+        gerar_relatorio_tendencia(
+            json_anterior=results_anterior['json_path'],
+            json_atual=results_atual['json_path'],
+            csv_anterior_name=filename_anterior,
+            csv_atual_name=filename_atual,
+            output_path=output_trend_path,
+            date_range_anterior=get_date_range_from_file(filepath_anterior),
+            date_range_atual=get_date_range_from_file(filepath_atual)
+        )
+        
+        return redirect(url_for('serve_report', run_folder=run_folder_name, filename='resumo_tendencia.html'))
+
+    except Exception as e:
+        print(f"❌ Erro fatal no processo de comparação: {e}")
+        flash("Ocorreu um erro inesperado durante a comparação. Verifique os logs.", "error")
+        return redirect(url_for('index'))
+    finally:
+        # Garante que os arquivos temporários sejam sempre limpos, mesmo em caso de erro.
+        for p in saved_filepaths:
+            if os.path.exists(p):
+                os.remove(p)
 
 # --- ROTAS PARA SERVIR ARQUIVOS ESTÁTICOS ---
 
