@@ -16,8 +16,6 @@
             --border-color: #3A3D5A;
             --accent-color: #6A5AF9;
             --header-bg-color: #24273A;
-            --danger-color: #e74a3b; /* NOVO */
-            --danger-color-hover: #c0392b; /* NOVO */
             --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
         body {
@@ -52,10 +50,10 @@
             border-radius: 16px;
             padding: 35px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-            overflow: hidden;
+            overflow: hidden; /* Garante que a tabela não ultrapasse as bordas arredondadas */
         }
         .table-wrapper {
-            overflow-x: auto;
+            overflow-x: auto; /* Para responsividade em telas pequenas */
         }
         table {
             width: 100%;
@@ -82,20 +80,18 @@
         thead th:last-child {
             border-top-right-radius: 8px;
         }
+        tbody tr {
+            transition: background-color 0.2s ease-in-out;
+        }
         tbody tr:hover {
             background-color: var(--header-bg-color);
         }
         tbody tr:last-child td {
             border-bottom: none;
         }
-        /* NOVO: Container para os botões de ação */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .action-link, .action-button { /* Estilo unificado */
+        .action-link {
             display: inline-block;
+            background-color: var(--accent-color);
             color: white;
             padding: 8px 16px;
             border-radius: 6px;
@@ -104,21 +100,9 @@
             font-size: 0.9em;
             text-align: center;
             transition: background-color 0.2s ease;
-            border: none;
-            cursor: pointer;
-        }
-        .action-link {
-            background-color: var(--accent-color);
         }
         .action-link:hover {
             background-color: #5848d8;
-        }
-        /* NOVO: Estilo para o botão de excluir */
-        .delete-button {
-            background-color: var(--danger-color);
-        }
-        .delete-button:hover {
-            background-color: var(--danger-color-hover);
         }
         .back-link {
             display: inline-block;
@@ -155,14 +139,7 @@
                         <tr>
                             <td>{{ report.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
                             <td>{{ report.original_filename }}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="{{ report.url }}" class="action-link">Visualizar</a>
-                                    <form action="{{ url_for('delete_report', report_id=report.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este relatório? Esta ação não pode ser desfeita.');">
-                                        <button type="submit" class="action-button delete-button">Excluir</button>
-                                    </form>
-                                </div>
-                            </td>
+                            <td><a href="{{ report.url }}" class="action-link">Visualizar</a></td>
                         </tr>
                         {% endfor %}
                     </tbody>

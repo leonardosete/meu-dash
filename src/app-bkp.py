@@ -1,14 +1,13 @@
 import os
-import shutil # NOVO: Para deletar diretórios recursivamente
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, flash # NOVO: flash adicionado
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text 
-from flask_migrate import Migrate
+from sqlalchemy import text # Adicionado para compatibilidade com SQLAlchemy 2.0
+from flask_migrate import Migrate # type: ignore
 
 app = Flask(__name__, template_folder='../templates')
 
@@ -22,7 +21,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['REPORTS_FOLDER'] = REPORTS_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'uma-chave-secreta-forte-para-flash' # NOVO: Chave secreta necessária para usar flash
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -32,7 +30,7 @@ class Report(db.Model):
     original_filename = db.Column(db.String(255))
     report_path = db.Column(db.String(255))
     json_summary_path = db.Column(db.String(255))
-    date_range = db.Column(db.String(100), nullable=True)
+    date_range = db.Column(db.String(100), nullable=True) # Novo campo para o intervalo de datas
 
     def __repr__(self):
         return f'<Report {self.original_filename}>'
@@ -55,12 +53,14 @@ def index():
     last_trend_analysis = None
     last_action_plan = None
     
+    # Busca o último relatório registrado no banco de dados
     last_report = Report.query.order_by(Report.timestamp.desc()).first()
 
     if last_report:
         run_folder_path = os.path.dirname(last_report.report_path)
         run_folder_name = os.path.basename(run_folder_path)
 
+        # 1. Verifica se existe o relatório de TENDÊNCIA
         trend_report_path = os.path.join(run_folder_path, 'resumo_tendencia.html')
         if os.path.exists(trend_report_path):
             last_trend_analysis = {
@@ -68,6 +68,7 @@ def index():
                 'date': last_report.timestamp.strftime('%d/%m/%Y às %H:%M')
             }
 
+        # 2. Verifica se existe o PLANO DE AÇÃO (editor_atuacao.html)
         action_plan_path = os.path.join(run_folder_path, 'editor_atuacao.html')
         if os.path.exists(action_plan_path):
             last_action_plan = {
@@ -93,6 +94,7 @@ def upload_file():
         return render_template('upload.html', error="Nenhum arquivo selecionado.")
 
     try:
+        # --- ETAPA 1: Salva o arquivo e extrai o intervalo de datas ---
         filename_atual = secure_filename(file_atual.filename)
         filepath_atual = os.path.join(app.config['UPLOAD_FOLDER'], f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_atual}")
         file_atual.save(filepath_atual)
@@ -102,9 +104,11 @@ def upload_file():
         output_dir = os.path.join(app.config['REPORTS_FOLDER'], run_folder_name)
         os.makedirs(output_dir, exist_ok=True)
 
+        # --- ETAPA 2: Busca o relatório anterior no histórico ---
         last_report = Report.query.order_by(Report.timestamp.desc()).first()
         trend_report_path_relative = None
 
+        # --- ETAPA 3: Gera o relatório de tendência (se houver um anterior) ---
         if last_report and last_report.json_summary_path and os.path.exists(last_report.json_summary_path):
             print(f"📈 Relatório anterior encontrado. Iniciando análise de tendência.")
             
@@ -127,6 +131,7 @@ def upload_file():
         else:
             print("⚠️ Nenhum relatório anterior encontrado.")
 
+        # --- ETAPA 4: Executa a análise completa no arquivo atual ---
         final_analysis_results = analisar_arquivo_csv(
             input_file=filepath_atual, 
             output_dir=output_dir, 
@@ -136,6 +141,7 @@ def upload_file():
         report_path_final = final_analysis_results['html_path']
         json_path_final = final_analysis_results['json_path']
 
+        # --- ETAPA 5: Salva o novo relatório no banco e redireciona ---
         new_report = Report(
             original_filename=filename_atual,
             report_path=report_path_final,
@@ -170,8 +176,11 @@ def serve_detalhes(run_folder, filename):
 def serve_report(run_folder, filename):
     return send_from_directory(os.path.join(app.config['REPORTS_FOLDER'], run_folder), filename)
 
+# --- ROTA ADICIONADA PARA DOCUMENTAÇÃO ---
 @app.route('/docs/<path:filename>')
 def serve_docs(filename):
+    """Serve os arquivos de documentação estática."""
+    # app.root_path aponta para /app/src, então usamos '..' para subir um nível
     docs_dir = os.path.abspath(os.path.join(app.root_path, '..', 'docs'))
     return send_from_directory(docs_dir, filename)
 
@@ -182,7 +191,6 @@ def relatorios():
     report_data = []
     for report in reports:
         report_data.append({
-            'id': report.id, # NOVO: Passando o ID para a exclusão
             'timestamp': report.timestamp,
             'original_filename': report.original_filename,
             'url': url_for('serve_report', 
@@ -190,34 +198,6 @@ def relatorios():
                         filename=os.path.basename(report.report_path))
         })
     return render_template('relatorios.html', reports=report_data)
-
-# --- NOVA ROTA PARA EXCLUSÃO ---
-@app.route('/report/delete/<int:report_id>', methods=['POST'])
-def delete_report(report_id):
-    """Encontra e exclui um relatório do banco e do sistema de arquivos."""
-    report = Report.query.get_or_404(report_id)
-    
-    try:
-        # Pega o diretório do relatório (ex: '.../data/reports/run_20251005_103000')
-        report_dir = os.path.dirname(report.report_path)
-        
-        # Deleta a pasta inteira do 'run', garantindo que todos os arquivos associados sejam removidos
-        if os.path.isdir(report_dir):
-            shutil.rmtree(report_dir)
-            print(f"🗑️ Diretório '{report_dir}' excluído com sucesso.")
-        
-        # Deleta o registro do banco de dados
-        db.session.delete(report)
-        db.session.commit()
-        
-        print(f"✅ Relatório '{report.original_filename}' excluído do banco de dados.")
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Erro ao excluir o relatório {report_id}: {e}")
-        
-    return redirect(url_for('relatorios'))
-
 
 # --- INICIALIZAÇÃO DA APLICAÇÃO ---
 

@@ -1,8 +1,8 @@
 # --- Namespace para organizar os recursos da aplicação ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: meu-dash-alertas
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: meu-dash-alertas
 
 ---
 # --- Headless Service: Necessário para o StatefulSet ---
@@ -122,29 +122,28 @@ spec:
         requests:
           storage: 1Gi
 ---
-# --- Ingress: Ponto de entrada para o tráfego externo via HTTPS ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: meu-dash-web-ingress
-  namespace: meu-dash-alertas
-  annotations:
-    # CONFIRMADO: Usando o seu ClusterIssuer 'letsencrypt-prod' para gerar o certificado TLS.
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-spec:
-  ingressClassName: nginx
-  tls:
-  - hosts:
-    - meu-dash-web-1.devops-master.shop
-    secretName: meu-dash-tls-secret # O cert-manager criará e gerenciará este Secret
-  rules:
-  - host: meu-dash-web-1.devops-master.shop
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: meu-dash-web
-            port:
-              number: 80
+#--- Ingress: Ponto de entrada para o tráfego externo via HTTPS ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: meu-dash-web-ingress
+#   namespace: meu-dash-alertas
+#   annotations:
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+# spec:
+#   ingressClassName: nginx
+#   tls:
+#   - hosts:
+#     - meu-dash-web-teste.devops-master.shop
+#     secretName: meu-dash-tls-secret # O cert-manager criará e gerenciará este Secret
+#   rules:
+#   - host: meu-dash-web-teste.devops-master.shop
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: meu-dash-web
+#             port:
+#               number: 80
