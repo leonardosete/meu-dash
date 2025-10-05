@@ -1,5 +1,5 @@
 import os
-import shutil # NOVO: Para deletar diretórios recursivamente
+import shutil # Para deletar diretórios recursivamente
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, flash # NOVO: flash adicionado
 from werkzeug.utils import secure_filename
