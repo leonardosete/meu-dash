@@ -322,17 +322,17 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
         back_link = '<a href="/" class="home-button">Página Inicial</a>'
     else:
         back_link = '<a href="resumo_geral.html">&larr; Voltar para o Dashboard</a>'
-    
+
     periodo_anterior_text = f"<code>{escape(os.path.basename(csv_anterior_name))}</code>" + (f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>" if date_range_anterior else "")
     periodo_atual_text = f"<code>{escape(os.path.basename(csv_atual_name))}</code>" + (f" <span style='color: var(--text-secondary-color);'>({escape(date_range_atual)})</span>" if date_range_atual else "")
     
     body = f'''
     <div class="report-header">
         {back_link}
-        <p class="date-range-text"><strong>Anterior:</strong> {periodo_anterior_text}<br><strong>Atual:</strong> {periodo_atual_text}</p>
     </div>
     <h1>Análise Comparativa de Alertas</h1>
     '''
+    body += f"<div class='definition-box' style='margin-bottom: 25px; text-align: center;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Atual:</strong> {periodo_atual_text}</div>"
     
     body += f"<div class='card'>{generate_kpis_html(kpis)}</div>"
 
