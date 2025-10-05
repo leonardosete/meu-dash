@@ -188,7 +188,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     <h1>Dashboard - Análise de Alertas</h1>
     '''
     # Adiciona o banner de período para consistência visual
-    body_content += f"<div class='definition-box' style='margin-bottom: 25px; text-align: center;'>{date_range_text}</div>"
+    body_content += f"<div class='definition-box' style='text-align: center;'>{date_range_text}</div>"
     
     # Placeholder para o resumo da IA
     body_content += "<!-- AI_SUMMARY_PLACEHOLDER -->"
