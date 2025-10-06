@@ -18,11 +18,14 @@ def sample_dataframe():
         'number': ['INC1', 'INC2', 'INC3', 'INC4', 'INC5', 'INC6', 'INC7'],
         'self_healing_status': [STATUS_OK, STATUS_NOT_OK, STATUS_OK, STATUS_OK, NO_STATUS, STATUS_NOT_OK, STATUS_NOT_OK],
         'severity': [3, 3, 2, 2, 4, 3, 3],
-        'priority_group': ['high', 'high', 'medium', 'medium', 'high', 'low', 'low']
+        'sn_priority_group': ['high', 'high', 'medium', 'medium', 'high', 'low', 'low'],
+        'node': ['node1', 'node1', 'node2', 'node2', 'node3', 'node4', 'node4'],
+        'source': ['source1', 'source1', 'source2', 'source2', 'source3', 'source4', 'source4'],
+        'cmdb_ci.sys_class_name': ['class1', 'class1', 'class2', 'class2', 'class3', 'class4', 'class4']
     }
     df = pd.DataFrame(data)
     df['severity_score'] = df['severity'].replace({4: 4, 3: 3, 2: 2, 1: 1, 0: 0})
-    df['priority_group_score'] = df['priority_group'].replace({'high': 3, 'medium': 2, 'low': 1})
+    df['priority_group_score'] = df['sn_priority_group'].replace({'high': 3, 'medium': 2, 'low': 1})
     df['score_criticidade_final'] = df['severity_score'] + df['priority_group_score']
     return df
 
