@@ -60,15 +60,15 @@ O backend em Python é responsável pela lógica de negócio principal. A revis�
 
 **Pontos Positivos:**
 
-*   Um framework de testes usando `pytest` foi estabelecido no diretório `tests/`.
-*   Testes de unidade foram criados para a lógica principal de análise de dados (`analisar_grupos`, `adicionar_acao_sugerida`).
-*   Um teste de integração (`test_criar_relatorio_completo_gera_arquivos`) valida o processo de geração de relatórios de ponta a ponta usando arquivos CSV de amostra localizados em `tests/fixtures`.
-*   Um workflow do GitHub Actions (`.github/workflows/run-tests.yml`) foi configurado para integração contínua, executando os testes automaticamente a cada push e pull request para o branch `main`.
+* Um framework de testes usando `pytest` foi estabelecido no diretório `tests/`.
+* Testes de unidade foram criados para a lógica principal de análise de dados (`analisar_grupos`, `adicionar_acao_sugerida`).
+* Um teste de integração (`test_criar_relatorio_completo_gera_arquivos`) valida o processo de geração de relatórios de ponta a ponta usando arquivos CSV de amostra localizados em `tests/fixtures`.
+* Um workflow do GitHub Actions (`.github/workflows/run-tests.yml`) foi configurado para integração contínua, executando os testes automaticamente a cada push e pull request para o branch `main`.
 
 **Áreas para Melhoria:**
 
-*   **Cobertura de Testes:** Embora os testes iniciais cubram partes críticas da aplicação, a cobertura de testes ainda não é abrangente. Mais testes devem ser adicionados para cobrir casos de borda e cenários diferentes.
-*   **Testes de Frontend:** Não há testes automatizados para o frontend.
+* **Cobertura de Testes:** Embora os testes iniciais cubram partes críticas da aplicação, a cobertura de testes ainda não é abrangente. Mais testes devem ser adicionados para cobrir casos de borda e cenários diferentes.
+* **Testes de Frontend:** Não há testes automatizados para o frontend.
 
 ## 3. Revisão do Frontend
 

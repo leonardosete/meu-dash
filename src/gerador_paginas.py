@@ -25,67 +25,21 @@ def carregar_template_html(filepath: str) -> str:
     except Exception as e:
         raise IOError(f"Erro inesperado ao ler o arquivo de template '{filepath}': {e}")
 
-def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, num_logs_invalidos: int, output_path: str, plan_dir: str, details_dir: str, timestamp_str: str, trend_report_path: str = None):
-    """Gera o dashboard principal em HTML com o resumo executivo da análise."""
+def gerar_resumo_executivo(context: dict, output_path: str, timestamp_str: str):
+    """Gera o dashboard principal em HTML com base em um contexto de dados pré-construído."""
     print("\n📊 Gerando Resumo Executivo estilo Dashboard...")
-    
-    total_grupos = len(summary_df)
-    grupos_atuacao = len(df_atuacao)
-    grupos_instabilidade = summary_df['acao_sugerida'].isin(ACAO_FLAGS_INSTABILIDADE).sum()
-    taxa_sucesso = (1 - (grupos_atuacao / total_grupos)) * 100 if total_grupos > 0 else 100
-    casos_ok_estaveis = total_grupos - grupos_atuacao - grupos_instabilidade
-    plan_dir_base_name = os.path.basename(plan_dir)
-    df_ok_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_OK)]
-    df_instabilidade_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)]
-    all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
-    top_squads = all_squads[all_squads > 0].nlargest(5)
-    metric_counts = df_atuacao[COL_METRIC_NAME].value_counts()
-    top_metrics = metric_counts[metric_counts > 0].nlargest(5)
-    top_problemas_atuacao = df_atuacao.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    top_problemas_remediados = df_ok_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    top_problemas_geral = summary_df.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(10)
-    top_problemas_instabilidade = df_instabilidade_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    total_alertas_remediados_ok = df_ok_filtered['alert_count'].sum()
-    total_alertas_instabilidade = df_instabilidade_filtered['alert_count'].sum()
-    total_alertas_problemas = df_atuacao['alert_count'].sum()
-    total_alertas_geral = summary_df['alert_count'].sum()
 
-    summary_filename = os.path.basename(output_path)
-    
     title = "Dashboard - Análise de Alertas"
     
-    start_date = summary_df['first_event'].min() if not summary_df.empty else None
-    end_date = summary_df['last_event'].max() if not summary_df.empty else None
-    date_range_text = "Período da Análise: Dados Indisponíveis"
-    if start_date and end_date:
-        date_range_text = f"Período da Análise: {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}"
-    squads_prioritarias = df_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True).agg(
-        score_acumulado=('score_ponderado_final', 'sum'),
-        total_casos=('score_ponderado_final', 'size')
-    ).reset_index()
-    top_5_squads_agrupadas = squads_prioritarias.sort_values(by='score_acumulado', ascending=False).head(5)
-
-    context = {
-        'total_grupos': total_grupos, 'grupos_atuacao': grupos_atuacao, 'grupos_instabilidade': grupos_instabilidade,
-        'taxa_sucesso': taxa_sucesso, 'casos_ok_estaveis': casos_ok_estaveis, 'top_squads': top_squads,
-        'top_metrics': top_metrics, 'top_problemas_atuacao': top_problemas_atuacao,
-        'top_problemas_remediados': top_problemas_remediados, 'top_problemas_geral': top_problemas_geral,
-        'top_problemas_instabilidade': top_problemas_instabilidade, 'total_alertas_remediados_ok': total_alertas_remediados_ok,
-        'total_alertas_instabilidade': total_alertas_instabilidade, 'total_alertas_problemas': total_alertas_problemas,
-        'total_alertas_geral': total_alertas_geral, 'all_squads': all_squads,
-        'top_5_squads_agrupadas': top_5_squads_agrupadas, 'num_logs_invalidos': num_logs_invalidos,
-        'trend_report_path': trend_report_path, 'date_range_text': date_range_text,
-        'summary_filename': summary_filename, 'plan_dir_base_name': plan_dir_base_name,
-        'details_dir_base_name': os.path.basename(details_dir),
-        'ai_summary': None
-    }
-
+    # Renderiza o corpo do HTML usando o contexto fornecido
     body_content = gerador_html.renderizar_resumo_executivo(context)
     
+    # Carrega o template principal
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     TEMPLATE_FILE = os.path.join(SCRIPT_DIR, '..', 'templates', 'template.html')
     HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
 
+    # Renderiza a página final e a salva
     footer_text = f"Relatório gerado em {timestamp_str}"
     html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
     with open(output_path, 'w', encoding='utf-8') as f:

@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, flash # NOVO: flash adicionado
 from werkzeug.utils import secure_filename
 from .analisar_alertas import analisar_arquivo_csv
-from .analise_tendencia import gerar_relatorio_tendencia
+from . import gerador_paginas, context_builder
 from .get_date_range import get_date_range_from_file
 from .utils import sort_files_by_date
 from flask_sqlalchemy import SQLAlchemy
@@ -94,14 +94,16 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    """Orquestra o processo de upload, análise e comparação automática de tendências."""
+    """Orquestra o processo de upload, análise e geração de relatórios."""
     if 'file_atual' not in request.files:
-        return render_template('upload.html', error="Nenhum arquivo enviado.")
+        flash("Nenhum arquivo enviado.", "error")
+        return redirect(url_for('index'))
         
     file_atual = request.files['file_atual']
 
     if file_atual.filename == '':
-        return render_template('upload.html', error="Nenhum arquivo selecionado.")
+        flash("Nenhum arquivo selecionado.", "error")
+        return redirect(url_for('index'))
 
     try:
         filename_atual = secure_filename(file_atual.filename)
@@ -119,22 +121,18 @@ def upload_file():
         if last_report and last_report.json_summary_path and os.path.exists(last_report.json_summary_path):
             print(f"📈 Relatório anterior encontrado. Iniciando análise de tendência.")
 
-            # Salva o arquivo CSV anterior temporariamente para usar a função de ordenação
-            # Esta é uma simplificação. O ideal seria ter o arquivo original ou extrair a data do JSON.
-            # Por agora, vamos assumir que o date_range é suficiente.
             date_range_anterior_obj = datetime.strptime(last_report.date_range.split(' a ')[0], '%d/%m/%Y') if last_report.date_range else None
             date_range_atual_obj = datetime.strptime(date_range_atual.split(' a ')[0], '%d/%m/%Y') if date_range_atual else None
 
             if date_range_anterior_obj and date_range_atual_obj and date_range_atual_obj > date_range_anterior_obj:
                 print("✅ Período do upload é mais recente que o último relatório. Gerando tendência...")
                 temp_analysis_results = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=True)
-                json_path_atual = temp_analysis_results['json_path']
                 
                 output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
                 
                 gerar_relatorio_tendencia(
                     json_anterior=last_report.json_summary_path,
-                    json_atual=json_path_atual,
+                    json_atual=temp_analysis_results['json_path'],
                     csv_anterior_name=last_report.original_filename,
                     csv_atual_name=filename_atual,
                     output_path=output_trend_path,
@@ -148,14 +146,76 @@ def upload_file():
         else:
             print("⚠️ Nenhum relatório anterior encontrado para comparação.")
 
-        final_analysis_results = analisar_arquivo_csv(
-            input_file=filepath_atual, 
-            output_dir=output_dir, 
-            light_analysis=False,
+        # Análise principal
+        analysis_results = analisar_arquivo_csv(input_file=filepath_atual, output_dir=output_dir, light_analysis=False)
+
+        # Construção do Contexto
+        dashboard_context = context_builder.build_dashboard_context(
+            summary_df=analysis_results['summary'],
+            df_atuacao=analysis_results['df_atuacao'],
+            num_logs_invalidos=analysis_results['num_logs_invalidos'],
+            output_dir=output_dir,
+            plan_dir=os.path.join(output_dir, "planos_de_acao"),
+            details_dir=os.path.join(output_dir, "detalhes"),
             trend_report_path=trend_report_path_relative
         )
-        report_path_final = final_analysis_results['html_path']
-        json_path_final = final_analysis_results['json_path']
+
+        # Geração de Páginas HTML
+        timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
+        gerador_paginas.gerar_resumo_executivo(dashboard_context, os.path.join(output_dir, "resumo_geral.html"), timestamp_str)
+        
+        # Gerar outras páginas que dependem dos resultados da análise
+        df_atuacao = analysis_results['df_atuacao']
+        summary = analysis_results['summary']
+        
+        # Filtrar os dataframes necessários para as páginas de detalhes
+        df_ok_filtered = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)]
+        df_instabilidade_filtered = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)]
+        
+        # Obter os top problemas para as páginas de detalhes
+        top_problemas_atuacao = df_atuacao.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
+        top_problemas_remediados = df_ok_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
+        top_problemas_geral = summary.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(10)
+        top_problemas_instabilidade = df_instabilidade_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
+        
+        # Obter as top métricas
+        metric_counts = df_atuacao[COL_METRIC_NAME].value_counts()
+        top_metrics = metric_counts[metric_counts > 0].nlargest(5)
+
+        details_dir = os.path.join(output_dir, "detalhes")
+        plan_dir = os.path.join(output_dir, "planos_de_acao")
+        summary_filename = "resumo_geral.html"
+        plan_dir_base_name = os.path.basename(plan_dir)
+
+        gerador_paginas.gerar_paginas_detalhe_problema(df_atuacao, top_problemas_atuacao.index, details_dir, summary_filename, 'aberto_', plan_dir_base_name, timestamp_str)
+        gerador_paginas.gerar_paginas_detalhe_problema(df_ok_filtered, top_problemas_remediados.index, details_dir, summary_filename, 'remediado_', plan_dir_base_name, timestamp_str)
+        gerador_paginas.gerar_paginas_detalhe_problema(summary, top_problemas_geral.index, details_dir, summary_filename, 'geral_', plan_dir_base_name, timestamp_str)
+        gerador_paginas.gerar_paginas_detalhe_problema(df_instabilidade_filtered, top_problemas_instabilidade.index, details_dir, summary_filename, 'instabilidade_', plan_dir_base_name, timestamp_str)
+        gerador_paginas.gerar_paginas_detalhe_metrica(df_atuacao, top_metrics.index, details_dir, summary_filename, plan_dir_base_name, timestamp_str)
+
+        gerador_paginas.gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
+        
+        all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
+        gerador_paginas.gerar_pagina_squads(all_squads, plan_dir, output_dir, summary_filename, timestamp_str)
+        
+        base_template_dir = os.path.join(BASE_DIR, '..', 'templates')
+        sucesso_template_file = os.path.join(base_template_dir, 'sucesso_template.html')
+        editor_template_file = os.path.join(base_template_dir, 'editor_template.html')
+
+        output_ok_csv = os.path.join(output_dir, "remediados.csv")
+        output_instability_csv = os.path.join(output_dir, "remediados_frequentes.csv")
+        output_actuation_csv = os.path.join(output_dir, "atuar.csv")
+
+        gerador_paginas.gerar_pagina_sucesso(output_dir, output_ok_csv, sucesso_template_file)
+        gerador_paginas.gerar_pagina_instabilidade(output_dir, output_instability_csv, sucesso_template_file)
+        gerador_paginas.gerar_pagina_editor_atuacao(output_dir, output_actuation_csv, editor_template_file)
+        
+        if analysis_results['num_logs_invalidos'] > 0:
+            log_invalidos_path = os.path.join(output_dir, LOG_INVALIDOS_FILENAME)
+            gerador_paginas.gerar_pagina_logs_invalidos(output_dir, log_invalidos_path, sucesso_template_file)
+
+        report_path_final = os.path.join(output_dir, "resumo_geral.html")
+        json_path_final = os.path.join(output_dir, "resumo_problemas.json")
 
         new_report = Report(
             original_filename=filename_atual,
@@ -165,17 +225,15 @@ def upload_file():
         )
         db.session.add(new_report)
         db.session.commit()
-        print(f"💾 Novo relatório '{filename_atual}' salvo no banco de dados.")
 
-        run_folder = os.path.basename(os.path.dirname(report_path_final))
-        report_filename = os.path.basename(report_path_final)
-        return redirect(url_for('serve_report', run_folder=run_folder, filename=report_filename))
+        return redirect(url_for('serve_report', run_folder=run_folder_name, filename=os.path.basename(report_path_final)))
 
     except Exception as e:
         print(f"❌ Erro fatal no processo de upload: {e}")
         import traceback
         traceback.print_exc()
-        return render_template('upload.html', error="Ocorreu um erro ao processar o arquivo. Verifique se o formato do CSV está correto e tente novamente.")
+        flash("Ocorreu um erro ao processar o arquivo. Verifique se o formato do CSV está correto e tente novamente.", "error")
+        return redirect(url_for('index'))
 
 @app.route('/compare', methods=['POST'])
 def compare_files():

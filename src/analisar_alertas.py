@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Any
 from datetime import datetime
 from .constants import (
     ACAO_ESTABILIZADA, ACAO_INCONSISTENTE, ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_STATUS_AUSENTE,
@@ -12,7 +12,6 @@ from .constants import (
     COL_SEVERITY, COL_PRIORITY_GROUP, GROUP_COLS, ESSENTIAL_COLS, STATUS_OK, STATUS_NOT_OK,
     UNKNOWN, NO_STATUS, LOG_INVALIDOS_FILENAME, LIMIAR_ALERTAS_RECORRENTES
 )
-from . import gerador_paginas
 
 # =============================================================================
 # PROCESSAMENTO E ANÁLISE DE DADOS
@@ -167,20 +166,17 @@ def export_summary_to_json(summary: pd.DataFrame, output_path: str):
 # EXECUÇÃO PRINCIPAL
 # =============================================================================
 
-def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool = False, trend_report_path: str = None) -> Dict[str, str]:
+def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool = False) -> Dict[str, Any]:
     """
-    Função principal que orquestra a análise de um arquivo CSV e a geração de relatórios.
+    Função principal que orquestra a análise de um arquivo CSV.
+    Retorna um dicionário com os resultados da análise e metadados.
     """
-    timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
     os.makedirs(output_dir, exist_ok=True)
 
     # Define caminhos
-    output_summary_html = os.path.join(output_dir, "resumo_geral.html")
     output_actuation_csv = os.path.join(output_dir, "atuar.csv")
     output_ok_csv = os.path.join(output_dir, "remediados.csv")
     output_instability_csv = os.path.join(output_dir, "remediados_frequentes.csv")
-    plan_dir = os.path.join(output_dir, "planos_de_acao")
-    details_dir = os.path.join(output_dir, "detalhes")
     output_json = os.path.join(output_dir, "resumo_problemas.json")
 
     # 1. Análise de Dados
@@ -190,50 +186,19 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
 
     if light_analysis:
         print("💡 Análise leve concluída. Apenas o resumo JSON foi gerado.")
-        return {'html_path': None, 'json_path': output_json}
+        return {
+            'summary': summary,
+            'df_atuacao': None,
+            'num_logs_invalidos': num_logs_invalidos,
+        }
 
     # 2. Geração de Relatórios CSV
     df_atuacao = gerar_relatorios_csv(summary, output_actuation_csv, output_ok_csv, output_instability_csv)
     
-    # 3. Geração de Todas as Páginas HTML
-    df_ok_filtered = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)]
-    df_instabilidade_filtered = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)]
+    print(f"✅ Análise completa finalizada. Os artefatos foram gerados em: {output_dir}")
     
-    top_problemas_atuacao = df_atuacao.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    top_problemas_remediados = df_ok_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    top_problemas_geral = summary.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(10)
-    top_problemas_instabilidade = df_instabilidade_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    
-    metric_counts = df_atuacao[COL_METRIC_NAME].value_counts()
-    top_metrics = metric_counts[metric_counts > 0].nlargest(5)
-
-    summary_filename = os.path.basename(output_summary_html)
-    plan_dir_base_name = os.path.basename(plan_dir)
-
-    gerador_paginas.gerar_paginas_detalhe_problema(df_atuacao, top_problemas_atuacao.index, details_dir, summary_filename, 'aberto_', plan_dir_base_name, timestamp_str)
-    gerador_paginas.gerar_paginas_detalhe_problema(df_ok_filtered, top_problemas_remediados.index, details_dir, summary_filename, 'remediado_', plan_dir_base_name, timestamp_str)
-    gerador_paginas.gerar_paginas_detalhe_problema(summary, top_problemas_geral.index, details_dir, summary_filename, 'geral_', plan_dir_base_name, timestamp_str)
-    gerador_paginas.gerar_paginas_detalhe_problema(df_instabilidade_filtered, top_problemas_instabilidade.index, details_dir, summary_filename, 'instabilidade_', plan_dir_base_name, timestamp_str)
-    gerador_paginas.gerar_paginas_detalhe_metrica(df_atuacao, top_metrics.index, details_dir, summary_filename, plan_dir_base_name, timestamp_str)
-
-    gerador_paginas.gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary_html, plan_dir, details_dir, timestamp_str, trend_report_path)
-    gerador_paginas.gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
-    
-    all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
-    gerador_paginas.gerar_pagina_squads(all_squads, plan_dir, output_dir, os.path.basename(output_summary_html), timestamp_str)
-    
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    base_template_dir = os.path.join(SCRIPT_DIR, '..', 'templates')
-    sucesso_template_file = os.path.join(base_template_dir, 'sucesso_template.html')
-    editor_template_file = os.path.join(base_template_dir, 'editor_template.html')
-
-    gerador_paginas.gerar_pagina_sucesso(output_dir, output_ok_csv, sucesso_template_file)
-    gerador_paginas.gerar_pagina_instabilidade(output_dir, output_instability_csv, sucesso_template_file)
-    gerador_paginas.gerar_pagina_editor_atuacao(output_dir, output_actuation_csv, editor_template_file)
-    
-    if num_logs_invalidos > 0:
-        log_invalidos_path = os.path.join(output_dir, LOG_INVALIDOS_FILENAME)
-        gerador_paginas.gerar_pagina_logs_invalidos(output_dir, log_invalidos_path, sucesso_template_file)
-
-    print(f"✅ Análise completa finalizada. Relatório principal em: {output_summary_html}")
-    return {'html_path': output_summary_html, 'json_path': output_json}
+    return {
+        'summary': summary,
+        'df_atuacao': df_atuacao,
+        'num_logs_invalidos': num_logs_invalidos,
+    }

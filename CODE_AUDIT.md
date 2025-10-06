@@ -60,15 +60,15 @@ The Python backend is responsible for the core business logic. The review focuse
 
 **The Good:**
 
-*   A testing framework using `pytest` has been established in the `tests/` directory.
-*   Unit tests have been created for the core data analysis logic (`analisar_grupos`, `adicionar_acao_sugerida`).
-*   An integration test (`test_criar_relatorio_completo_gera_arquivos`) validates the end-to-end report generation process using sample CSV files located in `tests/fixtures`.
-*   A GitHub Actions workflow (`.github/workflows/run-tests.yml`) has been set up for continuous integration, automatically running the tests on every push and pull request to the `main` branch.
+* A testing framework using `pytest` has been established in the `tests/` directory.
+* Unit tests have been created for the core data analysis logic (`analisar_grupos`, `adicionar_acao_sugerida`).
+* An integration test (`test_criar_relatorio_completo_gera_arquivos`) validates the end-to-end report generation process using sample CSV files located in `tests/fixtures`.
+* A GitHub Actions workflow (`.github/workflows/run-tests.yml`) has been set up for continuous integration, automatically running the tests on every push and pull request to the `main` branch.
 
 **Areas for Improvement:**
 
-*   **Test Coverage:** While the initial tests cover critical parts of the application, the test coverage is not yet comprehensive. More tests should be added to cover edge cases and different scenarios.
-*   **Frontend Testing:** There are no automated tests for the frontend.
+* **Test Coverage:** While the initial tests cover critical parts of the application, the test coverage is not yet comprehensive. More tests should be added to cover edge cases and different scenarios.
+* **Frontend Testing:** There are no automated tests for the frontend.
 
 ## 3. Frontend Review
 
@@ -123,3 +123,14 @@ The following is a prioritized list of recommendations to improve the codebase.
     2. This refactoring will be easier after implementing the service layer.
 
     *Note: The new unit tests provide a good starting point for testing the smaller functions that will be extracted from the god function.*
+
+## 5. Development Workflow
+
+### 5.1. Branching Strategy
+
+To ensure code stability and a clear history, all changes must be made in dedicated branches.
+
+* **Branch Naming:** Branches should be named descriptively, using a prefix like `feature/`, `fix/`, or `refactor/`. For example: `feature/add-user-authentication`, `fix/resolve-login-bug`, `refactor/decouple-data-and-presentation`.
+* **Pull Requests:** Once a feature or fix is complete, a pull request should be opened to merge the changes into the `main` branch.
+* **Code Review:** All pull requests must be reviewed by at least one other developer before being merged.
+* **CI Checks:** All automated checks (tests, linting) must pass before a pull request can be merged.
