@@ -361,7 +361,7 @@ def gerar_pagina_instabilidade(output_dir: str, instability_csv_path: str, templ
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
-        final_html = gerador_html.renderizar_pagina__csv_viewer(template_content, csv_content, "Instabilidade Crônica", os.path.basename(instability_csv_path))
+        final_html = gerador_html.renderizar_pagina_csv_viewer(template_content, csv_content, "Instabilidade Crônica", os.path.basename(instability_csv_path))
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
     except FileNotFoundError:
