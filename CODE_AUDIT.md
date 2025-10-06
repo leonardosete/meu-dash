@@ -4,7 +4,7 @@
 
 This document provides a comprehensive audit of the `meu-dash` application, identifies structural issues, and proposes a clear roadmap for improvement. The primary goal is to enhance the codebase's stability, maintainability, and scalability.
 
-A critical `AttributeError` bug was hotfixed by restoring data processing logic that was improperly removed during a previous refactoring. This incident highlighted deeper structural problems, which this report addresses.
+A critical `AttributeError` bug was hotfixed by restoring data processing logic that was improperly removed during a previous refactoring. This incident highlighted deeper structural problems, which this report addresses. To address these issues and prevent future regressions, a testing framework with automated CI/CD has been implemented.
 
 ## 2. Python Backend (`/src`) Review
 
@@ -56,6 +56,20 @@ The Python backend is responsible for the core business logic. The review focuse
 * **Inconsistent Logging:** Logging is done via `print()` statements. This is unsuitable for a production application running in Kubernetes. Structured logging (e.g., using Python's `logging` module) should be used to provide filterable, machine-readable logs.
 * **Limited Error Handling:** Error handling is not comprehensive. For example, if a required key is missing from a dictionary, it could raise a `KeyError`.
 
+### 2.5. Testing & CI/CD
+
+**The Good:**
+
+*   A testing framework using `pytest` has been established in the `tests/` directory.
+*   Unit tests have been created for the core data analysis logic (`analisar_grupos`, `adicionar_acao_sugerida`).
+*   An integration test (`test_criar_relatorio_completo_gera_arquivos`) validates the end-to-end report generation process using sample CSV files located in `tests/fixtures`.
+*   A GitHub Actions workflow (`.github/workflows/run-tests.yml`) has been set up for continuous integration, automatically running the tests on every push and pull request to the `main` branch.
+
+**Areas for Improvement:**
+
+*   **Test Coverage:** While the initial tests cover critical parts of the application, the test coverage is not yet comprehensive. More tests should be added to cover edge cases and different scenarios.
+*   **Frontend Testing:** There are no automated tests for the frontend.
+
 ## 3. Frontend Review
 
 The frontend consists of HTML templates and, presumably, some JavaScript.
@@ -77,6 +91,8 @@ The following is a prioritized list of recommendations to improve the codebase.
     2. The `analisar_arquivo_csv` function should return the raw analysis results, not generate HTML.
     3. The Flask route in `app.py` will be responsible for calling the analysis function, then the context builder, and finally the HTML rendering function.
 
+    *Note: The existing integration test can be used as a safety net during this refactoring.*
+
 ### Priority 2: Implement a Service Layer
 
 * **Problem:** Business logic is mixed between `app.py` and `analisar_alertas.py`.
@@ -86,6 +102,8 @@ The following is a prioritized list of recommendations to improve the codebase.
     2. Move the core business logic from `analisar_arquivo_csv` into a function within `services.py` (e.g., `create_analysis_report`). This service function will orchestrate the calls to `carregar_dados`, `analisar_grupos`, etc.
     3. The Flask route in `app.py` will become very thin, simply calling the service and rendering the result.
 
+    *Note: The unit tests for the analysis logic can be adapted to test the new service layer in isolation.*
+
 ### Priority 3: Improve Code Quality and Logging
 
 * **Problem:** The code does not follow PEP 8, and logging is done with `print()`.
@@ -94,6 +112,8 @@ The following is a prioritized list of recommendations to improve the codebase.
     1. **Adopt a code formatter** like `black` and a linter like `ruff` or `flake8` to automatically enforce PEP 8.
     2. **Replace all `print()` statements** with structured logging using Python's built-in `logging` module. Configure it to output JSON-formatted logs for easier parsing in Kubernetes.
 
+    *Note: The CI workflow can be extended to run linters and formatters automatically.*
+
 ### Priority 4: Refactor "God Functions"
 
 * **Problem:** The `analisar_arquivo_csv` function is too large and does too much.
@@ -101,3 +121,5 @@ The following is a prioritized list of recommendations to improve the codebase.
 * **Solution:**
     1. Break down the function into smaller, more focused functions, each with a single responsibility (e.g., one for generating CSVs, one for generating detail pages, etc.).
     2. This refactoring will be easier after implementing the service layer.
+
+    *Note: The new unit tests provide a good starting point for testing the smaller functions that will be extracted from the god function.*
