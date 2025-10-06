@@ -330,7 +330,7 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
     <div class="report-header">
         {back_link}
     </div>
-    <h1>Análise Comparativa de Alertas</h1>
+    <h1>Análise Comparativa de Períodos</h1>
     '''
     body += f"<div class='definition-box' style='text-align: center;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Atual:</strong> {periodo_atual_text}</div>"
     

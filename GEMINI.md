@@ -86,8 +86,8 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 
 #### Módulo: `src/analise_tendencia.py`
 - **Responsabilidade:** Comparar dois períodos (JSON atual vs. JSON anterior) e gerar o `resumo_tendencia.html`.
-- **Invocação:** É chamado como uma função Python diretamente do `app.py`.
-- **Entradas (Inputs):** Recebe os caminhos para os dois arquivos JSON (`json_anterior`, `json_atual`) e os nomes dos arquivos CSV originais como argumentos de função.
+- **Invocação:** É chamado como uma função Python diretamente do `app.py`. Também pode ser executado como um script de linha de comando independente para testes.
+- **Entradas (Inputs):** Recebe os caminhos para os dois arquivos JSON (`json_anterior`, `json_atual`), os nomes dos arquivos CSV originais, o caminho de saída para o relatório HTML e, opcionalmente, os intervalos de datas de ambos os períodos e um booleano (`is_direct_comparison`) que ajusta a navegação no relatório final.
 
 ## 4. Templates e Dados
 
@@ -110,7 +110,7 @@ O processo é iniciado pela interação do usuário e orquestrado integralmente 
     b. **Buscar Histórico:** O `app.py` consulta o banco de dados para encontrar o relatório mais recente (`Report.query.order_by(Report.timestamp.desc()).first()`).
     c. **Condição: Análise de Tendência (se um relatório anterior existe):**
         i. **Análise Leve:** A função `analisar_arquivo_csv` é chamada com `light_analysis=True` para o arquivo **atual**, gerando rapidamente o `resumo_problemas.json`.
-        ii. **Geração da Tendência:** A função `gerar_relatorio_tendencia` é chamada, recebendo os JSONs (anterior e atual) e também os intervalos de datas (anterior e atual) para enriquecer o relatório de tendência.
+        ii. **Geração da Tendência:** A função `gerar_relatorio_tendencia` é chamada, recebendo os JSONs (anterior e atual), os nomes dos arquivos CSV originais para rotular os períodos, e os intervalos de datas para enriquecer o relatório.
     d. **Análise Principal (Completa):**
         i. A função `analisar_arquivo_csv` é chamada novamente para o arquivo **atual**, com `light_analysis=False`.
         ii. O caminho para o `resumo_tendencia.html` (se gerado) é passado para esta função, para que o link de navegação seja injetado no relatório principal.
