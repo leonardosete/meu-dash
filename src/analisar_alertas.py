@@ -1,7 +1,6 @@
 import pandas as pd
-import sys
-import os
 import numpy as np
+import os
 from typing import Tuple, Dict
 from datetime import datetime
 from .constants import (
@@ -13,7 +12,7 @@ from .constants import (
     COL_SEVERITY, COL_PRIORITY_GROUP, GROUP_COLS, ESSENTIAL_COLS, STATUS_OK, STATUS_NOT_OK,
     UNKNOWN, NO_STATUS, LOG_INVALIDOS_FILENAME, LIMIAR_ALERTAS_RECORRENTES
 )
-from . import gerador_html
+from . import gerador_paginas
 
 # =============================================================================
 # PROCESSAMENTO E ANÁLISE DE DADOS
@@ -165,98 +164,12 @@ def export_summary_to_json(summary: pd.DataFrame, output_path: str):
     print(f"✅ Resumo salvo em: {output_path}")
 
 # =============================================================================
-# NOVA EXECUÇÃO PRINCIPAL (WEB-FOCUSED)
+# EXECUÇÃO PRINCIPAL
 # =============================================================================
-
-def gerar_resumo_executivo(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, num_logs_invalidos: int, output_path: str, plan_dir: str, details_dir: str, timestamp_str: str, trend_report_path: str = None):
-    """Gera o dashboard principal em HTML com o resumo executivo da análise."""
-    print("\n📊 Gerando Resumo Executivo estilo Dashboard...")
-    
-    total_grupos = len(summary_df)
-    grupos_atuacao = len(df_atuacao)
-    grupos_instabilidade = summary_df['acao_sugerida'].isin(ACAO_FLAGS_INSTABILIDADE).sum()
-    taxa_sucesso = (1 - (grupos_atuacao / total_grupos)) * 100 if total_grupos > 0 else 100
-    casos_ok_estaveis = total_grupos - grupos_atuacao - grupos_instabilidade
-    plan_dir_base_name = os.path.basename(plan_dir)
-    df_ok_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_OK)]
-    df_instabilidade_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)]
-    all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
-    top_squads = all_squads[all_squads > 0].nlargest(5)
-    metric_counts = df_atuacao[COL_METRIC_NAME].value_counts()
-    top_metrics = metric_counts[metric_counts > 0].nlargest(5)
-    top_problemas_atuacao = df_atuacao.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    top_problemas_remediados = df_ok_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    top_problemas_geral = summary_df.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(10)
-    top_problemas_instabilidade = df_instabilidade_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    total_alertas_remediados_ok = df_ok_filtered['alert_count'].sum()
-    total_alertas_instabilidade = df_instabilidade_filtered['alert_count'].sum()
-    total_alertas_problemas = df_atuacao['alert_count'].sum()
-    total_alertas_geral = summary_df['alert_count'].sum()
-
-    summary_filename = os.path.basename(output_path)
-    
-    title = "Dashboard - Análise de Alertas"
-    
-    start_date = summary_df['first_event'].min() if not summary_df.empty else None
-    end_date = summary_df['last_event'].max() if not summary_df.empty else None
-    date_range_text = "Período da Análise: Dados Indisponíveis"
-    if start_date and end_date:
-        date_range_text = f"Período da Análise: {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}"
-    squads_prioritarias = df_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True).agg(
-        score_acumulado=('score_ponderado_final', 'sum'),
-        total_casos=('score_ponderado_final', 'size')
-    ).reset_index()
-    top_5_squads_agrupadas = squads_prioritarias.sort_values(by='score_acumulado', ascending=False).head(5)
-
-    context = {
-        'total_grupos': total_grupos, 'grupos_atuacao': grupos_atuacao, 'grupos_instabilidade': grupos_instabilidade,
-        'taxa_sucesso': taxa_sucesso, 'casos_ok_estaveis': casos_ok_estaveis, 'top_squads': top_squads,
-        'top_metrics': top_metrics, 'top_problemas_atuacao': top_problemas_atuacao,
-        'top_problemas_remediados': top_problemas_remediados, 'top_problemas_geral': top_problemas_geral,
-        'top_problemas_instabilidade': top_problemas_instabilidade, 'total_alertas_remediados_ok': total_alertas_remediados_ok,
-        'total_alertas_instabilidade': total_alertas_instabilidade, 'total_alertas_problemas': total_alertas_problemas,
-        'total_alertas_geral': total_alertas_geral, 'all_squads': all_squads,
-        'top_5_squads_agrupadas': top_5_squads_agrupadas, 'num_logs_invalidos': num_logs_invalidos,
-        'trend_report_path': trend_report_path, 'date_range_text': date_range_text,
-        'summary_filename': summary_filename, 'plan_dir_base_name': plan_dir_base_name,
-        'details_dir_base_name': os.path.basename(details_dir),
-        'ai_summary': None
-    }
-
-    body_content = gerador_html.renderizar_resumo_executivo(context)
-    
-    # Carrega o template principal de forma robusta
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, '..', 'templates', 'template.html')
-    
-    try:
-        with open(TEMPLATE_FILE, 'r', encoding='utf-8') as f:
-            HTML_TEMPLATE = f.read()
-    except FileNotFoundError:
-        raise FileNotFoundError(f"O arquivo de template HTML '{TEMPLATE_FILE}' não foi encontrado.")
-    except Exception as e:
-        raise IOError(f"Erro inesperado ao ler o arquivo de template '{TEMPLATE_FILE}': {e}")
-
-    footer_text = f"Relatório gerado em {timestamp_str}"
-    html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(html_content)
-    print(f"✅ Resumo executivo gerado: {output_path}")
-
-    output_dir = os.path.dirname(output_path)
-    try:
-        with open(os.path.join(output_dir, 'resumo_problemas.json'), 'r', encoding='utf-8') as f:
-            json_content = f.read()
-        html_visualizador = gerador_html.renderizar_visualizador_json(json_content)
-        with open(os.path.join(output_dir, "visualizador_json.html"), 'w', encoding='utf-8') as f:
-            f.write(html_visualizador)
-        print(f"✅ Visualizador de JSON gerado: visualizador_json.html")
-    except Exception as e:
-        print(f"⚠️  Aviso: Não foi possível ler o arquivo JSON para o visualizador. Erro: {e}", file=sys.stderr)
 
 def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool = False, trend_report_path: str = None) -> Dict[str, str]:
     """
-    Função principal, otimizada para uso web, que orquestra a análise de um arquivo CSV.
+    Função principal que orquestra a análise de um arquivo CSV e a geração de relatórios.
     """
     timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
     os.makedirs(output_dir, exist_ok=True)
@@ -270,6 +183,7 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
     details_dir = os.path.join(output_dir, "detalhes")
     output_json = os.path.join(output_dir, "resumo_problemas.json")
 
+    # 1. Análise de Dados
     df, num_logs_invalidos = carregar_dados(input_file, output_dir)
     summary = analisar_grupos(df)
     export_summary_to_json(summary.copy(), output_json)
@@ -278,26 +192,28 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
         print("💡 Análise leve concluída. Apenas o resumo JSON foi gerado.")
         return {'html_path': None, 'json_path': output_json}
 
+    # 2. Geração de Relatórios CSV
     df_atuacao = gerar_relatorios_csv(summary, output_actuation_csv, output_ok_csv, output_instability_csv)
     
-    gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary_html, plan_dir, details_dir, timestamp_str, trend_report_path)
+    # 3. Geração de Todas as Páginas HTML
+    gerador_paginas.gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary_html, plan_dir, details_dir, timestamp_str, trend_report_path)
+    gerador_paginas.gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
     
-    gerador_html.gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
     all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
-    gerador_html.gerar_pagina_squads(all_squads, plan_dir, output_dir, os.path.basename(output_summary_html), timestamp_str)
+    gerador_paginas.gerar_pagina_squads(all_squads, plan_dir, output_dir, os.path.basename(output_summary_html), timestamp_str)
     
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     base_template_dir = os.path.join(SCRIPT_DIR, '..', 'templates')
     sucesso_template_file = os.path.join(base_template_dir, 'sucesso_template.html')
     editor_template_file = os.path.join(base_template_dir, 'editor_template.html')
 
-    gerador_html.gerar_pagina_sucesso(output_dir, output_ok_csv, sucesso_template_file)
-    gerador_html.gerar_pagina_instabilidade(output_dir, output_instability_csv, sucesso_template_file)
-    gerador_html.gerar_pagina_editor_atuacao(output_dir, output_actuation_csv, editor_template_file)
+    gerador_paginas.gerar_pagina_sucesso(output_dir, output_ok_csv, sucesso_template_file)
+    gerador_paginas.gerar_pagina_instabilidade(output_dir, output_instability_csv, sucesso_template_file)
+    gerador_paginas.gerar_pagina_editor_atuacao(output_dir, output_actuation_csv, editor_template_file)
     
     if num_logs_invalidos > 0:
         log_invalidos_path = os.path.join(output_dir, LOG_INVALIDOS_FILENAME)
-        gerador_html.gerar_pagina_logs_invalidos(output_dir, log_invalidos_path, sucesso_template_file)
+        gerador_paginas.gerar_pagina_logs_invalidos(output_dir, log_invalidos_path, sucesso_template_file)
 
     print(f"✅ Análise completa finalizada. Relatório principal em: {output_summary_html}")
     return {'html_path': output_summary_html, 'json_path': output_json}
