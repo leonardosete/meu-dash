@@ -482,7 +482,8 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         for _, row in top_5_squads_agrupadas.iterrows():
             score_color, _ = gerar_cores_para_barra(row['score_acumulado'], min_score, max_score * 1.1)
             squad_name = escape(row['assignment_group'])
-            total_casos_txt = f"({row['total_casos']} {{'casos' if row['total_casos'] > 1 else 'caso'}}))"
+            plural_casos = 'casos' if row['total_casos'] > 1 else 'caso'
+            total_casos_txt = f"({row['total_casos']} {plural_casos})"
             sanitized_squad_name = re.sub(r'[^a-zA-Z0-9_-]', '', squad_name.replace(" ", "_"))
             plan_path = f"{plan_dir_base_name}/plano-de-acao-{sanitized_squad_name}.html"
             

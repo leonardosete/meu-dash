@@ -201,12 +201,12 @@ def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_
                             formatted_chronology.append(f"{status_emoji_map.get(status, '⚪')} {escape(status)}")
                         else:
                             link_html = (
-                                f'<a href="../qualidade_dados_remediacao.html" class="tooltip-container invalid-status-link">'
-                                f'  ⚪ {escape(status)}'
-                                f'  <div class="tooltip-content" style="width: 280px; left: 50%; margin-left: -140px;">'
-                                f'    Status inválido. Clique para ver o log de erros.'
-                                f'  </div>'
-                                f'</a>'
+                                f'''<a href="../qualidade_dados_remediacao.html" class="tooltip-container invalid-status-link">
+                                  ⚪ {escape(status)}
+                                  <div class="tooltip-content" style="width: 280px; left: 50%; margin-left: -140px;">
+                                    Status inválido. Clique para ver o log de erros.
+                                  </div>
+                                </a>'''
                             )
                             formatted_chronology.append(link_html)
                     
@@ -259,6 +259,75 @@ def gerar_pagina_squads(all_squads: pd.Series, plan_dir: str, output_dir: str, s
         f.write(html_content)
     print(f"✅ Página de squads gerada: {output_path}")
 
+def gerar_paginas_detalhe(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, details_dir: str, timestamp_str: str):
+    """Gera páginas de detalhes para os principais problemas e métricas."""
+    print("\n📄 Gerando páginas de detalhes...")
+    os.makedirs(details_dir, exist_ok=True)
+
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, '..', 'templates', 'template.html')
+    HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
+    footer_text = f"Relatório gerado em {timestamp_str}"
+
+    def _gerar_pagina(df_group, title: str, filename: str):
+        if df_group.empty:
+            return
+
+        output_path = os.path.join(details_dir, filename)
+        body_content = f'<p><a href="../resumo_geral.html">&larr; Voltar para o Dashboard</a></p>'
+        body_content += f'<h2>{escape(title)}</h2>'
+        body_content += '<div class="card"><div class="card-content">'
+        body_content += '<table><thead><tr><th>Recurso (CI)</th><th>Nó</th><th>Squad</th><th>Primeiro Evento</th><th>Último Evento</th><th>Contagem de Alertas</th><th>Ação Sugerida</th></tr></thead><tbody>'
+
+        for _, row in df_group.iterrows():
+            body_content += '<tr>'
+            body_content += f'<td>{escape(row[COL_CMDB_CI])}</td>'
+            body_content += f'<td>{escape(row[COL_NODE])}</td>'
+            body_content += f'<td>{escape(row[COL_ASSIGNMENT_GROUP])}</td>'
+            body_content += f'<td>{row["first_event"].strftime("%d/%m/%Y %H:%M")}</td>'
+            body_content += f'<td>{row["last_event"].strftime("%d/%m/%Y %H:%M")}</td>'
+            body_content += f'<td>{row["alert_count"]}</td>'
+            body_content += f'<td>{escape(row["acao_sugerida"])}</td>'
+            body_content += '</tr>'
+
+        body_content += '</tbody></table></div></div>'
+        html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        print(f"✅ Página de detalhe gerada: {filename}")
+
+    top_problemas_atuacao = df_atuacao.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
+    for problem, _ in top_problemas_atuacao.items():
+        df_problem = summary_df[summary_df[COL_SHORT_DESCRIPTION] == problem]
+        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
+        _gerar_pagina(df_problem, f"Detalhe do Problema: {problem}", f"detalhe_aberto_{sanitized_name}.html")
+
+    top_metrics = df_atuacao[COL_METRIC_NAME].value_counts().nlargest(5)
+    for metric, _ in top_metrics.items():
+        df_metric = summary_df[summary_df[COL_METRIC_NAME] == metric]
+        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', metric.replace(" ", "_"))
+        _gerar_pagina(df_metric, f"Detalhe da Métrica: {metric}", f"detalhe_metrica_{sanitized_name}.html")
+
+    df_instabilidade_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)]
+    top_problemas_instabilidade = df_instabilidade_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
+    for problem, _ in top_problemas_instabilidade.items():
+        df_problem = summary_df[summary_df[COL_SHORT_DESCRIPTION] == problem]
+        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
+        _gerar_pagina(df_problem, f"Detalhe de Instabilidade: {problem}", f"detalhe_instabilidade_{sanitized_name}.html")
+
+    df_ok_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_OK)]
+    top_problemas_remediados = df_ok_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
+    for problem, _ in top_problemas_remediados.items():
+        df_problem = summary_df[summary_df[COL_SHORT_DESCRIPTION] == problem]
+        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
+        _gerar_pagina(df_problem, f"Detalhe de Remediado: {problem}", f"detalhe_remediado_{sanitized_name}.html")
+
+    top_problemas_geral = summary_df.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(10)
+    for problem, _ in top_problemas_geral.items():
+        df_problem = summary_df[summary_df[COL_SHORT_DESCRIPTION] == problem]
+        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
+        _gerar_pagina(df_problem, f"Detalhe Geral do Problema: {problem}", f"detalhe_geral_{sanitized_name}.html")
+
 def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):
     """Gera uma página HTML para visualização dos casos resolvidos com sucesso."""
     print(f"📄 Gerando página de visualização para '{os.path.basename(ok_csv_path)}'...")
@@ -292,7 +361,7 @@ def gerar_pagina_instabilidade(output_dir: str, instability_csv_path: str, templ
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
-        final_html = gerador_html.renderizar_pagina_csv_viewer(template_content, csv_content, "Instabilidade Crônica", os.path.basename(instability_csv_path))
+        final_html = gerador_html.renderizar_pagina__csv_viewer(template_content, csv_content, "Instabilidade Crônica", os.path.basename(instability_csv_path))
         with open(output_path, 'w', encoding='utf-8') as f_out:
             f_out.write(final_html)
     except FileNotFoundError:
@@ -333,7 +402,7 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
         csv_payload = csv_content.replace('\\', r'\\\\').replace('`', r'`')
-        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___"
+        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___")
         template_com_placeholder = template_content.replace('const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`', f'const csvDataPayload = `{placeholder}`')
         final_html = template_com_placeholder.replace(placeholder, csv_payload)
         with open(output_path, 'w', encoding='utf-8') as f_out:

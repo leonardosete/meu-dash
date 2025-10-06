@@ -196,6 +196,7 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
     df_atuacao = gerar_relatorios_csv(summary, output_actuation_csv, output_ok_csv, output_instability_csv)
     
     # 3. Geração de Todas as Páginas HTML
+    gerador_paginas.gerar_paginas_detalhe(summary, df_atuacao, details_dir, timestamp_str)
     gerador_paginas.gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary_html, plan_dir, details_dir, timestamp_str, trend_report_path)
     gerador_paginas.gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
     
