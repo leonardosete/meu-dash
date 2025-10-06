@@ -277,7 +277,11 @@
             <h3>Módulos Auxiliares</h3>
             <div class="card">
                 <h4><code>src/gerador_html.py</code></h4>
-                <p>Centraliza a lógica de renderização de HTML, transformando os dados da análise em dashboards interativos.</p>
+                <p>Centraliza a lógica de renderização de componentes HTML, transformando os dados da análise em dashboards interativos.</p>
+                <h4><code>src/gerador_paginas.py</code></h4>
+                <p>Orquestra a criação das diversas páginas HTML do relatório, utilizando <code>gerador_html.py</code> para construir as seções e salvando os arquivos finais.</p>
+                <h4><code>src/utils.py</code></h4>
+                <p>Fornece funções utilitárias, como a sanitização de nomes de arquivos, usadas em várias partes do projeto.</p>
                 <h4><code>src/constants.py</code></h4>
                 <p>Centraliza todas as constantes de lógica de negócio (pesos, ações, etc.) para garantir consistência.</p>
                 <h4><code>src/get_date_range.py</code></h4>
@@ -319,8 +323,31 @@
             </ol>
         </section>
 
+        <section id="deployment">
+            <h2>5. Implantação (Deployment)</h2>
+            <p>O projeto é totalmente containerizado para garantir portabilidade e escalabilidade.</p>
+            <div class="card">
+                <h4><code>Dockerfile</code></h4>
+                <p>Um <code>Dockerfile</code> multi-stage é fornecido para construir uma imagem de produção otimizada. Ele instala as dependências Python, inicializa o banco de dados com <strong>Flask-Migrate</strong> e configura a aplicação para ser servida com o servidor WSGI <strong>Gunicorn</strong>, pronto para produção.</p>
+<pre><code># Exemplo de build
+docker build -t meu-dash-web .
+
+# Exemplo de execução
+docker run -p 8000:8000 -v ./data:/app/data meu-dash-web</code></pre>
+            </div>
+            <div class="card">
+                <h4><code>kubernetes.yaml</code></h4>
+                <p>Para implantação em ambientes orquestrados, o arquivo <code>kubernetes.yaml</code> define os recursos necessários:</p>
+                <ul>
+                    <li><strong>PersistentVolumeClaim:</strong> Garante que o diretório <code>/app/data</code> (contendo o banco de dados, uploads e relatórios) seja persistido em um volume de armazenamento.</li>
+                    <li><strong>Deployment:</strong> Gerencia os Pods da aplicação, garantindo que o número desejado de réplicas esteja sempre em execução.</li>
+                    <li><strong>Service:</strong> Expõe o Deployment através de um serviço (<code>ClusterIP</code> ou <code>LoadBalancer</code>), tornando a aplicação acessível na rede.</li>
+                </ul>
+            </div>
+        </section>
+
         <section id="artefatos">
-            <h2>5. Artefatos Gerados (Outputs)</h2>
+            <h2>6. Artefatos Gerados (Outputs)</h2>
             <h3>Dashboards HTML Interativos</h3>
             <div class="card">
                 <ul>
