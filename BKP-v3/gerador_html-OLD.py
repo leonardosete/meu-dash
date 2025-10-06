@@ -2,14 +2,6 @@ import os
 import re
 from html import escape
 from typing import Dict, Any
-import pandas as pd
-from .constants import (
-    ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_STATUS_AUSENTE,
-    ACAO_INCONSISTENTE, ACAO_SEMPRE_OK, ACAO_ESTABILIZADA,
-    ACAO_INSTABILIDADE_CRONICA, ACAO_FLAGS_ATUACAO,
-    COL_ASSIGNMENT_GROUP, COL_SHORT_DESCRIPTION, COL_NODE, COL_CMDB_CI,
-    COL_METRIC_NAME, STATUS_OK, STATUS_NOT_OK, NO_STATUS, UNKNOWN
-)
 
 # =============================================================================
 # CONSTANTES VISUAIS
@@ -482,8 +474,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         for _, row in top_5_squads_agrupadas.iterrows():
             score_color, _ = gerar_cores_para_barra(row['score_acumulado'], min_score, max_score * 1.1)
             squad_name = escape(row['assignment_group'])
-            plural_casos = 'casos' if row['total_casos'] > 1 else 'caso'
-            total_casos_txt = f"({row['total_casos']} {plural_casos})"
+            total_casos_txt = f"({row['total_casos']} {'casos' if row['total_casos'] > 1 else 'caso'})"
             sanitized_squad_name = re.sub(r'[^a-zA-Z0-9_-]', '', squad_name.replace(" ", "_"))
             plan_path = f"{plan_dir_base_name}/plano-de-acao-{sanitized_squad_name}.html"
             
@@ -538,7 +529,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     body_content += '</div></div>'
     
     tooltip_metricas = "Categorias de métricas com maior número de Casos sem remediação."
-    body_content += f'<div class="card full-width"><h3><span class="card-title">TOP 5 CATEGORias</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_metricas)}</div></div></h3>'
+    body_content += f'<div class="card full-width"><h3><span class="card-title">TOP 5 CATEGORIAS</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_metricas)}</div></div></h3>'
     if not top_metrics.empty:
         body_content += '<div class="bar-chart-container">'
         min_metric_val, max_metric_val = top_metrics.min(), top_metrics.max()

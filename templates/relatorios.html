@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Relatórios</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #12141D;
+            --card-color: #1B1E2C;
+            --text-color: #E0E0E0;
+            --primary-text-color: #FFFFFF;
+            --border-color: #3A3D5A;
+            --accent-color: #6A5AF9;
+            --header-bg-color: #24273A;
+            --danger-color: #e74a3b; /* NOVO */
+            --danger-color-hover: #c0392b; /* NOVO */
+            --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            font-family: var(--font-family);
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 20px auto;
+        }
+        h1 {
+            color: var(--primary-text-color);
+            padding-bottom: 10px;
+            font-weight: 600;
+            font-size: 1.8em;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .card {
+            background: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            overflow: hidden;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        th {
+            background-color: var(--header-bg-color);
+            font-weight: 500;
+            color: var(--primary-text-color);
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        thead th:first-child {
+            border-top-left-radius: 8px;
+        }
+        thead th:last-child {
+            border-top-right-radius: 8px;
+        }
+        tbody tr:hover {
+            background-color: var(--header-bg-color);
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        /* NOVO: Container para os botões de ação */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .action-link, .action-button { /* Estilo unificado */
+            display: inline-block;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9em;
+            text-align: center;
+            transition: background-color 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .action-link {
+            background-color: var(--accent-color);
+        }
+        .action-link:hover {
+            background-color: #5848d8;
+        }
+        /* NOVO: Estilo para o botão de excluir */
+        .delete-button {
+            background-color: var(--danger-color);
+        }
+        .delete-button:hover {
+            background-color: var(--danger-color-hover);
+        }
+        .back-link {
+            display: inline-block;
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .back-link:hover {
+            color: var(--accent-color);
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Histórico de Relatórios</h1>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data de Geração</th>
+                            <th>Arquivo Original</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td>{{ report.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                            <td>{{ report.original_filename }}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{{ report.url }}" class="action-link">Visualizar</a>
+                                    <form action="{{ url_for('delete_report', report_id=report.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este relatório? Esta ação não pode ser desfeita.');">
+                                        <button type="submit" class="action-button delete-button">Excluir</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="text-center">
+            <a href="/" class="back-link">&larr; Voltar ao Upload</a>
+        </div>
+    </div>
+</body>
+</html>

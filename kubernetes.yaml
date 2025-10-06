@@ -1,0 +1,149 @@
+# --- Namespace para organizar os recursos da aplicação ---
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: meu-dash-alertas
+
+---
+# --- Headless Service: Necessário para o StatefulSet ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meu-dash-headless
+  namespace: meu-dash-alertas
+spec:
+  clusterIP: None
+  selector:
+    app: meu-dash-web
+  ports:
+  - port: 80
+    targetPort: 5000
+
+---
+# --- Service ClusterIP: Ponto de acesso interno para o Ingress ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meu-dash-web
+  namespace: meu-dash-alertas
+spec:
+  type: ClusterIP
+  selector:
+    app: meu-dash-web
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5000
+
+---
+# --- PodDisruptionBudget (PDB): Garante a alta disponibilidade ---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: meu-dash-pdb
+  namespace: meu-dash-alertas
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: meu-dash-web
+
+---
+# --- StatefulSet: Orquestração dos Pods da aplicação ---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: meu-dash-web
+  namespace: meu-dash-alertas
+spec:
+  serviceName: "meu-dash-headless"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meu-dash-web
+  template:
+    metadata:
+      labels:
+        app: meu-dash-web
+    spec:
+      # ADICIONADO: Declaração de um volume temporário (emptyDir).
+      volumes:
+      - name: temp-storage
+        emptyDir: {}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 2001
+      containers:
+      - name: meu-dash-web
+        # AINDA RECOMENDO: Trocar a tag :latest por uma versão específica (ex: v1.0.1)
+        image: sevenleo/meu-dash-web:latest 
+        ports:
+        - name: http
+          containerPort: 5000
+        readinessProbe:
+          httpGet:
+            path: /health 
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        resources:
+          requests:
+            cpu: "256m"
+            memory: "512Mi"
+          limits:
+            cpu: "256m"
+            memory: "512Mi"
+        volumeMounts:
+        - name: meu-dash-data
+          mountPath: /app/data
+        # ADICIONADO: Montagem do volume temporário no diretório /tmp.
+        - name: temp-storage 
+          mountPath: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - "ALL"
+  volumeClaimTemplates:
+  - metadata:
+      name: meu-dash-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 1Gi
+---
+#--- Ingress: Ponto de entrada para o tráfego externo via HTTPS ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: meu-dash-web-ingress
+#   namespace: meu-dash-alertas
+#   annotations:
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+# spec:
+#   ingressClassName: nginx
+#   tls:
+#   - hosts:
+#     - meu-dash-web-teste.devops-master.shop
+#     secretName: meu-dash-tls-secret # O cert-manager criará e gerenciará este Secret
+#   rules:
+#   - host: meu-dash-web-teste.devops-master.shop
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: meu-dash-web
+#             port:
+#               number: 80

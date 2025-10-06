@@ -2,232 +2,143 @@
 
 ## 1. SEU PAPEL E OBJETIVO
 
-**Você é um desenvolvedor de software sênior e especialista em automação de dados**, atuando como o principal assistente para o projeto `meu-dash`.
+**Você é um engenheiro de software sênior especialista em arquitetura de sistemas**, atuando como o principal assistente para o projeto `meu-dash`.
 
 **Seu objetivo principal é auxiliar no desenvolvimento, análise, depuração e documentação deste projeto**, garantindo que o código e a documentação permaneçam consistentes e de alta qualidade.
 
 ## 2. CONTEXTO E FONTE DA VERDADE
 
 - **Diretório Raiz do Projeto:** `~/meu-dash`
-- **Fonte Primária da Verdade:** **Este arquivo (`GEMINI.md`) é sua referência principal.** Sempre comece lendo-o para entender a arquitetura, o fluxo de dados e as responsabilidades de cada componente.
+- **Fonte Primária da Verdade:** **Este arquivo (`GEMINI.md`) é sua referência principal.** Sempre comece lendo-o para entender a arquitetura e o fluxo de dados. O código-fonte em `src/app.py` é a autoridade final sobre o fluxo de execução.
 - **Documentação para Humanos:**
-    - `docs/doc_tecnica.html`: Detalhes técnicos da implementação.
-    - `docs/doc_gerencial.html`: Visão de alto nível, fluxo e impacto para gestão.
+  - `docs/doc_tecnica.html`: Detalhes técnicos da implementação.
+  - `docs/doc_gerencial.html`: Visão de alto nível e impacto para gestão.
 
 ## 3. REGRAS DE OPERAÇÃO
 
-1.  **Sincronização Obrigatória:** Qualquer alteração no código que afete o fluxo de execução, as entradas/saídas de um script ou a estrutura dos relatórios gerados **DEVE** ser refletida imediatamente neste arquivo e, subsequentemente, nos documentos `doc_tecnica.html` e `doc_gerencial.html`.
-2.  **Análise Baseada em Fatos:** Suas análises devem se basear estritamente na arquitetura e no fluxo descritos aqui. Não presuma funcionalidades que não estejam documentadas.
-3.  **Clareza e Precisão:** Ao gerar código ou documentação, seja explícito sobre as dependências entre os scripts e os artefatos que eles consomem e produzem.
-4.  **Ponto de Partida Fixo:** Toda análise de fluxo de execução deve, obrigatoriamente, começar pelos orquestradores principais: `scripts/gerar_relatorio.sh` (para Linux/macOS) ou `scripts/gerar_relatorio.ps1` (para Windows).
+1. **Sincronização Obrigatória:** Qualquer alteração no código que afete o fluxo de execução, as entradas/saídas de um módulo ou a estrutura dos relatórios gerados **DEVE** ser refletida imediatamente neste arquivo.
+2. **Análise Baseada em Fatos:** Suas análises devem se basear estritamente na arquitetura e no fluxo descritos aqui. Não presuma funcionalidades que não estejam documentadas.
+3. **Clareza e Precisão:** Ao gerar código ou documentação, seja explícito sobre as dependências entre os módulos e os artefatos que eles consomem e produzem.
+4. **Ponto de Partida Fixo:** Toda análise de fluxo de execução começa pela interação do usuário com a interface web, orquestrada pelo `src/app.py`.
 
 ---
 
-# 📝 DESCRIÇÃO DO PROJETO: Análise de Alertas e Tendências
+## 📝 DESCRIÇÃO DO PROJETO: Análise de Alertas e Tendências
 
-Este projeto automatiza a análise de alertas de monitoramento (`.csv`), gera um ecossistema de dashboards HTML interativos para gestão e identifica tendências de problemas ao longo do tempo.
+Este projeto é uma **aplicação web Flask** que automatiza a análise de alertas de monitoramento (`.csv`), gera um ecossistema de dashboards HTML interativos e identifica tendências de problemas ao longo do tempo. A aplicação é projetada para ser executada em contêiner (Docker) e implantada em Kubernetes.
 
-O sistema classifica os problemas com base em um **Score de Prioridade**, que considera o risco do negócio, a ineficiência da automação e o impacto operacional (volume de alertas).
+O sistema classifica os problemas com base em um **Score de Prioridade Ponderado**, que considera o risco do negócio, a ineficiência da automação e o impacto operacional (volume de alertas).
 
 ---
 
-# 🧠 LÓGICA DE ANÁLISE E PRIORIZAÇÃO
+## 🧠 LÓGICA DE ANÁLISE E PRIORIZAÇÃO
 
 A análise se baseia em conceitos-chave para transformar "ruído" (alertas) em insights acionáveis (casos priorizados).
 
-## Casos vs. Alertas
+### Casos vs. Alertas
 
-Para focar no que é mais importante, a análise distingue **Alertas** de **Casos**:
+- **Alerta:** Uma notificação individual de um evento de monitoramento.
+- **Caso:** A causa raiz de um problema. Agrupa múltiplos alertas do mesmo tipo em um mesmo recurso (CI/Nó).
 
--   **Alerta:** Uma notificação individual de um evento de monitoramento.
--   **Caso:** A causa raiz de um problema. Ele agrupa múltiplos alertas do mesmo tipo que ocorrem em um mesmo recurso (CI/Nó), representando uma única frente de trabalho.
+### Score de Prioridade Ponderado
 
-> **Exemplo:** Um servidor com pouco espaço em disco pode gerar 100 **alertas** de "disco cheio". No entanto, como todos se referem à mesma causa raiz no mesmo recurso, eles são agrupados em apenas **1 Caso**.
+### **Score Final = (Risco) * (Ineficiência) * (Impacto)**
 
-## Score de Prioridade Ponderado
-
-A criticidade de um caso não é arbitrária. Ela é calculada pela fórmula:
-**Score Final = (Pilar 1: Risco) \* (Pilar 2: Ineficiência) \* (Pilar 3: Impacto)**
-
-#### Pilar 1: Score de Risco (Criticidade Base)
-Mede a gravidade inerente do problema. É a soma dos pesos da **Severidade** e **Prioridade** do alerta, extraídos diretamente das colunas `severity` e `sn_priority_group`.
-
-| Severidade       | Peso | Prioridade | Peso |
-| ---------------- | :--: | ---------- | :--: |
-| Crítico          |  10  | Urgente    |  10  |
-| Alto / Major     |  8   | Alto(a)    |  8   |
-| Médio / Minor    |  5   | Moderado(a)|  5   |
-| Aviso / Baixo    | 2-3  | Baixo(a)   |  2   |
-
-#### Pilar 2: Multiplicador de Ineficiência (Falha da Automação)
-Penaliza casos onde a automação de remediação falhou, indicando um processo ineficiente.
-
-| Resultado da Automação                  | Multiplicador |
-| --------------------------------------- | :-----------: |
-| Falha Persistente (nunca funcionou)     |   **x 1.5**   |
-| Intermitente (falha às vezes)           |   **x 1.2**   |
-| Status Ausente / Inconsistente          |   **x 1.1**   |
-| Funcionou no final (Estabilizada / OK)  |   **x 1.0**   |
-
-#### Pilar 3: Multiplicador de Impacto (Volume de Alertas)
-Penaliza o "ruído" operacional gerado pelo volume de alertas de um mesmo caso. O cálculo usa a fórmula `1 + ln(N)` (onde `ln` é o logaritmo natural e `N` é o número de alertas) para que o impacto seja significativo, mas cresça de forma controlada.
-
-| Nº de Alertas no Caso | Multiplicador Aprox. |
-| --------------------- | :------------------: |
-| 1 alerta              |       **x 1.0**      |
-| 10 alertas             |       **x 3.3**      |
-| 50 alertas             |       **x 4.9**      |
-| 100 alertas            |       **x 5.6**      |
-
-## Contabilização da Remediação
-
-A análise da remediação se baseia na coluna `self_healing_status`. O script `analisar_alertas.py` verifica o valor dessa coluna para cada alerta e determina o resultado da automação:
-- **`REM_OK`**: Sucesso.
-- **`REM_NOT_OK`**: Falha.
-- **Ausente ou outro valor**: Status desconhecido ou inválido.
-
-A sequência desses status ao longo do tempo para um mesmo **Caso** define a **Ação Sugerida** (ex: "Falha Persistente", "Intermitente", "Estabilizada").
-
-## Qualidade dos Dados: Status de Remediação
-
-Para garantir a integridade da análise, o script `analisar_alertas.py` realiza uma validação na coluna `self_healing_status`.
-- **Valores Esperados:** `REM_OK`, `REM_NOT_OK`, ou valores nulos/vazios.
-- **Ação em caso de Inconsistência:** Se um valor diferente dos esperados for encontrado, a linha inteira do alerta é registrada no arquivo `invalid_self_healing_status.csv`.
-- **Notificação:** O dashboard principal (`resumo_geral.html`) exibirá um aviso e um link para o `qualidade_dados_remediacao.html`, permitindo a fácil depuração e identificação de problemas na coleta de dados.
+- **Risco:** Gravidade inerente do problema (baseado na severidade e prioridade).
+- **Ineficiência:** Penaliza falhas da automação de remediação.
+- **Impacto:** Penaliza o "ruído" operacional (volume de alertas).
 
 ---
 
-# 🏛️ ARQUITETURA E COMPONENTES
+## 🏛️ ARQUITETURA E COMPONENTES
 
-## 1. Orquestradores Principais
+A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra todo o processo de análise e visualização.
 
-#### Scripts: `scripts/gerar_relatorio.sh` e `scripts/gerar_relatorio.ps1`
-- **Responsabilidade:** Único ponto de entrada do projeto. Orquestram todo o fluxo de análise e geração de relatórios para ambientes Linux/macOS (`.sh`) e Windows (`.ps1`).
-- **Entradas (Inputs):**
-    - Arquivos `.csv` localizados em `data/put_csv_here/`.
-    - Templates HTML em `templates/`.
-- **Saídas (Outputs):**
-    - Diretório de resultados (`reports/analise-comparativa-...` ou `reports/resultados-...`) contendo todos os dashboards e arquivos de dados.
-- **Detalhes Chave:**
-    - Preparam o ambiente Python e instalam dependências (`pandas`, `openpyxl`).
-    - Invocam `selecionar_arquivos.py` para ordenar os CSVs em modo comparativo.
-    - Invocam `analisar_alertas.py` com as flags corretas (`--resumo-only` para o período anterior).
-    - Invocam `get_date_range.py` e passam os resultados para `analise_tendencia.py`.
-    - Injetam dados do `atuar.csv` no `editor_template.html` para criar o `editor_atuacao.html`.
-    - Movem o log `invalid_self_healing_status.csv` para o diretório de resultados, se existir.
+### 1. Orquestrador Principal: Aplicação Flask (`src/app.py`)
 
-## 2. Motores de Análise
+- **Responsabilidade:** Único ponto de entrada e cérebro do projeto. Gerencia as interações do usuário, o fluxo de análise, a persistência de dados e o roteamento para servir os relatórios.
+- **Componentes Internos:**
+  - **Flask:** Microframework web.
+  - **SQLAlchemy:** ORM para interagir com o banco de dados.
+  - **Flask-Migrate:** Gerencia as migrações do esquema do banco de dados.
+- **Rotas Principais:**
+  - `GET /`: Exibe a página inicial de upload (`upload.html`).
+  - `POST /upload`: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.
+  - `GET /relatorios`: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.
+  - `GET /reports/<run_folder>/<filename>`: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.
 
-#### Script: `src/analisar_alertas.py`
+### 2. Banco de Dados (`data/meu_dash.db`)
+
+- **Tecnologia:** SQLite, gerenciado pelo SQLAlchemy.
+- **Modelo (`Report`):**
+  - `id`: Identificador único.
+  - `timestamp`: Data e hora da análise.
+  - `original_filename`: Nome do arquivo `.csv` que foi enviado.
+  - `report_path`: Caminho para o relatório HTML principal (`resumo_geral.html`).
+  - `json_summary_path`: **Crucial para a análise de tendência.** Caminho para o arquivo `resumo_problemas.json` daquela análise.
+  - `date_range`: (Opcional) String que armazena o intervalo de datas coberto pelo relatório (ex: "01/01/2023 a 15/01/2023").
+- **Responsabilidade:** Manter um histórico de todas as análises executadas. Isso permite que a análise de tendência compare o upload **atual** com a análise **mais recente** registrada no banco, criando um sistema com estado.
+
+### 3. Motores de Análise (Invocados como Bibliotecas)
+
+#### Módulo: `src/analisar_alertas.py`
+
 - **Responsabilidade:** Processar um único arquivo de alertas, realizar a análise principal e orquestrar a geração dos relatórios HTML para aquele período.
-- **Entradas (Inputs):**
-    - Um único arquivo `.csv` de alertas (via argumento posicional).
-    - Argumentos de linha de comando para especificar os caminhos de saída de todos os artefatos (e.g., `--output-json`, `--output-actuation`, `--plan-dir`, etc.).
-    - A flag `--resumo-only` para o modo de análise otimizada.
-    - Constantes de lógica de negócio (pesos, ações) importadas de `src/constants.py`.
-- **Saídas (Outputs):**
-    - **`resumo_problemas.json` (Artefato Central)**
-    - Arquivos de dados CSV (`atuar.csv`, `remediados.csv`, `remediados_frequentes.csv`).
-    - Opcionalmente, `invalid_self_healing_status.csv` se forem encontrados status inválidos.
-- **Detalhes Chave:**
-    - **Motor de Análise:** Agrupa alertas em **Casos** e calcula o **Score de Prioridade Ponderado**.
-    - **Validação de Dados:** Verifica a coluna `self_healing_status` e gera o log de anomalias. Adicionalmente, se um caso de atuação apresentar um status inválido em sua cronologia, a `acao_sugerida` no arquivo `atuar.csv` é prefixada com um aviso para forçar a análise.
-    - **Geração de Relatórios:** Invoca funções do `gerador_html.py` para criar todos os dashboards HTML (`resumo_geral.html`, planos de squad, páginas de detalhe, etc.).
-    - **Documentação Embutida:** O dashboard principal (`resumo_geral.html`) contém uma seção "Conceitos" detalhada, que explica a lógica da análise diretamente para o usuário final.
+- **Invocação:** É chamado como uma função Python diretamente do `app.py`.
+- **Entradas (Inputs):** Recebe o caminho do arquivo de input e o diretório de output como argumentos de função. A flag `light_analysis` controla a profundidade da análise.
+- **Saídas (Outputs):** Retorna um dicionário contendo os caminhos para os artefatos gerados (HTML e JSON).
 
-#### Script: `src/analise_tendencia.py`
-- **Responsabilidade:** Comparar dois períodos e gerar um relatório de tendência interativo e detalhado sobre a evolução dos problemas.
-- **Entradas (Inputs):**
-    - `resumo_problemas.json` (período atual).
-    - `resumo_problemas.json` (período anterior).
-    - Nomes dos arquivos CSV originais (para rótulos no relatório).
-    - Intervalos de datas (output de `get_date_range.py`) para os dois períodos.
-    - Constantes de flags de atuação importadas de `src/constants.py`.
-- **Saídas (Outputs):**
-    - `resumo_tendencia.html`.
-- **Detalhes Chave:**
-    - **Análise de Funil:** Apresenta um "Funil de Resolução" que mostra visualmente o fluxo de casos: quantos foram resolvidos, quantos persistiram e quantos novos surgiram.
-    - **Cálculo de KPIs:** Calcula e destaca a "Taxa de Resolução" como um indicador chave de eficácia.
-    - **Navegação por Abas:** Organiza a análise em abas interativas para exploração detalhada.
+#### Módulo: `src/analise_tendencia.py`
 
-## 3. Módulo de Geração de HTML
+- **Responsabilidade:** Comparar dois períodos (JSON atual vs. JSON anterior) e gerar o `resumo_tendencia.html`.
+- **Invocação:** É chamado como uma função Python diretamente do `app.py`. Também pode ser executado como um script de linha de comando independente para testes.
+- **Entradas (Inputs):** Recebe os caminhos para os dois arquivos JSON (`json_anterior`, `json_atual`), os nomes dos arquivos CSV originais, o caminho de saída para o relatório HTML e, opcionalmente, os intervalos de datas de ambos os períodos e um booleano (`is_direct_comparison`) que ajusta a navegação no relatório final.
 
-#### Script: `src/gerador_html.py`
-- **Responsabilidade:** Centralizar toda a lógica de renderização de HTML.
-- **Entradas (Inputs):**
-    - Dicionários de contexto com os dados da análise (e.g., KPIs, DataFrames de top problemas).
-    - Strings de templates HTML.
-- **Saídas (Outputs):**
-    - Strings HTML formatadas, prontas para serem salvas em arquivos.
-- **Detalhes Chave:**
-    - Contém funções específicas para renderizar cada componente do dashboard (KPIs, gráficos de barra, tabelas, etc.).
-    - Abstrai a complexidade da criação de HTML dos scripts de análise, promovendo a separação de responsabilidades.
+### 4. Templates e Dados
 
-## 4. Scripts Auxiliares
-
-#### Script: `src/constants.py`
-- **Responsabilidade:** Centralizar todas as constantes de lógica de negócio.
-- **Detalhes Chave:**
-    - **Ações Sugeridas:** Mapeamento de ações (`ACAO_FALHA_PERSISTENTE`, `ACAO_INTERMITENTE`, etc.).
-    - **Flags de Atuação:** Listas de ações que definem se um caso precisa de atuação manual (`ACAO_FLAGS_ATUACAO`), se está OK (`ACAO_FLAGS_OK`) ou se representa instabilidade (`ACAO_FLAGS_INSTABILIDADE`).
-    - **Pesos de Criticidade:** Dicionários com os pesos para cálculo do score (`SEVERITY_WEIGHTS`, `PRIORITY_GROUP_WEIGHTS`, `ACAO_WEIGHTS`).
-    - **Propósito:** Isolar a lógica de negócio da implementação dos scripts, facilitando a manutenção e garantindo consistência entre os diferentes componentes que precisam da mesma lógica.
-
-#### Script: `src/selecionar_arquivos.py`
-- **Responsabilidade:** Ordenar cronologicamente múltiplos arquivos `.csv` com base na data mais recente encontrada na coluna `sys_created_on`.
-- **Entradas (Inputs):**
-    - Múltiplos caminhos de arquivos `.csv`.
-- **Saídas (Outputs):**
-    - Imprime na saída padrão (stdout) os dois caminhos de arquivo mais recentes, na ordem correta (atual, anterior).
-
-#### Script: `src/get_date_range.py`
-- **Responsabilidade:** Extrair o intervalo de datas (primeira e última) de um arquivo `.csv`.
-- **Entradas (Inputs):**
-    - Um único arquivo `.csv`.
-- **Saídas (Outputs):**
-    - Imprime na saída padrão (stdout) o intervalo de datas formatado (ex: "DD/MM/YYYY a DD/MM/YYYY").
+- **`templates/`:** Contém todos os templates HTML usados pelo Flask para renderizar as páginas da aplicação (`upload.html`, `relatorios.html`, etc.).
+- **`data/`:** Diretório persistido que armazena:
+  - `uploads/`: Cópias dos arquivos `.csv` originais enviados pelo usuário.
+  - `reports/`: Subdiretórios para cada execução (`run_...`), contendo todos os artefatos gerados (HTML, JSON, CSV).
+  - `meu_dash.db`: O arquivo do banco de dados SQLite.
 
 ---
 
-# 🌊 FLUXO DE EXECUÇÃO LÓGICO
+## 🌊 FLUXO DE EXECUÇÃO LÓGICO
 
-O processo é totalmente automatizado e segue esta sequência:
+O processo é iniciado pela interação do usuário e orquestrado integralmente pelo `app.py`.
 
-1.  **Usuário:** Executa `./scripts/gerar_relatorio.sh` ou `.\scripts\gerar_relatorio.ps1`.
-2.  **Orquestrador:** Identifica os arquivos `.csv` em `data/put_csv_here/`.
-3.  **Condição: Análise Comparativa (>1 arquivo CSV):**
-    a. **`selecionar_arquivos.py`** é executado para determinar os arquivos `atual` e `anterior`.
-    b. **Primeira Análise (Otimizada):** `analisar_alertas.py` é executado para o arquivo `anterior` com a flag `--resumo-only`. Isso gera apenas o `resumo_problemas.json` e o salva em um diretório temporário.
-    c. **Segunda Análise (Completa):** `analisar_alertas.py` é executado para o arquivo `atual` sem flags, gerando os arquivos de dados (`.csv`, `.json`) e os relatórios HTML (`.html`) através do `gerador_html.py`.
-    d. **Coleta de Metadados:** `get_date_range.py` é executado para ambos os arquivos (`atual` e `anterior`) para obter os períodos de análise.
-    e. **Análise de Tendência:** `analise_tendencia.py` é executado, consumindo os dois arquivos `.json`, os nomes dos arquivos originais e os intervalos de datas para gerar o `resumo_tendencia.html`.
-4.  **Condição: Análise Simples (1 arquivo CSV):**
-    a. **Análise Completa:** `analisar_alertas.py` é executado para o único arquivo, gerando todo o ecossistema de dashboards e arquivos de dados.
-5.  **Finalização (Ambos os modos):**
-    a. O **Orquestrador** consolida os artefatos no diretório de resultados final.
-    b. O `atuar.csv` gerado é usado para popular o `editor_template.html` e criar o `editor_atuacao.html`.
-    c. Se o arquivo `invalid_self_healing_status.csv` foi criado, ele é movido para o diretório de resultados.
+1. **Usuário:** Acessa a rota `/` e vê a página de upload.
+2. **Upload:** O usuário seleciona um arquivo `.csv` (`file_atual`) e o envia através do formulário (`POST /upload`).
+3. **Orquestração (`app.py`):
+    a. **Salvar e Extrair Datas:** O arquivo `.csv` enviado é salvo em `data/uploads/`. O novo módulo `get_date_range.py` é usado para extrair o intervalo de datas do arquivo. Um diretório de saída (`run_<timestamp>`) é criado em `data/reports/`.
+    b. **Buscar Histórico:** O `app.py` consulta o banco de dados para encontrar o relatório mais recente (`Report.query.order_by(Report.timestamp.desc()).first()`).
+    c. **Condição: Análise de Tendência (se um relatório anterior existe):**
+        i. **Análise Leve:** A função `analisar_arquivo_csv` é chamada com `light_analysis=True` para o arquivo **atual**, gerando rapidamente o `resumo_problemas.json`.
+        ii. **Geração da Tendência:** A função `gerar_relatorio_tendencia` é chamada, recebendo os JSONs (anterior e atual), os nomes dos arquivos CSV originais para rotular os períodos, e os intervalos de datas para enriquecer o relatório.
+    d. **Análise Principal (Completa):**
+        i. A função `analisar_arquivo_csv` é chamada novamente para o arquivo **atual**, com `light_analysis=False`.
+        ii. O caminho para o `resumo_tendencia.html` (se gerado) é passado para esta função, para que o link de navegação seja injetado no relatório principal.
+        iii. Esta execução gera o ecossistema completo de dashboards.
+    e. **Persistência e Redirecionamento:**
+        i. Um novo registro `Report` é criado no banco de dados, agora incluindo o `date_range` extraído.
+        ii. O `app.py` redireciona o navegador do usuário para exibir o `resumo_geral.html` recém-criado.
 
 ---
 
-# 📦 ARTEFATOS GERADOS (OUTPUTS)
+## 📦 ARTEFATOS GERADOS (OUTPUTS)
 
-## Dashboards HTML Interativos
-- **`resumo_geral.html`**: Visão geral gerencial do período atual. Ponto central de navegação. **Contém uma seção "Conceitos" que explica a metodologia da análise.**
-- **`resumo_tendencia.html`**: (Modo comparativo) Relatório de evolução entre o período atual e o anterior.
-- **`editor_atuacao.html`**: Editor interativo para o time atuar sobre os problemas listados em `atuar.csv`.
-- **`sucesso_automacao.html`**: Visualizador de casos resolvidos por automação.
-- **`instabilidade_cronica.html`**: Visualizador de casos que são remediados, mas ocorrem com alta frequência.
-- **`visualizador_json.html`**: Ferramenta de depuração para visualizar o `resumo_problemas.json`.
-- **`qualidade_dados_remediacao.html`**: (Condicional) Visualizador para os alertas que possuem um `self_healing_status` inválido, facilitando a depuração da qualidade dos dados.
-- **`plano-de-acao-[TIME].html`**: Relatórios detalhados por time/squad.
-- **`todas_as_squads.html`**: Página de drill-down com a lista completa de squads com ações pendentes.
-- **`detalhes_problemas/`**: Diretório com páginas de detalhes para cada problema específico.
+Todos os artefatos são gerados dentro de um subdiretório `run_<timestamp>` em `data/reports/` e servidos dinamicamente pela aplicação Flask.
 
-## Arquivos de Dados
-- **`resumo_problemas.json`**: A base de dados principal, com a análise completa do período.
-- **`atuar.csv`**: Lista de problemas que exigem ação manual (automação falhou ou inexistente).
-- **`remediados.csv`**: Lista de problemas resolvidos por automação.
-- **`remediados_frequentes.csv`**: Lista de problemas que, apesar de remediados, ocorrem com alta frequência (instabilidade crônica).
-- **`invalid_self_healing_status.csv`**: (Condicional) Log com os alertas que possuem um valor inesperado na coluna `self_healing_status`.
-- **`dados_comparacao/resumo_problemas_anterior.json`**: (Modo comparativo) Snapshot dos problemas do período anterior.
+### Dashboards HTML Interativos
+
+- **`resumo_geral.html`**: Visão geral gerencial do período atual. Ponto central de navegação.
+- **`resumo_tendencia.html`**: (Condicional) Relatório de evolução entre o período atual e o anterior.
+- **`editor_atuacao.html`**: Editor interativo para o time atuar sobre os problemas.
+- ... (e todos os outros relatórios)
+
+### Arquivos de Dados
+
+- **`resumo_problemas.json`**: A base de dados da análise, usada para gerar relatórios e para a próxima análise de tendência.
+- **`atuar.csv`**: Lista de problemas que exigem ação manual.
+- ... (e todos os outros arquivos de dados)

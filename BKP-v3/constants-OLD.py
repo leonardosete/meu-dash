@@ -1,5 +1,3 @@
-from typing import List
-
 # Ações Sugeridas
 ACAO_ESTABILIZADA = "Remediação estabilizada (houve falha)"
 ACAO_INTERMITENTE = "Analisar intermitência na remediação"
@@ -33,37 +31,3 @@ ACAO_WEIGHTS = {
     ACAO_STATUS_AUSENTE: 1.1, ACAO_INCONSISTENTE: 1.1,
     ACAO_ESTABILIZADA: 1.0, ACAO_SEMPRE_OK: 1.0
 }
-
-# Nomes de colunas do DataFrame
-COL_CREATED_ON = "sys_created_on"
-COL_NODE = "node"
-COL_CMDB_CI = "cmdb_ci"
-COL_SELF_HEALING_STATUS = "self_healing_status"
-COL_ASSIGNMENT_GROUP = "assignment_group"
-COL_SHORT_DESCRIPTION = "short_description"
-COL_NUMBER = "number"
-COL_SOURCE = "source"
-COL_METRIC_NAME = "metric_name"
-COL_CMDB_CI_SYS_CLASS_NAME = "cmdb_ci.sys_class_name"
-COL_SEVERITY = "severity"
-COL_PRIORITY_GROUP = "sn_priority_group"
-
-# Colunas que definem um grupo único de alertas
-GROUP_COLS: List[str] = [
-    COL_ASSIGNMENT_GROUP, COL_SHORT_DESCRIPTION, COL_NODE, COL_CMDB_CI,
-    COL_SOURCE, COL_METRIC_NAME, COL_CMDB_CI_SYS_CLASS_NAME,
-]
-
-# Colunas essenciais para o funcionamento do script
-ESSENTIAL_COLS: List[str] = GROUP_COLS + [
-    COL_CREATED_ON, COL_SELF_HEALING_STATUS, COL_NUMBER, COL_SEVERITY, COL_PRIORITY_GROUP
-]
-
-# Valores de Status de Remediação
-STATUS_OK = "REM_OK"
-STATUS_NOT_OK = "REM_NOT_OK"
-UNKNOWN = "DESCONHECIDO"
-NO_STATUS = "NO_STATUS"
-LOG_INVALIDOS_FILENAME = "invalid_self_healing_status.csv"
-
-LIMIAR_ALERTAS_RECORRENTES = 5
