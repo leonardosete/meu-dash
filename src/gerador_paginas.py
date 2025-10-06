@@ -201,12 +201,12 @@ def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_
                             formatted_chronology.append(f"{status_emoji_map.get(status, '⚪')} {escape(status)}")
                         else:
                             link_html = (
-                                f'<a href="../qualidade_dados_remediacao.html" class="tooltip-container invalid-status-link">
-                                  ⚪ {escape(status)}
-                                  <div class="tooltip-content" style="width: 280px; left: 50%; margin-left: -140px;">
-                                    Status inválido. Clique para ver o log de erros.
-                                  </div>
-                                </a>'
+                                f'<a href="../qualidade_dados_remediacao.html" class="tooltip-container invalid-status-link">'
+                                f'  ⚪ {escape(status)}'
+                                f'  <div class="tooltip-content" style="width: 280px; left: 50%; margin-left: -140px;">'
+                                f'    Status inválido. Clique para ver o log de erros.'
+                                f'  </div>'
+                                f'</a>'
                             )
                             formatted_chronology.append(link_html)
                     
@@ -333,7 +333,7 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
         csv_payload = csv_content.replace('\\', r'\\\\').replace('`', r'`')
-        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___")
+        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___"
         template_com_placeholder = template_content.replace('const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`', f'const csvDataPayload = `{placeholder}`')
         final_html = template_com_placeholder.replace(placeholder, csv_payload)
         with open(output_path, 'w', encoding='utf-8') as f_out:
