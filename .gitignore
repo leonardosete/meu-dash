@@ -222,6 +222,7 @@ meu-dash.code-workspace
 
 # Ignore all csv files
 *.csv
+!tests/fixtures/*.csv
 
 # TO DO 
 fazer.md

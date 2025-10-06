@@ -4,3 +4,5 @@ numpy
 Flask-SQLAlchemy
 Flask-Migrate
 gunicorn
+pytest
+pytest-flask
