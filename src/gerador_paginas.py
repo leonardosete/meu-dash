@@ -275,8 +275,8 @@ def gerar_paginas_detalhe(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, de
 
         output_path = os.path.join(details_dir, filename)
         body_content = f'<p><a href="../resumo_geral.html">&larr; Voltar para o Dashboard</a></p>'
-        body_content += f'<h2>{escape(title)}</h2>'
         body_content += '<div class="card">'
+        body_content += f'<h2>{escape(title)}</h2>'
         body_content += '<table><thead><tr><th>Recurso (CI)</th><th>Nó</th><th>Squad</th><th>Primeiro Evento</th><th>Último Evento</th><th>Contagem de Alertas</th><th>Ação Sugerida</th></tr></thead><tbody>'
 
         for _, row in df_group.iterrows():
