@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhe do Problema: Long garbage-collection time</title>
+    <style>
+        :root {
+            --bg-color: #1a1c2f;
+            --card-color: #2c2f48;
+            --text-color: #f0f0f0;
+            --text-color-dark: #3a3b45;
+            --text-secondary-color: #a0a0b0;
+            --border-color: #404466;
+            --accent-color: #4e73df;
+            --success-color: #1cc88a;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: auto;
+            padding-left: 20px;
+            padding-right: 20px;
+            box-sizing: border-box;
+        }
+        h1, h2, h3 {
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            font-weight: 500;
+        }
+        h1 { font-size: 2em; margin-bottom: 20px; }
+        h2 { font-size: 1.5em; margin-top: 40px; }
+        h3 {
+            font-size: 1.1em;
+            margin-top: 25px;
+            border-bottom: none;
+            letter-spacing: 0.5px;
+        }
+        .card-title {
+            text-transform: uppercase;
+        }
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        td a {
+            font-weight: normal;
+        }
+        td a:hover {
+            text-decoration: underline;
+        }
+        .bar-label a {
+            color: var(--text-secondary-color);
+        }
+        .bar-label a:hover {
+            text-decoration: underline;
+            color: var(--accent-color);
+        }
+        a.kpi-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        a.kpi-link:hover {
+            transform: translateY(-4px);
+        }
+        a.kpi-link:hover .card {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+            box-sizing: border-box;
+            transition: box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+        .kpi-card { 
+            text-align: center; 
+            justify-content: center;
+        }
+        .kpi-value { font-size: 5em; font-weight: bold; color: var(--accent-color); margin: 0; }
+        .kpi-label {
+            font-size: 1em;
+            color: var(--text-secondary-color);
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background-color: #33365a;
+            font-weight: bold;
+        }
+        th.priority-col {
+            width: 100px;
+            text-align: center;
+        }
+        td.priority-col {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        code {
+            background-color: var(--bg-color);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            border: 1px solid var(--border-color);
+        }
+        .collapsible {
+            background-color: #33365a;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 1.1em;
+            font-weight: 500;
+            margin-top: 20px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+            box-sizing: border-box;
+        }
+        .collapsible:hover, .collapsible.active { background-color: #3c4062; }
+        .collapsible .instance-count { background-color: var(--accent-color); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85em; margin-left: 12px; }
+        
+        .collapsible-main-header {
+            display: flex;
+            align-items: center;
+        }
+        
+        .collapsible-metric {
+            background-color: #2c2f48;
+            border: 1px solid var(--border-color);
+            margin-top: 25px;
+        }
+        .collapsible-metric:hover, .collapsible-metric.active {
+            background-color: #33365a;
+        }
+        .collapsible-problem {
+            background-color: #33365a;
+            margin-top: 0;
+            border-radius: 0;
+            border-top: 1px solid var(--border-color);
+        }
+        .metric-content {
+            padding: 0;
+            display: none;
+            background-color: var(--card-color);
+            border-radius: 0 0 5px 5px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+        }
+        .metric-content .collapsible-problem:first-child {
+             border-top: none;
+        }
+
+        .content {
+            padding: 0;
+            display: none;
+            background-color: transparent;
+        }
+        .expandable-row { cursor: pointer; transition: background-color 0.2s; }
+        .expandable-row:hover, .expandable-row.active { background-color: #3c4062; }
+        .details-row { display: none; }
+        .details-row-content { background-color: rgba(0,0,0,0.15); padding: 20px; }
+        .download-icon { width: 22px; height: 22px; color: var(--text-secondary-color); opacity: 0.6; transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; }
+        a.download-link:hover .download-icon, span.download-link:hover .download-icon { opacity: 1; transform: translateY(-2px); cursor: pointer; }
+        .download-link, span.download-link { 
+            position: absolute; 
+            right: 25px; 
+            top: 25px; 
+            line-height: 0; 
+        }
+        .gauge { width: 100%; max-width: 250px; margin: 0 auto; }
+        .gauge__body { width: 100%; height: 0; padding-bottom: 50%; background: #404466; position: relative; border-top-left-radius: 100% 200%; border-top-right-radius: 100% 200%; overflow: hidden; }
+        .gauge__fill { position: absolute; top: 100%; left: 0; width: inherit; height: 100%; background: var(--accent-color); transform-origin: center top; transform: rotate(var(--gauge-fill)); transition: transform 0.5s ease-out; }
+        .gauge__cover { width: 75%; height: 150%; background: var(--card-color); border-radius: 50%; position: absolute; top: 25%; left: 50%; transform: translateX(-50%); }
+        .gauge__text-overlay { position: absolute; top: 64%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; }
+        .gauge__value { font-size: 2.2em; font-weight: bold; }
+        .gauge__label { font-size: 0.9em; color: var(--text-secondary-color); line-height: 1.2; margin-top: 0; }
+        .card-gauge { display: flex; align-items: center; justify-content: center; }
+        
+        .bar-chart-container {
+            padding: 10px;
+            flex-grow: 1;
+        }
+        .bar-item { margin-bottom: 16px; }
+        .bar-label { color: var(--text-secondary-color); margin-bottom: 6px; white-space: normal; word-break: break-word; }
+        .bar-wrapper { background-color: var(--border-color); border-radius: 4px; height: 25px; }
+        .bar { height: 100%; border-radius: 4px; text-align: right; padding-right: 8px; font-weight: bold; box-sizing: border-box; min-width: 35px; transition: width 0.5s ease-out, background-color 0.5s ease-out; color: white; line-height: 25px; }
+        
+        .footer-link {
+            text-align: right;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        .footer-link a {
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .footer-link a:hover { text-decoration: underline; }
+
+        .collapsible-row {
+            background: transparent;
+            width: 100%;
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+            padding: 12px 8px;
+            cursor: pointer;
+            text-align: left;
+            color: var(--text-color);
+            font-size: 1.4em;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .collapsible .chevron, .collapsible-row .chevron {
+            transition: transform 0.2s ease-in-out;
+            margin-right: 12px;
+            color: var(--text-secondary-color);
+        }
+        .collapsible.active .chevron, .collapsible-row.active .chevron {
+            transform: rotate(90deg);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85em;
+            color: var(--text-secondary-color);
+        }
+
+        @keyframes neon-blue-effect {
+            0%, 100% { box-shadow: 0 0 8px 3px rgba(78, 115, 223, 0.6), 0 0 12px 6px rgba(78, 115, 223, 0.5), 0 0 20px 12px rgba(78, 115, 223, 0.4); }
+            50% { box-shadow: 0 0 10px 4px rgba(78, 115, 223, 0.7), 0 0 16px 8px rgba(78, 115, 223, 0.6), 0 0 25px 15px rgba(78, 115, 223, 0.5); }
+        }
+        @keyframes neon-green-effect {
+            0%, 100% { box-shadow: 0 0 8px 3px rgba(28, 200, 138, 0.6), 0 0 12px 6px rgba(28, 200, 138, 0.5), 0 0 20px 12px rgba(28, 200, 138, 0.4); }
+            50% { box-shadow: 0 0 10px 4px rgba(28, 200, 138, 0.7), 0 0 16px 8px rgba(28, 200, 138, 0.6), 0 0 25px 15px rgba(28, 200, 138, 0.5); }
+        }
+        @keyframes neon-warning-effect {
+            0%, 100% { box-shadow: 0 0 8px 3px rgba(246, 194, 62, 0.6), 0 0 12px 6px rgba(246, 194, 62, 0.5), 0 0 20px 12px rgba(246, 194, 62, 0.4); }
+            50% { box-shadow: 0 0 10px 4px rgba(246, 194, 62, 0.7), 0 0 16px 8px rgba(246, 194, 62, 0.6), 0 0 25px 15px rgba(246, 194, 62, 0.5); }
+        }
+        @keyframes neon-red-effect {
+            0%, 100% { box-shadow: 0 0 8px 3px rgba(231, 74, 59, 0.6), 0 0 12px 6px rgba(231, 74, 59, 0.5), 0 0 20px 12px rgba(231, 74, 59, 0.4); }
+            50% { box-shadow: 0 0 10px 4px rgba(231, 74, 59, 0.7), 0 0 16px 8px rgba(231, 74, 59, 0.6), 0 0 25px 15px rgba(231, 74, 59, 0.5); }
+        }
+        .card-neon {
+            transition: transform 0.2s ease-in-out;
+        }
+        .card-neon-blue {
+            border: 1px solid var(--accent-color);
+            animation: neon-blue-effect 1.5s infinite alternate;
+        }
+        .card-neon-green {
+            border: 1px solid var(--success-color);
+            animation: neon-green-effect 1.5s infinite alternate;
+        }
+        .card-neon-warning {
+            border: 1px solid var(--warning-color);
+            animation: neon-warning-effect 1.5s infinite alternate;
+        }
+        .card-neon-red {
+            border: 1px solid var(--danger-color);
+            animation: neon-red-effect 1.5s infinite alternate;
+        }
+        a.kpi-link:hover .card-neon, .card.card-neon:hover {
+            animation-play-state: paused;
+            transform: scale(1.03);
+            cursor: pointer;
+        }
+        a.kpi-link .card-neon .download-link, a.kpi-link .card-neon span.download-link { pointer-events: none; }
+
+        @keyframes flash-warning-red {
+            0%, 100% { color: var(--warning-color); text-shadow: 0 0 5px var(--warning-color); }
+            50% { color: var(--danger-color); text-shadow: 0 0 5px var(--danger-color); }
+        }
+        .flashing-icon {
+            animation: flash-warning-red 1.2s infinite;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-left: 8px;
+            display: inline-block;
+        }
+        .info-icon {
+            cursor: pointer;
+            font-size: 0.9em;
+            color: var(--text-secondary-color);
+            margin-left: 8px;
+            display: inline-block;
+            border: 1px solid var(--text-secondary-color);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+        }
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+        .invalid-status-link {
+            text-decoration: underline dotted var(--warning-color);
+            color: var(--text-color);
+            font-weight: normal;
+        }
+        .invalid-status-link:hover {
+            color: var(--warning-color);
+            cursor: pointer;
+        }
+        .tooltip-content {
+            visibility: hidden;
+            width: 320px;
+            background-color: #3a3b45;
+            color: var(--text-secondary-color);
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 10;
+            top: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-left: 0;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+            font-size: 1em; 
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        .tooltip-content::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent #3a3b45 transparent;
+        }
+        .tooltip-container:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        @keyframes fire-effect {
+            0%, 100% {
+                box-shadow: 0 0 10px 3px rgba(246, 194, 62, 0.7), 0 0 20px 8px rgba(231, 74, 59, 0.5), inset 0 0 5px rgba(255, 100, 0, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 14px 5px rgba(246, 194, 62, 0.8), 0 0 28px 12px rgba(231, 74, 59, 0.6), inset 0 0 8px rgba(255, 100, 0, 0.5);
+            }
+            100% {
+                box-shadow: 0 0 10px 3px rgba(246, 194, 62, 0.7), 0 0 20px 8px rgba(231, 74, 59, 0.5), inset 0 0 5px rgba(255, 100, 0, 0.4);
+            }
+        }
+        @keyframes shake-effect {
+            0%, 90% { transform: translate(0, 0); }
+            92% { transform: translate(-5px, 3px); }
+            94% { transform: translate(5px, -3px); }
+            96% { transform: translate(-1px, 2px); }
+            98% { transform: translate(1px, -2px); }
+            100% { transform: translate(0, 0); }
+        }
+        .card-fire-shake {
+            border: 1px solid var(--warning-color);
+            animation: 
+                fire-effect 2s infinite linear,
+                shake-effect 3s infinite linear;
+        }
+        
+        .trend-link-card {
+            background-color: rgba(78, 115, 223, 0.1);
+            border: 1px solid var(--accent-color);
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            margin-bottom: 20px;
+        }
+        .trend-link-card h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: var(--text-color);
+            border: none;
+        }
+        .trend-link-description {
+            margin: 0;
+            color: var(--text-secondary-color);
+            max-width: 600px;
+        }
+        .trend-link-button {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s, transform 0.2s;
+            white-space: nowrap;
+        }
+        .trend-link-button:hover {
+            background-color: #6a8eff;
+            transform: translateY(-2px);
+        }
+        .trend-link-button svg {
+            width: 18px;
+            height: 18px;
+        }
+</style>
+</head>
+<body>
+    <div class="container"><p><a href="https://meu-dash-web-teste.devops-master.shop/reports/run_20251006_081642/resumo_geral.html">← Voltar para o Dashboard</a></p><h2>Detalhe do Problema: Long garbage-collection time</h2><div class="card"><div class="card-content"><table><thead><tr><th>Recurso (CI)</th><th>Nó</th><th>Squad</th><th>Primeiro Evento</th><th>Último Evento</th><th>Contagem de Alertas</th><th>Ação Sugerida</th></tr></thead><tbody><tr><td>PRD_oneagentloganalytics corporate-coe-position-evp-* - PROCESS_GROUP-AA8E1E557392B050</td><td>PRD_Corporate.COE.Position.EVP.API.dll prd (corporate-coe-position-evp-7464f9db6-9zgsr)</td><td>Consolidation</td><td>14/07/2025 11:06</td><td>14/07/2025 11:06</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>Corporate.GlobalPortfolio.RF.Etl.WebApi.exe@teste3sfb01yd201</td><td>PRD_Corporate.GlobalPortfolio.RF.Etl.WebApi.exe</td><td>Consolidation</td><td>15/07/2025 21:03</td><td>15/07/2025 21:03</td><td>1</td><td>Desenvolver remediação (nenhum sucesso registrado)</td></tr><tr><td>PRD_TESTEnc.OpenInvestments.Customer.dll prd - PROCESS_GROUP-901633B6D7E8B9AF</td><td>PRD_TESTEnc.OpenInvestments.Customer.dll prd (TESTEnc-openinvestments-customer-7574dd5bdf-2nrrc)</td><td>Consolidation</td><td>15/07/2025 01:32</td><td>15/07/2025 01:32</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_TESTEnc.OpenInvestments.Customer.dll prd - PROCESS_GROUP-901633B6D7E8B9AF</td><td>PRD_TESTEnc.OpenInvestments.Customer.dll prd (TESTEnc-openinvestments-customer-7574dd5bdf-n4rlx)</td><td>Consolidation</td><td>16/07/2025 02:36</td><td>16/07/2025 02:36</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-DE851FE3961E568C</td><td>PRD_Corp.Risk.MarketDataSystem.WebApi.dll prd (corp-risk-marketdatasystem-6749d7c8df-n45pn)</td><td>DESCONHECIDO</td><td>16/07/2025 12:40</td><td>16/07/2025 12:40</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-046E722D2369C563</td><td>PRD_Corporate.IFA.Customer.Api.dll prd (corporate-ifa-customer-primary-dbc4c45b8-jvccg)</td><td>DESCONHECIDO</td><td>16/07/2025 09:23</td><td>16/07/2025 09:23</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-046E722D2369C563</td><td>PRD_Corporate.IFA.Customer.Api.dll prd (corporate-ifa-customer-primary-dbc4c45b8-vjdk6)</td><td>DESCONHECIDO</td><td>16/07/2025 09:24</td><td>16/07/2025 09:24</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-CBAF5548A1A56986</td><td>PRD_TESTE.CRM.Salesforce.Integration.WebApi.dll prd (TESTE-crm-salesforce-integration-6cb6777fd-bgf7z)</td><td>DESCONHECIDO</td><td>16/07/2025 15:13</td><td>16/07/2025 15:13</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-CBAF5548A1A56986</td><td>PRD_TESTE.CRM.Salesforce.Integration.WebApi.dll prd (TESTE-crm-salesforce-integration-6cb6777fd-djsh2)</td><td>DESCONHECIDO</td><td>16/07/2025 13:24</td><td>16/07/2025 15:13</td><td>2</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-CBAF5548A1A56986</td><td>PRD_TESTE.CRM.Salesforce.Integration.WebApi.dll prd (TESTE-crm-salesforce-integration-6cb6777fd-sxqc2)</td><td>DESCONHECIDO</td><td>16/07/2025 15:14</td><td>16/07/2025 15:14</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-CBAF5548A1A56986</td><td>PRD_TESTE.CRM.Salesforce.Integration.WebApi.dll prd (TESTE-crm-salesforce-integration-b5fb956bd-6rcjl)</td><td>DESCONHECIDO</td><td>16/07/2025 15:13</td><td>16/07/2025 15:13</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-CBAF5548A1A56986</td><td>PRD_TESTE.CRM.Salesforce.Integration.WebApi.dll prd (TESTE-crm-salesforce-integration-b5fb956bd-zv248)</td><td>DESCONHECIDO</td><td>16/07/2025 15:13</td><td>16/07/2025 15:13</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-CBAF5548A1A56986</td><td>PRD_TESTE.CRM.Salesforce.Integration.WebApi.dll prd (TESTE-crm-salesforce-integration-797778b9b8-4v6r5)</td><td>Enabling e Audiências</td><td>14/07/2025 06:38</td><td>14/07/2025 06:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-CBAF5548A1A56986</td><td>PRD_TESTE.CRM.Salesforce.Integration.WebApi.dll prd (TESTE-crm-salesforce-integration-797778b9b8-bvbsl)</td><td>Enabling e Audiências</td><td>14/07/2025 06:38</td><td>14/07/2025 06:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-CBAF5548A1A56986</td><td>PRD_TESTE.CRM.Salesforce.Integration.WebApi.dll prd (TESTE-crm-salesforce-integration-7d9677f8d-hf79j)</td><td>Enabling e Audiências</td><td>14/07/2025 06:38</td><td>14/07/2025 06:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-CBAF5548A1A56986</td><td>PRD_TESTE.CRM.Salesforce.Integration.WebApi.dll prd (TESTE-crm-salesforce-integration-7d9677f8d-hjl9d)</td><td>Enabling e Audiências</td><td>14/07/2025 06:38</td><td>14/07/2025 06:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-67986bcgkmp6)</td><td>Growth</td><td>16/07/2025 09:26</td><td>16/07/2025 09:26</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-67986bcm2cnt)</td><td>Growth</td><td>16/07/2025 11:54</td><td>16/07/2025 11:54</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-67986bcvwj2n)</td><td>Growth</td><td>16/07/2025 11:53</td><td>16/07/2025 11:53</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-67986bczf54f)</td><td>Growth</td><td>16/07/2025 11:53</td><td>16/07/2025 11:53</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-6c57f979x4ns)</td><td>Growth</td><td>16/07/2025 11:53</td><td>16/07/2025 11:53</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-6c57f97h5zxd)</td><td>Growth</td><td>16/07/2025 11:53</td><td>16/07/2025 11:53</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-6c57f97t62lm)</td><td>Growth</td><td>16/07/2025 10:08</td><td>16/07/2025 10:08</td><td>1</td><td>Desenvolver remediação (nenhum sucesso registrado)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-6c57f97vln87)</td><td>Growth</td><td>16/07/2025 14:26</td><td>16/07/2025 14:26</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-6c57f97wczsj)</td><td>Growth</td><td>16/07/2025 10:08</td><td>16/07/2025 11:53</td><td>2</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd782ffxt)</td><td>Growth</td><td>11/07/2025 11:15</td><td>11/07/2025 11:15</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd782tv7b)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd7848txk)</td><td>Growth</td><td>11/07/2025 10:15</td><td>11/07/2025 10:15</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd784fmz2)</td><td>Growth</td><td>15/07/2025 09:39</td><td>15/07/2025 09:39</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd787z7nd)</td><td>Growth</td><td>14/07/2025 12:17</td><td>14/07/2025 12:17</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd7887c97)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd788km94)</td><td>Growth</td><td>14/07/2025 10:14</td><td>14/07/2025 10:14</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd789dsg5)</td><td>Growth</td><td>14/07/2025 09:41</td><td>14/07/2025 12:16</td><td>3</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78bc6hg)</td><td>Growth</td><td>11/07/2025 11:20</td><td>11/07/2025 11:20</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78gwlTESTE)</td><td>Growth</td><td>14/07/2025 09:43</td><td>14/07/2025 10:08</td><td>3</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78jfhlp)</td><td>Growth</td><td>14/07/2025 09:43</td><td>14/07/2025 10:00</td><td>2</td><td>Analisar intermitência na remediação</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78jnqkr)</td><td>Growth</td><td>14/07/2025 10:00</td><td>14/07/2025 12:04</td><td>3</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78jtrdr)</td><td>Growth</td><td>14/07/2025 09:44</td><td>14/07/2025 09:44</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78lnxcn)</td><td>Growth</td><td>14/07/2025 09:43</td><td>14/07/2025 11:59</td><td>3</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78nlvkv)</td><td>Growth</td><td>11/07/2025 09:43</td><td>11/07/2025 09:43</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78nz2xh)</td><td>Growth</td><td>14/07/2025 12:20</td><td>14/07/2025 12:20</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78p9qgr)</td><td>Growth</td><td>14/07/2025 10:08</td><td>15/07/2025 09:42</td><td>3</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78qp5d9)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78rfxh5)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78tqtnp)</td><td>Growth</td><td>11/07/2025 11:11</td><td>11/07/2025 11:11</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-74bbd78z6xs5)</td><td>Growth</td><td>11/07/2025 09:41</td><td>11/07/2025 10:12</td><td>2</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd924bzc)</td><td>Growth</td><td>14/07/2025 09:43</td><td>14/07/2025 09:43</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9489hp)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd955klj)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd95rswr)</td><td>Growth</td><td>14/07/2025 10:12</td><td>14/07/2025 10:12</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd98xk4m)</td><td>Growth</td><td>14/07/2025 10:00</td><td>15/07/2025 09:38</td><td>2</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd99fznp)</td><td>Growth</td><td>14/07/2025 09:43</td><td>14/07/2025 10:12</td><td>2</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd99wgvg)</td><td>Growth</td><td>14/07/2025 11:59</td><td>14/07/2025 11:59</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9b25jx)</td><td>Growth</td><td>11/07/2025 10:12</td><td>11/07/2025 11:18</td><td>2</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9bfbzd)</td><td>Growth</td><td>11/07/2025 09:41</td><td>11/07/2025 09:41</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9c7mlb)</td><td>Growth</td><td>14/07/2025 09:43</td><td>14/07/2025 10:14</td><td>3</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9ckmfq)</td><td>Growth</td><td>14/07/2025 12:20</td><td>14/07/2025 12:20</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9czsh4)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9f2rg2)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9jqdtx)</td><td>Growth</td><td>14/07/2025 12:13</td><td>14/07/2025 12:13</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9jxb95)</td><td>Growth</td><td>14/07/2025 09:43</td><td>14/07/2025 10:00</td><td>2</td><td>Analisar intermitência na remediação</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9ljgvs)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9mfbz9)</td><td>Growth</td><td>15/07/2025 09:38</td><td>15/07/2025 09:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9tfgnl)</td><td>Growth</td><td>11/07/2025 09:42</td><td>11/07/2025 09:42</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9w9zzh)</td><td>Growth</td><td>14/07/2025 12:24</td><td>14/07/2025 12:24</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9xtb5b)</td><td>Growth</td><td>14/07/2025 10:00</td><td>14/07/2025 10:08</td><td>2</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>PRD_dotnet prd - PROCESS_GROUP-285CF97D295AD420</td><td>PRD_WebApi.dll prd (corporate-securitiesservices-redeemnoquota-primary-7859bd9xww7l)</td><td>Growth</td><td>14/07/2025 09:26</td><td>14/07/2025 10:00</td><td>3</td><td>Analisar intermitência na remediação</td></tr><tr><td>IIS app pool Pub@teste2svrtec06</td><td>PRD_IIS app pool Pub</td><td>Métricas de Portfólio RV</td><td>11/07/2025 07:17</td><td>11/07/2025 07:17</td><td>1</td><td>Desenvolver remediação (nenhum sucesso registrado)</td></tr><tr><td>corporate-ifa-customer-primary</td><td>PRD_Corporate.IFA.Customer.Api.dll prd (corporate-ifa-customer-primary-dbc4c45b8-7wd9f)</td><td>Produtividade e Gestão</td><td>15/07/2025 09:00</td><td>15/07/2025 10:40</td><td>5</td><td>Revisar causa raiz (remediação recorrente)</td></tr><tr><td>corporate-ifa-customer-primary</td><td>PRD_Corporate.IFA.Customer.Api.dll prd (corporate-ifa-customer-primary-dbc4c45b8-dj5pl)</td><td>Produtividade e Gestão</td><td>15/07/2025 06:22</td><td>15/07/2025 10:13</td><td>5</td><td>Revisar causa raiz (remediação recorrente)</td></tr><tr><td>corporate-ifa-customer-primary</td><td>PRD_Corporate.IFA.Customer.Api.dll prd (corporate-ifa-customer-primary-dbc4c45b8-qnt2v)</td><td>Produtividade e Gestão</td><td>15/07/2025 09:00</td><td>15/07/2025 10:13</td><td>4</td><td>Remediação automática funcional</td></tr><tr><td>corporate-ifa-customer-primary</td><td>PRD_Corporate.IFA.Customer.Api.dll prd (corporate-ifa-customer-primary-dbc4c45b8-qttmp)</td><td>Produtividade e Gestão</td><td>15/07/2025 04:55</td><td>15/07/2025 05:49</td><td>3</td><td>Remediação automática funcional</td></tr><tr><td>corporate-ifa-customer-primary</td><td>PRD_Corporate.IFA.Customer.Api.dll prd (corporate-ifa-customer-primary-dbc4c45b8-vmlvc)</td><td>Produtividade e Gestão</td><td>15/07/2025 05:40</td><td>15/07/2025 09:35</td><td>4</td><td>Remediação estabilizada (houve falha)</td></tr><tr><td>ND.Services.CargasCustodia.exe@pcargas02</td><td>PRD_ND.Services.CargasCustodia.exe</td><td>REX Core</td><td>11/07/2025 08:43</td><td>11/07/2025 08:43</td><td>1</td><td>Desenvolver remediação (nenhum sucesso registrado)</td></tr><tr><td>ND.Services.CargasCustodia.exe@pcargas05</td><td>PRD_ND.Services.CargasCustodia.exe</td><td>REX Core</td><td>15/07/2025 04:41</td><td>15/07/2025 04:41</td><td>1</td><td>Desenvolver remediação (nenhum sucesso registrado)</td></tr><tr><td>PRD_TESTE.Rex.CustodyIntegration.Service.Consumer.dll prd - PROCESS_GROUP-4D568F399464D1FB</td><td>PRD_TESTE.Rex.CustodyIntegration.Service.Consumer.dll prd (TESTE-rex-custodyintegration-service-dcbff9f9c-</td><td>REX Core</td><td>11/07/2025 07:56</td><td>11/07/2025 07:56</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd - PROCESS_GROUP-D50842F04825D694</td><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd (TESTEs-pensionfunds-paymentgateway-7d4c774ccb-m8mgh</td><td>Seguradora Previdência</td><td>14/07/2025 14:15</td><td>14/07/2025 14:15</td><td>1</td><td>Desenvolver remediação (nenhum sucesso registrado)</td></tr><tr><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd - PROCESS_GROUP-D50842F04825D694</td><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd (TESTEs-pensionfunds-paymentgateway-dcf56bc64-64zpc)</td><td>Seguradora Previdência</td><td>15/07/2025 11:58</td><td>15/07/2025 11:58</td><td>1</td><td>Desenvolver remediação (nenhum sucesso registrado)</td></tr><tr><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd - PROCESS_GROUP-D50842F04825D694</td><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd (TESTEs-pensionfunds-paymentgateway-dcf56bc64-mwvlv)</td><td>Seguradora Previdência</td><td>15/07/2025 12:23</td><td>15/07/2025 12:23</td><td>1</td><td>Desenvolver remediação (nenhum sucesso registrado)</td></tr><tr><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd - PROCESS_GROUP-D50842F04825D694</td><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd (TESTEs-pensionfunds-paymentgateway-dcf56bc64-ntpss)</td><td>Seguradora Previdência</td><td>16/07/2025 06:38</td><td>16/07/2025 06:38</td><td>1</td><td>Remediação automática funcional</td></tr><tr><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd - PROCESS_GROUP-D50842F04825D694</td><td>PRD_TESTES.PensionFunds.PaymentGateway.WebApi.dll prd (TESTEs-pensionfunds-paymentgateway-dcf56bc64-v6cm4)</td><td>Seguradora Previdência</td><td>16/07/2025 13:30</td><td>16/07/2025 13:30</td><td>1</td><td>Remediação automática funcional</td></tr></tbody></table></div></div></div>
+    <footer class="footer">
+        <p>Relatório gerado em 06/10/2025 às 08:16:42</p>
+    </footer>
+    <script>
+        var collapsibles = document.querySelectorAll(".collapsible, .collapsible-row");
+        collapsibles.forEach(function(item) {
+            item.addEventListener("click", function() {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        });
+
+        var expandableRows = document.querySelectorAll(".expandable-row");
+        expandableRows.forEach(function(row) {
+            row.addEventListener("click", function() {
+                this.classList.toggle("active");
+                var targetId = this.dataset.target;
+                var detailRow = document.querySelector(targetId);
+                if (detailRow) {
+                    if (detailRow.style.display === "table-row") {
+                        detailRow.style.display = "none";
+                    } else {
+                        detailRow.style.display = "table-row";
+                    }
+                }
+            });
+        });
+    </script>
+
+</body></html>
