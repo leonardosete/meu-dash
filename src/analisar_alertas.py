@@ -5,7 +5,7 @@ import numpy as np
 from typing import Tuple, Dict
 from datetime import datetime
 from .constants import (
-    ACAO_ESTABILIZADA, ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_STATUS_AUSENTE,
+    ACAO_ESTABILIZADA, ACAO_INCONSISTENTE, ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_STATUS_AUSENTE,
     ACAO_SEMPRE_OK, ACAO_INSTABILIDADE_CRONICA, ACAO_FLAGS_ATUACAO,
     ACAO_FLAGS_OK, ACAO_FLAGS_INSTABILIDADE, SEVERITY_WEIGHTS, PRIORITY_GROUP_WEIGHTS, ACAO_WEIGHTS,
     COL_CREATED_ON, COL_NODE, COL_CMDB_CI, COL_SELF_HEALING_STATUS, COL_ASSIGNMENT_GROUP,
@@ -122,9 +122,9 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
     alerts_ok = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)].copy()
     alerts_instabilidade = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)].copy()
     full_emoji_map = {
-        acao_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
-        acao_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "⚠️✅",
-        acao_INSTABILIDADE_CRONICA: "🔁"
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
+        ACAO_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "⚠️✅",
+        ACAO_INSTABILIDADE_CRONICA: "🔁"
     }
 
     if not alerts_atuacao.empty:
