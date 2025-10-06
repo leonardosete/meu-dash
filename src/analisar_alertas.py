@@ -196,7 +196,26 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
     df_atuacao = gerar_relatorios_csv(summary, output_actuation_csv, output_ok_csv, output_instability_csv)
     
     # 3. Geração de Todas as Páginas HTML
-    gerador_paginas.gerar_paginas_detalhe(summary, df_atuacao, details_dir, timestamp_str)
+    df_ok_filtered = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)]
+    df_instabilidade_filtered = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)]
+    
+    top_problemas_atuacao = df_atuacao.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
+    top_problemas_remediados = df_ok_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
+    top_problemas_geral = summary.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(10)
+    top_problemas_instabilidade = df_instabilidade_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
+    
+    metric_counts = df_atuacao[COL_METRIC_NAME].value_counts()
+    top_metrics = metric_counts[metric_counts > 0].nlargest(5)
+
+    summary_filename = os.path.basename(output_summary_html)
+    plan_dir_base_name = os.path.basename(plan_dir)
+
+    gerador_paginas.gerar_paginas_detalhe_problema(df_atuacao, top_problemas_atuacao.index, details_dir, summary_filename, 'aberto_', plan_dir_base_name, timestamp_str)
+    gerador_paginas.gerar_paginas_detalhe_problema(df_ok_filtered, top_problemas_remediados.index, details_dir, summary_filename, 'remediado_', plan_dir_base_name, timestamp_str)
+    gerador_paginas.gerar_paginas_detalhe_problema(summary, top_problemas_geral.index, details_dir, summary_filename, 'geral_', plan_dir_base_name, timestamp_str)
+    gerador_paginas.gerar_paginas_detalhe_problema(df_instabilidade_filtered, top_problemas_instabilidade.index, details_dir, summary_filename, 'instabilidade_', plan_dir_base_name, timestamp_str)
+    gerador_paginas.gerar_paginas_detalhe_metrica(df_atuacao, top_metrics.index, details_dir, summary_filename, plan_dir_base_name, timestamp_str)
+
     gerador_paginas.gerar_resumo_executivo(summary, df_atuacao, num_logs_invalidos, output_summary_html, plan_dir, details_dir, timestamp_str, trend_report_path)
     gerador_paginas.gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
     

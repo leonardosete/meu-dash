@@ -6,7 +6,7 @@ from . import gerador_html
 from .constants import (
     ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_STATUS_AUSENTE, ACAO_INCONSISTENTE,
     COL_ASSIGNMENT_GROUP, COL_SHORT_DESCRIPTION, COL_NODE, COL_CMDB_CI,
-    COL_METRIC_NAME, STATUS_OK, STATUS_NOT_OK, NO_STATUS, UNKNOWN, ACAO_FLAGS_OK, ACAO_FLAGS_INSTABILIDADE
+    COL_METRIC_NAME, STATUS_OK, STATUS_NOT_OK, NO_STATUS, UNKNOWN, ACAO_FLAGS_OK, ACAO_FLAGS_INSTABILIDADE, ACAO_FLAGS_ATUACAO
 )
 
 # =============================================================================
@@ -259,74 +259,96 @@ def gerar_pagina_squads(all_squads: pd.Series, plan_dir: str, output_dir: str, s
         f.write(html_content)
     print(f"✅ Página de squads gerada: {output_path}")
 
-def gerar_paginas_detalhe(summary_df: pd.DataFrame, df_atuacao: pd.DataFrame, details_dir: str, timestamp_str: str):
-    """Gera páginas de detalhes para os principais problemas e métricas."""
-    print("\n📄 Gerando páginas de detalhes...")
-    os.makedirs(details_dir, exist_ok=True)
-
+def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Index, output_dir: str, summary_filename: str, file_prefix: str, plan_dir_name: str, timestamp_str: str):
+    """Gera páginas de detalhe para uma lista de problemas específicos."""
+    if problem_list.empty:
+        return
+    os.makedirs(output_dir, exist_ok=True)
+    emoji_map = {
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓",
+        ACAO_INCONSISTENTE: "🔍", ACAO_SEMPRE_OK: "✅", ACAO_ESTABILIZADA: "✅",
+        "🔁": "🔁"
+    }
+    
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     TEMPLATE_FILE = os.path.join(SCRIPT_DIR, '..', 'templates', 'template.html')
     HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
     footer_text = f"Relatório gerado em {timestamp_str}"
 
-    def _gerar_pagina(df_group, title: str, filename: str):
-        if df_group.empty:
-            return
-
-        output_path = os.path.join(details_dir, filename)
-        body_content = f'<p><a href="../resumo_geral.html">&larr; Voltar para o Dashboard</a></p>'
-        body_content += '<div class="card">'
-        body_content += f'<h2>{escape(title)}</h2>'
-        body_content += '<table><thead><tr><th>Recurso (CI)</th><th>Nó</th><th>Squad</th><th>Primeiro Evento</th><th>Último Evento</th><th>Contagem de Alertas</th><th>Ação Sugerida</th></tr></thead><tbody>'
-
-        for _, row in df_group.iterrows():
-            body_content += '<tr>'
-            body_content += f'<td>{escape(row[COL_CMDB_CI])}</td>'
-            body_content += f'<td>{escape(row[COL_NODE])}</td>'
-            body_content += f'<td>{escape(row[COL_ASSIGNMENT_GROUP])}</td>'
-            body_content += f'<td>{row["first_event"].strftime("%d/%m/%Y %H:%M")}</td>'
-            body_content += f'<td>{row["last_event"].strftime("%d/%m/%Y %H:%M")}</td>'
-            body_content += f'<td>{row["alert_count"]}</td>'
-            body_content += f'<td>{escape(row["acao_sugerida"])}</td>'
-            body_content += '</tr>'
-
-        body_content += '</tbody></table></div>'
+    print(f"\n📄 Gerando páginas de detalhe para o contexto: '{file_prefix}'...")
+    for problem_desc in problem_list:
+        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem_desc[:50].replace(" ", "_"))
+        output_path = os.path.join(output_dir, f"detalhe_{file_prefix}{sanitized_name}.html")
+        problem_df = df_source[df_source[COL_SHORT_DESCRIPTION] == problem_desc].sort_values(by="alert_count", ascending=False)
+        if problem_df.empty:
+            continue
+        total_alerts = problem_df['alert_count'].sum()
+        total_instances = len(problem_df)
+        title = f"Resumo do Problema: {escape(problem_desc)}"
+        body_content = f'<p><a href="../{summary_filename}">&larr; Voltar para o Dashboard</a></p><h2>{escape(problem_desc)}</h2><p>Total de alertas: <strong>{total_alerts}</strong> | Casos distintos: <strong>{total_instances}</strong></p>'
+        body_content += '<table><thead><tr><th>Recurso (CI) / Nó</th><th>Ação Sugerida</th><th>Período</th><th>Total de Alertas</th><th>Squad</th></tr></thead><tbody>'
+        for _, row in problem_df.iterrows():
+            recurso_info = f"<strong>{escape(row[COL_CMDB_CI])}</strong>"
+            if row[COL_NODE] != row[COL_CMDB_CI]: recurso_info += f"<br><small style='color:var(--text-secondary-color)'>{escape(row[COL_NODE])}</small>"
+            acao_sugerida = row.get('acao_sugerida', UNKNOWN)
+            acao_info = f"<span class='emoji'>{emoji_map.get(acao_sugerida, '⚙️')}</span> {escape(str(acao_sugerida))}"
+            periodo_info = f"{row['first_event'].strftime('%d/%m %H:%M')} a<br>{row['last_event'].strftime('%d/%m %H:%M')}"
+            squad_name = row[COL_ASSIGNMENT_GROUP]
+            if acao_sugerida in ACAO_FLAGS_ATUACAO:
+                sanitized_squad_name = re.sub(r'[^a-zA-Z0-9_-]', '', squad_name.replace(" ", "_"))
+                plan_path = f"../{plan_dir_name}/plano-de-acao-{sanitized_squad_name}.html"
+                squad_info = f'<a href="{plan_path}">{escape(squad_name)}</a>'
+            else:
+                squad_info = escape(squad_name)
+            body_content += f'<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{row["alert_count"]}</td><td>{squad_info}</td></tr>'
+        body_content += '</tbody></table>'
         html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        print(f"✅ Página de detalhe gerada: {filename}")
+    print(f"✅ {len(problem_list)} páginas de detalhe do contexto '{file_prefix}' geradas.")
 
-    top_problemas_atuacao = df_atuacao.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    for problem, _ in top_problemas_atuacao.items():
-        df_problem = summary_df[summary_df[COL_SHORT_DESCRIPTION] == problem]
-        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
-        _gerar_pagina(df_problem, f"Detalhe do Problema: {problem}", f"detalhe_aberto_{sanitized_name}.html")
+def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: pd.Index, output_dir: str, summary_filename: str, plan_dir_name: str, timestamp_str: str):
+    """Gera páginas de detalhe para categorias de métricas com casos em aberto."""
+    if metric_list.empty:
+        return
+    os.makedirs(output_dir, exist_ok=True)
+    emoji_map = {
+        ACAO_INTERMITENTE: "⚠️", ACAO_FALHA_PERSISTENTE: "❌", ACAO_STATUS_AUSENTE: "❓", ACAO_INCONSISTENTE: "🔍"
+    }
+    
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, '..', 'templates', 'template.html')
+    HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
+    footer_text = f"Relatório gerado em {timestamp_str}"
 
-    top_metrics = df_atuacao[COL_METRIC_NAME].value_counts().nlargest(5)
-    for metric, _ in top_metrics.items():
-        df_metric = summary_df[summary_df[COL_METRIC_NAME] == metric]
-        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', metric.replace(" ", "_"))
-        _gerar_pagina(df_metric, f"Detalhe da Métrica: {metric}", f"detalhe_metrica_{sanitized_name}.html")
-
-    df_instabilidade_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)]
-    top_problemas_instabilidade = df_instabilidade_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    for problem, _ in top_problemas_instabilidade.items():
-        df_problem = summary_df[summary_df[COL_SHORT_DESCRIPTION] == problem]
-        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
-        _gerar_pagina(df_problem, f"Detalhe de Instabilidade: {problem}", f"detalhe_instabilidade_{sanitized_name}.html")
-
-    df_ok_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_OK)]
-    top_problemas_remediados = df_ok_filtered.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(5)
-    for problem, _ in top_problemas_remediados.items():
-        df_problem = summary_df[summary_df[COL_SHORT_DESCRIPTION] == problem]
-        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
-        _gerar_pagina(df_problem, f"Detalhe de Remediado: {problem}", f"detalhe_remediado_{sanitized_name}.html")
-
-    top_problemas_geral = summary_df.groupby(COL_SHORT_DESCRIPTION, observed=True)['alert_count'].sum().nlargest(10)
-    for problem, _ in top_problemas_geral.items():
-        df_problem = summary_df[summary_df[COL_SHORT_DESCRIPTION] == problem]
-        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
-        _gerar_pagina(df_problem, f"Detalhe Geral do Problema: {problem}", f"detalhe_geral_{sanitized_name}.html")
+    print(f"\n📄 Gerando páginas de detalhe para Métricas em Aberto...")
+    for metric_name in metric_list:
+        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', metric_name.replace(" ", "_"))
+        output_path = os.path.join(output_dir, f"detalhe_metrica_{sanitized_name}.html")
+        metric_df = df_atuacao_source[df_atuacao_source[COL_METRIC_NAME] == metric_name].sort_values(by="last_event", ascending=False)
+        if metric_df.empty:
+            continue
+        total_instances = len(metric_df)
+        title = f"Detalhe da Métrica em Aberto: {escape(metric_name)}"
+        body_content = f'<p><a href="../{summary_filename}">&larr; Voltar para o Dashboard</a></p><h2>{escape(metric_name)}</h2><p>Total de Casos em aberto: <strong>{total_instances}</strong></p>'
+        body_content += '<table><thead><tr><th>Recurso (CI) / Nó</th><th>Ação Sugerida</th><th>Período</th><th>Problema</th><th>Squad</th></tr></thead><tbody>'
+        for _, row in metric_df.iterrows():
+            recurso_info = f"<strong>{escape(row[COL_CMDB_CI])}</strong>"
+            if row[COL_NODE] != row[COL_CMDB_CI]: recurso_info += f"<br><small style='color:var(--text-secondary-color)'>{escape(row[COL_NODE])}</small>"
+            acao_sugerida = row.get('acao_sugerida', UNKNOWN)
+            acao_info = f"<span class='emoji'>{emoji_map.get(acao_sugerida, '⚙️')}</span> {escape(str(acao_sugerida))}"
+            periodo_info = f"{row['first_event'].strftime('%d/%m %H:%M')} a<br>{row['last_event'].strftime('%d/%m %H:%M')}"
+            squad_name = row[COL_ASSIGNMENT_GROUP]
+            sanitized_squad_name = re.sub(r'[^a-zA-Z0-9_-]', '', squad_name.replace(" ", "_"))
+            plan_path = f"../{plan_dir_name}/plano-de-acao-{sanitized_squad_name}.html"
+            squad_info = f'<a href="{plan_path}">{escape(squad_name)}</a>'
+            problema_info = escape(row[COL_SHORT_DESCRIPTION])
+            body_content += f'<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{problema_info}</td><td>{squad_info}</td></tr>'
+        body_content += '</tbody></table>'
+        html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+    print(f"✅ {len(metric_list)} páginas de detalhe de métricas geradas.")
 
 def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):
     """Gera uma página HTML para visualização dos casos resolvidos com sucesso."""
