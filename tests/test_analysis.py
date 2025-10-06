@@ -1,5 +1,8 @@
 import pandas as pd
 import pytest
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.analisar_alertas import analisar_grupos, adicionar_acao_sugerida
 from src.constants import STATUS_OK, STATUS_NOT_OK, NO_STATUS, ACAO_ESTABILIZADA, ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_SEMPRE_OK, ACAO_STATUS_AUSENTE
 

@@ -1,5 +1,7 @@
 import os
 import pytest
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src import analisar_alertas as services
 
 # Define o caminho para os fixtures de teste
