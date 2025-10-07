@@ -1,14 +1,31 @@
 import os
 import re
 from html import escape
+import logging
 import pandas as pd
 from . import gerador_html
 from .constants import (
-    ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_STATUS_AUSENTE, ACAO_INCONSISTENTE,
-    ACAO_SEMPRE_OK, ACAO_ESTABILIZADA,
-    COL_ASSIGNMENT_GROUP, COL_SHORT_DESCRIPTION, COL_NODE, COL_CMDB_CI,
-    COL_METRIC_NAME, STATUS_OK, STATUS_NOT_OK, NO_STATUS, UNKNOWN, ACAO_FLAGS_OK, ACAO_FLAGS_INSTABILIDADE, ACAO_FLAGS_ATUACAO
+    ACAO_ESTABILIZADA,
+    ACAO_FALHA_PERSISTENTE,
+    ACAO_FLAGS_ATUACAO,
+    ACAO_FLAGS_INSTABILIDADE,
+    ACAO_FLAGS_OK,
+    ACAO_INCONSISTENTE,
+    ACAO_INTERMITENTE,
+    ACAO_SEMPRE_OK,
+    ACAO_STATUS_AUSENTE,
+    COL_ASSIGNMENT_GROUP,
+    COL_CMDB_CI,
+    COL_METRIC_NAME,
+    COL_NODE,
+    COL_SHORT_DESCRIPTION,
+    NO_STATUS,
+    STATUS_NOT_OK,
+    STATUS_OK,
+    UNKNOWN,
 )
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # FUNÇÕES DE GERAÇÃO DE PÁGINAS HTML
@@ -16,7 +33,7 @@ from .constants import (
 
 def carregar_template_html(filepath: str) -> str:
     """Carrega o conteúdo de um arquivo de template HTML de forma segura."""
-    print(f"📄 Carregando template de '{filepath}'...")
+    logger.info(f"Carregando template de '{filepath}'...")
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             return f.read()
@@ -27,7 +44,7 @@ def carregar_template_html(filepath: str) -> str:
 
 def gerar_resumo_executivo(context: dict, output_path: str, timestamp_str: str):
     """Gera o dashboard principal em HTML com base em um contexto de dados pré-construído."""
-    print("\n📊 Gerando Resumo Executivo estilo Dashboard...")
+    logger.info("Gerando Resumo Executivo estilo Dashboard...")
 
     title = "Dashboard - Análise de Alertas"
     
@@ -44,7 +61,7 @@ def gerar_resumo_executivo(context: dict, output_path: str, timestamp_str: str):
     html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    print(f"✅ Resumo executivo gerado: {output_path}")
+    logger.info(f"Resumo executivo gerado: {output_path}")
 
     output_dir = os.path.dirname(output_path)
     try:
@@ -53,15 +70,15 @@ def gerar_resumo_executivo(context: dict, output_path: str, timestamp_str: str):
         html_visualizador = gerador_html.renderizar_visualizador_json(json_content)
         with open(os.path.join(output_dir, "visualizador_json.html"), 'w', encoding='utf-8') as f:
             f.write(html_visualizador)
-        print(f"✅ Visualizador de JSON gerado: visualizador_json.html")
+        logger.info("Visualizador de JSON gerado: visualizador_json.html")
     except Exception as e:
-        print(f"⚠️  Aviso: Não foi possível ler o arquivo JSON para o visualizador. Erro: {e}")
+        logger.warning(f"Não foi possível ler o arquivo JSON para o visualizador. Erro: {e}")
 
 def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_str: str):
     """Gera arquivos de plano de ação HTML para cada squad com casos que precisam de atuação."""
-    print("\n📋 Gerando planos de ação por squad...")
+    logger.info("Gerando planos de ação por squad...")
     if df_atuacao.empty:
-        print("⚠️ Nenhum caso precisa de atuação. Nenhum plano de ação gerado.")
+        logger.info("Nenhum caso precisa de atuação. Nenhum plano de ação gerado.")
         return
 
     os.makedirs(output_dir, exist_ok=True)
@@ -173,11 +190,11 @@ def gerar_planos_por_squad(df_atuacao: pd.DataFrame, output_dir: str, timestamp_
         html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        print(f"✅ Plano de ação para a squad '{squad_name}' gerado: {output_path}")
+        logger.info(f"Plano de ação para a squad '{squad_name}' gerado: {output_path}")
 
 def gerar_pagina_squads(all_squads: pd.Series, plan_dir: str, output_dir: str, summary_filename: str, timestamp_str: str):
     """Gera uma página HTML com o gráfico de barras para todas as squads com casos em aberto."""
-    print(f"📄 Gerando página com a lista completa de squads...")
+    logger.info("Gerando página com a lista completa de squads...")
     output_path = os.path.join(output_dir, "todas_as_squads.html")
     title = "Lista Completa de Squads por Casos"
     body_content = f'<p><a href="{summary_filename}">&larr; Voltar para o Dashboard</a></p><div class="card">'
@@ -212,7 +229,7 @@ def gerar_pagina_squads(all_squads: pd.Series, plan_dir: str, output_dir: str, s
     html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    print(f"✅ Página de squads gerada: {output_path}")
+    logger.info(f"Página de squads gerada: {output_path}")
 
 def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Index, output_dir: str, summary_filename: str, file_prefix: str, plan_dir_name: str, timestamp_str: str):
     """Gera páginas de detalhe para uma lista de problemas específicos."""
@@ -230,7 +247,7 @@ def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Ind
     HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
     footer_text = f"Relatório gerado em {timestamp_str}"
 
-    print(f"\n📄 Gerando páginas de detalhe para o contexto: '{file_prefix}'...")
+    logger.info(f"Gerando páginas de detalhe para o contexto: '{file_prefix}'...")
     for problem_desc in problem_list:
         sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem_desc[:50].replace(" ", "_"))
         output_path = os.path.join(output_dir, f"detalhe_{file_prefix}{sanitized_name}.html")
@@ -260,7 +277,7 @@ def gerar_paginas_detalhe_problema(df_source: pd.DataFrame, problem_list: pd.Ind
         html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-    print(f"✅ {len(problem_list)} páginas de detalhe do contexto '{file_prefix}' geradas.")
+    logger.info(f"{len(problem_list)} páginas de detalhe do contexto '{file_prefix}' geradas.")
 
 def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: pd.Index, output_dir: str, summary_filename: str, plan_dir_name: str, timestamp_str: str):
     """Gera páginas de detalhe para categorias de métricas com casos em aberto."""
@@ -276,7 +293,7 @@ def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: 
     HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
     footer_text = f"Relatório gerado em {timestamp_str}"
 
-    print(f"\n📄 Gerando páginas de detalhe para Métricas em Aberto...")
+    logger.info("Gerando páginas de detalhe para Métricas em Aberto...")
     for metric_name in metric_list:
         sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', metric_name.replace(" ", "_"))
         output_path = os.path.join(output_dir, f"detalhe_metrica_{sanitized_name}.html")
@@ -303,18 +320,18 @@ def gerar_paginas_detalhe_metrica(df_atuacao_source: pd.DataFrame, metric_list: 
         html_content = gerador_html.renderizar_pagina_html(HTML_TEMPLATE, title, body_content, footer_text)
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-    print(f"✅ {len(metric_list)} páginas de detalhe de métricas geradas.")
+    logger.info(f"{len(metric_list)} páginas de detalhe de métricas geradas.")
 
 def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):
     """Gera uma página HTML para visualização dos casos resolvidos com sucesso."""
-    print(f"📄 Gerando página de visualização para '{os.path.basename(ok_csv_path)}'...")
+    logger.info(f"Gerando página de visualização para '{os.path.basename(ok_csv_path)}'...")
     output_path = os.path.join(output_dir, "sucesso_automacao.html")
     try:
         with open(ok_csv_path, 'r', encoding='utf-8') as f:
             csv_content = f.read().lstrip()
     except FileNotFoundError:
         csv_content = ""
-        print(f"⚠️ Aviso: Arquivo '{ok_csv_path}' não encontrado. Gerando página vazia.")
+        logger.warning(f"Arquivo '{ok_csv_path}' não encontrado. Gerando página vazia.")
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
@@ -323,18 +340,18 @@ def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):
             f_out.write(final_html)
     except FileNotFoundError:
         raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
-    print(f"✅ Página de visualização de sucesso gerada: {output_path}")
+    logger.info(f"Página de visualização de sucesso gerada: {output_path}")
 
 def gerar_pagina_instabilidade(output_dir: str, instability_csv_path: str, template_path: str):
     """Gera uma página HTML para visualização dos casos de instabilidade crônica."""
-    print(f"📄 Gerando página de visualização para '{os.path.basename(instability_csv_path)}'...")
+    logger.info(f"Gerando página de visualização para '{os.path.basename(instability_csv_path)}'...")
     output_path = os.path.join(output_dir, "instabilidade_cronica.html")
     try:
         with open(instability_csv_path, 'r', encoding='utf-8') as f:
             csv_content = f.read().lstrip()
     except FileNotFoundError:
         csv_content = ""
-        print(f"⚠️ Aviso: Arquivo '{instability_csv_path}' não encontrado. Gerando página vazia.")
+        logger.warning(f"Arquivo '{instability_csv_path}' não encontrado. Gerando página vazia.")
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
@@ -343,18 +360,18 @@ def gerar_pagina_instabilidade(output_dir: str, instability_csv_path: str, templ
             f_out.write(final_html)
     except FileNotFoundError:
         raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
-    print(f"✅ Página de visualização de instabilidade gerada: {output_path}")
+    logger.info(f"Página de visualização de instabilidade gerada: {output_path}")
 
 def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_path: str):
     """Gera uma página HTML para visualização dos logs com status inválido."""
-    print(f"📄 Gerando página de visualização para '{os.path.basename(log_csv_path)}'...")
+    logger.info(f"Gerando página de visualização para '{os.path.basename(log_csv_path)}'...")
     output_path = os.path.join(output_dir, "qualidade_dados_remediacao.html")
     try:
         with open(log_csv_path, 'r', encoding='utf-8') as f:
             csv_content = f.read().lstrip()
     except FileNotFoundError:
         csv_content = ""
-        print(f"⚠️ Aviso: Arquivo '{log_csv_path}' não encontrado. Gerando página vazia.")
+        logger.warning(f"Arquivo '{log_csv_path}' não encontrado. Gerando página vazia.")
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
@@ -363,18 +380,18 @@ def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_pat
             f_out.write(final_html)
     except FileNotFoundError:
         raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
-    print(f"✅ Página de visualização de logs inválidos gerada: {output_path}")
+    logger.info(f"Página de visualização de logs inválidos gerada: {output_path}")
 
 def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, template_path: str):
     """Gera uma página HTML para edição do arquivo de atuação."""
-    print(f"📄 Gerando página de edição para '{os.path.basename(actuation_csv_path)}'...")
+    logger.info(f"Gerando página de edição para '{os.path.basename(actuation_csv_path)}'...")
     output_path = os.path.join(output_dir, "editor_atuacao.html")
     try:
         with open(actuation_csv_path, 'r', encoding='utf-8') as f:
             csv_content = f.read().lstrip()
     except FileNotFoundError:
         csv_content = ""
-        print(f"⚠️ Aviso: Arquivo '{actuation_csv_path}' não encontrado. Gerando página de edição vazia.")
+        logger.warning(f"Arquivo '{actuation_csv_path}' não encontrado. Gerando página de edição vazia.")
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
@@ -386,4 +403,4 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
             f_out.write(final_html)
     except FileNotFoundError:
         raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
-    print(f"✅ Página de edição gerada: {output_path}")
+    logger.info(f"Página de edição gerada: {output_path}")

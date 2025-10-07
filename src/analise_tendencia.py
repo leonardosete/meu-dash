@@ -3,9 +3,12 @@ import sys
 import os
 import json
 from html import escape
+import logging
 import re
 from string import Template
 from .constants import ACAO_FLAGS_ATUACAO
+
+logger = logging.getLogger(__name__)
 
 CASE_ID_COLS = ['assignment_group', 'short_description', 'node', 'cmdb_ci', 'source', 'metric_name', 'cmdb_ci.sys_class_name']
 
@@ -35,10 +38,10 @@ def load_summary_from_json(filepath: str):
         if 'last_event' in df.columns:
             df['last_event'] = pd.to_datetime(df['last_event'], errors='coerce')
             
-        print(f"✅ Resumo de problemas carregado de: {filepath}")
+        logger.info(f"Resumo de problemas carregado de: {filepath}")
         return df
     except (FileNotFoundError, ValueError, TypeError) as e:
-        print(f"❌ Erro ao carregar ou processar o arquivo JSON '{filepath}': {e}", file=sys.stderr)
+        logger.error(f"Erro ao carregar ou processar o arquivo JSON '{filepath}': {e}")
         return None
 
 def calculate_kpis_and_merged_df(df_p1, df_p2):
@@ -288,7 +291,7 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
     df_p2 = load_summary_from_json(json_atual)
 
     if df_p1 is None or df_p2 is None:
-        print("❌ Não foi possível continuar a análise de tendência devido a erro no carregamento dos resumos JSON.", file=sys.stderr)
+        logger.error("Não foi possível continuar a análise de tendência devido a erro no carregamento dos resumos JSON.")
         return None
 
     df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
@@ -367,11 +370,11 @@ def gerar_relatorio_tendencia(json_anterior: str, json_atual: str, csv_anterior_
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(final_report)
-        print(f"✅ Relatório de tendência gerado em: {output_path}")
+        logger.info(f"Relatório de tendência gerado em: {output_path}")
         return kpis
 
     except Exception as e:
-        print(f"❌ Ocorreu um erro inesperado ao gerar o relatório de tendência: {e}", file=sys.stderr)
+        logger.error(f"Ocorreu um erro inesperado ao gerar o relatório de tendência: {e}", exc_info=True)
         return None
 
 def main_cli():

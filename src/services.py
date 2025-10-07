@@ -1,19 +1,21 @@
 """
 Módulo de Serviço para encapsular a lógica de negócio principal da aplicação.
 """
-
 import os
 from datetime import datetime
+import logging
 from werkzeug.utils import secure_filename
 
 from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
 from . import context_builder, gerador_paginas
-from .constants import (
-    ACAO_FLAGS_OK, ACAO_FLAGS_INSTABILIDADE, COL_SHORT_DESCRIPTION,
-    COL_METRIC_NAME, COL_ASSIGNMENT_GROUP, LOG_INVALIDOS_FILENAME
-)
+from .constants import (ACAO_FLAGS_INSTABILIDADE, ACAO_FLAGS_OK,
+                        COL_ASSIGNMENT_GROUP, COL_METRIC_NAME,
+                        COL_SHORT_DESCRIPTION, LOG_INVALIDOS_FILENAME)
+
+logger = logging.getLogger(__name__)
+
 
 def process_upload_and_generate_reports(file_atual, upload_folder: str, reports_folder: str, db, Report, base_dir: str):
     """
@@ -42,15 +44,15 @@ def process_upload_and_generate_reports(file_atual, upload_folder: str, reports_
     trend_report_path_relative = None
 
     if last_report and last_report.json_summary_path and os.path.exists(last_report.json_summary_path):
-        print(f"📈 Relatório anterior encontrado. Iniciando análise de tendência.")
+        logger.info("Relatório anterior encontrado. Iniciando análise de tendência.")
         date_range_anterior_obj = datetime.strptime(last_report.date_range.split(' a ')[0], '%d/%m/%Y') if last_report.date_range else None
         date_range_atual_obj = datetime.strptime(date_range_atual.split(' a ')[0], '%d/%m/%Y') if date_range_atual else None
 
         if date_range_anterior_obj and date_range_atual_obj and date_range_atual_obj > date_range_anterior_obj:
-            print("✅ Período do upload é mais recente. Gerando tendência...")
+            logger.info("Período do upload é mais recente. Gerando tendência...")
             temp_analysis_results = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=True)
             output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
-            
+
             gerar_relatorio_tendencia(
                 json_anterior=last_report.json_summary_path,
                 json_atual=temp_analysis_results['json_path'],
@@ -61,11 +63,11 @@ def process_upload_and_generate_reports(file_atual, upload_folder: str, reports_
                 date_range_atual=date_range_atual
             )
             trend_report_path_relative = os.path.basename(output_trend_path)
-            print(f"✅ Relatório de tendência gerado.")
+            logger.info(f"Relatório de tendência gerado em: {output_trend_path}")
         else:
-            print("⚠️  Aviso: O arquivo enviado não é cronologicamente mais recente. A análise de tendência será pulada.")
+            logger.warning("O arquivo enviado não é cronologicamente mais recente. A análise de tendência será pulada.")
     else:
-        print("⚠️ Nenhum relatório anterior encontrado para comparação.")
+        logger.info("Nenhum relatório anterior encontrado para comparação de tendência.")
 
     # 3. Análise Principal (Completa)
     analysis_results = analisar_arquivo_csv(input_file=filepath_atual, output_dir=output_dir, light_analysis=False)
@@ -85,7 +87,7 @@ def process_upload_and_generate_reports(file_atual, upload_folder: str, reports_
     timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
     summary_html_path = os.path.join(output_dir, "resumo_geral.html")
     gerador_paginas.gerar_resumo_executivo(dashboard_context, summary_html_path, timestamp_str)
-    
+
     df_atuacao = analysis_results['df_atuacao']
     summary = analysis_results['summary']
     details_dir = os.path.join(output_dir, "detalhes")
@@ -100,12 +102,12 @@ def process_upload_and_generate_reports(file_atual, upload_folder: str, reports_
     gerador_paginas.gerar_paginas_detalhe_metrica(df_atuacao, dashboard_context['top_metrics'].index, details_dir, summary_filename, plan_dir_base_name, timestamp_str)
     gerador_paginas.gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
     gerador_paginas.gerar_pagina_squads(dashboard_context['all_squads'], plan_dir, output_dir, summary_filename, timestamp_str)
-    
+
     base_template_dir = os.path.join(base_dir, '..', 'templates')
     gerador_paginas.gerar_pagina_sucesso(output_dir, os.path.join(output_dir, "remediados.csv"), os.path.join(base_template_dir, 'sucesso_template.html'))
     gerador_paginas.gerar_pagina_instabilidade(output_dir, os.path.join(output_dir, "remediados_frequentes.csv"), os.path.join(base_template_dir, 'sucesso_template.html'))
     gerador_paginas.gerar_pagina_editor_atuacao(output_dir, os.path.join(output_dir, "atuar.csv"), os.path.join(base_template_dir, 'editor_template.html'))
-    
+
     if analysis_results['num_logs_invalidos'] > 0:
         gerador_paginas.gerar_pagina_logs_invalidos(output_dir, os.path.join(output_dir, LOG_INVALIDOS_FILENAME), os.path.join(base_template_dir, 'sucesso_template.html'))
 
@@ -150,9 +152,9 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
         output_dir_anterior = os.path.join(output_dir, 'anterior')
         output_dir_atual = os.path.join(output_dir, 'atual')
 
-        print("⚙️  Executando análise completa para o arquivo ATUAL...")
+        logger.info(f"Executando análise completa para o arquivo ATUAL: {filename_atual}")
         results_atual = analisar_arquivo_csv(filepath_atual, output_dir_atual, light_analysis=False)
-        print("⚙️  Executando análise completa para o arquivo ANTERIOR...")
+        logger.info(f"Executando análise completa para o arquivo ANTERIOR: {filename_anterior}")
         results_anterior = analisar_arquivo_csv(filepath_anterior, output_dir_anterior, light_analysis=False)
 
         output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')

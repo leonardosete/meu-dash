@@ -1,17 +1,25 @@
-import pandas as pd
-import numpy as np
 import os
-from typing import Tuple, Dict, Any
 from datetime import datetime
+from typing import Tuple, Dict, Any
+import logging
+
+import numpy as np
+import pandas as pd
+
 from .constants import (
-    ACAO_ESTABILIZADA, ACAO_INCONSISTENTE, ACAO_INTERMITENTE, ACAO_FALHA_PERSISTENTE, ACAO_STATUS_AUSENTE,
-    ACAO_SEMPRE_OK, ACAO_INSTABILIDADE_CRONICA, ACAO_FLAGS_ATUACAO,
-    ACAO_FLAGS_OK, ACAO_FLAGS_INSTABILIDADE, SEVERITY_WEIGHTS, PRIORITY_GROUP_WEIGHTS, ACAO_WEIGHTS,
-    COL_CREATED_ON, COL_NODE, COL_CMDB_CI, COL_SELF_HEALING_STATUS, COL_ASSIGNMENT_GROUP,
-    COL_SHORT_DESCRIPTION, COL_NUMBER, COL_SOURCE, COL_METRIC_NAME, COL_CMDB_CI_SYS_CLASS_NAME,
-    COL_SEVERITY, COL_PRIORITY_GROUP, GROUP_COLS, ESSENTIAL_COLS, STATUS_OK, STATUS_NOT_OK,
-    UNKNOWN, NO_STATUS, LOG_INVALIDOS_FILENAME, LIMIAR_ALERTAS_RECORRENTES
+    ACAO_ESTABILIZADA, ACAO_FALHA_PERSISTENTE, ACAO_FLAGS_ATUACAO,
+    ACAO_FLAGS_INSTABILIDADE, ACAO_FLAGS_OK, ACAO_INCONSISTENTE,
+    ACAO_INSTABILIDADE_CRONICA, ACAO_INTERMITENTE, ACAO_SEMPRE_OK,
+    ACAO_STATUS_AUSENTE, ACAO_WEIGHTS, COL_ASSIGNMENT_GROUP, COL_CMDB_CI,
+    COL_CMDB_CI_SYS_CLASS_NAME, COL_CREATED_ON, COL_METRIC_NAME, COL_NODE,
+    COL_NUMBER, COL_PRIORITY_GROUP, COL_SELF_HEALING_STATUS, COL_SEVERITY,
+    COL_SHORT_DESCRIPTION, COL_SOURCE, ESSENTIAL_COLS, GROUP_COLS,
+    LIMIAR_ALERTAS_RECORRENTES, LOG_INVALIDOS_FILENAME, NO_STATUS,
+    PRIORITY_GROUP_WEIGHTS, SEVERITY_WEIGHTS, STATUS_NOT_OK, STATUS_OK,
+    UNKNOWN,
 )
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # PROCESSAMENTO E ANÁLISE DE DADOS
@@ -19,7 +27,7 @@ from .constants import (
 
 def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
     """Carrega, valida e pré-processa os dados de um arquivo CSV."""
-    print(f"⚙️  Carregando e preparando dados de '{filepath}'...")
+    logger.info(f"Carregando e preparando dados de '{filepath}'...")
     try:
         df = pd.read_csv(filepath, encoding="utf-8-sig", sep=';', engine='python')
     except FileNotFoundError:
@@ -40,7 +48,7 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
         num_invalidos = len(df_invalidos)
         if not df_invalidos.empty:
             log_invalidos_path = os.path.join(output_dir, LOG_INVALIDOS_FILENAME)
-            print(f"⚠️  Detectadas {num_invalidos} linhas com status de remediação inesperado. Registrando em '{log_invalidos_path}'...")
+            logger.warning(f"Detectadas {num_invalidos} linhas com status de remediação inesperado. Registrando em '{log_invalidos_path}'...")
             df_invalidos.to_csv(log_invalidos_path, index=False, encoding='utf-8-sig')
 
     for col in GROUP_COLS:
@@ -54,7 +62,7 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
     for col in GROUP_COLS + [COL_SELF_HEALING_STATUS, COL_SEVERITY, COL_PRIORITY_GROUP]:
         if col in df.columns and df[col].dtype == 'object':
             df[col] = df[col].astype('category')
-    print("✅ Dados carregados e preparados com sucesso.")
+    logger.info("Dados carregados e preparados com sucesso.")
     return df, num_invalidos
 
 def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
@@ -81,7 +89,7 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
 
 def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
     """Agrupa e analisa os alertas para criar um sumário de problemas únicos."""
-    print("\n⏳ Analisando e agrupando alertas...")
+    logger.info("Analisando e agrupando alertas...")
     aggregations = {
         COL_CREATED_ON: ['min', 'max'],
         COL_NUMBER: ['nunique', lambda x: ', '.join(sorted(x.unique()))],
@@ -106,7 +114,7 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
     summary['score_ponderado_final'] = (
         summary['score_criticidade_agregado'] * summary['fator_peso_remediacao'] * summary['fator_volume']
     )
-    print(f"📊 Total de grupos únicos analisados: {summary.shape[0]}")
+    logger.info(f"Total de grupos únicos analisados: {summary.shape[0]}")
     return summary
 
 # =============================================================================
@@ -115,7 +123,7 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
 
 def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok: str, output_instability: str) -> pd.DataFrame:
     """Filtra os resultados, salva em CSV e retorna o dataframe de atuação."""
-    print("\n📑 Gerando relatórios CSV...")
+    logger.info("Gerando relatórios CSV...")
     alerts_atuacao = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
     alerts_ok = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)].copy()
     alerts_instabilidade = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)].copy()
@@ -145,7 +153,7 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
                 df_to_save['responsavel'] = ''
                 df_to_save['data_previsao_solucao'] = ''
             df_to_save.to_csv(path, index=False, encoding="utf-8-sig")
-            print(f"✅ Relatório CSV gerado: {path}")
+            logger.info(f"Relatório CSV gerado: {path}")
 
     save_csv(alerts_atuacao, output_actuation, "score_ponderado_final", False)
     save_csv(alerts_ok, output_ok, "last_event", False)
@@ -154,13 +162,13 @@ def gerar_relatorios_csv(summary: pd.DataFrame, output_actuation: str, output_ok
 
 def export_summary_to_json(summary: pd.DataFrame, output_path: str):
     """Salva o dataframe de resumo em formato JSON."""
-    print(f"\n💾 Exportando resumo para JSON...")
+    logger.info("Exportando resumo para JSON...")
     summary_json = summary.copy()
     for col in ['first_event', 'last_event']:
         if col in summary_json.columns:
             summary_json[col] = summary_json[col].astype(str)
     summary_json.to_json(output_path, orient='records', indent=4, date_format='iso')
-    print(f"✅ Resumo salvo em: {output_path}")
+    logger.info(f"Resumo salvo em: {output_path}")
 
 # =============================================================================
 # EXECUÇÃO PRINCIPAL
@@ -187,7 +195,7 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
     df_atuacao = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
 
     if light_analysis:
-        print("💡 Análise leve concluída. Apenas o resumo JSON foi gerado.")
+        logger.info("Análise leve concluída. Apenas o resumo JSON foi gerado.")
         return {
             'summary': summary,
             'df_atuacao': df_atuacao,
@@ -198,7 +206,7 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
     # 2. Geração de Relatórios CSV
     df_atuacao = gerar_relatorios_csv(summary, output_actuation_csv, output_ok_csv, output_instability_csv)
 
-    print(f"\n✅ Análise de dados finalizada. Os artefatos foram gerados em: {output_dir}")
+    logger.info(f"Análise de dados finalizada. Artefatos gerados em: {output_dir}")
     
     return {
         'summary': summary,
