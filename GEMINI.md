@@ -64,6 +64,7 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 - **Rotas Principais:**
   - `GET /`: Exibe a página inicial de upload (`upload.html`).
   - `POST /upload`: Recebe o arquivo do usuário e chama o `services.py` para processá-lo.
+  - `POST /compare`: Recebe dois arquivos e chama o serviço de comparação direta.
   - `GET /relatorios`: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.
   - `GET /reports/<run_folder>/<filename>`: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.
 
@@ -79,6 +80,7 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
   5. Constrói o dicionário de contexto (chamando `context_builder`).
   6. Orquestra a geração de todas as páginas HTML (chamando `gerador_paginas`).
   7. Salva o novo registro do relatório no banco de dados.
+- **Funções Adicionais:** Contém também a lógica para a `process_direct_comparison`, que analisa dois arquivos e gera um relatório de tendência.
 
 ### 2. Banco de Dados (`data/meu_dash.db`)
 
@@ -142,6 +144,17 @@ O processo é iniciado pela interação do usuário e orquestrado integralmente 
     f. **Gera as Páginas:** Chama as funções em `gerador_paginas.py`, passando o `contexto`, para renderizar todos os relatórios HTML.
     g. **Persiste o Resultado:** Cria um novo registro `Report` no banco de dados com os caminhos para os artefatos gerados.
 5. **Redirecionamento (`app.py`):** O serviço retorna as informações necessárias para o `app.py`, que então redireciona o navegador do usuário para o `resumo_geral.html` recém-criado.
+
+### Fluxo de Comparação Direta
+
+1. **Usuário:** Acessa a seção "Análise Comparativa Direta", seleciona dois arquivos `.csv` e clica em "Comparar".
+2. **Controlador (`app.py`):** A rota `POST /compare` recebe os dois arquivos e chama a função `services.process_direct_comparison`.
+3. **Serviço (`services.py`):** A função `process_direct_comparison` orquestra o fluxo:
+    a. Salva os dois arquivos temporariamente e os ordena por data.
+    b. Chama `analisar_alertas.py` para cada arquivo, gerando os respectivos `resumo_problemas.json`.
+    c. Chama `analise_tendencia.py` para comparar os dois JSONs e gerar o `resumo_tendencia.html`.
+    d. Remove os arquivos temporários.
+4. **Redirecionamento (`app.py`):** O serviço retorna o caminho para o relatório de tendência, e o `app.py` redireciona o usuário para a visualização.
 
 ---
 

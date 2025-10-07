@@ -99,6 +99,7 @@ The following is a prioritized list of recommendations to improve the codebase.
     2. A função `process_upload_and_generate_reports` foi implementada para orquestrar todo o fluxo de geração de relatórios.
     3. A rota `/upload` em `app.py` foi simplificada, tornando-se um "controlador" enxuto que apenas delega a tarefa para a camada de serviço.
     4. Um teste de unidade (`tests/test_services.py`) foi criado para validar a camada de serviço de forma isolada.
+    5. A lógica da rota `/compare` também foi movida para uma função dedicada em `services.py`, mantendo a consistência da arquitetura.
 
 ### Priority 3: Improve Code Quality and Logging
 
