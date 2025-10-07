@@ -25,7 +25,7 @@ def sample_dataframe():
     }
     df = pd.DataFrame(data)
     df['severity_score'] = df['severity'].replace({4: 4, 3: 3, 2: 2, 1: 1, 0: 0})
-    df['priority_group_score'] = df['sn_priority_group'].replace({'high': 3, 'medium': 2, 'low': 1})
+    df['priority_group_score'] = df['sn_priority_group'].map({'high': 3, 'medium': 2, 'low': 1}).fillna(0)
     df['score_criticidade_final'] = df['severity_score'] + df['priority_group_score']
     return df
 

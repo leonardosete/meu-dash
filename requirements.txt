@@ -1,8 +1,8 @@
 Flask
-pandas
-numpy
-Flask-SQLAlchemy
 Flask-Migrate
+Flask-SQLAlchemy
 gunicorn
+numpy
+pandas
 pytest
-pytest-flask
+Werkzeug

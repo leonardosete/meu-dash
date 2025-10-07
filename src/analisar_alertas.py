@@ -21,7 +21,7 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
     """Carrega, valida e pré-processa os dados de um arquivo CSV."""
     print(f"⚙️  Carregando e preparando dados de '{filepath}'...")
     try:
-        df = pd.read_csv(filepath, encoding="utf-8-sig", sep=None, engine='python')
+        df = pd.read_csv(filepath, encoding="utf-8-sig", sep=';', engine='python')
     except FileNotFoundError:
         raise FileNotFoundError(f"O arquivo de entrada '{filepath}' não foi encontrado.")
     except Exception as e:
@@ -184,21 +184,25 @@ def analisar_arquivo_csv(input_file: str, output_dir: str, light_analysis: bool 
     summary = analisar_grupos(df)
     export_summary_to_json(summary.copy(), output_json)
 
+    df_atuacao = summary[summary["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
+
     if light_analysis:
         print("💡 Análise leve concluída. Apenas o resumo JSON foi gerado.")
         return {
             'summary': summary,
-            'df_atuacao': None,
+            'df_atuacao': df_atuacao,
             'num_logs_invalidos': num_logs_invalidos,
+            'json_path': output_json,
         }
 
     # 2. Geração de Relatórios CSV
     df_atuacao = gerar_relatorios_csv(summary, output_actuation_csv, output_ok_csv, output_instability_csv)
-    
-    print(f"✅ Análise completa finalizada. Os artefatos foram gerados em: {output_dir}")
+
+    print(f"\n✅ Análise de dados finalizada. Os artefatos foram gerados em: {output_dir}")
     
     return {
         'summary': summary,
         'df_atuacao': df_atuacao,
         'num_logs_invalidos': num_logs_invalidos,
+        'json_path': output_json,
     }

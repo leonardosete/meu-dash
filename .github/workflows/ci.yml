@@ -1,0 +1,61 @@
+# Workflow de CI/CD unificado: Testa, Constrói e Publica a imagem Docker.
+name: CI - Build, Test, and Publish
+
+on:
+  # Dispara o workflow em pushes para as branches principais e de refatoração.
+  push:
+    branches:
+      - main
+      - refactor/**
+  # Dispara o workflow em pull requests para a branch main.
+  pull_request:
+    branches:
+      - main
+  # Permite a execução manual do workflow a partir da aba "Actions" do GitHub.
+  workflow_dispatch:
+
+jobs:
+  build-test-publish:
+    name: Build, Test, and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout do código: Baixa o código do repositório para o runner.
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+
+      # 2. Configuração do Python: Prepara o ambiente Python.
+      - name: Set up Python
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c
+        with:
+          python-version: '3.11'
+
+      # 3. Instalação de Dependências: Instala as bibliotecas listadas no requirements.txt.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 4. Execução dos Testes: Roda a suíte de testes com pytest.
+      # Se este passo falhar, o workflow para aqui.
+      - name: Run tests
+        run: pytest
+
+      # 5. Login no Docker Hub: Só executa em pushes para a branch 'main' e se os testes passaram.
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 6. Build e Push da Imagem: Só executa em pushes para a 'main' e se os testes passaram.
+      - name: Build and push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:${{ github.sha }}
