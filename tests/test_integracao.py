@@ -105,7 +105,9 @@ def test_path_traversal_is_blocked(client):
     response = client.get("/reports/some_run/../../requirements.txt")
 
     # Assert: Verifica se a resposta é 404 Not Found, e não 200 OK.
-    assert response.status_code == 404, "A vulnerabilidade de Path Traversal ainda existe!"
+    assert (
+        response.status_code == 404
+    ), "A vulnerabilidade de Path Traversal ainda existe!"
 
 
 @patch("src.app.services")
