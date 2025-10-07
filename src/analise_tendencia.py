@@ -20,9 +20,11 @@ CASE_ID_COLS = [
     "cmdb_ci.sys_class_name",
 ]
 
+
 def sanitize_for_id(text):
     """Cria uma string segura para ser usada como ID HTML."""
-    return re.sub(r'[^a-zA-Z0-9\-_]', '-', str(text)).lower()
+    return re.sub(r"[^a-zA-Z0-9\-_]", "-", str(text)).lower()
+
 
 def load_summary_from_json(filepath: str):
     """
@@ -51,6 +53,7 @@ def load_summary_from_json(filepath: str):
     except (FileNotFoundError, ValueError, TypeError) as e:
         logger.error(f"Erro ao carregar ou processar o arquivo JSON '{filepath}': {e}")
         return None
+
 
 def calculate_kpis_and_merged_df(df_p1, df_p2):
     """
@@ -105,6 +108,7 @@ def calculate_kpis_and_merged_df(df_p1, df_p2):
 
     return kpis, merged_df
 
+
 def analyze_persistent_cases(merged_df):
     """Analisa apenas os casos persistentes (existiam em ambos os períodos)."""
     persistent_df = merged_df[merged_df["_merge"] == "both"].copy()
@@ -130,9 +134,13 @@ def generate_kpis_html(kpis):
     """Gera o HTML para a seção de KPIs do panorama geral."""
     saldo_icon = ""
     if kpis["total_p2"] > kpis["total_p1"]:
-        saldo_icon = "<span style='font-size: 0.7em; color: var(--danger-color);'>▲</span>"
+        saldo_icon = (
+            "<span style='font-size: 0.7em; color: var(--danger-color);'>▲</span>"
+        )
     elif kpis["total_p2"] < kpis["total_p1"]:
-        saldo_icon = "<span style='font-size: 0.7em; color: var(--success-color);'>▼</span>"
+        saldo_icon = (
+            "<span style='font-size: 0.7em; color: var(--success-color);'>▼</span>"
+        )
 
     kpi_html = "<h2>Panorama Geral: O Funil de Resolução</h2>"
     kpi_html += "<div class='definition-box'><strong>Definição:</strong> Um 'Caso' é um problema único que precisa de ação. O fluxo abaixo mostra a evolução do número de casos e do volume total de alertas entre os dois períodos.</div>"
@@ -205,6 +213,7 @@ def generate_kpis_html(kpis):
 
     return kpi_html
 
+
 def _generate_change_bar_html(change, max_abs_change):
     """Gera o HTML para uma barra de variação (positiva/negativa)."""
     change_sign = ""
@@ -227,6 +236,7 @@ def _generate_change_bar_html(change, max_abs_change):
         <div class="bar-wrapper"><div class="bar {bar_class}" style="width: {bar_width}%;"></div></div>
         <span class="change-value" style="color: {change_color}">{change_sign}{change:,.0f}</span>
     </div>"""
+
 
 def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, label_p2):
     """Gera a tabela HTML para os casos persistentes por squad."""
@@ -271,9 +281,11 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
     total_change_color = (
         "var(--danger-color)"
         if total_change > 0
-        else "var(--success-color)"
-        if total_change < 0
-        else "var(--text-secondary-color)"
+        else (
+            "var(--success-color)"
+            if total_change < 0
+            else "var(--text-secondary-color)"
+        )
     )
 
     table_footer = f"<tfoot><tr><td>Total</td>"
@@ -282,6 +294,7 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
 
     table_header = f"<thead><tr><th style='width: 35%;'>Squad</th><th style='width: 25%;'>Variação de Alertas</th><th class='center'>Alertas ({escape(label_p2)})</th><th class='center'>Alertas ({escape(label_p1)})</th><th class='center'>Nº de Casos Persistentes</th></tr></thead>"
     return f"<table>{table_header}{table_body}{table_footer}</table>"
+
 
 def generate_trend_table_html(df_merged, label_p1, label_p2):
     """Gera uma tabela de tendência genérica para diferentes categorias."""
@@ -311,9 +324,11 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
         case_col_name = (
             "Nº de Casos (Novos)"
             if total_p1 == 0 and total_p2 > 0
-            else "Nº de Casos (Resolvidos)"
-            if total_p2 == 0 and total_p1 > 0
-            else "Nº de Casos"
+            else (
+                "Nº de Casos (Resolvidos)"
+                if total_p2 == 0 and total_p1 > 0
+                else "Nº de Casos"
+            )
         )
         table_header += f"<th class='center'>{case_col_name}</th>"
     table_header += "</tr></thead>"
@@ -323,9 +338,7 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
         p1_count, p2_count, change = row["count_p1"], row["count_p2"], row["change"]
         table_body += f"<tr><td>{escape(str(name))}</td><td>{_generate_change_bar_html(change, max_abs_change)}</td><td class='center'>{int(p2_count)}</td><td class='center'>{int(p1_count)}</td>"
         if has_case_count:
-            table_body += (
-                f'<td class="center" style="font-weight: bold;">{int(row["num_cases"])}</td>'
-            )
+            table_body += f'<td class="center" style="font-weight: bold;">{int(row["num_cases"])}</td>'
         table_body += "</tr>"
     table_body += "</tbody>"
 
@@ -333,9 +346,11 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
     total_change_color = (
         "var(--danger-color)"
         if total_change > 0
-        else "var(--success-color)"
-        if total_change < 0
-        else "var(--text-secondary-color)"
+        else (
+            "var(--success-color)"
+            if total_change < 0
+            else "var(--text-secondary-color)"
+        )
     )
 
     table_footer = f"<tfoot><tr><td>Total</td>"
@@ -363,7 +378,9 @@ def gerar_relatorio_tendencia(
     df_p2 = load_summary_from_json(json_atual)
 
     if df_p1 is None or df_p2 is None:
-        logger.error("Não foi possível continuar a análise de tendência devido a erro no carregamento dos resumos JSON.")
+        logger.error(
+            "Não foi possível continuar a análise de tendência devido a erro no carregamento dos resumos JSON."
+        )
         return None
 
     df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
@@ -428,21 +445,15 @@ def gerar_relatorio_tendencia(
     else:
         back_link = '<a href="resumo_geral.html">&larr; Voltar para o Dashboard</a>'
 
-    periodo_anterior_text = (
-        f"<code>{escape(os.path.basename(csv_anterior_name))}</code>"
-        + (
-            f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>"
-            if date_range_anterior
-            else ""
-        )
+    periodo_anterior_text = f"<code>{escape(os.path.basename(csv_anterior_name))}</code>" + (
+        f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>"
+        if date_range_anterior
+        else ""
     )
-    periodo_atual_text = (
-        f"<code>{escape(os.path.basename(csv_atual_name))}</code>"
-        + (
-            f" <span style='color: var(--text-secondary-color);'>({escape(date_range_atual)})</span>"
-            if date_range_atual
-            else ""
-        )
+    periodo_atual_text = f"<code>{escape(os.path.basename(csv_atual_name))}</code>" + (
+        f" <span style='color: var(--text-secondary-color);'>({escape(date_range_atual)})</span>"
+        if date_range_atual
+        else ""
     )
 
     body = f"""
@@ -527,6 +538,7 @@ def gerar_relatorio_tendencia(
         )
         return None
 
+
 def main_cli():
     """Função para manter a compatibilidade com a execução via linha de comando."""
     import argparse
@@ -558,6 +570,7 @@ def main_cli():
         args.csv_atual_name,
         output_path,
     )
+
 
 if __name__ == "__main__":
     main_cli()

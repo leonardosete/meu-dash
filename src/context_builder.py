@@ -1,6 +1,7 @@
 """
 Módulo para construir os dicionários de contexto para a renderização de templates HTML.
 """
+
 import os
 from typing import Dict, Any
 import logging
@@ -96,9 +97,7 @@ def build_dashboard_context(
     end_date = summary_df["last_event"].max() if not summary_df.empty else None
     date_range_text = "Período da Análise: Dados Indisponíveis"
     if start_date and end_date:
-        date_range_text = (
-            f"Período da Análise: {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}"
-        )
+        date_range_text = f"Período da Análise: {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}"
 
     squads_prioritarias = (
         df_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True)

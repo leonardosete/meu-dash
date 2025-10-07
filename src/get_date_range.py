@@ -15,8 +15,16 @@ def get_date_range_from_file(filepath: str) -> Optional[str]:
         determinar o intervalo.
     """
     try:
-        df = pd.read_csv(filepath, usecols=['sys_created_on'], encoding="utf-8-sig", sep=None, engine='python')
-        datetimes = pd.to_datetime(df["sys_created_on"], errors="coerce", format="mixed")
+        df = pd.read_csv(
+            filepath,
+            usecols=["sys_created_on"],
+            encoding="utf-8-sig",
+            sep=None,
+            engine="python",
+        )
+        datetimes = pd.to_datetime(
+            df["sys_created_on"], errors="coerce", format="mixed"
+        )
         valid_dates = datetimes.dropna()
 
         if valid_dates.empty:
@@ -27,8 +35,12 @@ def get_date_range_from_file(filepath: str) -> Optional[str]:
             return f"{min_date.strftime('%d/%m/%Y')} a {max_date.strftime('%d/%m/%Y')}"
 
     except (FileNotFoundError, ValueError, KeyError) as e:
-        print(f"⚠️  Aviso: Não foi possível ler as datas do arquivo '{filepath}'. Erro: {e}", file=sys.stderr)
+        print(
+            f"⚠️  Aviso: Não foi possível ler as datas do arquivo '{filepath}'. Erro: {e}",
+            file=sys.stderr,
+        )
         return None
+
 
 def main_cli():
     """Função para manter a compatibilidade com a execução via linha de comando."""
@@ -42,6 +54,7 @@ def main_cli():
     else:
         print("N/A", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main_cli()

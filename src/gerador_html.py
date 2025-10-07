@@ -38,7 +38,10 @@ CHEVRON_SVG = """<svg width="18" height="18" viewBox="0 0 24 24" fill="none" str
 # FUNÇÕES AUXILIARES DE RENDERIZAÇÃO
 # =============================================================================
 
-def gerar_cores_para_barra(valor: float, valor_min: float, valor_max: float) -> tuple[str, str]:
+
+def gerar_cores_para_barra(
+    valor: float, valor_min: float, valor_max: float
+) -> tuple[str, str]:
     """Gera uma tupla com (cor de fundo, cor de texto) para a barra do gráfico."""
     if valor_max == valor_min:
         return "hsl(0, 90%, 55%)", "white"
@@ -50,11 +53,17 @@ def gerar_cores_para_barra(valor: float, valor_min: float, valor_max: float) -> 
     text_color = "var(--text-color-dark)" if hue > 35 else "white"
     return background_color, text_color
 
-def renderizar_pagina_html(template: str, title: str, body: str, footer_timestamp: str) -> str:
+
+def renderizar_pagina_html(
+    template: str, title: str, body: str, footer_timestamp: str
+) -> str:
     """Renderiza o template HTML principal com o conteúdo fornecido."""
     return template.format(title=title, body=body, footer_timestamp=footer_timestamp)
 
-def renderizar_pagina_csv_viewer(template: str, csv_content: str, page_title: str, csv_filename: str) -> str:
+
+def renderizar_pagina_csv_viewer(
+    template: str, csv_content: str, page_title: str, csv_filename: str
+) -> str:
     """Renderiza um template de visualizador de CSV (como Handsontable)."""
     # CORREÇÃO: Usa uma "raw string" (r'...') para criar a sequência de escape de forma explícita e segura.
     csv_payload = csv_content.replace("`", r"\`")
@@ -76,6 +85,7 @@ def renderizar_pagina_csv_viewer(template: str, csv_content: str, page_title: st
     final_html = final_html.replace("__CSV_FILENAME__", csv_filename)
 
     return final_html
+
 
 def renderizar_visualizador_json(json_data_str: str) -> str:
     """Cria um arquivo HTML estático para visualizar o JSON de forma formatada."""
@@ -161,9 +171,11 @@ def renderizar_visualizador_json(json_data_str: str) -> str:
 </html>
 """
 
+
 # =============================================================================
 # RENDERIZAÇÃO DE COMPONENTES E PÁGINAS
 # =============================================================================
+
 
 def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     """Gera o corpo HTML do dashboard principal com base no contexto de dados."""
@@ -445,12 +457,22 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     if grupos_atuacao > 0:
         view_icon_html = f'<a href="editor_atuacao.html" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
     else:
-        disabled_svg = VIEW_ICON_SVG.replace('class="download-icon"', 'class="download-icon" style="opacity: 0.4;"')
+        disabled_svg = VIEW_ICON_SVG.replace(
+            'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
+        )
         view_icon_html = f'<span class="download-link" title="Nenhum arquivo de atuação gerado." style="cursor: not-allowed;">{disabled_svg}</span>'
-    card_class = 'card-fire-shake' if grupos_atuacao > 0 else 'card-neon card-neon-blue'
-    tooltip_text = 'Casos que precisam de revisão: Remediação Pendente.' if grupos_atuacao > 0 else 'Tudo certo! Nenhum caso precisa de intervenção manual.'
+    card_class = "card-fire-shake" if grupos_atuacao > 0 else "card-neon card-neon-blue"
+    tooltip_text = (
+        "Casos que precisam de revisão: Remediação Pendente."
+        if grupos_atuacao > 0
+        else "Tudo certo! Nenhum caso precisa de intervenção manual."
+    )
     status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{'flashing-icon' if grupos_atuacao > 0 else ''}" style="font-size: 1.5em;">{'🚨' if grupos_atuacao > 0 else '✅'}</span><div class="tooltip-content" style="width: 240px; left: 0; margin-left: 0;">{escape(tooltip_text)}</div></div>"""
-    kpi_color_style = 'color: var(--danger-color);' if grupos_atuacao > 0 else 'color: var(--accent-color);'
+    kpi_color_style = (
+        "color: var(--danger-color);"
+        if grupos_atuacao > 0
+        else "color: var(--accent-color);"
+    )
     body_content += f"""
     <div class="card kpi-card {card_class}">
         {status_icon_html}
@@ -463,11 +485,25 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     if grupos_instabilidade > 0:
         instabilidade_view_icon_html = f'<a href="instabilidade_cronica.html" class="download-link" title="Visualizar detalhes dos casos de instabilidade">{VIEW_ICON_SVG}</a>'
     else:
-        disabled_svg = VIEW_ICON_SVG.replace('class="download-icon"', 'class="download-icon" style="opacity: 0.4;"')
+        disabled_svg = VIEW_ICON_SVG.replace(
+            'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
+        )
         instabilidade_view_icon_html = f'<span class="download-link" title="Nenhum caso de instabilidade crônica detectado." style="cursor: not-allowed;">{disabled_svg}</span>'
-    instabilidade_card_class = 'card-neon card-neon-warning' if grupos_instabilidade > 0 else 'card-neon card-neon-blue'
-    instabilidade_kpi_color = 'color: var(--warning-color);' if grupos_instabilidade > 0 else 'color: var(--accent-color);'
-    tooltip_instabilidade_text = "Casos que são remediados, mas ocorrem com alta frequência. Oportunidades para análise de causa raiz." if grupos_instabilidade > 0 else "Nenhum ponto de alta recorrência crônica detectado."
+    instabilidade_card_class = (
+        "card-neon card-neon-warning"
+        if grupos_instabilidade > 0
+        else "card-neon card-neon-blue"
+    )
+    instabilidade_kpi_color = (
+        "color: var(--warning-color);"
+        if grupos_instabilidade > 0
+        else "color: var(--accent-color);"
+    )
+    tooltip_instabilidade_text = (
+        "Casos que são remediados, mas ocorrem com alta frequência. Oportunidades para análise de causa raiz."
+        if grupos_instabilidade > 0
+        else "Nenhum ponto de alta recorrência crônica detectado."
+    )
     instabilidade_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{'flashing-icon' if grupos_instabilidade > 0 else ''}" style="font-size: 1.5em;">{'⚠️' if grupos_instabilidade > 0 else '✅'}</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_instabilidade_text)}</div></div>"""
 
     body_content += f"""
@@ -485,7 +521,9 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     if casos_sucesso > 0:
         sucesso_view_icon_html = f'<a href="{sucesso_page_name}" class="download-link" title="Visualizar detalhes dos casos resolvidos">{VIEW_ICON_SVG}</a>'
     else:
-        disabled_svg = VIEW_ICON_SVG.replace('class="download-icon"', 'class="download-icon" style="opacity: 0.4;"')
+        disabled_svg = VIEW_ICON_SVG.replace(
+            'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
+        )
         sucesso_view_icon_html = f'<span class="download-link" title="Nenhum caso resolvido automaticamente." style="cursor: not-allowed;">{disabled_svg}</span>'
     body_content += f"""
     <div class="card kpi-card card-neon {automation_card_class}">
@@ -497,7 +535,9 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     </div>
     """
 
-    tooltip_volume_casos = "Distribuição do total de casos únicos analisados no período."
+    tooltip_volume_casos = (
+        "Distribuição do total de casos únicos analisados no período."
+    )
     body_content += f"""
     <div class="card">
         <h3><span class="card-title">Volume de Casos</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_volume_casos)}</div></div></h3>
@@ -509,8 +549,12 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     """
 
     tooltip_volume = "Distribuição do total de alertas únicos analisados no período."
-    sem_remediacao_color_style = 'color: var(--danger-color);' if total_alertas_problemas > 0 else 'color: var(--text-secondary-color);'
-    remediados_color_style = 'color: var(--success-color);'
+    sem_remediacao_color_style = (
+        "color: var(--danger-color);"
+        if total_alertas_problemas > 0
+        else "color: var(--text-secondary-color);"
+    )
+    remediados_color_style = "color: var(--success-color);"
     body_content += f"""
     <div class="card">
         <h3><span class="card-title">Volume de Alertas</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_volume)}</div></div></h3>
@@ -530,15 +574,25 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         <div style="flex-grow: 1; display: flex; flex-direction: column;">
     """
     if not top_5_squads_agrupadas.empty:
-        max_score = top_5_squads_agrupadas['score_acumulado'].max() if not top_5_squads_agrupadas.empty else 20
+        max_score = (
+            top_5_squads_agrupadas["score_acumulado"].max()
+            if not top_5_squads_agrupadas.empty
+            else 20
+        )
         min_score = 0
         for _, row in top_5_squads_agrupadas.iterrows():
-            score_color, _ = gerar_cores_para_barra(row['score_acumulado'], min_score, max_score * 1.1)
-            squad_name = escape(row['assignment_group'])
-            plural_casos = 'casos' if row['total_casos'] > 1 else 'caso'
+            score_color, _ = gerar_cores_para_barra(
+                row["score_acumulado"], min_score, max_score * 1.1
+            )
+            squad_name = escape(row["assignment_group"])
+            plural_casos = "casos" if row["total_casos"] > 1 else "caso"
             total_casos_txt = f"({row['total_casos']} {plural_casos})"
-            sanitized_squad_name = re.sub(r'[^a-zA-Z0-9_-]', '', squad_name.replace(" ", "_"))
-            plan_path = f"{plan_dir_base_name}/plano-de-acao-{sanitized_squad_name}.html"
+            sanitized_squad_name = re.sub(
+                r"[^a-zA-Z0-9_-]", "", squad_name.replace(" ", "_")
+            )
+            plan_path = (
+                f"{plan_dir_base_name}/plano-de-acao-{sanitized_squad_name}.html"
+            )
 
             body_content += f"""
             <a href="{plan_path}" class="priority-list-item-new" title="Ver plano de ação para {squad_name}">
@@ -551,8 +605,8 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
             """
     else:
         body_content += "<p>Nenhum caso prioritário precisa de atuação. ✅</p>"
-    body_content += '</div></div>'
-    body_content += '</div></div>'
+    body_content += "</div></div>"
+    body_content += "</div></div>"
 
     body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}TOP 5 - SEM REMEDIAÇÃO</button>'
     body_content += '<div class="content" style="display: none; padding-top: 20px;"><div class="grid-container" style="grid-template-columns: 1fr 1fr; align-items: stretch; gap: 20px;">'
@@ -563,9 +617,13 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         min_squad_val, max_squad_val = top_squads.min(), top_squads.max()
         for squad, count in top_squads.items():
             bar_width = (count / max_squad_val) * 100
-            background_color, text_color = gerar_cores_para_barra(count, min_squad_val, max_squad_val)
-            sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', squad.replace(" ", "_"))
-            plan_path = os.path.join(plan_dir_base_name, f"plano-de-acao-{sanitized_name}.html")
+            background_color, text_color = gerar_cores_para_barra(
+                count, min_squad_val, max_squad_val
+            )
+            sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", squad.replace(" ", "_"))
+            plan_path = os.path.join(
+                plan_dir_base_name, f"plano-de-acao-{sanitized_name}.html"
+            )
             body_content += f'<div class="bar-item"><div class="bar-label"><a href="{plan_path}" title="{escape(squad)}">{escape(squad)}</a></div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
         body_content += "</div>"
     else:
@@ -573,7 +631,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     squads_com_casos_count = len(all_squads[all_squads > 0])
     if squads_com_casos_count > len(top_squads):
         body_content += f'<div class="footer-link"><a href="todas_as_squads.html">Ver todas as squads ({squads_com_casos_count}) &rarr;</a></div>'
-    body_content += '</div>'
+    body_content += "</div>"
 
     tooltip_abertos = "Tipos de problemas que mais geraram alertas sem remediação."
     body_content += f'<div class="card"><h3><span class="card-title">TOP 5 ALERTAS</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_abertos)}</div></div></h3>'
@@ -582,29 +640,45 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         min_val, max_val = top_problemas_atuacao.min(), top_problemas_atuacao.max()
         for problem, count in top_problemas_atuacao.items():
             bar_width = (count / max_val) * 100
-            background_color, text_color = gerar_cores_para_barra(count, min_val, max_val)
-            sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
-            details_path = os.path.join(details_dir_base_name, f"detalhe_aberto_{sanitized_name}.html")
+            background_color, text_color = gerar_cores_para_barra(
+                count, min_val, max_val
+            )
+            sanitized_name = re.sub(
+                r"[^a-zA-Z0-9_-]", "", problem[:50].replace(" ", "_")
+            )
+            details_path = os.path.join(
+                details_dir_base_name, f"detalhe_aberto_{sanitized_name}.html"
+            )
             body_content += f'<div class="bar-item"><div class="bar-label"><a href="{details_path}" title="Ver detalhes">{escape(problem)}</a></div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
         body_content += "</div>"
-    else: body_content += "<p>Nenhum caso em aberto. ✅</p>"
-    body_content += '</div></div>'
+    else:
+        body_content += "<p>Nenhum caso em aberto. ✅</p>"
+    body_content += "</div></div>"
 
-    tooltip_metricas = "Categorias de métricas com maior número de Casos sem remediação."
+    tooltip_metricas = (
+        "Categorias de métricas com maior número de Casos sem remediação."
+    )
     body_content += f'<div class="card full-width"><h3><span class="card-title">TOP 5 CATEGORias</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_metricas)}</div></div></h3>'
     if not top_metrics.empty:
         body_content += '<div class="bar-chart-container">'
         min_metric_val, max_metric_val = top_metrics.min(), top_metrics.max()
         for metric, count in top_metrics.items():
             bar_width = (count / max_metric_val) * 100
-            background_color, text_color = gerar_cores_para_barra(count, min_metric_val, max_metric_val)
-            sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', metric.replace(" ", "_"))
-            details_path = os.path.join(details_dir_base_name, f"detalhe_metrica_{sanitized_name}.html")
-            label_html = f'<a href="{details_path}" title="Ver detalhes">{escape(metric)}</a>'
+            background_color, text_color = gerar_cores_para_barra(
+                count, min_metric_val, max_metric_val
+            )
+            sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", metric.replace(" ", "_"))
+            details_path = os.path.join(
+                details_dir_base_name, f"detalhe_metrica_{sanitized_name}.html"
+            )
+            label_html = (
+                f'<a href="{details_path}" title="Ver detalhes">{escape(metric)}</a>'
+            )
             body_content += f'<div class="bar-item"><div class="bar-label">{label_html}</div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
         body_content += "</div>"
-    else: body_content += "<p>Nenhuma categoria com casos em aberto. ✅</p>"
-    body_content += '</div></div>'
+    else:
+        body_content += "<p>Nenhuma categoria com casos em aberto. ✅</p>"
+    body_content += "</div></div>"
 
     body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}TENDÊNCIAS E OPORTUNIDADES</button>'
     body_content += '<div class="content" style="display: none; padding-top: 20px;"><div class="grid-container" style="grid-template-columns: 1fr; gap: 20px;">'
@@ -613,31 +687,49 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     body_content += f'<div class="card"><h3><span class="card-title">TOP 5 PONTOS DE ATENÇÃO</span><div class="tooltip-container"><span class="flashing-icon">🚨</span><div class="tooltip-content" style="width: 300px;">{escape(tooltip_instabilidade_chart)}</div></div></h3>'
     if not top_problemas_instabilidade.empty:
         body_content += '<div class="bar-chart-container">'
-        min_val, max_val = top_problemas_instabilidade.min(), top_problemas_instabilidade.max()
+        min_val, max_val = (
+            top_problemas_instabilidade.min(),
+            top_problemas_instabilidade.max(),
+        )
         for problem, count in top_problemas_instabilidade.items():
             bar_width = (count / max_val) * 100
             background_color, text_color = "hsl(45, 90%, 55%)", "var(--text-color-dark)"
-            sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
-            details_path = os.path.join(details_dir_base_name, f"detalhe_instabilidade_{sanitized_name}.html")
+            sanitized_name = re.sub(
+                r"[^a-zA-Z0-9_-]", "", problem[:50].replace(" ", "_")
+            )
+            details_path = os.path.join(
+                details_dir_base_name, f"detalhe_instabilidade_{sanitized_name}.html"
+            )
             body_content += f'<div class="bar-item"><div class="bar-label"><a href="{details_path}" title="Ver detalhes">{escape(problem)}</a></div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
         body_content += "</div>"
-    else: body_content += "<p>Nenhum ponto de alta recorrência crônica detectado. ✅</p>"
-    body_content += '</div>'
+    else:
+        body_content += "<p>Nenhum ponto de alta recorrência crônica detectado. ✅</p>"
+    body_content += "</div>"
 
     mensagem_tooltip = "Problemas com menor frequência de remediação, mas que também podem indicar instabilidade e são candidatos a uma análise de causa raiz definitiva."
     body_content += f'<div class="card"><h3><span class="card-title">TOP 5 REMEDIAÇÕES EXECUTADAS</span><div class="tooltip-container"><span class="flashing-icon">⚠️</span><div class="tooltip-content">{escape(mensagem_tooltip)}</div></div></h3>'
     if not top_problemas_remediados.empty:
         body_content += '<div class="bar-chart-container">'
-        min_val, max_val = top_problemas_remediados.min(), top_problemas_remediados.max()
+        min_val, max_val = (
+            top_problemas_remediados.min(),
+            top_problemas_remediados.max(),
+        )
         for problem, count in top_problemas_remediados.items():
             bar_width = (count / max_val) * 100
             background_color, text_color = f"hsl(155, 60%, 45%)", "white"
-            sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
-            details_path = os.path.join(details_dir_base_name, f"detalhe_remediado_{sanitized_name}.html")
+            sanitized_name = re.sub(
+                r"[^a-zA-Z0-9_-]", "", problem[:50].replace(" ", "_")
+            )
+            details_path = os.path.join(
+                details_dir_base_name, f"detalhe_remediado_{sanitized_name}.html"
+            )
             body_content += f'<div class="bar-item"><div class="bar-label"><a href="{details_path}" title="Ver detalhes">{escape(problem)}</a></div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
         body_content += "</div>"
-    else: body_content += "<p><strong>⚠️ Nenhum problema remediado automaticamente.</strong></p>"
-    body_content += '</div></div></div>'
+    else:
+        body_content += (
+            "<p><strong>⚠️ Nenhum problema remediado automaticamente.</strong></p>"
+        )
+    body_content += "</div></div></div>"
 
     body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}TOP 10 - ALERTAS (GERAL)</button>'
     body_content += '<div class="content" style="display: none; padding-top: 20px;">'
@@ -645,15 +737,25 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     body_content += f'<div class="card"><h3><span class="card-title">TOP 10 ALERTAS</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_recorrentes)}</div></div></h3>'
     if not top_problemas_geral.empty:
         body_content += '<div class="bar-chart-container">'
-        min_prob_val, max_prob_val = top_problemas_geral.min(), top_problemas_geral.max()
+        min_prob_val, max_prob_val = (
+            top_problemas_geral.min(),
+            top_problemas_geral.max(),
+        )
         for problem, count in top_problemas_geral.items():
             bar_width = (count / max_prob_val) * 100
-            background_color, text_color = gerar_cores_para_barra(count, min_prob_val, max_prob_val)
-            sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '', problem[:50].replace(" ", "_"))
-            details_path = os.path.join(details_dir_base_name, f"detalhe_geral_{sanitized_name}.html")
+            background_color, text_color = gerar_cores_para_barra(
+                count, min_prob_val, max_prob_val
+            )
+            sanitized_name = re.sub(
+                r"[^a-zA-Z0-9_-]", "", problem[:50].replace(" ", "_")
+            )
+            details_path = os.path.join(
+                details_dir_base_name, f"detalhe_geral_{sanitized_name}.html"
+            )
             body_content += f'<div class="bar-item"><div class="bar-label"><a href="{details_path}" title="Ver detalhes">{escape(problem)}</a></div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
         body_content += "</div>"
-    else: body_content += "<p>Nenhum problema recorrente. ✅</p>"
-    body_content += '</div></div>'
+    else:
+        body_content += "<p>Nenhum problema recorrente. ✅</p>"
+    body_content += "</div></div>"
 
     return body_content

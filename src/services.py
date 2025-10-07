@@ -39,7 +39,9 @@ def process_upload_and_generate_reports(
     """
     # 1. Salvar arquivo e preparar ambiente
     filename_atual = secure_filename(file_atual.filename)
-    filepath_atual = os.path.join(upload_folder, f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_atual}")
+    filepath_atual = os.path.join(
+        upload_folder, f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_atual}"
+    )
     file_atual.save(filepath_atual)
     date_range_atual = get_date_range_from_file(filepath_atual)
 
@@ -95,7 +97,9 @@ def process_upload_and_generate_reports(
                 "O arquivo enviado não é cronologicamente mais recente. A análise de tendência será pulada."
             )
     else:
-        logger.info("Nenhum relatório anterior encontrado para comparação de tendência.")
+        logger.info(
+            "Nenhum relatório anterior encontrado para comparação de tendência."
+        )
 
     # 3. Análise Principal (Completa)
     analysis_results = analisar_arquivo_csv(
@@ -116,7 +120,9 @@ def process_upload_and_generate_reports(
     # 5. Geração de todas as páginas HTML
     timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
     summary_html_path = os.path.join(output_dir, "resumo_geral.html")
-    gerador_paginas.gerar_resumo_executivo(dashboard_context, summary_html_path, timestamp_str)
+    gerador_paginas.gerar_resumo_executivo(
+        dashboard_context, summary_html_path, timestamp_str
+    )
 
     df_atuacao = analysis_results["df_atuacao"]
     summary = analysis_results["summary"]
@@ -244,7 +250,9 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
             )
 
         filepath_atual, filepath_anterior = sorted_paths
-        filename_atual = os.path.basename(filepath_atual).replace(f"temp_{os.path.basename(filepath_atual).split('_')[1]}_", "")
+        filename_atual = os.path.basename(filepath_atual).replace(
+            f"temp_{os.path.basename(filepath_atual).split('_')[1]}_", ""
+        )
         filename_anterior = os.path.basename(filepath_anterior).replace(
             f"temp_{os.path.basename(filepath_anterior).split('_')[1]}_", ""
         )

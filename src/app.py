@@ -35,7 +35,9 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["REPORTS_FOLDER"] = REPORTS_FOLDER
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = "uma-chave-secreta-forte-para-flash"  # NOVO: Chave secreta necessária para usar flash
+app.config["SECRET_KEY"] = (
+    "uma-chave-secreta-forte-para-flash"  # NOVO: Chave secreta necessária para usar flash
+)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -61,7 +63,8 @@ os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
 
 # --- ROTAS DE HEALTH CHECK PARA KUBERNETES ---
 
-@app.route('/health')
+
+@app.route("/health")
 def health_check():
     """Verifica se a aplicação está online e respondendo a requisições."""
     return jsonify({"status": "ok"}), 200
@@ -69,7 +72,8 @@ def health_check():
 
 # --- ROTAS PRINCIPAIS DA APLICAÇÃO ---
 
-@app.route('/')
+
+@app.route("/")
 def index():
     """Renderiza a página inicial e passa links para as últimas análises, se existirem."""
     last_trend_analysis = None
@@ -145,7 +149,13 @@ def upload_file():
         )
 
         if result:
-            return redirect(url_for('serve_report', run_folder=result['run_folder'], filename=result['report_filename']))
+            return redirect(
+                url_for(
+                    "serve_report",
+                    run_folder=result["run_folder"],
+                    filename=result["report_filename"],
+                )
+            )
         else:
             raise Exception(
                 "O serviço de processamento falhou sem retornar um erro específico."
@@ -166,12 +176,10 @@ def compare_files():
         flash("Nenhum arquivo enviado.", "error")
         return redirect(url_for("index"))
 
-    files = request.files.getlist('files')
+    files = request.files.getlist("files")
 
     if len(files) != 2:
-        flash(
-            "Por favor, selecione exatamente dois arquivos para comparação.", "error"
-        )
+        flash("Por favor, selecione exatamente dois arquivos para comparação.", "error")
         return redirect(url_for("index"))
 
     saved_filepaths = []
@@ -187,7 +195,13 @@ def compare_files():
             upload_folder=app.config["UPLOAD_FOLDER"],
             reports_folder=app.config["REPORTS_FOLDER"],
         )
-        return redirect(url_for('serve_report', run_folder=result['run_folder'], filename=result['report_filename']))
+        return redirect(
+            url_for(
+                "serve_report",
+                run_folder=result["run_folder"],
+                filename=result["report_filename"],
+            )
+        )
 
     except Exception as e:
         logger.error(f"Erro fatal no processo de comparação: {e}", exc_info=True)
@@ -260,9 +274,7 @@ def delete_report(report_id):
         # Deleta a pasta inteira do 'run', garantindo que todos os arquivos associados sejam removidos
         if os.path.isdir(report_dir):
             shutil.rmtree(report_dir)
-            logger.info(
-                f"Diretório de relatório '{report_dir}' excluído com sucesso."
-            )
+            logger.info(f"Diretório de relatório '{report_dir}' excluído com sucesso.")
 
         # Deleta o registro do banco de dados
         db.session.delete(report)
@@ -274,11 +286,9 @@ def delete_report(report_id):
 
     except Exception as e:
         db.session.rollback()
-        logger.error(
-            f"Erro ao excluir o relatório {report_id}: {e}", exc_info=True
-        )
+        logger.error(f"Erro ao excluir o relatório {report_id}: {e}", exc_info=True)
 
-    return redirect(url_for('relatorios'))
+    return redirect(url_for("relatorios"))
 
 
 # --- INICIALIZAÇÃO DA APLICAÇÃO ---

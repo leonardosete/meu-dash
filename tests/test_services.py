@@ -77,11 +77,13 @@ def test_process_upload_and_generate_reports(
     assert (
         mock_gerador_paginas.gerar_resumo_executivo.called
     ), "A geração do resumo executivo deveria ter sido chamada."
-    assert (
-        mock_dependencies["db"].session.add.called
-    ), "Um novo relatório deveria ter sido adicionado à sessão do DB."
-    assert (
-        mock_dependencies["db"].session.commit.called
-    ), "A sessão do DB deveria ter sido 'commitada'."
+    assert mock_dependencies[
+        "db"
+    ].session.add.called, (
+        "Um novo relatório deveria ter sido adicionado à sessão do DB."
+    )
+    assert mock_dependencies[
+        "db"
+    ].session.commit.called, "A sessão do DB deveria ter sido 'commitada'."
     assert "run_folder" in result
     assert "report_filename" in result
