@@ -378,7 +378,7 @@ def gerar_pagina_editor_atuacao(output_dir: str, actuation_csv_path: str, templa
     try:
         with open(template_path, 'r', encoding='utf-8') as f_template:
             template_content = f_template.read()
-        csv_payload = csv_content.replace('\\', '\\\\').replace('`', r'\`')
+        csv_payload = csv_content.replace('\\', '\\\\').replace('`', '\\`')
         placeholder = "___CSV_DATA_PAYLOAD_EDITOR___"
         template_com_placeholder = template_content.replace('const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`', f'const csvDataPayload = `{placeholder}`')
         final_html = template_com_placeholder.replace(placeholder, csv_payload)
