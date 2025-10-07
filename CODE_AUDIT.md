@@ -103,10 +103,10 @@ The following is a prioritized list of recommendations to improve the codebase.
 
 ### Priority 3: Improve Code Quality and Logging
 
-* **Status:** 🟡 **Não Iniciado**
-* **Próximos Passos:**
-    1. Adotar um formatador de código como `black` para padronizar o estilo do projeto.
-    2. Substituir os `print()` por um sistema de `logging` estruturado, essencial para a observabilidade em produção.
+* **Status:** ✅ **Concluído**
+* **Resumo da Implementação:**
+    1. **Formatação de Código:** O formatador `black` foi adicionado ao projeto e aplicado a toda a base de código. Um arquivo `pyproject.toml` foi criado para configurar e excluir diretórios desnecessários. A verificação de formatação (`black --check .`) foi adicionada como um passo obrigatório no pipeline de CI/CD, garantindo a consistência do estilo do código.
+    2. **Logging Estruturado:** Foi criado um módulo centralizado (`src/logging_config.py`) para configurar o logging. Todos os `print()` statements na aplicação foram substituídos por chamadas de logging apropriadas (`logger.info`, `logger.error`, etc.), tornando a aplicação observável e pronta para produção.
 
 ### Priority 4: Refactor "God Functions"
 
