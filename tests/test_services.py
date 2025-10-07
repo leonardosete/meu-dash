@@ -59,6 +59,11 @@ def test_process_upload_and_generate_reports(
         "json_path": "fake/path/summary.json",
     }
 
+    # Configura o retorno do novo orquestrador de páginas
+    mock_gerador_paginas.gerar_ecossistema_de_relatorios.return_value = (
+        "fake/path/resumo_geral.html"
+    )
+
     # Act
     result = services.process_upload_and_generate_reports(
         **mock_dependencies,
@@ -75,8 +80,8 @@ def test_process_upload_and_generate_reports(
         mock_context_builder.build_dashboard_context.called
     ), "O construtor de contexto deveria ter sido chamado."
     assert (
-        mock_gerador_paginas.gerar_resumo_executivo.called
-    ), "A geração do resumo executivo deveria ter sido chamada."
+        mock_gerador_paginas.gerar_ecossistema_de_relatorios.called
+    ), "O orquestrador de geração de relatórios deveria ter sido chamado."
     assert mock_dependencies[
         "db"
     ].session.add.called, (

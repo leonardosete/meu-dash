@@ -118,95 +118,13 @@ def process_upload_and_generate_reports(
     )
 
     # 5. Geração de todas as páginas HTML
-    timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
-    summary_html_path = os.path.join(output_dir, "resumo_geral.html")
-    gerador_paginas.gerar_resumo_executivo(
-        dashboard_context, summary_html_path, timestamp_str
+    # Encapsula a geração de todas as páginas em uma única chamada de orquestração
+    summary_html_path = gerador_paginas.gerar_ecossistema_de_relatorios(
+        dashboard_context=dashboard_context,
+        analysis_results=analysis_results,
+        output_dir=output_dir,
+        base_dir=base_dir,
     )
-
-    df_atuacao = analysis_results["df_atuacao"]
-    summary = analysis_results["summary"]
-    details_dir = os.path.join(output_dir, "detalhes")
-    plan_dir = os.path.join(output_dir, "planos_de_acao")
-    summary_filename = os.path.basename(summary_html_path)
-    plan_dir_base_name = os.path.basename(plan_dir)
-
-    gerador_paginas.gerar_paginas_detalhe_problema(
-        df_atuacao,
-        dashboard_context["top_problemas_atuacao"].index,
-        details_dir,
-        summary_filename,
-        "aberto_",
-        plan_dir_base_name,
-        timestamp_str,
-    )
-    gerador_paginas.gerar_paginas_detalhe_problema(
-        summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)],
-        dashboard_context["top_problemas_remediados"].index,
-        details_dir,
-        summary_filename,
-        "remediado_",
-        plan_dir_base_name,
-        timestamp_str,
-    )
-    gerador_paginas.gerar_paginas_detalhe_problema(
-        summary,
-        dashboard_context["top_problemas_geral"].index,
-        details_dir,
-        summary_filename,
-        "geral_",
-        plan_dir_base_name,
-        timestamp_str,
-    )
-    gerador_paginas.gerar_paginas_detalhe_problema(
-        summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)],
-        dashboard_context["top_problemas_instabilidade"].index,
-        details_dir,
-        summary_filename,
-        "instabilidade_",
-        plan_dir_base_name,
-        timestamp_str,
-    )
-    gerador_paginas.gerar_paginas_detalhe_metrica(
-        df_atuacao,
-        dashboard_context["top_metrics"].index,
-        details_dir,
-        summary_filename,
-        plan_dir_base_name,
-        timestamp_str,
-    )
-    gerador_paginas.gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
-    gerador_paginas.gerar_pagina_squads(
-        dashboard_context["all_squads"],
-        plan_dir,
-        output_dir,
-        summary_filename,
-        timestamp_str,
-    )
-
-    base_template_dir = os.path.join(base_dir, "..", "templates")
-    gerador_paginas.gerar_pagina_sucesso(
-        output_dir,
-        os.path.join(output_dir, "remediados.csv"),
-        os.path.join(base_template_dir, "sucesso_template.html"),
-    )
-    gerador_paginas.gerar_pagina_instabilidade(
-        output_dir,
-        os.path.join(output_dir, "remediados_frequentes.csv"),
-        os.path.join(base_template_dir, "sucesso_template.html"),
-    )
-    gerador_paginas.gerar_pagina_editor_atuacao(
-        output_dir,
-        os.path.join(output_dir, "atuar.csv"),
-        os.path.join(base_template_dir, "editor_template.html"),
-    )
-
-    if analysis_results["num_logs_invalidos"] > 0:
-        gerador_paginas.gerar_pagina_logs_invalidos(
-            output_dir,
-            os.path.join(output_dir, LOG_INVALIDOS_FILENAME),
-            os.path.join(base_template_dir, "sucesso_template.html"),
-        )
 
     # 6. Salvar registro no banco de dados
     new_report = Report(

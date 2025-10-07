@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 from html import escape
 import logging
 import pandas as pd
@@ -30,6 +31,120 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # FUNÇÕES DE GERAÇÃO DE PÁGINAS HTML
 # =============================================================================
+
+
+def gerar_ecossistema_de_relatorios(
+    dashboard_context: dict, analysis_results: dict, output_dir: str, base_dir: str
+) -> str:
+    """
+    Orquestra a geração de todas as páginas HTML do relatório.
+
+    Args:
+        dashboard_context: Dicionário com os dados para os dashboards.
+        analysis_results: Dicionário com os DataFrames da análise.
+        output_dir: Diretório onde os relatórios serão salvos.
+        base_dir: Diretório base da aplicação para encontrar templates.
+
+    Returns:
+        O caminho para o arquivo de resumo principal (resumo_geral.html).
+    """
+    logger.info("Iniciando a geração do ecossistema completo de relatórios HTML...")
+    timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
+    summary_html_path = os.path.join(output_dir, "resumo_geral.html")
+
+    # Gera o dashboard principal
+    gerar_resumo_executivo(dashboard_context, summary_html_path, timestamp_str)
+
+    # Prepara dados e caminhos para as páginas de detalhe
+    df_atuacao = analysis_results["df_atuacao"]
+    summary = analysis_results["summary"]
+    details_dir = os.path.join(output_dir, "detalhes")
+    plan_dir = os.path.join(output_dir, "planos_de_acao")
+    summary_filename = os.path.basename(summary_html_path)
+    plan_dir_base_name = os.path.basename(plan_dir)
+
+    # Gera páginas de detalhe para os principais problemas
+    gerar_paginas_detalhe_problema(
+        df_atuacao,
+        dashboard_context["top_problemas_atuacao"].index,
+        details_dir,
+        summary_filename,
+        "aberto_",
+        plan_dir_base_name,
+        timestamp_str,
+    )
+    gerar_paginas_detalhe_problema(
+        summary[summary["acao_sugerida"].isin(ACAO_FLAGS_OK)],
+        dashboard_context["top_problemas_remediados"].index,
+        details_dir,
+        summary_filename,
+        "remediado_",
+        plan_dir_base_name,
+        timestamp_str,
+    )
+    gerar_paginas_detalhe_problema(
+        summary,
+        dashboard_context["top_problemas_geral"].index,
+        details_dir,
+        summary_filename,
+        "geral_",
+        plan_dir_base_name,
+        timestamp_str,
+    )
+    gerar_paginas_detalhe_problema(
+        summary[summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)],
+        dashboard_context["top_problemas_instabilidade"].index,
+        details_dir,
+        summary_filename,
+        "instabilidade_",
+        plan_dir_base_name,
+        timestamp_str,
+    )
+    gerar_paginas_detalhe_metrica(
+        df_atuacao,
+        dashboard_context["top_metrics"].index,
+        details_dir,
+        summary_filename,
+        plan_dir_base_name,
+        timestamp_str,
+    )
+
+    # Gera páginas de planos de ação e visualizadores de CSV
+    gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
+    gerar_pagina_squads(
+        dashboard_context["all_squads"],
+        plan_dir,
+        output_dir,
+        summary_filename,
+        timestamp_str,
+    )
+
+    base_template_dir = os.path.join(base_dir, "..", "templates")
+    gerar_pagina_sucesso(
+        output_dir,
+        os.path.join(output_dir, "remediados.csv"),
+        os.path.join(base_template_dir, "sucesso_template.html"),
+    )
+    gerar_pagina_instabilidade(
+        output_dir,
+        os.path.join(output_dir, "remediados_frequentes.csv"),
+        os.path.join(base_template_dir, "sucesso_template.html"),
+    )
+    gerar_pagina_editor_atuacao(
+        output_dir,
+        os.path.join(output_dir, "atuar.csv"),
+        os.path.join(base_template_dir, "editor_template.html"),
+    )
+
+    if analysis_results["num_logs_invalidos"] > 0:
+        gerar_pagina_logs_invalidos(
+            output_dir,
+            os.path.join(output_dir, LOG_INVALIDOS_FILENAME),
+            os.path.join(base_template_dir, "sucesso_template.html"),
+        )
+
+    logger.info("Geração do ecossistema de relatórios HTML concluída.")
+    return summary_html_path
 
 
 def carregar_template_html(filepath: str) -> str:

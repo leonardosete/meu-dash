@@ -1,6 +1,7 @@
 import os
 import shutil  # Para deletar diretórios recursivamente
 from datetime import datetime
+from flask import abort
 from flask import (
     Flask,
     render_template,
@@ -14,7 +15,6 @@ from flask import (
 from . import services
 from .utils import sort_files_by_date
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
 from flask_migrate import Migrate
 
 app = Flask(__name__, template_folder="../templates")
@@ -117,7 +117,7 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload_file():
     """Orquestra o processo de upload, análise e comparação automática de tendências."""
-    file_atual = request.files["file_atual"]
+    file_atual = request.files.get("file_atual")
 
     if not file_atual or file_atual.filename == "":
         flash("Nenhum arquivo selecionado.", "error")
@@ -193,35 +193,50 @@ def compare_files():
         return redirect(url_for("index"))
 
 
+# --- FUNÇÃO DE SEGURANÇA PARA SERVIR ARQUIVOS ---
+
+
+def secure_send_from_directory(base_directory, path):
+    """
+    Serve um arquivo de um diretório de forma segura, prevenindo Path Traversal.
+    """
+    # Constrói o caminho absoluto do arquivo solicitado
+    requested_path = os.path.normpath(os.path.join(base_directory, path))
+
+    # Garante que o caminho resolvido está dentro do diretório base
+    if not requested_path.startswith(os.path.abspath(base_directory)):
+        # Se não estiver, é uma tentativa de Path Traversal.
+        abort(404)  # Usar 404 para não vazar informação de que o recurso existe.
+
+    # Usa a função segura do Flask para servir o arquivo
+    return send_from_directory(base_directory, path)
+
+
 # --- ROTAS PARA SERVIR ARQUIVOS ESTÁTICOS ---
 
 
 @app.route("/reports/<run_folder>/planos_de_acao/<filename>")
 def serve_planos(run_folder, filename):
-    return send_from_directory(
-        os.path.join(app.config["REPORTS_FOLDER"], run_folder, "planos_de_acao"),
-        filename,
-    )
+    safe_path = os.path.join(run_folder, "planos_de_acao", filename)
+    return secure_send_from_directory(app.config["REPORTS_FOLDER"], safe_path)
 
 
 @app.route("/reports/<run_folder>/detalhes/<filename>")
 def serve_detalhes(run_folder, filename):
-    return send_from_directory(
-        os.path.join(app.config["REPORTS_FOLDER"], run_folder, "detalhes"), filename
-    )
+    safe_path = os.path.join(run_folder, "detalhes", filename)
+    return secure_send_from_directory(app.config["REPORTS_FOLDER"], safe_path)
 
 
 @app.route("/reports/<run_folder>/<path:filename>")
 def serve_report(run_folder, filename):
-    return send_from_directory(
-        os.path.join(app.config["REPORTS_FOLDER"], run_folder), filename
-    )
+    safe_path = os.path.join(run_folder, filename)
+    return secure_send_from_directory(app.config["REPORTS_FOLDER"], safe_path)
 
 
 @app.route("/docs/<path:filename>")
 def serve_docs(filename):
     docs_dir = os.path.abspath(os.path.join(app.root_path, "..", "docs"))
-    return send_from_directory(docs_dir, filename)
+    return secure_send_from_directory(docs_dir, filename)
 
 
 @app.route("/relatorios")

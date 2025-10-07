@@ -1,12 +1,23 @@
 import os
 import pytest
 import sys
+from io import BytesIO
+from unittest.mock import patch
+from flask import Flask
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src import analisar_alertas, services
+from src import analisar_alertas, services, app as flask_app
 
 # Define o caminho para os fixtures de teste
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
+
+
+@pytest.fixture
+def client():
+    """Configura o cliente de teste do Flask."""
+    flask_app.app.config["TESTING"] = True
+    with flask_app.app.test_client() as client:
+        yield client
 
 
 @pytest.mark.parametrize("sample_file", ["csv-dummy-1.csv", "csv-dummy-2.csv"])
@@ -82,3 +93,85 @@ def test_comparacao_direta_gera_relatorio_tendencia(tmp_path, file_order):
     assert os.path.exists(
         os.path.join(tmp_path, result["run_folder"], result["report_filename"])
     ), "O relatório de tendência da comparação direta não foi gerado."
+
+
+def test_path_traversal_is_blocked(client):
+    """
+    Valida a correção de segurança, garantindo que tentativas de Path Traversal
+    sejam bloqueadas com um erro 404.
+    """
+    # Tenta acessar um arquivo fora do diretório de relatórios permitido
+    # (ex: o requirements.txt na raiz do projeto)
+    response = client.get("/reports/some_run/../../requirements.txt")
+
+    # Assert: Verifica se a resposta é 404 Not Found, e não 200 OK.
+    assert response.status_code == 404, "A vulnerabilidade de Path Traversal ainda existe!"
+
+
+@patch("src.app.services")
+def test_upload_route_success(mock_service, client):
+    """
+    Testa a rota /upload com sucesso, garantindo que ela chama o serviço
+    e redireciona corretamente.
+    """
+    # Arrange
+    # Configura o retorno da função mockada dentro do módulo de serviço
+    mock_service.process_upload_and_generate_reports.return_value = {
+        "run_folder": "run_test_123",
+        "report_filename": "resumo_geral.html",
+    }
+
+    # Cria um arquivo CSV em memória para o upload
+    data = {
+        # The key 'file_atual' must match the 'name' attribute of the file input in the HTML form.
+        "file_atual": (BytesIO(b"header1;header2\nvalue1;value2"), "test.csv")
+    }
+
+    # Act
+    # Envia uma requisição POST para a rota /upload, simulando o envio de um formulário
+    response = client.post("/upload", data=data, content_type="multipart/form-data")
+
+    # Assert
+    # 1. Verifica se o serviço foi chamado com o arquivo correto
+    mock_service.process_upload_and_generate_reports.assert_called_once()
+
+    # 2. Verifica se a resposta é um redirecionamento (302 Found)
+    assert response.status_code == 302, "A rota não redirecionou após o upload."
+
+    # 3. Verifica se o redirecionamento aponta para a URL correta do relatório
+    assert "/reports/run_test_123/resumo_geral.html" in response.location
+
+
+@patch("src.app.services.process_direct_comparison")
+def test_compare_route_success(mock_service, client):
+    """
+    Testa a rota /compare com sucesso, garantindo que ela chama o serviço
+    e redireciona corretamente.
+    """
+    # Arrange
+    # Configura o retorno do serviço de comparação mockado
+    mock_service.return_value = {
+        "run_folder": "run_compare_456",
+        "report_filename": "resumo_tendencia.html",
+    }
+
+    # Cria dois arquivos CSV em memória para o upload
+    data = {
+        "files": [
+            (BytesIO(b"header\nval1"), "file1.csv"),
+            (BytesIO(b"header\nval2"), "file2.csv"),
+        ]
+    }
+
+    # Act
+    response = client.post("/compare", data=data, content_type="multipart/form-data")
+
+    # Assert
+    # 1. Verifica se o serviço de comparação foi chamado
+    mock_service.assert_called_once()
+
+    # 2. Verifica se a resposta é um redirecionamento
+    assert response.status_code == 302, "A rota /compare não redirecionou."
+
+    # 3. Verifica se o redirecionamento aponta para a URL correta
+    assert "/reports/run_compare_456/resumo_tendencia.html" in response.location
