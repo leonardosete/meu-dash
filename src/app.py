@@ -198,11 +198,11 @@ def compare_files():
 
 @app.route("/reports/<run_folder>/planos_de_acao/<filename>")
 def serve_planos(run_folder, filename):
-    return send_from_directory(
-        os.path.join(app.config["REPORTS_FOLDER"], run_folder, "planos_de_acao"),
-        filename,
-    )
-
+    base_reports_folder = os.path.abspath(app.config["REPORTS_FOLDER"])
+    target_dir = os.path.abspath(os.path.normpath(os.path.join(base_reports_folder, run_folder, "planos_de_acao")))
+    if not target_dir.startswith(base_reports_folder):
+        abort(404)
+    return send_from_directory(target_dir, filename)
 
 @app.route("/reports/<run_folder>/detalhes/<filename>")
 def serve_detalhes(run_folder, filename):
