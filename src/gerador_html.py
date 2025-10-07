@@ -455,7 +455,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         automation_card_class = "card-neon-warning"
 
     if grupos_atuacao > 0:
-        view_icon_html = f'<a href="editor_atuacao.html" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
+        view_icon_html = f'<a href="atuar.html" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
     else:
         disabled_svg = VIEW_ICON_SVG.replace(
             'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'

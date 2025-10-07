@@ -130,7 +130,7 @@ def gerar_ecossistema_de_relatorios(
         os.path.join(output_dir, "remediados_frequentes.csv"),
         os.path.join(base_template_dir, "sucesso_template.html"),
     )
-    gerar_pagina_editor_atuacao(
+    gerar_pagina_atuar(
         output_dir,
         os.path.join(output_dir, "atuar.csv"),
         os.path.join(base_template_dir, "editor_template.html"),
@@ -635,14 +635,12 @@ def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_pat
     logger.info(f"Página de visualização de logs inválidos gerada: {output_path}")
 
 
-def gerar_pagina_editor_atuacao(
-    output_dir: str, actuation_csv_path: str, template_path: str
-):
+def gerar_pagina_atuar(output_dir: str, actuation_csv_path: str, template_path: str):
     """Gera uma página HTML para edição do arquivo de atuação."""
     logger.info(
         f"Gerando página de edição para '{os.path.basename(actuation_csv_path)}'..."
     )
-    output_path = os.path.join(output_dir, "editor_atuacao.html")
+    output_path = os.path.join(output_dir, "atuar.html")
     try:
         with open(actuation_csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()

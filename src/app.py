@@ -74,13 +74,13 @@ def index():
     if last_report:
         run_folder_path = os.path.dirname(last_report.report_path)
         run_folder_name = os.path.basename(run_folder_path)
-        action_plan_path = os.path.join(run_folder_path, "editor_atuacao.html")
+        action_plan_path = os.path.join(run_folder_path, "atuar.html")
         if os.path.exists(action_plan_path):
             last_action_plan = {
                 "url": url_for(
                     "serve_report",
                     run_folder=run_folder_name,
-                    filename="editor_atuacao.html",
+                    filename="atuar.html",
                 ),
                 "date": last_report.timestamp.strftime("%d/%m/%Y às %H:%M"),
             }

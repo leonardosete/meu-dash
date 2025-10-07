@@ -131,7 +131,7 @@ Todos os artefatos são gerados dentro de um subdiretório `run_<timestamp>` em 
 
 - **`resumo_geral.html`**: Visão geral gerencial do período atual. Ponto central de navegação.
 - **`resumo_tendencia.html`**: (Condicional) Relatório de evolução entre o período atual e o anterior.
-- **`editor_atuacao.html`**: Editor interativo para o time atuar sobre os problemas.
+- **`atuar.html`**: Editor interativo para o time atuar sobre os problemas.
 - ... (e todos os outros relatórios)
 
 ### Arquivos de Dados
