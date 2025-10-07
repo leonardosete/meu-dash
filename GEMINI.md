@@ -105,15 +105,17 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 #### Módulo: `src/analise_tendencia.py`
 
 - **Responsabilidade:** Comparar dois períodos (JSON atual vs. JSON anterior) e gerar o `resumo_tendencia.html`.
-- **Invocação:** É chamado como uma função Python diretamente do `app.py`. Também pode ser executado como um script de linha de comando independente para testes.
+- **Invocação:** É chamado pela camada de serviço (`services.py`) durante o fluxo de comparação. Também pode ser executado como um script de linha de comando independente para testes.
 - **Entradas (Inputs):** Recebe os caminhos para os dois arquivos JSON (`json_anterior`, `json_atual`), os nomes dos arquivos CSV originais, o caminho de saída para o relatório HTML e, opcionalmente, os intervalos de datas de ambos os períodos e um booleano (`is_direct_comparison`) que ajusta a navegação no relatório final.
 
 ### 4. Camada de Apresentação
 
 #### Módulo: `src/context_builder.py`
+
 - **Responsabilidade:** Preparar os dados para a visualização. Recebe os resultados brutos da análise (DataFrames) e os transforma em um dicionário de `contexto` com todas as métricas, KPIs e listas de "Top 5" necessárias para renderizar os dashboards.
 
 #### Módulos: `src/gerador_paginas.py` e `src/gerador_html.py`
+
 - **Responsabilidade:** Renderizar os relatórios HTML. Recebem o `contexto` e os dados necessários e geram os arquivos `.html` finais. São componentes de apresentação puros, sem lógica de negócio.
 
 ### 4. Templates e Dados
@@ -152,9 +154,8 @@ O processo é iniciado pela interação do usuário e orquestrado integralmente 
 3. **Serviço (`services.py`):** A função `process_direct_comparison` orquestra o fluxo:
     a. Salva os dois arquivos temporariamente e os ordena por data.
     b. Chama `analisar_alertas.py` para cada arquivo, gerando os respectivos `resumo_problemas.json`.
-    c. Chama `analise_tendencia.py` para comparar os dois JSONs e gerar o `resumo_tendencia.html`.
-    d. Remove os arquivos temporários.
-4. **Redirecionamento (`app.py`):** O serviço retorna o caminho para o relatório de tendência, e o `app.py` redireciona o usuário para a visualização.
+    c. Chama `gerar_contexto_tendencia` para obter os dados da comparação.
+5. **Controlador (`app.py`):** O serviço retorna o `contexto` e os `metadados`. O controlador então usa `render_template` para gerar o HTML e redireciona o usuário para a visualização.
 
 ---
 

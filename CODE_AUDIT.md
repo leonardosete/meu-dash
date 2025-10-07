@@ -86,10 +86,9 @@ The following is a prioritized list of recommendations to improve the codebase.
 
 * **Status:** ✅ **Concluído**
 * **Resumo da Implementação:**
-    1. O módulo `analisar_alertas.py` foi refatorado para ser um motor de análise de dados puro, retornando DataFrames e caminhos de arquivos de dados, sem gerar HTML.
-    2. Um novo módulo `context_builder.py` foi criado para centralizar a preparação dos dados para a camada de visualização.
-    3. O `app.py` foi ajustado para orquestrar o fluxo, chamando a análise, o construtor de contexto e, por fim, os geradores de página na sequência correta.
-    4. O acoplamento entre a lógica de dados e a apresentação foi efetivamente removido.
+    1. O módulo `analisar_alertas.py` foi refatorado para ser um motor de análise de dados puro, retornando apenas DataFrames e caminhos de arquivos de dados, sem gerar HTML.
+    2. A lógica de apresentação foi isolada em módulos dedicados (`gerador_paginas.py`, `context_builder.py`), que consomem os dados da análise para gerar os relatórios.
+    3. Esta separação foi o primeiro passo crucial, que permitiu a implementação da camada de serviço (Prioridade 2) para orquestrar o fluxo de forma limpa e desacoplada.
 
 ### Priority 2: Implement a Service Layer
 
