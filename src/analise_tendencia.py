@@ -324,7 +324,7 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
         table_body += f"<tr><td>{escape(str(name))}</td><td>{_generate_change_bar_html(change, max_abs_change)}</td><td class='center'>{int(p2_count)}</td><td class='center'>{int(p1_count)}</td>"
         if has_case_count:
             table_body += (
-                f"<td class='center' style='font-weight: bold;'>{int(row["num_cases"])}</td>"
+                f'<td class="center" style="font-weight: bold;">{int(row["num_cases"])}</td>'
             )
         table_body += "</tr>"
     table_body += "</tbody>"
