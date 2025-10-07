@@ -4,7 +4,9 @@ name: CI - Build, Test, and Publish
 on:
   # Dispara o workflow em pushes para as branches principais e de refatoração.
   push:
-
+    # branches:
+    #   - main
+    #   - refactor/**
   # Dispara o workflow em pull requests para a branch main.
   pull_request:
     branches:
@@ -39,6 +41,10 @@ jobs:
       - name: Run tests
         run: pytest
 
+      # 5. Check Code Formatting: Fails if code is not formatted with black.
+      - name: Check code formatting
+        run: black --check .
+
       # 5. Login no Docker Hub: Só executa em pushes para a branch 'main' e se os testes passaram.
       - name: Log in to Docker Hub
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446
@@ -48,7 +54,6 @@ jobs:
 
       # 6. Build e Push da Imagem: Só executa em pushes para a 'main' e se os testes passaram.
       - name: Build and push Docker image
-        id: build-and-push
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0
         with:
           context: .
