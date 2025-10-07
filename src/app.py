@@ -1,23 +1,17 @@
 import os
 import shutil  # Para deletar diretórios recursivamente
 from datetime import datetime
-import logging
-
 from flask import (
     Flask,
-    flash,
-    jsonify,
-    redirect,
     render_template,
     request,
-    send_from_directory,
+    redirect,
     url_for,
+    send_from_directory,
+    jsonify,
+    flash,
 )
-from werkzeug.utils import secure_filename
-
 from . import services
-from .logging_config import setup_logging
-from .get_date_range import get_date_range_from_file
 from .utils import sort_files_by_date
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
@@ -40,10 +34,6 @@ app.config["SECRET_KEY"] = (
 )
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
-# Configura o logging para a aplicação
-setup_logging()
-logger = logging.getLogger(__name__)
 
 
 class Report(db.Model):
@@ -126,19 +116,15 @@ def index():
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
-    """Orquestra o processo de upload, análise e geração de relatórios."""
-    if "file_atual" not in request.files:
-        flash("Nenhum arquivo enviado.", "error")
-        return redirect(url_for("index"))
-
+    """Orquestra o processo de upload, análise e comparação automática de tendências."""
     file_atual = request.files["file_atual"]
 
-    if file_atual.filename == "":
+    if not file_atual or file_atual.filename == "":
         flash("Nenhum arquivo selecionado.", "error")
         return redirect(url_for("index"))
 
     try:
-        # Delega toda a lógica de negócio para a nova camada de serviço
+        # Delega toda a lógica de negócio para a camada de serviço
         result = services.process_upload_and_generate_reports(
             file_atual=file_atual,
             upload_folder=app.config["UPLOAD_FOLDER"],
@@ -147,7 +133,6 @@ def upload_file():
             Report=Report,
             base_dir=BASE_DIR,
         )
-
         if result:
             return redirect(
                 url_for(
@@ -157,13 +142,10 @@ def upload_file():
                 )
             )
         else:
-            raise Exception(
-                "O serviço de processamento falhou sem retornar um erro específico."
-            )
-
+            flash("Ocorreu um erro durante o processamento do arquivo.", "error")
+            return redirect(url_for("index"))
     except Exception as e:
-        logger.error(f"Erro fatal no processo de upload: {e}", exc_info=True)
-        flash(f"Ocorreu um erro ao processar o arquivo: {e}", "error")
+        flash(f"Erro fatal no processo de upload: {e}", "error")
         return redirect(url_for("index"))
 
 
@@ -182,30 +164,32 @@ def compare_files():
         flash("Por favor, selecione exatamente dois arquivos para comparação.", "error")
         return redirect(url_for("index"))
 
-    saved_filepaths = []
-    for f in files:
-        if f.filename == "":
-            # A validação de 'required' no HTML deve pegar isso, mas é uma segurança extra.
-            flash("Ambos os campos de arquivo devem ser preenchidos.", "error")
-            return redirect(url_for("index"))
-
     try:
+        # Delega toda a lógica de negócio para a camada de serviço
         result = services.process_direct_comparison(
             files=files,
             upload_folder=app.config["UPLOAD_FOLDER"],
             reports_folder=app.config["REPORTS_FOLDER"],
         )
-        return redirect(
-            url_for(
-                "serve_report",
-                run_folder=result["run_folder"],
-                filename=result["report_filename"],
+        if result:
+            return redirect(
+                url_for(
+                    "serve_report",
+                    run_folder=result["run_folder"],
+                    filename=result["report_filename"],
+                )
             )
-        )
-
+        else:
+            flash("Não foi possível processar a comparação.", "error")
+            return redirect(url_for("index"))
+    except ValueError as e:
+        flash(str(e), "error")
+        return redirect(url_for("index"))
     except Exception as e:
-        logger.error(f"Erro fatal no processo de comparação: {e}", exc_info=True)
-        flash(f"Ocorreu um erro inesperado durante a comparação: {e}", "error")
+        flash(
+            "Ocorreu um erro inesperado durante a comparação. Verifique os logs.",
+            "error",
+        )
         return redirect(url_for("index"))
 
 
@@ -274,19 +258,17 @@ def delete_report(report_id):
         # Deleta a pasta inteira do 'run', garantindo que todos os arquivos associados sejam removidos
         if os.path.isdir(report_dir):
             shutil.rmtree(report_dir)
-            logger.info(f"Diretório de relatório '{report_dir}' excluído com sucesso.")
+            print(f"🗑️ Diretório '{report_dir}' excluído com sucesso.")
 
         # Deleta o registro do banco de dados
         db.session.delete(report)
         db.session.commit()
 
-        logger.info(
-            f"Registro do relatório ID {report_id} ('{report.original_filename}') excluído do banco de dados."
-        )
+        print(f"✅ Relatório '{report.original_filename}' excluído do banco de dados.")
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Erro ao excluir o relatório {report_id}: {e}", exc_info=True)
+        print(f"❌ Erro ao excluir o relatório {report_id}: {e}")
 
     return redirect(url_for("relatorios"))
 
