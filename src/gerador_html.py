@@ -42,24 +42,24 @@ def renderizar_pagina_html(template: str, title: str, body: str, footer_timestam
 
 def renderizar_pagina_csv_viewer(template: str, csv_content: str, page_title: str, csv_filename: str) -> str:
     """Renderiza um template de visualizador de CSV (como Handsontable)."""
+    # CORREÇÃO: Usa uma "raw string" (r'...') para criar a sequência de escape de forma explícita e segura.
     csv_payload = csv_content.replace('`', r'\`')
     
     # Usa um placeholder improvável para evitar colisões
     placeholder = "___CSV_DATA_PAYLOAD_PLACEHOLDER___"
     
     # Substitui o placeholder no template
-    template_com_placeholder = template.replace(
+    final_html = template.replace(
         'const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`',
         f'const csvDataPayload = `{placeholder}`'
     )
     
     # Injeta o payload real
-    final_html = template_com_placeholder.replace(placeholder, csv_payload)
+    final_html = final_html.replace(placeholder, csv_payload)
     
-    # Ajusta títulos e nomes de arquivo
-    final_html = final_html.replace('Detalhes do Sucesso da Automação', page_title)
-    final_html = final_html.replace('Sucesso da Automação - remediados.csv', f'{page_title} - {csv_filename}')
-    final_html = final_html.replace('remediados.csv', csv_filename)
+    # MELHORIA: Usa placeholders dedicados para os títulos, tornando o código mais robusto.
+    final_html = final_html.replace('__PAGE_TITLE__', page_title)
+    final_html = final_html.replace('__CSV_FILENAME__', csv_filename)
     
     return final_html
 
@@ -380,15 +380,12 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     
     body_content += f'<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">'
 
-    # Garante que a taxa de sucesso seja um número para comparações lógicas.
-    taxa_sucesso_num = float(taxa_sucesso)
-
     gauge_color_class = "var(--success-color)"
     automation_card_class = "card-neon-green"
-    if taxa_sucesso_num < 50:
+    if taxa_sucesso < 50:
         gauge_color_class = "var(--danger-color)"
         automation_card_class = "card-neon-red"
-    elif taxa_sucesso_num < 70:
+    elif taxa_sucesso < 70:
         gauge_color_class = "var(--warning-color)"
         automation_card_class = "card-neon-warning"
     
