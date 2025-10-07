@@ -3,7 +3,6 @@ import pytest
 import sys
 from io import BytesIO
 from unittest.mock import patch
-from flask import Flask
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src import analisar_alertas, services, app as flask_app
