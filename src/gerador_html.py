@@ -42,7 +42,7 @@ def renderizar_pagina_html(template: str, title: str, body: str, footer_timestam
 
 def renderizar_pagina_csv_viewer(template: str, csv_content: str, page_title: str, csv_filename: str) -> str:
     """Renderiza um template de visualizador de CSV (como Handsontable)."""
-    csv_payload = csv_content.replace('`', '\`')
+    csv_payload = csv_content.replace('`', r'\`')
     
     # Usa um placeholder improvável para evitar colisões
     placeholder = "___CSV_DATA_PAYLOAD_PLACEHOLDER___"
