@@ -1,4 +1,12 @@
 [tool.black]
 exclude = '''
-/(BKP-v3)/
+(
+  # Padrões de exclusão do Black para evitar formatação de dependências e build artifacts
+  /(
+      \.git|\.hg|\.mypy_cache|\.tox|\.venv
+      |venv|_build|buck-out|build|dist
+  )/
+  # Suas exclusões personalizadas
+  | /(BKP-v3)/
+)
 '''
