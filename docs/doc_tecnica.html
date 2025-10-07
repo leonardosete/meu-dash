@@ -224,47 +224,44 @@
 
         <section id="arquitetura">
             <h2>3. Arquitetura e Componentes</h2>
-            <p>A arquitetura do projeto foi modernizada, migrando de um sistema baseado em scripts para uma <strong>aplicação web Flask</strong> que centraliza toda a lógica de orquestração e análise.</p>
-            
-            <h3>1. Orquestrador Principal: Aplicação Flask (<code>src/app.py</code>)</h3>
+            <p>A arquitetura do projeto foi refatorada para um modelo de <strong>camadas</strong>, desacoplando a apresentação (Flask), a lógica de negócio (Camada de Serviço) e a análise de dados (Motores de Análise).</p>
+
+            <h3>Controlador Web e Ponto de Entrada (<code>src/app.py</code>)</h3>
             <div class="card">
                 <ul>
-                    <li><strong>Responsabilidade:</strong> Atua como um "controlador" enxuto. É o ponto de entrada da aplicação web, gerenciando as rotas (endpoints), as requisições do usuário e delegando toda a lógica de negócio para a camada de serviço.</li>
-                     <li><strong>Componentes Internos:</strong>
+                    <li><strong>Responsabilidade:</strong> Atuar como a camada de apresentação e o ponto de entrada da aplicação. É responsável por gerenciar as rotas HTTP, receber as requisições do usuário e delegar toda a lógica de negócio para a camada de serviço.</li>
+                    <li><strong>Componentes Internos:</strong>
                         <ul>
                             <li><strong>Flask:</strong> Microframework web que estrutura a aplicação.</li>
-                            <li><strong>SQLAlchemy:</strong> ORM para interagir com o banco de dados SQLite, gerenciando o histórico de relatórios.</li>
+                            <li><strong>SQLAlchemy:</strong> ORM para interagir com o banco de dados, gerenciando o histórico de relatórios.</li>
                             <li><strong>Flask-Migrate:</strong> Ferramenta para gerenciar as migrações do esquema do banco de dados.</li>
                         </ul>
                     </li>
                     <li><strong>Rotas Principais:</strong>
                         <ul>
                             <li><code>GET /</code>: Exibe a página inicial de upload (<code>upload.html</code>).</li>
-                            <li><code>POST /upload</code>: Recebe o arquivo do usuário e chama o <code>services.py</code> para processá-lo.</li>
-                            <li><code>POST /compare</code>: Recebe dois arquivos e chama o serviço de comparação direta.</li>
-                            <li><code>GET /relatorios</code>: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.</li>
+                            <li><code>POST /upload</code>: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.</li>
+                            <li><code>GET /relatorios</code>: Exibe um histórico de todos os relatórios gerados.</li>
                             <li><code>GET /reports/&lt;run_folder&gt;/&lt;filename&gt;</code>: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.</li>
                         </ul>
                     </li>
                 </ul>
             </div>
-            
-            <h3>2. Camada de Serviço (<code>src/services.py</code>)</h3>
+
+            <h3>Camada de Serviço (<code>src/services.py</code>)</h3>
             <div class="card">
                 <ul>
-                    <li><strong>Responsabilidade:</strong> Contém a lógica de negócio principal da aplicação. Orquestra todo o fluxo de trabalho para a geração de um relatório, desde o recebimento do arquivo até a gravação no banco de dados.</li>
-                    <li><strong>Invocação:</strong> É chamado pelo <code>app.py</code> (controlador) quando uma nova análise é solicitada.</li>
-                    <li><strong>Fluxo Interno:</strong>
-                        <ol type="a">
-                            <li>Salva o arquivo de upload e consulta o banco de dados pelo relatório anterior.</li>
-                            <li>Orquestra a análise de tendência (chamando <code>analisar_alertas</code> e <code>analise_tendencia</code>).</li>
-                            <li>Orquestra a análise principal completa (chamando <code>analisar_alertas</code>).</li>
-                            <li>Constrói o dicionário de contexto (chamando <code>context_builder</code>) e orquestra a geração das páginas HTML (chamando <code>gerador_paginas</code>).</li>
-                            <li>Salva o novo registro do relatório no banco de dados.</li>
-                        </ol>
+                    <li><strong>Responsabilidade:</strong> É o <strong>cérebro</strong> da aplicação. Encapsula e orquestra toda a lógica de negócio, como o processamento de uploads e a comparação de arquivos.</li>
+                    <li><strong>Funções Principais:</strong>
+                        <ul>
+                            <li><code>process_upload_and_generate_reports</code>: Coordena o fluxo completo de uma nova análise, desde salvar o arquivo até persistir o resultado no banco de dados.</li>
+                            <li><code>process_direct_comparison</code>: Orquestra a análise comparativa entre dois arquivos.</li>
+                        </ul>
                     </li>
+                    <li><strong>Invocação:</strong> As funções deste módulo são chamadas diretamente pelas rotas do <code>app.py</code>.</li>
                 </ul>
             </div>
+
             <h3>Banco de Dados (<code>data/meu_dash.db</code>)</h3>
             <div class="card">
                 <ul>
@@ -276,26 +273,33 @@
 
             <h3>Motores de Análise (Invocados como Bibliotecas)</h3>
             <div class="card">
+                <p>Estes módulos foram refatorados para serem "motores" puros de análise de dados. Eles recebem dados, processam e retornam resultados (DataFrames, dicionários), sem se preocupar com a orquestração geral ou geração de HTML.</p>
                 <h4><code>src/analisar_alertas.py</code></h4>
                 <ul>
-                    <li><strong>Responsabilidade:</strong> Atua como um motor de análise de dados puro. Sua única função é processar um arquivo de alertas (<code>.csv</code>) e gerar os artefatos de <strong>dados</strong> (outros <code>.csv</code> e um <code>resumo_problemas.json</code>). <strong>Não possui conhecimento sobre HTML ou apresentação.</strong></li>
+                    <li><strong>Responsabilidade:</strong> Processar um único arquivo de alertas e realizar a análise principal.</li>
+                    <li><strong>Função Principal:</strong> <code>analisar_arquivo_csv</code>.</li>
                     <li><strong>Invocação:</strong> É chamado pela camada de serviço (<code>services.py</code>).</li>
-                    <li><strong>Saídas (Outputs):</strong> Retorna um dicionário contendo os DataFrames da análise e os caminhos para os arquivos de dados gerados.</li>
+                    <li><strong>Entradas:</strong> Caminho do arquivo de input, diretório de output e a flag <code>light_analysis</code>.</li>
+                    <li><strong>Saídas:</strong> Retorna um dicionário contendo os resultados da análise (DataFrames) e o caminho para o <code>resumo_problemas.json</code> gerado.</li>
                 </ul>
                 <h4><code>src/analise_tendencia.py</code></h4>
                 <ul>
-                    <li><strong>Responsabilidade:</strong> Comparar dois períodos (JSON atual vs. JSON anterior) e gerar um <strong>dicionário de contexto</strong> com os dados para o relatório de tendência.</li>
+                    <li><strong>Responsabilidade:</strong> Comparar dois períodos (JSON atual vs. JSON anterior) e gerar o dashboard de tendência.</li>
+                    <li><strong>Função Principal:</strong> <code>gerar_relatorio_tendencia</code>.</li>
                     <li><strong>Invocação:</strong> É chamado pela camada de serviço (<code>services.py</code>).</li>
-                    <li><strong>Saídas (Outputs):</strong> Retorna um dicionário de contexto que será usado pelo controlador para renderizar o template <code>relatorio_tendencia.html</code>.</li>
+                    <li><strong>Entradas:</strong> Caminhos para os dois arquivos JSON, nomes dos arquivos CSV originais e os intervalos de datas.</li>
+                    <li><strong>Saídas:</strong> Gera o arquivo <code>resumo_tendencia.html</code>.</li>
                 </ul>
             </div>
-            
+
             <h3>Módulos Auxiliares</h3>
             <div class="card">
-                <h4><code>src/gerador_html.py</code></h4>
-                <p>Centraliza a lógica de renderização de componentes HTML, transformando os dados da análise em dashboards interativos.</p>
+                <h4><code>src/context_builder.py</code></h4>
+                <p>Prepara o dicionário de "contexto" com todos os dados e KPIs necessários para os templates HTML, a partir dos resultados brutos da análise.</p>
                 <h4><code>src/gerador_paginas.py</code></h4>
-                <p>Orquestra a criação das diversas páginas HTML do relatório, utilizando <code>gerador_html.py</code> para construir as seções e salvando os arquivos finais.</p>
+                <p>Orquestra a criação das diversas páginas HTML do relatório, consumindo o contexto do <code>context_builder.py</code> e renderizando os templates.</p>
+                <h4><code>src/gerador_html.py</code></h4>
+                <p>Contém funções de baixo nível para gerar componentes HTML específicos (tabelas, gráficos, etc.). É utilizado pelo <code>gerador_paginas.py</code>.</p>
                 <h4><code>src/utils.py</code></h4>
                 <p>Fornece funções utilitárias, como a sanitização de nomes de arquivos, usadas em várias partes do projeto.</p>
                 <h4><code>src/constants.py</code></h4>
@@ -307,32 +311,27 @@
 
         <section id="fluxo">
             <h2>4. Fluxo de Execução Lógico</h2>
-            <p>O processo é iniciado pela interação do usuário com a interface web e orquestrado integralmente pelo <code>app.py</code>.</p>
+            <p>O processo é iniciado pela interação do usuário e segue um fluxo de delegação claro através das camadas da aplicação.</p>
             <ol class="flow-diagram">
                 <li>
-                    <strong>1. Upload do Usuário:</strong> O usuário acessa a rota <code>/</code> e envia um arquivo <code>.csv</code> através do formulário, que faz um <code>POST</code> para a rota <code>/upload</code>.
+                    <strong>1. Requisição do Usuário:</strong> O usuário envia um arquivo <code>.csv</code> via formulário, que dispara uma requisição <code>POST</code> para a rota <code>/upload</code> no <strong><code>app.py</code></strong>.
                 </li>
                 <li>
-                    <strong>2. Controlador (<code>app.py</code>):</strong> A rota <code>/upload</code> recebe a requisição e imediatamente chama a camada de serviço, passando o arquivo.
+                    <strong>2. Delegação para o Serviço:</strong> A rota em <code>app.py</code> recebe o arquivo e imediatamente delega toda a lógica de negócio para a função <code>process_upload_and_generate_reports</code> no módulo <strong><code>src/services.py</code></strong>.
                 </li>
                 <li>
-                    <strong>3. Camada de Serviço (<code>services.py</code>):</strong> A função <code>process_upload_and_generate_reports</code> assume o controle e executa a lógica de negócio:
+                    <strong>3. Orquestração na Camada de Serviço (<code>services.py</code>):</strong>
                     <ul>
-                        <li>a. <strong>Salva o arquivo</strong> e cria um diretório de saída para a execução (<code>run_&lt;timestamp&gt;</code>).</li>
-                        <li>b. <strong>Consulta o DB</strong> para obter o relatório mais recente.</li>
-                        <li>c. **Executa a Análise de Tendência (se aplicável):**
-                            <ul>
-                                <li>i. Chama <code>analisar_alertas.py</code> em modo <code>light_analysis=True</code> para gerar o JSON do período atual.</li>
-                                <li>ii. Chama <code>analise_tendencia.py</code> para comparar os JSONs (atual vs. anterior) e gerar o <code>resumo_tendencia.html</code>.</li>
-                            </ul>
-                        </li>
-                        <li>d. <strong>Executa a Análise Principal:</strong> Chama <code>analisar_alertas.py</code> em modo <code>light_analysis=False</code> para obter os DataFrames da análise completa.</li>
-                        <li>e. <strong>Constrói o Contexto e Gera Páginas:</strong> Chama <code>context_builder.py</code> e <code>gerador_paginas.py</code> para renderizar todos os relatórios HTML.</li>
-                        <li>f. <strong>Persiste o Resultado:</strong> Cria um novo registro <code>Report</code> no banco de dados.</li>
+                        <li>a. <strong>Preparação:</strong> O serviço salva o arquivo, extrai o intervalo de datas e cria um diretório de execução (`run_&lt;timestamp&gt;`).</li>
+                        <li>b. <strong>Análise de Tendência (Condicional):</strong> O serviço consulta o banco de dados pelo relatório mais recente. Se existir, ele chama <code>analisar_arquivo_csv(light_analysis=True)</code> para obter o JSON do período atual e, em seguida, chama <code>gerar_relatorio_tendencia</code> para criar o dashboard comparativo.</li>
+                        <li>c. <strong>Análise Principal:</strong> O serviço chama <code>analisar_arquivo_csv(light_analysis=False)</code> para obter os resultados completos da análise (DataFrames).</li>
+                        <li>d. <strong>Construção de Contexto e Geração de Páginas:</strong> O serviço passa os resultados para <code>context_builder.py</code> para preparar os dados para visualização e, em seguida, para <code>gerador_paginas.py</code> para criar todas as páginas HTML do relatório.</li>
+                        <li>e. <strong>Persistência:</strong> Um novo registro <code>Report</code> é criado e salvo no banco de dados com os metadados da análise.</li>
+                        <li>f. <strong>Retorno:</strong> O serviço retorna o nome da pasta (`run_folder`) e do arquivo de relatório principal para o <code>app.py</code>.</li>
                     </ul>
                 </li>
                 <li>
-                    <strong>4. Redirecionamento (<code>app.py</code>):</strong> O serviço retorna as informações necessárias para o <code>app.py</code>, que então redireciona o navegador do usuário para o <code>resumo_geral.html</code> recém-criado.
+                    <strong>4. Redirecionamento (<code>app.py</code>):</strong> A rota <code>/upload</code> recebe o resultado do serviço e redireciona o navegador do usuário para a URL que serve o relatório recém-criado (ex: <code>/reports/run_.../resumo_geral.html</code>).
                 </li>
             </ol>
         </section>
