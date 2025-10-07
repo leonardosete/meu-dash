@@ -14,24 +14,31 @@ ACAO_FLAGS_ATUACAO = [
     ACAO_INTERMITENTE,
     ACAO_FALHA_PERSISTENTE,
     ACAO_STATUS_AUSENTE,
-    ACAO_INCONSISTENTE
+    ACAO_INCONSISTENTE,
 ]
 ACAO_FLAGS_OK = [ACAO_SEMPRE_OK, ACAO_ESTABILIZADA]
 ACAO_FLAGS_INSTABILIDADE = [ACAO_INSTABILIDADE_CRONICA]
 
 # Pesos para o cálculo de Score de Criticidade
 SEVERITY_WEIGHTS = {
-    'Crítico': 10, 'Alto': 8, 'Alto / Major': 8, 'Médio': 5,
-    'Médio / Minor': 5, 'Aviso': 3, 'Baixo / Informativo': 2,
-    'OK': 0, 'Limpar': 0,
+    "Crítico": 10,
+    "Alto": 8,
+    "Alto / Major": 8,
+    "Médio": 5,
+    "Médio / Minor": 5,
+    "Aviso": 3,
+    "Baixo / Informativo": 2,
+    "OK": 0,
+    "Limpar": 0,
 }
-PRIORITY_GROUP_WEIGHTS = {
-    'Urgente': 10, 'Alto(a)': 8, 'Moderado(a)': 5, 'Baixo(a)': 2
-}
+PRIORITY_GROUP_WEIGHTS = {"Urgente": 10, "Alto(a)": 8, "Moderado(a)": 5, "Baixo(a)": 2}
 ACAO_WEIGHTS = {
-    ACAO_FALHA_PERSISTENTE: 1.5, ACAO_INTERMITENTE: 1.2,
-    ACAO_STATUS_AUSENTE: 1.1, ACAO_INCONSISTENTE: 1.1,
-    ACAO_ESTABILIZADA: 1.0, ACAO_SEMPRE_OK: 1.0
+    ACAO_FALHA_PERSISTENTE: 1.5,
+    ACAO_INTERMITENTE: 1.2,
+    ACAO_STATUS_AUSENTE: 1.1,
+    ACAO_INCONSISTENTE: 1.1,
+    ACAO_ESTABILIZADA: 1.0,
+    ACAO_SEMPRE_OK: 1.0,
 }
 
 # Nomes de colunas do DataFrame
@@ -50,13 +57,22 @@ COL_PRIORITY_GROUP = "sn_priority_group"
 
 # Colunas que definem um grupo único de alertas
 GROUP_COLS: List[str] = [
-    COL_ASSIGNMENT_GROUP, COL_SHORT_DESCRIPTION, COL_NODE, COL_CMDB_CI,
-    COL_SOURCE, COL_METRIC_NAME, COL_CMDB_CI_SYS_CLASS_NAME,
+    COL_ASSIGNMENT_GROUP,
+    COL_SHORT_DESCRIPTION,
+    COL_NODE,
+    COL_CMDB_CI,
+    COL_SOURCE,
+    COL_METRIC_NAME,
+    COL_CMDB_CI_SYS_CLASS_NAME,
 ]
 
 # Colunas essenciais para o funcionamento do script
 ESSENTIAL_COLS: List[str] = GROUP_COLS + [
-    COL_CREATED_ON, COL_SELF_HEALING_STATUS, COL_NUMBER, COL_SEVERITY, COL_PRIORITY_GROUP
+    COL_CREATED_ON,
+    COL_SELF_HEALING_STATUS,
+    COL_NUMBER,
+    COL_SEVERITY,
+    COL_PRIORITY_GROUP,
 ]
 
 # Valores de Status de Remediação
