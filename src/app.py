@@ -174,28 +174,49 @@ def compare_files():
         os.makedirs(output_dir_anterior, exist_ok=True)
         os.makedirs(output_dir_atual, exist_ok=True)
 
-        # ALTERAÇÃO: Executa a análise completa (False) para garantir consistência total
-        # com o fluxo de upload padrão. Isso gera todos os relatórios para ambos os
-        # períodos, garantindo que os JSONs de resumo sejam 100% precisos.
-        print("⚙️  Executando análise completa para o arquivo ATUAL...")
-        results_atual = analisar_arquivo_csv(filepath_atual, output_dir_atual, light_analysis=False)
-        print("⚙️  Executando análise completa para o arquivo ANTERIOR...")
-        results_anterior = analisar_arquivo_csv(filepath_anterior, output_dir_anterior, light_analysis=False)
+        # Executa a análise de dados para ambos os arquivos
+        print("⚙️  Executando análise de dados para o arquivo ATUAL...")
+        results_atual = analisar_arquivo_csv(filepath_atual, output_dir_atual, light_analysis=True)
+        print("⚙️  Executando análise de dados para o arquivo ANTERIOR...")
+        results_anterior = analisar_arquivo_csv(filepath_anterior, output_dir_anterior, light_analysis=True)
 
         # Gera o relatório de tendência
         output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
+        date_range_anterior = get_date_range_from_file(filepath_anterior)
+        date_range_atual = get_date_range_from_file(filepath_atual)
         gerar_relatorio_tendencia(
             json_anterior=results_anterior['json_path'],
             json_atual=results_atual['json_path'],
             csv_anterior_name=filename_anterior,
             csv_atual_name=filename_atual,
             output_path=output_trend_path,
-            date_range_anterior=get_date_range_from_file(filepath_anterior),
-            date_range_atual=get_date_range_from_file(filepath_atual),
+            date_range_anterior=date_range_anterior,
+            date_range_atual=date_range_atual,
             is_direct_comparison=True # Informa que é uma comparação direta
         )
+        trend_report_path_relative = os.path.basename(output_trend_path)
+
+        # Executa a análise completa do arquivo ATUAL para gerar todos os relatórios
+        print("⚙️  Executando análise completa do arquivo ATUAL para gerar relatórios...")
+        full_analysis_results = analisar_arquivo_csv(filepath_atual, output_dir, light_analysis=False)
+
+        # Constrói o contexto e gera as páginas HTML para o período atual
+        dashboard_context = context_builder.build_dashboard_context(
+            summary_df=full_analysis_results['summary'],
+            df_atuacao=full_analysis_results['df_atuacao'],
+            num_logs_invalidos=full_analysis_results['num_logs_invalidos'],
+            output_dir=output_dir,
+            plan_dir=os.path.join(output_dir, "planos_de_acao"),
+            details_dir=os.path.join(output_dir, "detalhes"),
+            trend_report_path=trend_report_path_relative
+        )
+
+        timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
+        summary_html_path = os.path.join(output_dir, "resumo_geral.html")
+        gerador_paginas.gerar_resumo_executivo(dashboard_context, summary_html_path, timestamp_str)
         
-        return redirect(url_for('serve_report', run_folder=run_folder_name, filename='resumo_tendencia.html'))
+        # Redireciona para o dashboard principal, que agora contém o link para a tendência
+        return redirect(url_for('serve_report', run_folder=run_folder_name, filename=os.path.basename(summary_html_path)))
 
     except Exception as e:
         print(f"❌ Erro fatal no processo de comparação: {e}")
