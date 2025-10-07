@@ -22,11 +22,11 @@ jobs:
     steps:
       # 1. Checkout do código: Baixa o código do repositório para o runner.
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # Pinned to a specific commit
 
       # 2. Configuração do Python: Prepara o ambiente Python.
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # Pinned to a specific commit
         with:
           python-version: '3.11'
 
@@ -47,16 +47,14 @@ jobs:
 
       # 5. Login no Docker Hub: Só executa em pushes para a branch 'main'.
       - name: Log in to Docker Hub
-        if: github.ref == 'refs/heads/main'
-        uses: docker/login-action@v3
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # Pinned to a specific commit
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 6. Build e Push da Imagem: Só executa em pushes para a 'main'.
       - name: Build and push Docker image
-        if: github.ref == 'refs/heads/main'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # Pinned to a specific commit
         with:
           context: .
           push: true
