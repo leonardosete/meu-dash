@@ -380,12 +380,15 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     
     body_content += f'<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">'
 
+    # Garante que a taxa de sucesso seja um número para comparações lógicas.
+    taxa_sucesso_num = float(taxa_sucesso)
+
     gauge_color_class = "var(--success-color)"
     automation_card_class = "card-neon-green"
-    if taxa_sucesso < 50:
+    if taxa_sucesso_num < 50:
         gauge_color_class = "var(--danger-color)"
         automation_card_class = "card-neon-red"
-    elif taxa_sucesso < 70:
+    elif taxa_sucesso_num < 70:
         gauge_color_class = "var(--warning-color)"
         automation_card_class = "card-neon-warning"
     
