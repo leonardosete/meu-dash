@@ -149,63 +149,18 @@ def compare_files():
             flash("Ambos os campos de arquivo devem ser preenchidos.", "error")
             return redirect(url_for('index'))
         
-        filename = secure_filename(f.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}")
-        f.save(filepath)
-        saved_filepaths.append(filepath)
-
     try:
-        # Usa a lógica importada para determinar qual arquivo é o atual e qual é o anterior
-        sorted_paths = sort_files_by_date(saved_filepaths)
-        if not sorted_paths:
-            flash("Não foi possível determinar a ordem cronológica dos arquivos. Verifique se ambos contêm a coluna 'sys_created_on' com datas válidas.", "error")
-            return redirect(url_for('index'))
-
-        filepath_atual, filepath_anterior = sorted_paths
-        filename_atual = os.path.basename(filepath_atual).replace(f"temp_{os.path.basename(filepath_atual).split('_')[1]}_", "")
-        filename_anterior = os.path.basename(filepath_anterior).replace(f"temp_{os.path.basename(filepath_anterior).split('_')[1]}_", "")
-        
-        run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}_compare"
-        output_dir = os.path.join(app.config['REPORTS_FOLDER'], run_folder_name)
-        
-        # Cria subdiretórios para cada análise para evitar conflitos de arquivos
-        output_dir_anterior = os.path.join(output_dir, 'anterior')
-        output_dir_atual = os.path.join(output_dir, 'atual')
-        os.makedirs(output_dir_anterior, exist_ok=True)
-        os.makedirs(output_dir_atual, exist_ok=True)
-
-        # ALTERAÇÃO: Executa a análise completa (False) para garantir consistência total
-        # com o fluxo de upload padrão. Isso gera todos os relatórios para ambos os
-        # períodos, garantindo que os JSONs de resumo sejam 100% precisos.
-        print("⚙️  Executando análise completa para o arquivo ATUAL...")
-        results_atual = analisar_arquivo_csv(filepath_atual, output_dir_atual, light_analysis=False)
-        print("⚙️  Executando análise completa para o arquivo ANTERIOR...")
-        results_anterior = analisar_arquivo_csv(filepath_anterior, output_dir_anterior, light_analysis=False)
-
-        # Gera o relatório de tendência
-        output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
-        gerar_relatorio_tendencia(
-            json_anterior=results_anterior['json_path'],
-            json_atual=results_atual['json_path'],
-            csv_anterior_name=filename_anterior,
-            csv_atual_name=filename_atual,
-            output_path=output_trend_path,
-            date_range_anterior=get_date_range_from_file(filepath_anterior),
-            date_range_atual=get_date_range_from_file(filepath_atual),
-            is_direct_comparison=True # Informa que é uma comparação direta
+        result = services.process_direct_comparison(
+            files=files,
+            upload_folder=app.config['UPLOAD_FOLDER'],
+            reports_folder=app.config['REPORTS_FOLDER']
         )
-        
-        return redirect(url_for('serve_report', run_folder=run_folder_name, filename='resumo_tendencia.html'))
+        return redirect(url_for('serve_report', run_folder=result['run_folder'], filename=result['report_filename']))
 
     except Exception as e:
         print(f"❌ Erro fatal no processo de comparação: {e}")
-        flash("Ocorreu um erro inesperado durante a comparação. Verifique os logs.", "error")
+        flash(f"Ocorreu um erro inesperado durante a comparação: {e}", "error")
         return redirect(url_for('index'))
-    finally:
-        # Garante que os arquivos temporários sejam sempre limpos, mesmo em caso de erro.
-        for p in saved_filepaths:
-            if os.path.exists(p):
-                os.remove(p)
 
 # --- ROTAS PARA SERVIR ARQUIVOS ESTÁTICOS ---
 

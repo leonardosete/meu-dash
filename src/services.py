@@ -123,3 +123,52 @@ def process_upload_and_generate_reports(file_atual, upload_folder: str, reports_
         'run_folder': run_folder_name,
         'report_filename': os.path.basename(summary_html_path)
     }
+
+def process_direct_comparison(files: list, upload_folder: str, reports_folder: str):
+    """
+    Serviço que orquestra a comparação direta entre dois arquivos.
+    """
+    saved_filepaths = []
+    try:
+        for f in files:
+            filename = secure_filename(f.filename)
+            filepath = os.path.join(upload_folder, f"temp_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}")
+            f.save(filepath)
+            saved_filepaths.append(filepath)
+
+        from .utils import sort_files_by_date # Importação local para evitar dependência circular
+        sorted_paths = sort_files_by_date(saved_filepaths)
+        if not sorted_paths:
+            raise ValueError("Não foi possível determinar a ordem cronológica dos arquivos.")
+
+        filepath_atual, filepath_anterior = sorted_paths
+        filename_atual = os.path.basename(filepath_atual).replace(f"temp_{os.path.basename(filepath_atual).split('_')[1]}_", "")
+        filename_anterior = os.path.basename(filepath_anterior).replace(f"temp_{os.path.basename(filepath_anterior).split('_')[1]}_", "")
+
+        run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}_compare"
+        output_dir = os.path.join(reports_folder, run_folder_name)
+        output_dir_anterior = os.path.join(output_dir, 'anterior')
+        output_dir_atual = os.path.join(output_dir, 'atual')
+
+        print("⚙️  Executando análise completa para o arquivo ATUAL...")
+        results_atual = analisar_arquivo_csv(filepath_atual, output_dir_atual, light_analysis=False)
+        print("⚙️  Executando análise completa para o arquivo ANTERIOR...")
+        results_anterior = analisar_arquivo_csv(filepath_anterior, output_dir_anterior, light_analysis=False)
+
+        output_trend_path = os.path.join(output_dir, 'resumo_tendencia.html')
+        gerar_relatorio_tendencia(
+            json_anterior=results_anterior['json_path'],
+            json_atual=results_atual['json_path'],
+            csv_anterior_name=filename_anterior,
+            csv_atual_name=filename_atual,
+            output_path=output_trend_path,
+            date_range_anterior=get_date_range_from_file(filepath_anterior),
+            date_range_atual=get_date_range_from_file(filepath_atual),
+            is_direct_comparison=True
+        )
+        return {'run_folder': run_folder_name, 'report_filename': 'resumo_tendencia.html'}
+
+    finally:
+        for p in saved_filepaths:
+            if os.path.exists(p):
+                os.remove(p)
