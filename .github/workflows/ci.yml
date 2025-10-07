@@ -43,7 +43,6 @@ jobs:
 
       # 5. Login no Docker Hub: Só executa em pushes para a branch 'main' e se os testes passaram.
       - name: Log in to Docker Hub
-        if: github.event_name == 'push' && github.ref == 'refs/heads/*'
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
