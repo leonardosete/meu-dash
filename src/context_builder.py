@@ -82,7 +82,7 @@ def build_dashboard_context(
         'total_grupos': total_grupos,
         'grupos_atuacao': grupos_atuacao,
         'grupos_instabilidade': grupos_instabilidade,
-        'taxa_sucesso': f"{taxa_sucesso:.1f}",
+        'taxa_sucesso': taxa_sucesso,
         'casos_ok_estaveis': casos_ok_estaveis,
         'top_squads': top_squads,
         'top_metrics': top_metrics,
