@@ -55,6 +55,6 @@ jobs:
         with:
           context: .
           push: true
-          # Usa o DOCKERHUB_USERNAME dos secrets para montar o nome da imagem dinamicamente.
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:latest
-                ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:${{ github.sha }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:${{ github.sha }}
