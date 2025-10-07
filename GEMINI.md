@@ -56,16 +56,29 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 
 ### 1. Orquestrador Principal: Aplicação Flask (`src/app.py`)
 
-- **Responsabilidade:** Único ponto de entrada e cérebro do projeto. Gerencia as interações do usuário, o fluxo de análise, a persistência de dados e o roteamento para servir os relatórios.
+- **Responsabilidade:** Ponto de entrada da aplicação web. Gerencia as rotas (endpoints), as requisições do usuário e delega a lógica de negócio para a camada de serviço. Atua como um "controlador" enxuto.
 - **Componentes Internos:**
   - **Flask:** Microframework web.
   - **SQLAlchemy:** ORM para interagir com o banco de dados.
   - **Flask-Migrate:** Gerencia as migrações do esquema do banco de dados.
 - **Rotas Principais:**
   - `GET /`: Exibe a página inicial de upload (`upload.html`).
-  - `POST /upload`: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.
+  - `POST /upload`: Recebe o arquivo do usuário e chama o `services.py` para processá-lo.
   - `GET /relatorios`: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.
   - `GET /reports/<run_folder>/<filename>`: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.
+
+### 2. Camada de Serviço (`src/services.py`)
+
+- **Responsabilidade:** Contém a lógica de negócio principal da aplicação. Orquestra todo o fluxo de trabalho para a geração de um relatório, desde o recebimento do arquivo até a gravação no banco de dados.
+- **Invocação:** É chamado pelo `app.py` (controlador) quando uma nova análise é solicitada.
+- **Fluxo Interno:**
+  1. Salva o arquivo de upload.
+  2. Consulta o banco de dados pelo relatório anterior.
+  3. Orquestra a análise de tendência (chamando `analisar_alertas` e `analise_tendencia`).
+  4. Orquestra a análise principal completa (chamando `analisar_alertas`).
+  5. Constrói o dicionário de contexto (chamando `context_builder`).
+  6. Orquestra a geração de todas as páginas HTML (chamando `gerador_paginas`).
+  7. Salva o novo registro do relatório no banco de dados.
 
 ### 2. Banco de Dados (`data/meu_dash.db`)
 
@@ -83,16 +96,23 @@ A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra 
 
 #### Módulo: `src/analisar_alertas.py`
 
-- **Responsabilidade:** Processar um único arquivo de alertas, realizar a análise principal e orquestrar a geração dos relatórios HTML para aquele período.
-- **Invocação:** É chamado como uma função Python diretamente do `app.py`.
-- **Entradas (Inputs):** Recebe o caminho do arquivo de input e o diretório de output como argumentos de função. A flag `light_analysis` controla a profundidade da análise.
-- **Saídas (Outputs):** Retorna um dicionário contendo os caminhos para os artefatos gerados (HTML e JSON).
+- **Responsabilidade:** Atua como um motor de análise de dados puro. Sua única função é processar um arquivo de alertas (`.csv`) e gerar os artefatos de **dados** (outros `.csv` e um `resumo_problemas.json`). **Não possui conhecimento sobre HTML ou apresentação.**
+- **Invocação:** É chamado pela camada de serviço (`services.py`).
+- **Saídas (Outputs):** Retorna um dicionário contendo os DataFrames da análise e os caminhos para os arquivos de dados gerados.
 
 #### Módulo: `src/analise_tendencia.py`
 
 - **Responsabilidade:** Comparar dois períodos (JSON atual vs. JSON anterior) e gerar o `resumo_tendencia.html`.
 - **Invocação:** É chamado como uma função Python diretamente do `app.py`. Também pode ser executado como um script de linha de comando independente para testes.
 - **Entradas (Inputs):** Recebe os caminhos para os dois arquivos JSON (`json_anterior`, `json_atual`), os nomes dos arquivos CSV originais, o caminho de saída para o relatório HTML e, opcionalmente, os intervalos de datas de ambos os períodos e um booleano (`is_direct_comparison`) que ajusta a navegação no relatório final.
+
+### 4. Camada de Apresentação
+
+#### Módulo: `src/context_builder.py`
+- **Responsabilidade:** Preparar os dados para a visualização. Recebe os resultados brutos da análise (DataFrames) e os transforma em um dicionário de `contexto` com todas as métricas, KPIs e listas de "Top 5" necessárias para renderizar os dashboards.
+
+#### Módulos: `src/gerador_paginas.py` e `src/gerador_html.py`
+- **Responsabilidade:** Renderizar os relatórios HTML. Recebem o `contexto` e os dados necessários e geram os arquivos `.html` finais. São componentes de apresentação puros, sem lógica de negócio.
 
 ### 4. Templates e Dados
 
@@ -110,19 +130,18 @@ O processo é iniciado pela interação do usuário e orquestrado integralmente 
 
 1. **Usuário:** Acessa a rota `/` e vê a página de upload.
 2. **Upload:** O usuário seleciona um arquivo `.csv` (`file_atual`) e o envia através do formulário (`POST /upload`).
-3. **Orquestração (`app.py`):
-    a. **Salvar e Extrair Datas:** O arquivo `.csv` enviado é salvo em `data/uploads/`. O novo módulo `get_date_range.py` é usado para extrair o intervalo de datas do arquivo. Um diretório de saída (`run_<timestamp>`) é criado em `data/reports/`.
-    b. **Buscar Histórico:** O `app.py` consulta o banco de dados para encontrar o relatório mais recente (`Report.query.order_by(Report.timestamp.desc()).first()`).
-    c. **Condição: Análise de Tendência (se um relatório anterior existe):**
-        i. **Análise Leve:** A função `analisar_arquivo_csv` é chamada com `light_analysis=True` para o arquivo **atual**, gerando rapidamente o `resumo_problemas.json`.
-        ii. **Geração da Tendência:** A função `gerar_relatorio_tendencia` é chamada, recebendo os JSONs (anterior e atual), os nomes dos arquivos CSV originais para rotular os períodos, e os intervalos de datas para enriquecer o relatório.
-    d. **Análise Principal (Completa):**
-        i. A função `analisar_arquivo_csv` é chamada novamente para o arquivo **atual**, com `light_analysis=False`.
-        ii. O caminho para o `resumo_tendencia.html` (se gerado) é passado para esta função, para que o link de navegação seja injetado no relatório principal.
-        iii. Esta execução gera o ecossistema completo de dashboards.
-    e. **Persistência e Redirecionamento:**
-        i. Um novo registro `Report` é criado no banco de dados, agora incluindo o `date_range` extraído.
-        ii. O `app.py` redireciona o navegador do usuário para exibir o `resumo_geral.html` recém-criado.
+3. **Controlador (`app.py`):** A rota `/upload` recebe a requisição e imediatamente chama a camada de serviço, passando o arquivo.
+4. **Serviço (`services.py`):** A função `process_upload_and_generate_reports` assume o controle e executa a lógica de negócio:
+    a. **Salva o arquivo** e cria um diretório de saída para a execução (`run_<timestamp>`).
+    b. **Consulta o DB** para obter o relatório mais recente.
+    c. **Executa a Análise de Tendência (se aplicável):**
+        i. Chama `analisar_alertas.py` em modo `light_analysis=True` para gerar o JSON do período atual.
+        ii. Chama `analise_tendencia.py` para comparar os JSONs (atual vs. anterior) e gerar o `resumo_tendencia.html`.
+    d. **Executa a Análise Principal:** Chama `analisar_alertas.py` em modo `light_analysis=False` para obter os DataFrames da análise completa e gerar os CSVs de dados.
+    e. **Constrói o Contexto:** Chama `context_builder.py`, passando os DataFrames, para obter um dicionário de `contexto` com todos os KPIs e dados para os gráficos.
+    f. **Gera as Páginas:** Chama as funções em `gerador_paginas.py`, passando o `contexto`, para renderizar todos os relatórios HTML.
+    g. **Persiste o Resultado:** Cria um novo registro `Report` no banco de dados com os caminhos para os artefatos gerados.
+5. **Redirecionamento (`app.py`):** O serviço retorna as informações necessárias para o `app.py`, que então redireciona o navegador do usuário para o `resumo_geral.html` recém-criado.
 
 ---
 

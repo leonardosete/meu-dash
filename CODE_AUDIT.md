@@ -84,45 +84,36 @@ The following is a prioritized list of recommendations to improve the codebase.
 
 ### Priority 1: Decouple Data and Presentation
 
-* **Problem:** The data analysis module (`analisar_alertas.py`) is tightly coupled with the HTML generation module (`gerador_html.py`).
-* **Risk:** This leads to bugs like the one we just fixed. It makes the code brittle and hard to refactor.
-* **Solution:**
-    1. **Introduce a "Context Builder" pattern.** Create a new function or class responsible for preparing all the data needed for the HTML templates. This function will take the results of the analysis (e.g., the `summary` and `df_atuacao` DataFrames) and produce the `context` dictionary.
-    2. The `analisar_arquivo_csv` function should return the raw analysis results, not generate HTML.
-    3. The Flask route in `app.py` will be responsible for calling the analysis function, then the context builder, and finally the HTML rendering function.
-
-    *Note: The existing integration test can be used as a safety net during this refactoring.*
+* **Status:** ✅ **Concluído**
+* **Resumo da Implementação:**
+    1. O módulo `analisar_alertas.py` foi refatorado para ser um motor de análise de dados puro, retornando DataFrames e caminhos de arquivos de dados, sem gerar HTML.
+    2. Um novo módulo `context_builder.py` foi criado para centralizar a preparação dos dados para a camada de visualização.
+    3. O `app.py` foi ajustado para orquestrar o fluxo, chamando a análise, o construtor de contexto e, por fim, os geradores de página na sequência correta.
+    4. O acoplamento entre a lógica de dados e a apresentação foi efetivamente removido.
 
 ### Priority 2: Implement a Service Layer
 
-* **Problem:** Business logic is mixed between `app.py` and `analisar_alertas.py`.
-* **Risk:** This makes the code hard to test and reuse.
-* **Solution:**
-    1. Create a `services.py` module.
-    2. Move the core business logic from `analisar_arquivo_csv` into a function within `services.py` (e.g., `create_analysis_report`). This service function will orchestrate the calls to `carregar_dados`, `analisar_grupos`, etc.
-    3. The Flask route in `app.py` will become very thin, simply calling the service and rendering the result.
-
-    *Note: The unit tests for the analysis logic can be adapted to test the new service layer in isolation.*
+* **Status:** ✅ **Concluído**
+* **Resumo da Implementação:**
+    1. Foi criado o módulo `src/services.py` para encapsular a lógica de negócio.
+    2. A função `process_upload_and_generate_reports` foi implementada para orquestrar todo o fluxo de geração de relatórios.
+    3. A rota `/upload` em `app.py` foi simplificada, tornando-se um "controlador" enxuto que apenas delega a tarefa para a camada de serviço.
+    4. Um teste de unidade (`tests/test_services.py`) foi criado para validar a camada de serviço de forma isolada.
 
 ### Priority 3: Improve Code Quality and Logging
 
-* **Problem:** The code does not follow PEP 8, and logging is done with `print()`.
-* **Risk:** Inconsistent style makes the code harder to read. `print()` is not suitable for production logging.
-* **Solution:**
-    1. **Adopt a code formatter** like `black` and a linter like `ruff` or `flake8` to automatically enforce PEP 8.
-    2. **Replace all `print()` statements** with structured logging using Python's built-in `logging` module. Configure it to output JSON-formatted logs for easier parsing in Kubernetes.
-
-    *Note: The CI workflow can be extended to run linters and formatters automatically.*
+* **Status:** 🟡 **Não Iniciado**
+* **Próximos Passos:**
+    1. Adotar um formatador de código como `black` para padronizar o estilo do projeto.
+    2. Substituir os `print()` por um sistema de `logging` estruturado, essencial para a observabilidade em produção.
 
 ### Priority 4: Refactor "God Functions"
 
-* **Problem:** The `analisar_arquivo_csv` function is too large and does too much.
-* **Risk:** It is difficult to understand, test, and modify.
-* **Solution:**
-    1. Break down the function into smaller, more focused functions, each with a single responsibility (e.g., one for generating CSVs, one for generating detail pages, etc.).
-    2. This refactoring will be easier after implementing the service layer.
-
-    *Note: The new unit tests provide a good starting point for testing the smaller functions that will be extracted from the god function.*
+* **Status:** 🟢 **Parcialmente Concluído**
+* **Resumo da Implementação:**
+    1. A função `analisar_arquivo_csv` foi significativamente simplificada com a remoção da lógica de geração de HTML.
+    2. A rota `/upload` em `app.py` foi completamente enxugada com a introdução da camada de serviço.
+    3. O código em `services.py` agora representa a orquestração principal, que pode ser um alvo para futuras refatorações se crescer em complexidade.
 
 ## 5. Development Workflow
 
