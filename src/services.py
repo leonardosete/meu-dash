@@ -2,6 +2,7 @@
 Módulo de Serviço para encapsular a lógica de negócio principal da aplicação.
 """
 
+import shutil
 import os
 from datetime import datetime
 import logging
@@ -11,6 +12,7 @@ from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
 from . import context_builder, gerador_paginas
+from .constants import MAX_REPORTS_HISTORY
 from .constants import (
     ACAO_FLAGS_INSTABILIDADE,
     ACAO_FLAGS_OK,
@@ -21,6 +23,47 @@ from .constants import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _enforce_report_limit(db, Report):
+    """
+    Garante que o número de relatórios no banco de dados não exceda o limite.
+
+    Se o limite for excedido, os relatórios mais antigos são excluídos, tanto do
+    banco de dados quanto do sistema de arquivos, para manter a aplicação
+    performática e controlar o uso de disco.
+    """
+    try:
+        total_reports = Report.query.count()
+        reports_to_delete_count = total_reports - MAX_REPORTS_HISTORY
+
+        if reports_to_delete_count > 0:
+            logger.info(
+                f"Limite de {MAX_REPORTS_HISTORY} relatórios excedido. "
+                f"Excluindo {reports_to_delete_count} relatório(s) mais antigo(s)."
+            )
+
+            # Encontra os relatórios mais antigos para excluir, ordenando por timestamp
+            oldest_reports = (
+                Report.query.order_by(Report.timestamp.asc())
+                .limit(reports_to_delete_count)
+                .all()
+            )
+
+            for report in oldest_reports:
+                logger.warning(
+                    f"Excluindo relatório antigo: {report.original_filename} de {report.timestamp}"
+                )
+                report_dir = os.path.dirname(report.report_path)
+                if os.path.isdir(report_dir):
+                    shutil.rmtree(report_dir)
+                db.session.delete(report)
+
+            db.session.commit()
+            logger.info("Limpeza de relatórios antigos concluída com sucesso.")
+    except Exception as e:
+        logger.error(f"Erro ao tentar aplicar o limite de histórico: {e}")
+        db.session.rollback()
 
 
 def process_upload_and_generate_reports(
@@ -135,6 +178,9 @@ def process_upload_and_generate_reports(
     )
     db.session.add(new_report)
     db.session.commit()
+
+    # 7. Aplicar política de retenção de histórico
+    _enforce_report_limit(db, Report)
 
     return {
         "run_folder": run_folder_name,

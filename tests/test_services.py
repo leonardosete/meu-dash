@@ -1,6 +1,7 @@
 import os
 import pytest
 import sys
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from src import services
@@ -92,3 +93,79 @@ def test_process_upload_and_generate_reports(
     ].session.commit.called, "A sessão do DB deveria ter sido 'commitada'."
     assert "run_folder" in result
     assert "report_filename" in result
+
+
+@patch("src.services.shutil.rmtree")
+def test_enforce_report_limit_deletes_oldest(
+    mock_rmtree, mock_dependencies, tmp_path, monkeypatch
+):
+    """
+    Testa se a política de retenção de histórico funciona corretamente,
+    excluindo os relatórios mais antigos quando o limite é excedido.
+    """
+    # Arrange
+    # 1. Configurar um limite de histórico baixo para o teste
+    TEST_LIMIT = 5
+    monkeypatch.setattr(services, "MAX_REPORTS_HISTORY", TEST_LIMIT)
+
+    # 2. Criar mais relatórios mock do que o limite
+    total_reports_to_create = TEST_LIMIT + 3  # 8 relatórios
+    reports_to_delete_count = total_reports_to_create - TEST_LIMIT  # 3 relatórios
+
+    mock_reports = []
+    for i in range(total_reports_to_create):
+        # Criar diretórios e mocks de relatório com timestamps crescentes
+        run_folder = tmp_path / f"run_{i}"
+        run_folder.mkdir()
+        report_file_path = run_folder / "resumo_geral.html"
+        report_file_path.touch()
+
+        report_mock = MagicMock()
+        report_mock.timestamp = datetime.now() - timedelta(
+            days=total_reports_to_create - i
+        )
+        report_mock.original_filename = f"report_{i}.csv"
+        report_mock.report_path = str(report_file_path)
+        mock_reports.append(report_mock)
+
+    # 3. Configurar os mocks do banco de dados
+    mock_db = mock_dependencies["db"]
+    mock_Report = mock_dependencies["Report"]
+
+    # Simular que o DB tem 8 relatórios
+    mock_Report.query.count.return_value = total_reports_to_create
+
+    # Simular que a query pelos mais antigos retorna os 3 primeiros
+    oldest_reports_to_return = mock_reports[:reports_to_delete_count]
+    mock_Report.query.order_by.return_value.limit.return_value.all.return_value = (
+        oldest_reports_to_return
+    )
+
+    # Act
+    services._enforce_report_limit(mock_db, mock_Report)
+
+    # Assert
+    # 1. Verifica se a contagem foi feita
+    mock_Report.query.count.assert_called_once()
+
+    # 2. Verifica se a query para encontrar os mais antigos foi feita corretamente
+    mock_Report.query.order_by.return_value.limit.assert_called_with(
+        reports_to_delete_count
+    )
+
+    # 3. Verifica se a exclusão no DB foi chamada para cada relatório antigo
+    assert mock_db.session.delete.call_count == reports_to_delete_count
+    mock_db.session.delete.assert_any_call(oldest_reports_to_return[0])
+    mock_db.session.delete.assert_any_call(oldest_reports_to_return[2])
+
+    # 4. Verifica se a exclusão dos diretórios foi chamada para cada relatório antigo
+    assert mock_rmtree.call_count == reports_to_delete_count
+    mock_rmtree.assert_any_call(
+        os.path.dirname(oldest_reports_to_return[0].report_path)
+    )
+    mock_rmtree.assert_any_call(
+        os.path.dirname(oldest_reports_to_return[2].report_path)
+    )
+
+    # 5. Verifica se o commit foi feito no final
+    mock_db.session.commit.assert_called_once()
