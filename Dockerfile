@@ -57,6 +57,7 @@ EXPOSE 5000
 ENV PYTHONDONTWRITEBYTECODE=1
 # Força a saída de logs (stdout/stderr) a não ter buffer, garantindo que os logs apareçam em tempo real.
 ENV PYTHONUNBUFFERED=1
+# Informa ao Flask onde encontrar a aplicação, corrigindo o erro "Could not locate a Flask application".
 
 # O CMD executa a migração do banco de dados com Flask-Migrate e, em seguida, inicia o Gunicorn.
-CMD ["/bin/sh", "-c", "flask db upgrade && gunicorn --bind 0.0.0.0:5000 src.app:app"]
+CMD ["/bin/sh", "-c", "python -c 'from src.app import app, db; app.app_context().push(); db.create_all()' && gunicorn --bind 0.0.0.0:5000 src.app:app"]
