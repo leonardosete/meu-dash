@@ -56,7 +56,15 @@ os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
 
 @app.route("/health")
 def health_check():
-    """Verifica se a aplicação está online e respondendo a requisições."""
+    """Endpoint de Health Check para o Kubernetes.
+
+    Usado pelo Liveness Probe e Readiness Probe do Kubernetes para verificar se a
+    aplicação está em execução e pronta para receber tráfego.
+
+    Returns:
+        tuple: Uma tupla contendo a resposta JSON e o código de status HTTP.
+               Ex: ({"status": "ok"}, 200)
+    """
     return jsonify({"status": "ok"}), 200
 
 
@@ -65,7 +73,15 @@ def health_check():
 
 @app.route("/")
 def index():
-    """Renderiza a página inicial e passa links para as últimas análises, se existirem."""
+    """Renderiza a página de upload principal (`upload.html`).
+
+    Busca no banco de dados os links para o último relatório de tendência e para o
+    plano de ação mais recente. Esses links são passados para o template para
+    serem exibidos como atalhos na interface do usuário.
+
+    Returns:
+        str: O conteúdo HTML renderizado da página de upload.
+    """
     last_trend_analysis = None
     last_action_plan = None
 
@@ -116,7 +132,20 @@ def index():
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
-    """Orquestra o processo de upload, análise e comparação automática de tendências."""
+    """Recebe o arquivo enviado pelo usuário e orquestra a análise.
+
+    Este endpoint é ativado pelo formulário de upload de arquivo único. Ele
+    valida o arquivo, delega o processamento completo para a camada de serviço
+    (`services.process_upload_and_generate_reports`) e, se bem-sucedido,
+    redireciona o usuário para o relatório recém-gerado.
+
+    Em caso de erro, exibe uma mensagem flash para o usuário e o redireciona
+    de volta para a página inicial.
+
+    Returns:
+        werkzeug.wrappers.Response: Uma resposta de redirecionamento para a página
+        do relatório gerado ou de volta para a página inicial em caso de erro.
+    """
     file_atual = request.files.get("file_atual")
 
     if not file_atual or file_atual.filename == "":
@@ -151,8 +180,16 @@ def upload_file():
 
 @app.route("/compare", methods=["POST"])
 def compare_files():
-    """
-    Orquestra a comparação direta entre dois arquivos enviados pelo usuário.
+    """Recebe dois arquivos e orquestra a comparação direta entre eles.
+
+    Este endpoint é ativado pelo formulário de comparação. Ele espera exatamente
+    dois arquivos, delega a lógica de comparação para a camada de serviço
+    (`services.process_direct_comparison`), e redireciona o usuário para o
+    relatório de tendência resultante.
+
+    Returns:
+        werkzeug.wrappers.Response: Uma resposta de redirecionamento para o
+        relatório de tendência ou de volta para a página inicial em caso de erro.
     """
     if "files" not in request.files:
         flash("Nenhum arquivo enviado.", "error")
@@ -197,8 +234,27 @@ def compare_files():
 
 
 def secure_send_from_directory(base_directory, path):
-    """
-    Serve um arquivo de um diretório de forma segura, prevenindo Path Traversal.
+    """Serve um arquivo de um diretório de forma segura, prevenindo Path Traversal.
+
+    Esta função é um wrapper de segurança em torno da `send_from_directory` do Flask.
+    Ela garante que o caminho do arquivo solicitado esteja contido estritamente
+    dentro do diretório base permitido, prevenindo que um usuário mal-intencionado
+    acesse arquivos arbitrários no sistema de arquivos (e.g., `../../etc/passwd`).
+
+    Args:
+        base_directory (str): O caminho absoluto para o diretório a partir do qual
+                              os arquivos podem ser servidos.
+        path (str): O caminho relativo para o arquivo solicitado, fornecido pelo
+                    usuário.
+
+    Returns:
+        werkzeug.wrappers.Response: A resposta do Flask para servir o arquivo
+        solicitado.
+
+    Raises:
+        werkzeug.exceptions.NotFound: Lança uma exceção 404 Not Found se o caminho
+        resolvido estiver fora do `base_directory`, tratando-o como um recurso
+        não encontrado para evitar vazamento de informações.
     """
     # Constrói o caminho absoluto do arquivo solicitado
     requested_path = os.path.normpath(os.path.join(base_directory, path))
@@ -241,7 +297,15 @@ def serve_docs(filename):
 
 @app.route("/relatorios")
 def relatorios():
-    """Exibe a página de histórico de relatórios."""
+    """Renderiza a página de histórico de relatórios (`relatorios.html`).
+
+    Consulta o banco de dados para obter uma lista de todos os relatórios gerados,
+    ordenados do mais recente para o mais antigo. Os dados são então passados
+    para o template para exibição em uma tabela.
+
+    Returns:
+        str: O conteúdo HTML renderizado da página de histórico.
+    """
     reports = Report.query.order_by(Report.timestamp.desc()).all()
     report_data = []
     for report in reports:
@@ -263,7 +327,20 @@ def relatorios():
 # --- NOVA ROTA PARA EXCLUSÃO ---
 @app.route("/report/delete/<int:report_id>", methods=["POST"])
 def delete_report(report_id):
-    """Encontra e exclui um relatório do banco e do sistema de arquivos."""
+    """Processa a exclusão de um relatório específico.
+
+    Ativado por um POST na página de histórico. A função localiza o relatório
+    no banco de dados pelo seu ID, remove a pasta de execução correspondente
+    (que contém todos os arquivos HTML e JSON daquela análise) do sistema de
+    arquivos e, em seguida, remove o registro do banco de dados.
+
+    Args:
+        report_id (int): O ID do relatório a ser excluído, capturado da URL.
+
+    Returns:
+        werkzeug.wrappers.Response: Uma resposta de redirecionamento de volta
+        para a página de histórico de relatórios.
+    """
     report = Report.query.get_or_404(report_id)
 
     try:

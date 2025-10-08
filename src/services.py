@@ -69,16 +69,35 @@ def _enforce_report_limit(db, Report):
 def process_upload_and_generate_reports(
     file_atual, upload_folder: str, reports_folder: str, db, Report, base_dir: str
 ):
-    """
-    Serviço que orquestra todo o processo de análise de um arquivo de upload.
-    1. Salva o arquivo.
-    2. Executa a análise de tendência (se aplicável).
-    3. Executa a análise completa.
-    4. Constrói o contexto para os templates.
-    5. Gera todas as páginas HTML.
-    6. Salva o registro no banco de dados.
+    """Orquestra o fluxo completo de processamento para um único arquivo de upload.
 
-    Retorna um dicionário com informações para o redirecionamento ou None em caso de falha.
+    Esta função atua como o coração da lógica de negócio, executando uma sequência
+    de passos para analisar um arquivo CSV e gerar um ecossistema de relatórios.
+    Os passos incluem:
+    1. Salvar o arquivo de forma segura.
+    2. Preparar os diretórios de saída.
+    3. Realizar uma análise de tendência se um relatório anterior existir.
+    4. Executar a análise principal e completa do arquivo.
+    5. Construir o contexto de dados para os templates.
+    6. Gerar todas as páginas HTML do relatório.
+    7. Persistir os metadados da análise no banco de dados.
+    8. Aplicar a política de retenção para limpar relatórios antigos.
+
+    Args:
+        file_atual (werkzeug.datastructures.FileStorage): O objeto do arquivo enviado
+            pelo Flask.
+        upload_folder (str): O caminho absoluto para a pasta de uploads.
+        reports_folder (str): O caminho absoluto para a pasta onde os relatórios
+            serão salvos.
+        db (flask_sqlalchemy.SQLAlchemy): A instância do banco de dados SQLAlchemy.
+        Report (db.Model): A classe do modelo `Report` para interagir com o banco.
+        base_dir (str): O diretório base da aplicação, usado para resolver caminhos
+            de templates.
+
+    Returns:
+        dict | None: Um dicionário contendo `run_folder` e `report_filename` para
+        construir a URL de redirecionamento em caso de sucesso. Retorna `None` se
+        ocorrer uma falha no processo.
     """
     # 1. Salvar arquivo e preparar ambiente
     filename_atual = secure_filename(file_atual.filename)
@@ -189,8 +208,26 @@ def process_upload_and_generate_reports(
 
 
 def process_direct_comparison(files: list, upload_folder: str, reports_folder: str):
-    """
-    Serviço que orquestra a comparação direta entre dois arquivos.
+    """Orquestra a comparação direta entre dois arquivos CSV.
+
+    Este serviço lida com a funcionalidade de "comparar dois arquivos". Ele salva
+    temporariamente os arquivos, determina sua ordem cronológica, executa uma
+    análise completa em cada um e, finalmente, gera um relatório de tendência
+    comparando os dois. Os arquivos temporários são limpos no final.
+
+    Args:
+        files (list): Uma lista de dois objetos `FileStorage` enviados pelo Flask.
+        upload_folder (str): O caminho absoluto para a pasta de uploads temporários.
+        reports_folder (str): O caminho absoluto para a pasta de relatórios.
+
+    Returns:
+        dict: Um dicionário com `run_folder` e `report_filename` para o
+              redirecionamento para o relatório de tendência gerado.
+
+    Raises:
+        ValueError: Se não for possível determinar a ordem cronológica dos
+            arquivos (por exemplo, se as datas não puderem ser extraídas de seus
+            conteúdos).
     """
     saved_filepaths = []
     try:

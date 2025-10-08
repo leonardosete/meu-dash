@@ -100,292 +100,147 @@
             color: var(--text-color);
         }
         td:nth-child(2) { text-align: center; }
-        .flow-diagram {
-            list-style: none;
-            padding: 0;
-            position: relative;
-        }
-        .flow-diagram li {
-            padding: 20px;
-            background: var(--card-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        .flow-diagram li::after {
-            content: '↓';
-            position: absolute;
-            bottom: -28px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 1.5em;
-            color: var(--accent-color);
-        }
-        .flow-diagram li:last-child::after {
-            content: '';
-        }
-        .flow-diagram strong {
-            color: var(--accent-color);
-            font-weight: 600;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📄 Documentação Técnica - Dash Alertas</h1>
-        <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados e lógica de análise do projeto <code>meu-dash</code>.</p>
+        <h1>📄 Documentação Técnica - meu-dash</h1>
+        <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados, lógica de análise e guia de desenvolvimento do projeto <code>meu-dash</code>.</p>
 
-        <section id="descricao">
-            <h2>1. Descrição do Projeto</h2>
+        <section id="arquitetura">
+            <h2>1. Arquitetura e Componentes</h2>
             <div class="card">
-                <p>O projeto <strong>Dash Alertas</strong> automatiza a análise de alertas de monitoramento (extraídos de arquivos <code>.csv</code>), gera um ecossistema de dashboards HTML interativos para gestão e identifica tendências de problemas ao longo do tempo.</p>
-                <p>O principal diferencial do sistema é a sua capacidade de classificar problemas com base em um <strong>Score de Prioridade Ponderado</strong>, que considera o risco para o negócio, a ineficiência da automação e o impacto operacional (volume de alertas), permitindo que as equipes foquem no que é mais crítico.</p>
+                <p>A aplicação segue uma arquitetura de <strong>3 camadas</strong>, projetada para garantir a separação de responsabilidades e facilitar a manutenção:</p>
+                <ul>
+                    <li><strong>Camada de Apresentação (Flask Web):</strong> Responsável por renderizar a interface do usuário, receber requisições HTTP e servir os relatórios.</li>
+                    <li><strong>Camada de Serviço:</strong> Orquestra a lógica de negócio, atuando como uma ponte entre a camada web e os motores de análise.</li>
+                    <li><strong>Camada de Análise e Dados:</strong> Contém os motores que processam os dados, aplicam a lógica de negócio e geram os resultados.</li>
+                </ul>
+                <p>Para uma descrição mais detalhada, consulte o arquivo <a href="../ARCHITECTURE.md"><code>ARCHITECTURE.md</code></a> na raiz do projeto.</p>
+            </div>
+
+            <h4>Componentes Principais</h4>
+            <div class="card">
+                <ul>
+                    <li><code>src/app.py</code>: Ponto de entrada da aplicação Flask. Define as rotas, gerencia as requisições e delega a lógica para a camada de serviço.</li>
+                    <li><code>src/services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados e coordena a geração de relatórios.</li>
+                    <li><code>src/analisar_alertas.py</code>: Motor de análise que processa um arquivo <code>.csv</code>, agrupa alertas em casos e calcula o score de prioridade.</li>
+                    <li><code>src/analise_tendencia.py</code>: Motor que compara dois períodos de análise e gera o relatório de tendência.</li>
+                    <li><code>data/meu_dash.db</code>: Banco de dados SQLite que persiste os metadados dos relatórios, essencial para a análise de tendência.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="fluxo">
+            <h2>2. Fluxo de Dados (Upload de Arquivo)</h2>
+            <p>O diagrama abaixo ilustra o fluxo de dados quando um usuário faz o upload de um novo arquivo para análise.</p>
+            <div class="card">
+                <div class="mermaid">
+sequenceDiagram
+    participant User as Usuário
+    participant App as Flask App (app.py)
+    participant Service as Camada de Serviço (services.py)
+    participant Analysis as Módulos de Análise
+    participant DB as Banco de Dados (SQLite)
+
+    User->>+App: POST /upload com arquivo.csv
+    App->>+Service: Chama `process_upload_and_generate_reports()`
+    Service->>Service: Salva o arquivo em `data/uploads`
+    Service->>DB: Consulta o último relatório (para tendência)
+    DB-->>Service: Retorna metadados do relatório anterior
+    
+    alt Análise de Tendência Aplicável
+        Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise leve do arquivo atual)
+        Analysis-->>-Service: Retorna JSON temporário
+        Service->>+Analysis: Chama `gerar_relatorio_tendencia()` com JSON anterior e atual
+        Analysis-->>-Service: Gera `resumo_tendencia.html`
+    end
+
+    Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise completa)
+    Analysis-->>-Service: Retorna dataframes e sumários
+    Service->>Service: Chama `context_builder` e `gerador_paginas`
+    Service->>Service: Gera todo o ecossistema de relatórios HTML
+    
+    Service->>+DB: Salva metadados do novo relatório
+    DB-->>-Service: Confirmação
+    
+    Service-->>-App: Retorna o caminho para o relatório principal
+    App->>-User: Redireciona para a página do relatório
+
+                </div>
+            </div>
+        </section>
+
+        <section id="deployment">
+            <h2>3. Implantação e Desenvolvimento Local</h2>
+            
+            <h3>Desenvolvimento Local</h3>
+            <div class="card">
+                <p>Para executar a aplicação localmente, siga os passos abaixo. Para mais detalhes, consulte o <a href="../CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
+                <pre><code># 1. Clone o repositório e entre no diretório
+
+# 2. Crie um ambiente virtual e ative-o
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Instale as dependências
+pip install -r requirements.txt
+
+# 4. Exporte as variáveis de ambiente do Flask
+export FLASK_APP=src/app.py
+export FLASK_DEBUG=True
+
+# 5. Inicialize/Atualize o banco de dados
+flask db upgrade
+
+# 6. Inicie o servidor de desenvolvimento
+flask run</code></pre>
+                <p>A aplicação estará disponível em <a href="http://127.0.0.1:5000">http://127.0.0.1:5000</a>.</p>
+            </div>
+
+            <h3>Implantação em Produção</h3>
+            <div class="card">
+                <h4><code>Dockerfile</code></h4>
+                <p>O <code>Dockerfile</code> multi-stage constrói uma imagem de produção otimizada, utilizando <strong>Gunicorn</strong> como servidor WSGI.</p>
+<pre><code># Build da imagem
+docker build -t meu-dash-web .
+
+# Execução do container
+docker run -p 8000:8000 -v ./data:/app/data meu-dash-web</code></pre>
+                <h4><code>kubernetes.yaml</code></h4>
+                <p>Define os recursos para implantação em Kubernetes, incluindo <strong>PersistentVolumeClaim</strong> para o diretório <code>/app/data</code>, <strong>Deployment</strong> e <strong>Service</strong>.</p>
             </div>
         </section>
 
         <section id="logica">
-            <h2>2. Lógica de Análise e Priorização</h2>
-            <p>A análise se baseia em conceitos-chave para transformar "ruído" (milhares de alertas) em insights acionáveis (casos priorizados).</p>
+            <h2>4. Lógica de Análise e Priorização</h2>
+            <p>A análise se baseia em conceitos-chave para transformar "ruído" em insights acionáveis.</p>
             
             <h3>Casos vs. Alertas</h3>
             <div class="card">
-                <p>Para focar na causa raiz, a análise distingue <strong>Alertas</strong> de <strong>Casos</strong>:</p>
-                <ul>
-                    <li><strong>Alerta:</strong> Uma notificação individual de um evento de monitoramento.</li>
-                    <li><strong>Caso:</strong> A causa raiz de um problema. Ele agrupa múltiplos alertas do mesmo tipo que ocorrem em um mesmo recurso (CI/Nó), representando uma única frente de trabalho.</li>
-                </ul>
-                <pre><code>Exemplo: Um servidor com pouco espaço em disco pode gerar 100 alertas de "disco cheio". No entanto, como todos se referem à mesma causa raiz no mesmo recurso, eles são agrupados em apenas 1 Caso.</code></pre>
+                <p>A análise agrupa múltiplos alertas da mesma natureza em um mesmo recurso em um único <strong>Caso</strong>, permitindo focar na causa raiz.</p>
             </div>
 
             <h3>Score de Prioridade Ponderado</h3>
             <div class="card">
                 <p>A criticidade de um caso é calculada pela fórmula:</p>
-                <pre><code>Score Final = (Pilar 1: Risco) * (Pilar 2: Ineficiência) * (Pilar 3: Impacto)</code></pre>
+                <pre><code>Score Final = (Risco) * (Ineficiência) * (Impacto)</code></pre>
                 
                 <h4>Pilar 1: Score de Risco (Criticidade Base)</h4>
-                <p>Mede a gravidade inerente do problema. É a soma dos pesos da <strong>Severidade</strong> e <strong>Prioridade</strong> do alerta, extraídos das colunas <code>severity</code> e <code>sn_priority_group</code>.</p>
-                <table>
-                    <thead><tr><th>Severidade</th><th>Peso</th><th>Prioridade</th><th>Peso</th></tr></thead>
-                    <tbody>
-                        <tr><td>Crítico</td><td>10</td><td>Urgente</td><td>10</td></tr>
-                        <tr><td>Alto / Major</td><td>8</td><td>Alto(a)</td><td>8</td></tr>
-                        <tr><td>Médio / Minor</td><td>5</td><td>Moderado(a)</td><td>5</td></tr>
-                        <tr><td>Aviso / Baixo</td><td>2-3</td><td>Baixo(a)</td><td>2</td></tr>
-                    </tbody>
-                </table>
+                <p>Mede a gravidade inerente do problema (Severidade + Prioridade).</p>
 
                 <h4>Pilar 2: Multiplicador de Ineficiência (Falha da Automação)</h4>
                 <p>Penaliza casos onde a automação de remediação falhou.</p>
-                <table>
-                    <thead><tr><th>Resultado da Automação</th><th>Multiplicador</th></tr></thead>
-                    <tbody>
-                        <tr><td>Falha Persistente (nunca funcionou)</td><td>x 1.5</td></tr>
-                        <tr><td>Intermitente (falha às vezes)</td><td>x 1.2</td></tr>
-                        <tr><td>Status Ausente / Inconsistente</td><td>x 1.1</td></tr>
-                        <tr><td>Funcionou no final (Estabilizada / OK)</td><td>x 1.0</td></tr>
-                    </tbody>
-                </table>
 
                 <h4>Pilar 3: Multiplicador de Impacto (Volume de Alertas)</h4>
-                <p>Penaliza o "ruído" operacional. O cálculo usa a fórmula <code>1 + ln(N)</code> (logaritmo natural).</p>
-                <table>
-                    <thead><tr><th>Nº de Alertas no Caso</th><th>Multiplicador Aprox.</th></tr></thead>
-                    <tbody>
-                        <tr><td>1 alerta</td><td>x 1.0</td></tr>
-                        <tr><td>10 alertas</td><td>x 3.3</td></tr>
-                        <tr><td>50 alertas</td><td>x 4.9</td></tr>
-                        <tr><td>100 alertas</td><td>x 5.6</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <h3>Contabilização da Remediação</h3>
-            <div class="card">
-                <p>A análise da remediação se baseia na coluna <code>self_healing_status</code>. O script <code>analisar_alertas.py</code> verifica o valor para cada alerta:</p>
-                <ul>
-                    <li><code>REM_OK</code>: Sucesso.</li>
-                    <li><code>REM_NOT_OK</code>: Falha.</li>
-                    <li>Ausente ou outro valor: Status desconhecido ou inválido.</li>
-                </ul>
-                <p>A sequência desses status ao longo do tempo para um mesmo <strong>Caso</strong> define a <strong>Ação Sugerida</strong> (ex: "Falha Persistente", "Intermitente", "Estabilizada").</p>
-            </div>
-
-            <h3>Qualidade dos Dados: Status de Remediação</h3>
-            <div class="card">
-                <p>Para garantir a integridade da análise, o script <code>analisar_alertas.py</code> realiza uma validação na coluna <code>self_healing_status</code>.</p>
-                <ul>
-                    <li><strong>Valores Esperados:</strong> <code>REM_OK</code>, <code>REM_NOT_OK</code>, ou valores nulos/vazios.</li>
-                    <li><strong>Ação em caso de Inconsistência:</strong> Se um valor diferente dos esperados for encontrado, a linha inteira do alerta é registrada no arquivo <code>invalid_self_healing_status.csv</code>.</li>
-                    <li><strong>Notificação:</strong> O dashboard principal (<code>resumo_geral.html</code>) exibirá um aviso e um link para o <code>qualidade_dados_remediacao.html</code>, permitindo a fácil depuração e identificação de problemas na coleta de dados.</li>
-                </ul>
-            </div>
-        </section>
-
-        <section id="arquitetura">
-            <h2>3. Arquitetura e Componentes</h2>
-            <p>A arquitetura do projeto foi refatorada para um modelo de <strong>camadas</strong>, desacoplando a apresentação (Flask), a lógica de negócio (Camada de Serviço) e a análise de dados (Motores de Análise).</p>
-
-            <h3>Controlador Web e Ponto de Entrada (<code>src/app.py</code>)</h3>
-            <div class="card">
-                <ul>
-                    <li><strong>Responsabilidade:</strong> Atuar como a camada de apresentação e o ponto de entrada da aplicação. É responsável por gerenciar as rotas HTTP, receber as requisições do usuário e delegar toda a lógica de negócio para a camada de serviço.</li>
-                    <li><strong>Componentes Internos:</strong>
-                        <ul>
-                            <li><strong>Flask:</strong> Microframework web que estrutura a aplicação.</li>
-                            <li><strong>SQLAlchemy:</strong> ORM para interagir com o banco de dados, gerenciando o histórico de relatórios.</li>
-                            <li><strong>Flask-Migrate:</strong> Ferramenta para gerenciar as migrações do esquema do banco de dados.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Rotas Principais:</strong>
-                        <ul>
-                            <li><code>GET /</code>: Exibe a página inicial de upload (<code>upload.html</code>).</li>
-                            <li><code>POST /upload</code>: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.</li>
-                            <li><code>GET /relatorios</code>: Exibe um histórico de todos os relatórios gerados.</li>
-                            <li><code>GET /reports/&lt;run_folder&gt;/&lt;filename&gt;</code>: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.</li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-
-            <h3>Camada de Serviço (<code>src/services.py</code>)</h3>
-            <div class="card">
-                <ul>
-                    <li><strong>Responsabilidade:</strong> É o <strong>cérebro</strong> da aplicação. Encapsula e orquestra toda a lógica de negócio, como o processamento de uploads e a comparação de arquivos.</li>
-                    <li><strong>Funções Principais:</strong>
-                        <ul>
-                            <li><code>process_upload_and_generate_reports</code>: Coordena o fluxo completo de uma nova análise, desde salvar o arquivo até persistir o resultado no banco de dados.</li>
-                            <li><code>process_direct_comparison</code>: Orquestra a análise comparativa entre dois arquivos.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Invocação:</strong> As funções deste módulo são chamadas diretamente pelas rotas do <code>app.py</code>.</li>
-                </ul>
-            </div>
-
-            <h3>Banco de Dados (<code>data/meu_dash.db</code>)</h3>
-            <div class="card">
-                <ul>
-                    <li><strong>Tecnologia:</strong> SQLite, gerenciado pelo SQLAlchemy.</li>
-                    <li><strong>Modelo de Dados (<code>Report</code>):</strong> Armazena metadados de cada análise, incluindo o nome do arquivo original, o timestamp, os caminhos para os artefatos gerados (<code>resumo_geral.html</code> e <code>resumo_problemas.json</code>) e o intervalo de datas da análise.</li>
-                    <li><strong>Responsabilidade:</strong> Manter um histórico persistente de todas as análises. Este histórico é <strong>crucial</strong> para a análise de tendência, pois permite que a aplicação compare o upload atual com a análise mais recente registrada.</li>
-                </ul>
-            </div>
-
-            <h3>Motores de Análise (Invocados como Bibliotecas)</h3>
-            <div class="card">
-                <p>Estes módulos foram refatorados para serem "motores" puros de análise de dados. Eles recebem dados, processam e retornam resultados (DataFrames, dicionários), sem se preocupar com a orquestração geral ou geração de HTML.</p>
-                <h4><code>src/analisar_alertas.py</code></h4>
-                <ul>
-                    <li><strong>Responsabilidade:</strong> Processar um único arquivo de alertas e realizar a análise principal.</li>
-                    <li><strong>Função Principal:</strong> <code>analisar_arquivo_csv</code>.</li>
-                    <li><strong>Invocação:</strong> É chamado pela camada de serviço (<code>services.py</code>).</li>
-                    <li><strong>Entradas:</strong> Caminho do arquivo de input, diretório de output e a flag <code>light_analysis</code>.</li>
-                    <li><strong>Saídas:</strong> Retorna um dicionário contendo os resultados da análise (DataFrames) e o caminho para o <code>resumo_problemas.json</code> gerado.</li>
-                </ul>
-                <h4><code>src/analise_tendencia.py</code></h4>
-                <ul>
-                    <li><strong>Responsabilidade:</strong> Comparar dois períodos (JSON atual vs. JSON anterior) e gerar o dashboard de tendência.</li>
-                    <li><strong>Função Principal:</strong> <code>gerar_relatorio_tendencia</code>.</li>
-                    <li><strong>Invocação:</strong> É chamado pela camada de serviço (<code>services.py</code>).</li>
-                    <li><strong>Entradas:</strong> Caminhos para os dois arquivos JSON, nomes dos arquivos CSV originais e os intervalos de datas.</li>
-                    <li><strong>Saídas:</strong> Gera o arquivo <code>resumo_tendencia.html</code>.</li>
-                </ul>
-            </div>
-
-            <h3>Módulos Auxiliares</h3>
-            <div class="card">
-                <h4><code>src/context_builder.py</code></h4>
-                <p>Prepara o dicionário de "contexto" com todos os dados e KPIs necessários para os templates HTML, a partir dos resultados brutos da análise.</p>
-                <h4><code>src/gerador_paginas.py</code></h4>
-                <p>Orquestra a criação das diversas páginas HTML do relatório, consumindo o contexto do <code>context_builder.py</code> e renderizando os templates.</p>
-                <h4><code>src/gerador_html.py</code></h4>
-                <p>Contém funções de baixo nível para gerar componentes HTML específicos (tabelas, gráficos, etc.). É utilizado pelo <code>gerador_paginas.py</code>.</p>
-                <h4><code>src/utils.py</code></h4>
-                <p>Fornece funções utilitárias, como a sanitização de nomes de arquivos, usadas em várias partes do projeto.</p>
-                <h4><code>src/constants.py</code></h4>
-                <p>Centraliza todas as constantes de lógica de negócio (pesos, ações, etc.) para garantir consistência.</p>
-                <h4><code>src/get_date_range.py</code></h4>
-                <p>Responsável por ler um arquivo de alertas e extrair a data mais antiga e a mais recente, retornando um intervalo de datas formatado.</p>
-            </div>
-        </section>
-
-        <section id="fluxo">
-            <h2>4. Fluxo de Execução Lógico</h2>
-            <p>O processo é iniciado pela interação do usuário e segue um fluxo de delegação claro através das camadas da aplicação.</p>
-            <ol class="flow-diagram">
-                <li>
-                    <strong>1. Requisição do Usuário:</strong> O usuário envia um arquivo <code>.csv</code> via formulário, que dispara uma requisição <code>POST</code> para a rota <code>/upload</code> no <strong><code>app.py</code></strong>.
-                </li>
-                <li>
-                    <strong>2. Delegação para o Serviço:</strong> A rota em <code>app.py</code> recebe o arquivo e imediatamente delega toda a lógica de negócio para a função <code>process_upload_and_generate_reports</code> no módulo <strong><code>src/services.py</code></strong>.
-                </li>
-                <li>
-                    <strong>3. Orquestração na Camada de Serviço (<code>services.py</code>):</strong>
-                    <ul>
-                        <li>a. <strong>Preparação:</strong> O serviço salva o arquivo, extrai o intervalo de datas e cria um diretório de execução (`run_&lt;timestamp&gt;`).</li>
-                        <li>b. <strong>Análise de Tendência (Condicional):</strong> O serviço consulta o banco de dados pelo relatório mais recente. Se existir, ele chama <code>analisar_arquivo_csv(light_analysis=True)</code> para obter o JSON do período atual e, em seguida, chama <code>gerar_relatorio_tendencia</code> para criar o dashboard comparativo.</li>
-                        <li>c. <strong>Análise Principal:</strong> O serviço chama <code>analisar_arquivo_csv(light_analysis=False)</code> para obter os resultados completos da análise (DataFrames).</li>
-                        <li>d. <strong>Construção de Contexto e Geração de Páginas:</strong> O serviço passa os resultados para <code>context_builder.py</code> para preparar os dados para visualização e, em seguida, para <code>gerador_paginas.py</code> para criar todas as páginas HTML do relatório.</li>
-                        <li>e. <strong>Persistência:</strong> Um novo registro <code>Report</code> é criado e salvo no banco de dados com os metadados da análise.</li>
-                        <li>f. <strong>Retorno:</strong> O serviço retorna o nome da pasta (`run_folder`) e do arquivo de relatório principal para o <code>app.py</code>.</li>
-                    </ul>
-                </li>
-                <li>
-                    <strong>4. Redirecionamento (<code>app.py</code>):</strong> A rota <code>/upload</code> recebe o resultado do serviço e redireciona o navegador do usuário para a URL que serve o relatório recém-criado (ex: <code>/reports/run_.../resumo_geral.html</code>).
-                </li>
-            </ol>
-        </section>
-
-        <section id="deployment">
-            <h2>5. Implantação (Deployment)</h2>
-            <p>O projeto é totalmente containerizado para garantir portabilidade e escalabilidade.</p>
-            <div class="card">
-                <h4><code>Dockerfile</code></h4>
-                <p>Um <code>Dockerfile</code> multi-stage é fornecido para construir uma imagem de produção otimizada. Ele instala as dependências Python, inicializa o banco de dados com <strong>Flask-Migrate</strong> e configura a aplicação para ser servida com o servidor WSGI <strong>Gunicorn</strong>, pronto para produção.</p>
-<pre><code># Exemplo de build
-docker build -t meu-dash-web .
-
-# Exemplo de execução
-docker run -p 8000:8000 -v ./data:/app/data meu-dash-web</code></pre>
-            </div>
-            <div class="card">
-                <h4><code>kubernetes.yaml</code></h4>
-                <p>Para implantação em ambientes orquestrados, o arquivo <code>kubernetes.yaml</code> define os recursos necessários:</p>
-                <ul>
-                    <li><strong>PersistentVolumeClaim:</strong> Garante que o diretório <code>/app/data</code> (contendo o banco de dados, uploads e relatórios) seja persistido em um volume de armazenamento.</li>
-                    <li><strong>Deployment:</strong> Gerencia os Pods da aplicação, garantindo que o número desejado de réplicas esteja sempre em execução.</li>
-                    <li><strong>Service:</strong> Expõe o Deployment através de um serviço (<code>ClusterIP</code> ou <code>LoadBalancer</code>), tornando a aplicação acessível na rede.</li>
-                </ul>
-            </div>
-        </section>
-
-        <section id="artefatos">
-            <h2>6. Artefatos Gerados (Outputs)</h2>
-            <h3>Dashboards HTML Interativos</h3>
-            <div class="card">
-                <ul>
-                    <li><strong><code>resumo_geral.html</code>:</strong> Visão geral gerencial. Contém uma seção "Conceitos" que explica a metodologia da análise.</li>
-                    <li><strong><code>resumo_tendencia.html</code>:</strong> (Modo comparativo) Relatório de evolução entre os períodos.</li>
-                    <li><strong><code>atuar.html</code>:</strong> Editor interativo para o time atuar sobre os problemas que precisam de ação.</li>
-                    <li><strong><code>sucesso_automacao.html</code>:</strong> Visualizador de casos resolvidos por automação.</li>
-                    <li><strong><code>instabilidade_cronica.html</code>:</strong> Visualizador de casos que são remediados, mas ocorrem com alta frequência.</li>
-                    <li><strong><code>qualidade_dados_remediacao.html</code>:</strong> (Condicional) Visualizador para os alertas com status de remediação inválido.</li>
-                    <li><strong><code>visualizador_json.html</code>:</strong> Ferramenta de depuração para visualizar o <code>resumo_problemas.json</code>.</li>
-                    <li><strong>Outros:</strong> Planos de ação por squad, visualizador de squads, páginas de detalhes, etc.</li>
-                </ul>
-            </div>
-            <h3>Arquivos de Dados</h3>
-            <div class="card">
-                <ul>
-                    <li><strong><code>resumo_problemas.json</code>:</strong> A base de dados principal, com a análise completa do período.</li>
-                    <li><strong><code>atuar.csv</code>:</strong> Lista de problemas que exigem ação manual.</li>
-                    <li><strong><code>remediados.csv</code>:</strong> Lista de problemas resolvidos por automação.</li>
-                    <li><strong><code>remediados_frequentes.csv</code>:</strong> Lista de problemas que indicam instabilidade crônica.</li>
-                    <li><strong><code>invalid_self_healing_status.csv</code>:</strong> (Condicional) Log com os alertas que possuem um valor de status inesperado.</li>
-                </ul>
+                <p>Penaliza o "ruído" operacional, usando uma escala logarítmica (<code>1 + ln(N)</code>).</p>
             </div>
         </section>
 
     </div>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
 </body>
 </html>

@@ -6,6 +6,52 @@ O principal diferencial do sistema é a sua capacidade de classificar problemas 
 
 ---
 
+### 💻 Tecnologias Utilizadas
+
+-   **Backend:** Python
+-   **Framework Web:** Flask
+-   **Análise de Dados:** Pandas e NumPy
+-   **Banco de Dados:** SQLite com Flask-SQLAlchemy
+-   **Servidor de Produção:** Gunicorn
+-   **Testes:** Pytest
+-   **Containerização:** Docker
+-   **Orquestração:** Kubernetes
+
+### 🚀 Desenvolvimento Local
+
+Para executar a aplicação em seu ambiente local, siga estes passos. Para mais detalhes, consulte o `CONTRIBUTING.md`.
+
+1.  **Clone e instale as dependências:**
+
+    ```bash
+    # Clone o repositório
+    git clone <URL_DO_REPOSITORIO>
+    cd meu-dash
+
+    # Crie um ambiente virtual e instale as dependências
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
+    ```
+
+2.  **Configure e inicie a aplicação:**
+
+    ```bash
+    # Exporte as variáveis de ambiente do Flask
+    export FLASK_APP=src/app.py
+    export FLASK_DEBUG=True
+
+    # Inicialize/Atualize o banco de dados
+    flask db upgrade
+
+    # Inicie o servidor
+    flask run
+    ```
+
+3.  Acesse `http://127.0.0.1:5000` em seu navegador.
+
+---
+
 ## 🚀 Como Usar
 
 Acesse a aplicação através do seu endereço web e faça o upload de um ou mais arquivos `.csv` contendo os dados de alerta. A aplicação processará os arquivos e gerará os relatórios automaticamente.
