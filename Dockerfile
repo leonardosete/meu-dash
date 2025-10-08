@@ -1,5 +1,6 @@
 # ---- Estágio de Build (Builder) ----
-FROM python:3.14-alpine AS builder
+# ---- python:3.14-alpine ----
+FROM python@sha256:a7e141e82491b72477b06942524caef4e85247fa91873e7d4f365ed9a1d578c4 AS builder
 
 # Atualiza o sistema e instala as dependências de build
 RUN apk update && apk upgrade --available && \
@@ -27,8 +28,8 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # ---- Estágio Final (Final) ----
-FROM python:3.14-alpine AS final
-
+# ---- python:3.14-alpine ----
+FROM python@sha256:a7e141e82491b72477b06942524caef4e85247fa91873e7d4f365ed9a1d578c4 AS final
 WORKDIR /app
 
 # Crie usuário não-root para segurança
