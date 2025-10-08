@@ -63,14 +63,17 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 6. Build e Push da Imagem: Só executa em pushes para a 'main'.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d4c6c1c7f6b317f57f53a6a2822f4eac7a4e7a19 # SHA do v2
+              
       - name: Build and push Docker image
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # Pinned to a specific commit
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # SHA do v5
         with:
           context: .
-          # Habilita o cache para as camadas da imagem Docker.
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:${{ github.sha }}
+
