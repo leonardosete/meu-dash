@@ -1,5 +1,5 @@
 # ---- Estágio de Build (Builder) ----
-FROM python:3.13.8-alpine AS builder
+FROM python:3.12-alpine AS builder
 
 # Atualiza o sistema e instala as dependências de build
 RUN apk update && apk upgrade --available && \
@@ -27,7 +27,7 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # ---- Estágio Final (Final) ----
-FROM python:3.13.8-alpine AS final
+FROM python:3.12-alpine AS final
 
 WORKDIR /app
 
