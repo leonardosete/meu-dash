@@ -5,8 +5,6 @@ FROM python:3.13.8-alpine AS base
 FROM python:3.13-alpine AS builder
 
 # Atualize sistema e remova pacotes desnecessários
-RUN apk update && \
-    apk upgrade && \
 RUN apk update && apk upgrade --available && \
     apk add --no-cache \
         build-base \
@@ -14,8 +12,7 @@ RUN apk update && apk upgrade --available && \
         musl-dev \
         gcc \
         py3-pip \
-        libffi-dev
-    && rm -rf /var/cache/apk/*
+        libffi-dev && rm -rf /var/cache/apk/*
 
 # Crie usuário não-root
 RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
