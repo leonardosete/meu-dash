@@ -1,7 +1,5 @@
-# ---- Base Stage ----
 FROM python:3.13.8-alpine AS base
 
-# Atualize sistema e force upgrades
 RUN apk update && \
     apk upgrade --available && \
     apk add --no-cache \
@@ -13,10 +11,8 @@ RUN apk update && \
         busybox \
     && rm -rf /var/cache/apk/*
 
-# Corrija busybox para última versão disponível
-RUN apk add --no-cache --upgrade busybox
+RUN python -m pip install --upgrade pip setuptools wheel --user
 
-# Crie usuário não-root
 RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
 ENV HOME=/home/nonroot
 
@@ -24,14 +20,10 @@ USER nonroot
 
 WORKDIR /app
 
-# Atualize pip e setuptools/wheel para evitar CVE em pip
-RUN python -m pip install --upgrade "pip>=25.3" setuptools wheel --user
-
-# Instale dependências
 COPY --chown=nonroot:nonroot requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-# ---- App Stage ----
+
 FROM python:3.13.8-alpine AS app
 
 WORKDIR /app
