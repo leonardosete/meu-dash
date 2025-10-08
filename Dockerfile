@@ -13,9 +13,8 @@ RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
 USER nonroot
 WORKDIR /app
 
-# Instala dependências Python normalmente via pip (que já está disponível)
 COPY --chown=nonroot:nonroot requirements.txt .
-RUN pip3 install --no-cache-dir --user -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY --chown=nonroot:nonroot src/ src/
 COPY --chown=nonroot:nonroot templates/ templates/
