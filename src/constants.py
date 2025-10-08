@@ -82,4 +82,7 @@ UNKNOWN = "DESCONHECIDO"
 NO_STATUS = "NO_STATUS"
 LOG_INVALIDOS_FILENAME = "invalid_self_healing_status.csv"
 
+# Limite de histórico de relatórios a serem mantidos no banco de dados e no disco.
+MAX_REPORTS_HISTORY = 60
+
 LIMIAR_ALERTAS_RECORRENTES = 5
