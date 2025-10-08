@@ -1,4 +1,4 @@
-# 🤖 PAINEL DE CONTROLE DA IA (GEMINI)
+# 🤖 PAINEL DE CONTROLE DA IA (GEMINI) - v2.0
 
 ## 1. SEU PAPEL E OBJETIVO
 
@@ -6,24 +6,11 @@
 
 **Seu objetivo principal é auxiliar no desenvolvimento, análise, depuração e documentação deste projeto**, garantindo que o código e a documentação permaneçam consistentes e de alta qualidade.
 
-## 2. CONTEXTO E FONTE DA VERDADE
-
-- **Diretório Raiz do Projeto:** `~/meu-dash`
-- **Fonte Primária da Verdade:** **Este arquivo (`GEMINI.md`) é sua referência principal.** Sempre comece lendo-o para entender a arquitetura e o fluxo de dados. O código-fonte em `src/app.py` é a autoridade final sobre o fluxo de execução.
-- **Documentação para Humanos:**
-  - `docs/doc_tecnica.html`: Detalhes técnicos da implementação.
-  - `docs/doc_gerencial.html`: Visão de alto nível e impacto para gestão.
-
-## 3. REGRAS DE OPERAÇÃO
-
-1. **Sincronização Obrigatória:** Qualquer alteração no código que afete o fluxo de execução, as entradas/saídas de um módulo ou a estrutura dos relatórios gerados **DEVE** ser refletida imediatamente neste arquivo.
-2. **Análise Baseada em Fatos:** Suas análises devem se basear estritamente na arquitetura e no fluxo descritos aqui. Não presuma funcionalidades que não estejam documentadas.
-3. **Clareza e Precisão:** Ao gerar código ou documentação, seja explícito sobre as dependências entre os módulos e os artefatos que eles consomem e produzem.
-4. **Ponto de Partida Fixo:** Toda análise de fluxo de execução começa pela interação do usuário com a interface web, orquestrada pelo `src/app.py`.
+**Este arquivo é sua fonte primária e única da verdade.** Sempre comece por ele.
 
 ---
 
-## 📝 DESCRIÇÃO DO PROJETO: Análise de Alertas e Tendências
+## 2. DESCRIÇÃO DO PROJETO: Análise de Alertas e Tendências
 
 Este projeto é uma **aplicação web Flask** que automatiza a análise de alertas de monitoramento (`.csv`), gera um ecossistema de dashboards HTML interativos e identifica tendências de problemas ao longo do tempo. A aplicação é projetada para ser executada em contêiner (Docker) e implantada em Kubernetes.
 
@@ -31,111 +18,71 @@ O sistema classifica os problemas com base em um **Score de Prioridade Ponderado
 
 ---
 
-## 🧠 LÓGICA DE ANÁLISE E PRIORIZAÇÃO
+## 3. ARQUITETURA ATUAL (Pós-Refatoração)
 
-A análise se baseia em conceitos-chave para transformar "ruído" (alertas) em insights acionáveis (casos priorizados).
+A arquitetura original foi refatorada para um modelo mais robusto, desacoplado e testável. A estrutura atual segue os seguintes princípios:
 
-### Casos vs. Alertas
+### 3.1. Visão Geral da Arquitetura
 
-- **Alerta:** Uma notificação individual de um evento de monitoramento.
-- **Caso:** A causa raiz de um problema. Agrupa múltiplos alertas do mesmo tipo em um mesmo recurso (CI/Nó).
+- **Controller (`src/app.py`):** Camada fina responsável apenas por gerenciar rotas HTTP e delegar toda a lógica de negócio para a camada de serviço. Não contém lógica de negócio.
+- **Service Layer (`src/services.py`):** O cérebro da aplicação. Orquestra todo o fluxo de trabalho, desde o recebimento dos dados até a geração e persistência dos relatórios.
+- **Analysis Engine (`src/analisar_alertas.py`):** Motor de análise puro. Recebe dados e retorna DataFrames com os resultados. Não tem conhecimento sobre HTML ou apresentação.
+- **Presentation Layer (`src/gerador_paginas.py`, `src/context_builder.py`):** Responsável por consumir os dados da camada de análise e construir os relatórios HTML.
+- **Logging (`src/logging_config.py`):** Módulo centralizado para configuração de logging estruturado em toda a aplicação. `print()` não é utilizado.
+- **Database (`data/meu_dash.db` via SQLAlchemy):** Armazena o histórico das execuções para permitir a análise de tendências.
 
-### Score de Prioridade Ponderado
-
-### **Score Final = (Risco) * (Ineficiência) * (Impacto)**
-
-- **Risco:** Gravidade inerente do problema (baseado na severidade e prioridade).
-- **Ineficiência:** Penaliza falhas da automação de remediação.
-- **Impacto:** Penaliza o "ruído" operacional (volume de alertas).
+Esta arquitetura foi o resultado de um plano de refatoração bem-sucedido, documentado em `CODE_AUDIT.md`.
 
 ---
 
-## 🏛️ ARQUITETURA E COMPONENTES
+## 4. FLUXO DE EXECUÇÃO LÓGICO
 
-A arquitetura do projeto é centrada em uma aplicação web Flask que orquestra todo o processo de análise e visualização.
-
-### 1. Orquestrador Principal: Aplicação Flask (`src/app.py`)
-
-- **Responsabilidade:** Único ponto de entrada e cérebro do projeto. Gerencia as interações do usuário, o fluxo de análise, a persistência de dados e o roteamento para servir os relatórios.
-- **Componentes Internos:**
-  - **Flask:** Microframework web.
-  - **SQLAlchemy:** ORM para interagir com o banco de dados.
-  - **Flask-Migrate:** Gerencia as migrações do esquema do banco de dados.
-- **Rotas Principais:**
-  - `GET /`: Exibe a página inicial de upload (`upload.html`).
-  - `POST /upload`: Orquestra todo o fluxo de análise após o usuário enviar um arquivo.
-  - `GET /relatorios`: Exibe um histórico de todos os relatórios gerados, com links para visualizá-los.
-  - `GET /reports/<run_folder>/<filename>`: Serve os arquivos de relatório (HTML, CSV, etc.) de uma execução específica.
-
-### 2. Banco de Dados (`data/meu_dash.db`)
-
-- **Tecnologia:** SQLite, gerenciado pelo SQLAlchemy.
-- **Modelo (`Report`):**
-  - `id`: Identificador único.
-  - `timestamp`: Data e hora da análise.
-  - `original_filename`: Nome do arquivo `.csv` que foi enviado.
-  - `report_path`: Caminho para o relatório HTML principal (`resumo_geral.html`).
-  - `json_summary_path`: **Crucial para a análise de tendência.** Caminho para o arquivo `resumo_problemas.json` daquela análise.
-  - `date_range`: (Opcional) String que armazena o intervalo de datas coberto pelo relatório (ex: "01/01/2023 a 15/01/2023").
-- **Responsabilidade:** Manter um histórico de todas as análises executadas. Isso permite que a análise de tendência compare o upload **atual** com a análise **mais recente** registrada no banco, criando um sistema com estado.
-
-### 3. Motores de Análise (Invocados como Bibliotecas)
-
-#### Módulo: `src/analisar_alertas.py`
-
-- **Responsabilidade:** Processar um único arquivo de alertas, realizar a análise principal e orquestrar a geração dos relatórios HTML para aquele período.
-- **Invocação:** É chamado como uma função Python diretamente do `app.py`.
-- **Entradas (Inputs):** Recebe o caminho do arquivo de input e o diretório de output como argumentos de função. A flag `light_analysis` controla a profundidade da análise.
-- **Saídas (Outputs):** Retorna um dicionário contendo os caminhos para os artefatos gerados (HTML e JSON).
-
-#### Módulo: `src/analise_tendencia.py`
-
-- **Responsabilidade:** Comparar dois períodos (JSON atual vs. JSON anterior) e gerar o `resumo_tendencia.html`.
-- **Invocação:** É chamado como uma função Python diretamente do `app.py`. Também pode ser executado como um script de linha de comando independente para testes.
-- **Entradas (Inputs):** Recebe os caminhos para os dois arquivos JSON (`json_anterior`, `json_atual`), os nomes dos arquivos CSV originais, o caminho de saída para o relatório HTML e, opcionalmente, os intervalos de datas de ambos os períodos e um booleano (`is_direct_comparison`) que ajusta a navegação no relatório final.
-
-### 4. Templates e Dados
-
-- **`templates/`:** Contém todos os templates HTML usados pelo Flask para renderizar as páginas da aplicação (`upload.html`, `relatorios.html`, etc.).
-- **`data/`:** Diretório persistido que armazena:
-  - `uploads/`: Cópias dos arquivos `.csv` originais enviados pelo usuário.
-  - `reports/`: Subdiretórios para cada execução (`run_...`), contendo todos os artefatos gerados (HTML, JSON, CSV).
-  - `meu_dash.db`: O arquivo do banco de dados SQLite.
+1. **Upload:** O usuário envia um arquivo `.csv` via `POST` para a rota `/upload` em `app.py`.
+2. **Delegação:** A rota em `app.py` não faz nenhum processamento. Ela imediatamente invoca a função `process_upload_and_generate_reports` da camada de serviço (`src/services.py`), passando o arquivo.
+3. **Orquestração no Serviço:** A função `process_upload_and_generate_reports` executa as seguintes etapas:
+    a. Salva o arquivo de upload.
+    b. Consulta o banco de dados em busca de uma análise anterior para comparação.
+    c. Invoca o **Analysis Engine** (`analisar_alertas.py`) para processar os dados e obter os DataFrames resultantes.
+    d. Invoca a **Presentation Layer** (`gerador_paginas.py`, `context_builder.py`) para gerar todos os artefatos HTML e CSV.
+    e. Se uma análise anterior existia, invoca a análise de tendência.
+    f. Salva um registro da nova análise no banco de dados.
+    g. Retorna o caminho do relatório principal para a camada de controller.
+4. **Redirecionamento:** `app.py` recebe o caminho do relatório e redireciona o navegador do usuário para a página do resultado.
 
 ---
 
-## 🌊 FLUXO DE EXECUÇÃO LÓGICO
+## 5. DIRETIVAS DE DESENVOLVIMENTO E QUALIDADE
 
-O processo é iniciado pela interação do usuário e orquestrado integralmente pelo `app.py`.
+Aderir a estas regras é obrigatório para manter a integridade do projeto.
 
-1. **Usuário:** Acessa a rota `/` e vê a página de upload.
-2. **Upload:** O usuário seleciona um arquivo `.csv` (`file_atual`) e o envia através do formulário (`POST /upload`).
-3. **Orquestração (`app.py`):
-    a. **Delegação para a Camada de Serviço:** A rota `/upload` em `app.py` recebe o arquivo e imediatamente delega toda a lógica de negócio para a função `services.process_upload_and_generate_reports()`.
-4. **Execução na Camada de Serviço (`src/services.py`):**
-    a. **Preparação:** O serviço salva o arquivo, extrai o intervalo de datas e cria o diretório de saída (`run_<timestamp>`).
-    b. **Busca de Histórico e Análise de Tendência:** O serviço consulta o banco de dados pelo relatório mais recente. Se encontrado, ele orquestra a análise de tendência, chamando `analisar_arquivo_csv(light_analysis=True)` e `gerar_relatorio_tendencia`.
-    c. **Análise Principal e Geração de Relatórios:** O serviço executa a análise completa (`analisar_arquivo_csv(light_analysis=False)`), constrói o contexto de dados e chama os módulos de `gerador_paginas` para criar todo o ecossistema de dashboards HTML.
-    d. **Persistência:** Um novo registro `Report` é criado e salvo no banco de dados.
-    e. **Retorno:** O serviço retorna o nome da pasta (`run_folder`) e do arquivo de relatório principal para o `app.py`.
-5. **Redirecionamento (`app.py`):**
-    a. A rota `/upload` recebe o resultado do serviço e redireciona o navegador do usuário para a URL do relatório recém-criado.
+### 5.1. Qualidade de Código
+
+- **Formatação:** O projeto usa o formatador `black`. Todo código deve ser formatado antes do commit. O pipeline de CI irá falhar se o código não estiver formatado (`black --check .`).
+- **Logging:** Use o logger configurado em `logging_config.py`. Não introduza `print()` statements.
+
+### 5.2. Testes
+
+- O projeto usa `pytest`. Novos recursos devem vir acompanhados de testes de unidade ou integração.
+- Todos os testes devem passar no pipeline de CI (`.github/workflows/ci.yml`) antes de um Pull Request ser mesclado.
+
+### 5.3. Controle de Versão e Workflow
+
+- **Branches:** Todo o trabalho deve ser feito em branches dedicadas.
+  - **Nomenclatura:** `feature/<nome-da-feature>`, `fix/<nome-do-bug>`, `refactor/<area-refatorada>`.
+- **Pull Requests (PRs):**
+  - Ao concluir o trabalho, abra um PR para o branch `main`.
+  - O PR deve passar em todas as verificações de CI (testes e formatação).
+  - O PR deve ser revisado por outro desenvolvedor.
+
+### 5.4. Sincronização da Documentação
+
+- **Regra de Ouro:** Qualquer alteração na arquitetura, fluxo de dados, ou lógica de negócio **DEVE** ser refletida neste arquivo (`GEMINI.md`). Este documento é o contrato.
 
 ---
 
-## 📦 ARTEFATOS GERADOS (OUTPUTS)
+## 6. ROADMAP DE PRÓXIMAS ATIVIDADES
 
-Todos os artefatos são gerados dentro de um subdiretório `run_<timestamp>` em `data/reports/` e servidos dinamicamente pela aplicação Flask.
+**(Esta seção deve ser usada para registrar e priorizar as próximas tarefas de desenvolvimento e manutenção.)*
 
-### Dashboards HTML Interativos
-
-- **`resumo_geral.html`**: Visão geral gerencial do período atual. Ponto central de navegação.
-- **`resumo_tendencia.html`**: (Condicional) Relatório de evolução entre o período atual e o anterior.
-- **`atuar.html`**: Editor interativo para o time atuar sobre os problemas.
-- ... (e todos os outros relatórios)
-
-### Arquivos de Dados
-
-- **`resumo_problemas.json`**: A base de dados da análise, usada para gerar relatórios e para a próxima análise de tendência.
-- **`atuar.csv`**: Lista de problemas que exigem ação manual.
-- ... (e todos os outros arquivos de dados)
+- ...
+- ...
