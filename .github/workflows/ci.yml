@@ -4,9 +4,8 @@ name: CI - Build, Test, and Publish
 on:
   # Dispara o workflow em pushes para as branches principais e de refatoração.
   push:
-    # branches:
-    #   - main
-    #   - refactor/**
+    branches:
+      - main
   # Dispara o workflow em pull requests para a branch main.
   pull_request:
     branches:
