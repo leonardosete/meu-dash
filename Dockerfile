@@ -1,5 +1,5 @@
 # ---- Base Stage ----
-FROM python:3.11-slim AS base
+FROM python:3.13.8-slim-trixie AS base
 
 # create a non-root user
 RUN groupadd -r nonroot && useradd -r -g nonroot -d /home/nonroot nonroot
@@ -16,7 +16,7 @@ COPY --chown=nonroot:nonroot requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # ---- App Stage ----
-FROM python:3.11-slim AS app
+FROM python:3.13.8-slim-trixie AS app
 
 # set work directory
 WORKDIR /app
@@ -36,7 +36,8 @@ COPY --from=base /home/nonroot/.local /home/nonroot/.local
 
 # Add local bin and site-packages to path
 ENV PATH=/home/nonroot/.local/bin:$PATH
-ENV PYTHONPATH=/home/nonroot/.local/lib/python3.11/site-packages
+ENV PYTHONPATH=/home/nonroot/.local/lib/python3.13/site-packages
+
 
 # copy application code
 COPY --chown=nonroot:nonroot src/app.py src/app.py
