@@ -68,6 +68,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # SHA do v5
         with:
+          platforms: linux/amd64,linux/arm64
           context: .
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -75,4 +76,3 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:${{ github.sha }}
-
