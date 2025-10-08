@@ -1,18 +1,13 @@
-# ---- Base Stage ----
-FROM python:3.13.8-alpine AS base
-
 # ---- Estágio de Build (Builder) ----
-FROM python:3.13-alpine AS builder
+FROM python:3.13.8-alpine AS builder
 
-# Atualize sistema e remova pacotes desnecessários
+# Atualiza o sistema e instala as dependências de build
 RUN apk update && apk upgrade --available && \
     apk add --no-cache \
         build-base \
         libffi-dev \
         musl-dev \
-        gcc \
-        py3-pip \
-    && rm -rf /var/cache/apk/*
+        gcc
 
 # Crie usuário não-root
 RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
@@ -28,11 +23,11 @@ COPY requirements.txt .
 
 # Mude para usuário não-root para instalar dependências no venv (agora com permissão!)
 USER nonroot
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # ---- Estágio Final (Final) ----
-FROM python:3.13-alpine AS final
+FROM python:3.13.8-alpine AS final
 
 WORKDIR /app
 
@@ -55,12 +50,11 @@ USER nonroot
 COPY --chown=nonroot:nonroot src/ ./src
 COPY --chown=nonroot:nonroot templates/ ./templates
 COPY --chown=nonroot:nonroot docs/ ./docs
-COPY --chown=nonroot:nonroot requirements.txt .
 
 EXPOSE 5000
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# O CMD executa a migração do banco de dados e, em seguida, inicia o Gunicorn.
-CMD ["/bin/sh", "-c", "python -c 'from src.app import app, db; app.app_context().push(); db.create_all()' && gunicorn --bind 0.0.0.0:5000 src.app:app"]
+# O CMD executa a migração do banco de dados com Flask-Migrate e, em seguida, inicia o Gunicorn.
+CMD ["/bin/sh", "-c", "flask db upgrade && gunicorn --bind 0.0.0.0:5000 src.app:app"]
