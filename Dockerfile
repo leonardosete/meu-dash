@@ -53,7 +53,9 @@ COPY --chown=nonroot:nonroot docs/ ./docs
 
 EXPOSE 5000
 
+# Impede o Python de criar arquivos .pyc, mantendo a imagem limpa e menor.
 ENV PYTHONDONTWRITEBYTECODE=1
+# Força a saída de logs (stdout/stderr) a não ter buffer, garantindo que os logs apareçam em tempo real.
 ENV PYTHONUNBUFFERED=1
 
 # O CMD executa a migração do banco de dados com Flask-Migrate e, em seguida, inicia o Gunicorn.
