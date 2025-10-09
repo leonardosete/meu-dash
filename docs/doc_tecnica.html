@@ -167,7 +167,7 @@
                 <h5 style="margin-top: 20px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Lógica Principal (Core)</h5>
                 <ul>
                     <li><code>app.py</code>: Ponto de entrada da aplicação Flask. Define as rotas (<code>/</code>, <code>/upload</code>), gerencia as requisições e delega a lógica para a camada de serviço.</li>
-                    <li><code>services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados e coordena a chamada aos motores de análise e geradores de página.</li>
+                    <li><code>services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados (usando os modelos <code>Report</code> e <code>TrendAnalysis</code> para garantir a continuidade da análise de tendência) e coordena a chamada aos motores de análise e geradores de página.</li>
                     <li><code>analisar_alertas.py</code>: Motor de análise principal. Processa um arquivo <code>.csv</code>, agrupa alertas em casos e calcula o score de prioridade para cada um.</li>
                     <li><code>analise_tendencia.py</code>: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência.</li>
                     <li><code>gerador_paginas.py</code>: Responsável por usar os dados analisados para gerar o conjunto completo de páginas HTML do relatório.</li>
