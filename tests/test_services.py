@@ -99,6 +99,7 @@ def test_process_upload_and_generate_reports(
     # Valida que a TrendAnalysis foi instanciada com o ID do relatório anterior
     # O caminho absoluto é dinâmico, então usamos ANY da unittest.mock
     from unittest.mock import ANY
+
     mock_dependencies["TrendAnalysis"].assert_called_with(
         trend_report_path=ANY,
         previous_report_id=mock_last_report.id,

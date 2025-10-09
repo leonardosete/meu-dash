@@ -271,7 +271,7 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
         squad_cases_df = detailed_df[detailed_df["assignment_group"] == name]
         details_content = "<h4>Detalhes dos Casos Persistentes</h4><table class='sub-table'><thead><tr><th>Problema</th><th>Recurso Afetado</th><th>Alertas (Atual)</th><th>Alertas (Anterior)</th></tr></thead><tbody>"
         for _, case_row in squad_cases_df.iterrows():
-            details_content += f'<tr><td>{escape(case_row["short_description"])}</td><td>{escape(case_row["cmdb_ci"])}</td><td>{int(case_row["alert_count_p2"])}</td><td>{int(case_row["alert_count_p1"])}</td></tr>'
+            details_content += f"<tr><td>{escape(case_row['short_description'])}</td><td>{escape(case_row['cmdb_ci'])}</td><td>{int(case_row['alert_count_p2'])}</td><td>{int(case_row['alert_count_p1'])}</td></tr>"
         details_content += "</tbody></table>"
 
         table_body += f"<tr id='{details_id}' class='details-row'><td colspan='5'><div class='details-row-content'>{details_content}</div></td></tr>"
@@ -445,10 +445,13 @@ def gerar_relatorio_tendencia(
     else:
         back_link = '<a href="resumo_geral.html">&larr; Voltar para o Dashboard</a>'
 
-    periodo_anterior_text = f"<code>{escape(os.path.basename(csv_anterior_name))}</code>" + (
-        f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>"
-        if date_range_anterior
-        else ""
+    periodo_anterior_text = (
+        f"<code>{escape(os.path.basename(csv_anterior_name))}</code>"
+        + (
+            f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>"
+            if date_range_anterior
+            else ""
+        )
     )
     periodo_atual_text = f"<code>{escape(os.path.basename(csv_atual_name))}</code>" + (
         f" <span style='color: var(--text-secondary-color);'>({escape(date_range_atual)})</span>"

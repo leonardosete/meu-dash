@@ -54,7 +54,9 @@ class TrendAnalysis(db.Model):
     trend_report_path = db.Column(db.String(255), nullable=False)
 
     # Chaves estrangeiras para os relatórios que geraram a tendência
-    current_report_id = db.Column(db.Integer, db.ForeignKey("report.id"), nullable=False)
+    current_report_id = db.Column(
+        db.Integer, db.ForeignKey("report.id"), nullable=False
+    )
     previous_report_id = db.Column(
         db.Integer, db.ForeignKey("report.id"), nullable=False
     )
@@ -125,7 +127,9 @@ def index():
             }
 
     # NOVA LÓGICA: Busca o histórico de tendências diretamente do banco de dados.
-    trend_analyses = TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).limit(60).all()
+    trend_analyses = (
+        TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).limit(60).all()
+    )
     for analysis in trend_analyses:
         try:
             run_folder = os.path.basename(os.path.dirname(analysis.trend_report_path))

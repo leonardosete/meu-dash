@@ -467,7 +467,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         if grupos_atuacao > 0
         else "Tudo certo! Nenhum caso precisa de intervenção manual."
     )
-    status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{'flashing-icon' if grupos_atuacao > 0 else ''}" style="font-size: 1.5em;">{'🚨' if grupos_atuacao > 0 else '✅'}</span><div class="tooltip-content" style="width: 240px; left: 0; margin-left: 0;">{escape(tooltip_text)}</div></div>"""
+    status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{"flashing-icon" if grupos_atuacao > 0 else ""}" style="font-size: 1.5em;">{"🚨" if grupos_atuacao > 0 else "✅"}</span><div class="tooltip-content" style="width: 240px; left: 0; margin-left: 0;">{escape(tooltip_text)}</div></div>"""
     kpi_color_style = (
         "color: var(--danger-color);"
         if grupos_atuacao > 0
@@ -504,7 +504,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         if grupos_instabilidade > 0
         else "Nenhum ponto de alta recorrência crônica detectado."
     )
-    instabilidade_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{'flashing-icon' if grupos_instabilidade > 0 else ''}" style="font-size: 1.5em;">{'⚠️' if grupos_instabilidade > 0 else '✅'}</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_instabilidade_text)}</div></div>"""
+    instabilidade_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{"flashing-icon" if grupos_instabilidade > 0 else ""}" style="font-size: 1.5em;">{"⚠️" if grupos_instabilidade > 0 else "✅"}</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_instabilidade_text)}</div></div>"""
 
     body_content += f"""
     <div class="card kpi-card {instabilidade_card_class}">
@@ -600,7 +600,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
                     {SQUAD_ICON_SVG}
                     <span class="squad-name-new">{squad_name} <small style="color:var(--text-secondary-color)">{total_casos_txt}</small></span>
                 </div>
-                <span class="priority-score-new" style="background-color: {score_color};">{row['score_acumulado']:.1f}</span>
+                <span class="priority-score-new" style="background-color: {score_color};">{row["score_acumulado"]:.1f}</span>
             </a>
             """
     else:

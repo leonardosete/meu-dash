@@ -472,7 +472,7 @@ def gerar_paginas_detalhe_problema(
                 squad_info = f'<a href="{plan_path}">{escape(squad_name)}</a>'
             else:
                 squad_info = escape(squad_name)
-            body_content += f'<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{row["alert_count"]}</td><td>{squad_info}</td></tr>'
+            body_content += f"<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{row['alert_count']}</td><td>{squad_info}</td></tr>"
         body_content += "</tbody></table>"
         html_content = gerador_html.renderizar_pagina_html(
             HTML_TEMPLATE, title, body_content, footer_text

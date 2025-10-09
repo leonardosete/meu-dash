@@ -67,7 +67,13 @@ def _enforce_report_limit(db, Report):
 
 
 def process_upload_and_generate_reports(
-    file_atual, upload_folder: str, reports_folder: str, db, Report, TrendAnalysis, base_dir: str
+    file_atual,
+    upload_folder: str,
+    reports_folder: str,
+    db,
+    Report,
+    TrendAnalysis,
+    base_dir: str,
 ):
     """Orquestra o fluxo completo de processamento para um único arquivo de upload.
 
