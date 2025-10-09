@@ -7,31 +7,41 @@ PYTHON := $(shell if [ -d ".venv" ]; then echo ".venv/bin/python"; else echo "py
 DOCKER_IMAGE_NAME := meu-dash
 DOCKER_IMAGE_TAG := latest
 
-.PHONY: help install setup run test format lint check clean docker-build docker-run
+.PHONY: help install setup run test format lint check clean distclean docker-build docker-run
 
 help:
 	@echo "Comandos disponíveis:"
 	@echo "  make install        - Instala as dependências do requirements.txt."
 	@echo "  make setup          - Cria o ambiente virtual e instala as dependências."
+	@echo "  make setup-and-run  - (FAZ-TUDO) Configura o ambiente do zero e inicia a aplicação."
 	@echo "  make run            - Inicia a aplicação Flask em modo de desenvolvimento."
+	@echo "  make fresh-run      - Limpa o DB, aplica migrações e inicia a aplicação (para testes)."
 	@echo "  make migrate        - Aplica as migrações do banco de dados (cria as tabelas)."
 	@echo "  make test           - Executa a suíte de testes com pytest."
 	@echo "  make format         - Formata o código com 'black'."
 	@echo "  make lint           - Executa o linter 'ruff check --fix' para corrigir erros."
 	@echo "  make check          - Roda o formatador e o linter em modo de verificação (para CI)."
 	@echo "  make clean          - Remove arquivos temporários e caches."
+	@echo "  make distclean      - Remove TODOS os arquivos gerados (venv, db, relatórios)."
 	@echo "  make docker-build   - Constrói a imagem Docker da aplicação."
 	@echo "  make docker-run     - Executa a aplicação a partir da imagem Docker."
 
+# Cria o ambiente virtual e instala as dependências nele.
 setup:
 	@echo ">>> Configurando ambiente virtual em .venv..."
-	python3 -m venv .venv
-	@$(PYTHON) -m pip install --upgrade pip
-	@make install
+	@python3 -m venv .venv
+	@echo ">>> Atualizando pip e instalando dependências no ambiente virtual..."
+	@.venv/bin/pip install --upgrade pip -r requirements.txt
 
 install:
 	@echo ">>> Instalando dependências de requirements.txt..."
 	@$(PYTHON) -m pip install -r requirements.txt
+
+setup-and-run:
+	@echo ">>> [FAZ-TUDO] Iniciando configuração completa do ambiente..."
+	@$(MAKE) setup
+	@$(MAKE) migrate
+	@$(MAKE) run
 
 run:
 	@echo ">>> Iniciando a aplicação em modo de desenvolvimento..."
@@ -40,16 +50,32 @@ run:
 	export FLASK_DEBUG=True && \
 	.venv/bin/flask run
 
+fresh-run:
+	@echo ">>> [FRESH RUN] Removendo banco de dados antigo..."
+	@rm -f data/meu_dash.db
+	@$(MAKE) migrate
+	@$(MAKE) run
+
 test:
 	@echo ">>> Executando testes com pytest..."
 	@export PYTHONPATH=$(shell pwd) && \
 	.venv/bin/pytest
 
+# Aplica as migrações do banco de dados.
+# Garante que o ambiente de migrações esteja configurado e que a migração inicial seja criada, se necessário.
 migrate:
 	@echo ">>> Aplicando migrações do banco de dados..."
-	@export PYTHONPATH=$(shell pwd) && \
-	export FLASK_APP=src.app && \
-	.venv/bin/flask db upgrade
+	@if [ ! -d "migrations" ]; then \
+		echo ">>> Diretório 'migrations' não encontrado. Executando 'flask db init'..."; \
+		export PYTHONPATH=$(shell pwd) && export FLASK_APP=src.app && .venv/bin/flask db init; \
+	fi
+	# Verifica se há scripts de migração. Se não houver, cria a migração inicial.
+	@if [ -z "$$(ls -A migrations/versions 2>/dev/null)" ]; then \
+		echo ">>> Nenhuma migração inicial encontrada. Criando migração inicial..."; \
+		export PYTHONPATH=$(shell pwd) && export FLASK_APP=src.app && .venv/bin/flask db migrate -m "Initial migration"; \
+	fi
+	@echo ">>> Aplicando migrações ao banco de dados (flask db upgrade)..."
+	@export PYTHONPATH=$(shell pwd) && export FLASK_APP=src.app && .venv/bin/flask db upgrade
 
 format:
 	@echo ">>> Formatando o código com black..."
@@ -70,6 +96,15 @@ clean:
 	@find . -type f -name "*.pyc" -delete
 	@find . -type d -name "__pycache__" -exec rm -rf {} +
 	@rm -f .coverage
+
+distclean: clean
+	@echo ">>> [DEEP CLEAN] Removendo ambiente virtual, banco de dados, migrações e relatórios..."
+	@rm -rf .venv
+	@rm -rf migrations
+	@rm -f data/meu_dash.db
+	@echo ">>> Limpando diretórios de dados (uploads e reports)..."
+	@rm -rf data
+	@echo ">>> Limpeza completa concluída."
 
 docker-build:
 	@echo ">>> Construindo imagem Docker: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
