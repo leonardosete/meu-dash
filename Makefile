@@ -51,6 +51,10 @@ run:
 	.venv/bin/flask run
 
 fresh-run:
+	# Garante que o ambiente virtual exista antes de continuar.
+	@if [ ! -d ".venv" ]; then \
+		$(MAKE) setup; \
+	fi
 	@echo ">>> [FRESH RUN] Removendo banco de dados antigo..."
 	@rm -f data/meu_dash.db
 	@$(MAKE) migrate
@@ -103,7 +107,8 @@ distclean: clean
 	@rm -rf migrations
 	@rm -f data/meu_dash.db
 	@echo ">>> Limpando diretórios de dados (uploads e reports)..."
-	@rm -rf data
+	@rm -rf data/uploads/*
+	@rm -rf data/reports/*
 	@echo ">>> Limpeza completa concluída."
 
 docker-build:

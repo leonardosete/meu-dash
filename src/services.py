@@ -111,19 +111,34 @@ def process_upload_and_generate_reports(
     os.makedirs(output_dir, exist_ok=True)
 
     # 2. Análise de Tendência (se aplicável)
-    last_report = Report.query.order_by(Report.timestamp.desc()).first()
+    # LÓGICA REVISADA: Busca o relatório correto para comparação.
+    # Prioriza o último relatório que foi 'current' em uma análise de tendência.
+    last_trend_analysis_obj = (
+        TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).first()
+    )
+    previous_report_for_trend = None
+
+    if last_trend_analysis_obj:
+        # Se já existe uma tendência, o próximo ponto de comparação é o relatório 'atual' da última tendência.
+        previous_report_for_trend = last_trend_analysis_obj.current_report
+        logger.info(
+            f"Última análise de tendência encontrada. Usando o relatório '{previous_report_for_trend.original_filename}' como base para a próxima tendência."
+        )
+    else:
+        # Se não há tendências, usa o último relatório geral como base (para a primeira tendência).
+        previous_report_for_trend = Report.query.order_by(Report.timestamp.desc()).first()
+        if previous_report_for_trend:
+            logger.info(
+                f"Nenhuma análise de tendência anterior encontrada. Usando o último relatório geral '{previous_report_for_trend.original_filename}' como base."
+            )
+
     trend_report_path_relative = None
     new_trend_analysis = None
 
-    if (
-        last_report
-        and last_report.json_summary_path
-        and os.path.exists(last_report.json_summary_path)
-    ):
-        logger.info("Relatório anterior encontrado. Iniciando análise de tendência.")
+    if previous_report_for_trend and os.path.exists(previous_report_for_trend.json_summary_path):
         date_range_anterior_obj = (
-            datetime.strptime(last_report.date_range.split(" a ")[0], "%d/%m/%Y")
-            if last_report.date_range
+            datetime.strptime(previous_report_for_trend.date_range.split(" a ")[0], "%d/%m/%Y")
+            if previous_report_for_trend.date_range
             else None
         )
         date_range_atual_obj = (
@@ -144,12 +159,12 @@ def process_upload_and_generate_reports(
             output_trend_path = os.path.join(output_dir, "resumo_tendencia.html")
 
             gerar_relatorio_tendencia(
-                json_anterior=last_report.json_summary_path,
+                json_anterior=previous_report_for_trend.json_summary_path,
                 json_atual=temp_analysis_results["json_path"],
-                csv_anterior_name=last_report.original_filename,
+                csv_anterior_name=previous_report_for_trend.original_filename,
                 csv_atual_name=filename_atual,
                 output_path=output_trend_path,
-                date_range_anterior=last_report.date_range,
+                date_range_anterior=previous_report_for_trend.date_range,
                 date_range_atual=date_range_atual,
             )
             trend_report_path_relative = os.path.basename(output_trend_path)
@@ -158,7 +173,7 @@ def process_upload_and_generate_reports(
             # Prepara o objeto TrendAnalysis para ser salvo depois
             new_trend_analysis = TrendAnalysis(
                 trend_report_path=output_trend_path,
-                previous_report_id=last_report.id,
+                previous_report_id=previous_report_for_trend.id,
             )
 
         else:
