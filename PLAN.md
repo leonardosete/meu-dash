@@ -1,27 +1,23 @@
-# 📈 Plano de Implementação: Histórico de Relatórios de Tendência
+# 📈 Plano de Implementação: Análise de Tendência Contínua
 
-Este documento descreve o plano de ação para implementar a funcionalidade de histórico de relatórios de tendência. O objetivo é rastrear o progresso e garantir que todos os passos sejam concluídos, incluindo testes.
+Este documento descreve o plano de ação para refatorar a lógica de análise de tendência, garantindo que cada novo upload seja comparado com o relatório mais recente que participou de uma análise de tendência anterior.
 
 ## Roadmap da Funcionalidade
 
-### Prioridade 1: Estrutura de Dados
+### Prioridade 1: Lógica de Negócio (Service Layer)
 
-- [x] **Criar Modelo `TrendAnalysis`:** Em `src/app.py`, definir a nova classe `TrendAnalysis(db.Model)`.
-- [x] **Gerar Migração do Banco de Dados:** Executar `flask db migrate -m "Add TrendAnalysis table"`.
-- [x] **Aplicar Migração:** Executar `flask db upgrade`.
+- [x] **Refatorar `services.py`:** Modificar a função `process_upload_and_generate_reports` para alterar a lógica de busca do "relatório anterior".
+  - Em vez de buscar o `Report` mais recente, a lógica deve buscar a `TrendAnalysis` mais recente.
+  - A partir da `TrendAnalysis` mais recente, obter o `current_report` associado. Este será o verdadeiro "relatório anterior" para a nova comparação.
+  - Se nenhuma `TrendAnalysis` existir, a lógica deve voltar ao comportamento antigo (comparar com o `Report` mais recente) para a primeira análise de tendência.
 
-### Prioridade 2: Lógica de Negócio
+### Prioridade 2: Testes e Validação
 
-- [x] **Atualizar `services.py`:** Na função `process_upload_and_generate_reports`, salvar uma nova instância de `TrendAnalysis` no banco de dados sempre que uma tendência for gerada.
-
-### Prioridade 3: Camada de Apresentação
-
-- [x] **Otimizar Rota Principal:** Em `src/app.py`, na rota `/`, consultar a tabela `TrendAnalysis` para buscar os últimos 60 registros.
-- [x] **Atualizar Template `upload.html`:** Modificar o card de "Análise de Tendência" para exibir a lista de históricos.
-
-### Prioridade 4: Testes e Validação
-
-- [x] **Criar Teste de Modelo:** Validar a criação do objeto `TrendAnalysis`.
-- [x] **Atualizar Teste de Serviço:** Verificar se um registro `TrendAnalysis` é criado após a análise.
-- [x] **Criar Teste de Rota:** Validar se a rota `/` carrega e exibe o histórico.
-- [x] **Teste Manual:** Executar o fluxo completo na interface.
+- [x] **Atualizar Testes de Serviço:** Modificar os testes existentes para simular o novo fluxo:
+  - Teste 1: Upload de arquivo A (sem tendência).
+  - Teste 2: Upload de arquivo B (gera tendência B vs A).
+  - Teste 3: Upload de arquivo C (deve gerar tendência C vs B).
+- [x] **Teste Manual:** Executar o fluxo completo na interface para validar o comportamento esperado:
+  - Fazer upload do `file-1.csv`.
+  - Fazer upload do `file-2.csv` (verificar se a tendência foi gerada).
+  - Fazer upload do `file-3.csv` (verificar se a nova tendência foi gerada comparando com o `file-2.csv`).
