@@ -21,6 +21,18 @@
             --danger-color: #e74a3b;
         }
         body {
+            --bg-color: #12141D;
+            --card-color: #1B1E2C;
+            --text-color: #E0E0E0;
+            --primary-text-color: #FFFFFF;
+            --border-color: #3A3D5A;
+            --accent-color: #6A5AF9;
+            --accent-color-hover: #5848d8;
+            --font-family: 'Poppins', sans-serif;
+            --success-color: #1cc88a;
+            --danger-color: #e74a3b;
+        }
+        body {
             font-family: var(--font-family);
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -195,6 +207,8 @@
         .last-analysis-card svg { color: var(--success-color); }
         .action-plan-card { border-left: 4px solid var(--danger-color); }
         .action-plan-card svg { color: var(--danger-color); }
+        .admin-card { border-left: 4px solid var(--accent-color); } /* NOVO */
+        .admin-card svg { color: var(--accent-color); } /* NOVO */
         .doc-gerencial-card svg { color: var(--accent-color); }
         .doc-tecnica-card svg { color: #38bdf8; }
 
@@ -258,6 +272,23 @@
                 max-width: 600px;
             }
         }
+
+        /* NOVO: Estilo para o link de admin */
+        .admin-link-container {
+            margin-top: 30px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        .admin-link-container a {
+            color: var(--text-color);
+            text-decoration: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .admin-link-container a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -265,6 +296,25 @@
         
         <aside class="sidebar-column">
             
+            {# NOVO: Card de Acesso Administrativo #}
+            {% if session.is_admin %}
+            <a href="{{ url_for('admin_logout') }}" class="side-card admin-card">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <div class="side-card-text">
+                    <h3>Modo Admin Ativo</h3>
+                    <p>Clique para sair</p>
+                </div>
+            </a>
+            {% else %}
+            <a href="{{ url_for('admin_login_page') }}" class="side-card admin-card">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <div class="side-card-text">
+                    <h3>Acesso Administrativo</h3>
+                    <p>Login para gerenciar relatórios</p>
+                </div>
+            </a>
+            {% endif %}
+
             <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" target="_blank" class="side-card doc-gerencial-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                 <div class="side-card-text">
@@ -320,6 +370,16 @@
 
         <main class="main-content-column">
             <div class="card">
+                {# NOVO: Bloco para exibir mensagens flash #}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            {# Reutiliza a classe de erro para avisos, ou pode criar uma nova #}
+                            <div class="error-message" style="border-color: #f6c23e; color: #f6c23e; background-color: rgba(246, 194, 62, 0.1);">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
                 {% if error %}
                     <div class="error-message">{{ error }}</div>
                 {% endif %}

@@ -81,6 +81,15 @@ spec:
         ports:
         - name: http
           containerPort: 5000
+        # ADICIONADO: Define a variável de ambiente ADMIN_TOKEN a partir de um Secret
+        env:
+        - name: ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              # O nome do Secret que você criou no cluster
+              name: admin-token-secret
+              # A chave dentro do Secret que contém o token
+              key: ADMIN_TOKEN
         readinessProbe:
           httpGet:
             path: /health 

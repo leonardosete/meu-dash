@@ -247,7 +247,7 @@ docker build -t meu-dash-web .
 # Execução do container
 docker run -p 8000:8000 -v ./data:/app/data meu-dash-web</code></pre>
                 <h4><code>kubernetes.yaml</code></h4>
-                <p>Define os recursos para implantação em Kubernetes, incluindo <strong>PersistentVolumeClaim</strong> para o diretório <code>/app/data</code>, <strong>Deployment</strong> e <strong>Service</strong>.</p>
+                <p>Define os recursos para implantação em Kubernetes, incluindo <strong>StatefulSet</strong> e <strong>PersistentVolumeClaim</strong>. O manifesto está configurado para injetar o <code>ADMIN_TOKEN</code> como uma variável de ambiente a partir de um <strong>Kubernetes Secret</strong>. Para detalhes sobre como criar e gerenciar este segredo, consulte o <a href="../CONTRIBUTING.md">guia de contribuição</a>.</p>
             </div>
         </section>
 
