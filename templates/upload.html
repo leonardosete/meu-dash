@@ -286,7 +286,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
                 <div class="side-card-text">
                     <h3>Plano de Ação</h3>
-                    <p>Gerado em: {{ last_action_plan.date }}</p>
+                    <p>Gerado em: {{ last_action_plan.date | localtime }}</p>
                 </div>
             </a>
             {% endif %}
@@ -297,7 +297,7 @@
                 <div class="side-card-text">
                     <a href="{{ trend_history[0].url }}" target="_blank" style="text-decoration: none; color: inherit;">
                         <h3>Ver Última Análise de Tendência</h3>
-                        <p>Gerada em: {{ trend_history[0].date }}</p>
+                        <p>Gerada em: {{ trend_history[0].date | localtime }}</p>
                     </a>
                     
                     {% if trend_history|length > 1 %}
@@ -306,7 +306,7 @@
                         <ul style="list-style: none; padding-left: 10px; margin-top: 5px; font-size: 0.85em;">
                             {% for analysis in trend_history[1:] %}
                             <li style="margin-bottom: 5px;">
-                                <a href="{{ analysis.url }}" target="_blank">Análise de {{ analysis.date }}</a>
+                                <a href="{{ analysis.url }}" target="_blank">Análise de {{ analysis.date | localtime }}</a>
                             </li>
                             {% endfor %}
                         </ul>
