@@ -188,7 +188,7 @@ def process_upload_and_generate_reports(
             )
             # Retorna um dicionário com o aviso para ser exibido na interface
             return {
-                "warning": "Análise de tendência pulada: o arquivo enviado não é mais recente que o último analisado."
+                "warning": "Análise de tendência pulada: o arquivo enviado não é mais recente. Para comparar arquivos específicos, use a aba 'Comparação Direta'."
             }
     else:
         logger.info(

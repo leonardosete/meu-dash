@@ -79,6 +79,8 @@ spec:
         # AINDA RECOMENDO: Trocar a tag :latest por uma versão específica (ex: v1.0.1)
         image: sevenleo/meu-dash-web:latest 
         ports:
+        - name: http
+          containerPort: 5000
         # ADICIONADO: Define a variável de ambiente ADMIN_TOKEN a partir de um Secret
         env:
         - name: ADMIN_TOKEN
@@ -88,8 +90,6 @@ spec:
               name: admin-token-secret
               # A chave dentro do Secret que contém o token
               key: ADMIN_TOKEN
-        - name: http
-          containerPort: 5000
         readinessProbe:
           httpGet:
             path: /health 
