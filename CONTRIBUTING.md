@@ -35,30 +35,43 @@ Para facilitar o desenvolvimento e garantir a consistência, recomendamos o uso 
 
 ## 🚀 Executando a Aplicação Localmente
 
-Com as dependências instaladas, você pode iniciar a aplicação Flask no modo de desenvolvimento.
+Com o ambiente configurado e as dependências instaladas, siga os passos abaixo para iniciar a aplicação.
 
-1.  **Inicialize o banco de dados (se for a primeira vez):**
+1.  **Exporte as variáveis de ambiente:**
 
-    A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados. O banco de dados SQLite será criado automaticamente no diretório `data/`.
+    Essas variáveis configuram o contexto da aplicação para o Flask. Execute os seguintes comandos no seu terminal:
 
     ```bash
-    # Estas variáveis de ambiente dizem ao Flask onde encontrar a aplicação
-    export FLASK_APP=src/app.py
-
-    # Aplica quaisquer migrações de banco de dados
-    flask db upgrade
+    export PYTHONPATH=$(pwd)
+    export FLASK_APP=src.app
+    export FLASK_DEBUG=True
     ```
 
-2.  **Inicie o servidor de desenvolvimento:**
+2.  **Inicialize e atualize o banco de dados:**
 
-    Para habilitar o modo de depuração com recarregamento automático, defina a variável de ambiente `FLASK_DEBUG`.
+    A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados.
+    
+    *   **Se esta for a primeira vez** que você configura o projeto, execute os três comandos abaixo em sequência para criar o diretório de migrações, gerar a migração inicial e aplicar o esquema ao banco de dados (que será criado em `data/meu_dash.db`):
+        ```bash
+        flask db init
+        flask db migrate -m "Initial migration"
+        flask db upgrade
+        ```
+
+    *   **Para atualizações futuras**, se você puxar novas alterações que modifiquem o banco de dados, apenas o seguinte comando é necessário:
+        ```bash
+        flask db upgrade
+        ```
+
+3.  **Inicie o servidor de desenvolvimento:**
 
     ```bash
-    export FLASK_DEBUG=True
     flask run
     ```
 
     A aplicação estará disponível em `http://127.0.0.1:5000`.
+
+    > **Nota:** Se o comando `flask` não for encontrado, certifique-se de que seu ambiente virtual (`.venv`) está ativado.
 
 ## ✅ Padrões de Código e Qualidade
 
