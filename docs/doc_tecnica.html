@@ -181,7 +181,7 @@
                     <li><code>utils.py</code>: Fornece funções utilitárias genéricas, como a ordenação de arquivos por data.</li>
                     <li><code>get_date_range.py</code>: Script utilitário para extrair o intervalo de datas de um arquivo de dados.</li>
                     <li><code>logging_config.py</code>: Configura o sistema de logging da aplicação.</li>
-                    <li style="margin-top:15px;"><code>data/meu_dash.db</code>: Banco de dados SQLite que persiste os metadados dos relatórios, essencial para a análise de tendência.</li>
+                    <li style="margin-top:15px;"><code>data/meu_dash.db</code>: Banco de dados SQLite que persiste os metadados dos relatórios (modelos <code>Report</code> e <code>TrendAnalysis</code>), essencial para o histórico e a análise de tendência.</li>
                 </ul>
             </div>
         </section>
@@ -225,39 +225,22 @@
             
             <h3>Desenvolvimento Local</h3>
             <div class="card">
-                <p>Para executar a aplicação localmente, siga os passos abaixo. Para mais detalhes, consulte o <a href="../CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
+                <p>O projeto utiliza um <code>Makefile</code> para automatizar as tarefas comuns. Para configurar e executar a aplicação pela primeira vez, use um único comando. Para mais detalhes, consulte o <a href="../CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
                 <pre><code># 1. Crie um ambiente virtual e ative-o
-python3 -m venv .venv
-source .venv/bin/activate
-# Seu prompt do terminal deve mudar para indicar que o ambiente `(.venv)` está ativo.
+git clone &lt;URL_DO_REPOSITORIO&gt;
+cd meu-dash
 
-# 2. Instale as dependências
-pip install -r requirements.txt
-
-# 3. Exporte as variáveis de ambiente
-export PYTHONPATH=$(pwd)
-export FLASK_APP=src.app
-export FLASK_DEBUG=True
-
-# 4. Inicialize e atualize o banco de dados
-# Se esta for a primeira vez, execute os três comandos:
-flask db init
-flask db migrate -m "Initial migration"
-flask db upgrade
-# Para atualizações futuras, apenas `flask db upgrade` é necessário.
-
-# 5. Inicie o servidor de desenvolvimento
-flask run
-
-# NOTA: Se o comando `flask` não for encontrado, certifique-se de que
-# o ambiente virtual está ativado (passo 2).</code></pre>
+# 2. Configure o ambiente e inicie a aplicação
+# Este comando único cuida de tudo: ambiente virtual, dependências,
+# banco de dados e inicialização do servidor.
+make setup-and-run</code></pre>
                 <p>A aplicação estará disponível em <a href="http://127.0.0.1:5000">http://127.0.0.1:5000</a>.</p>
             </div>
 
             <h3>Implantação em Produção</h3>
             <div class="card">
                 <h4><code>Dockerfile</code></h4>
-                <p>O <code>Dockerfile</code> multi-stage constrói uma imagem de produção otimizada, utilizando <strong>Gunicorn</strong> como servidor WSGI.</p>
+                <p>O <code>Dockerfile</code> multi-stage constrói uma imagem de produção otimizada. Ele executa o comando <code>flask db upgrade</code> antes de iniciar o <strong>Gunicorn</strong>, garantindo que o banco de dados esteja sempre atualizado na inicialização do container.</p>
 <pre><code># Build da imagem
 docker build -t meu-dash-web .
 
