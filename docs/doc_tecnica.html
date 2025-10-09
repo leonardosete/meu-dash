@@ -100,6 +100,47 @@
             color: var(--text-color);
         }
         td:nth-child(2) { text-align: center; }
+        .flow-diagram {
+            display: flex;
+            justify-content: space-around;
+            list-style: none;
+            padding: 0;
+            text-align: center;
+            gap: 15px;
+        }
+        .flow-diagram .flow-step {
+            flex: 1;
+            padding: 10px;
+            position: relative;
+            min-width: 0; /* Prevent flex items from overflowing */
+        }
+        .flow-diagram .flow-step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -12px;
+            top: 40%;
+            transform: translateY(-50%);
+            font-size: 2em;
+            color: var(--accent-color);
+        }
+        .flow-diagram .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .flow-diagram h4 {
+            font-size: 1em;
+            margin-bottom: 5px;
+            border: none;
+            padding-bottom: 5px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+        .flow-diagram p {
+            font-size: 0.85em;
+            color: var(--text-secondary-color);
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -121,52 +162,60 @@
 
             <h4>Componentes Principais</h4>
             <div class="card">
+                <p>O diretório <code>src</code> contém os seguintes módulos, divididos entre lógica principal e módulos de suporte:</p>
+                
+                <h5 style="margin-top: 20px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Lógica Principal (Core)</h5>
                 <ul>
-                    <li><code>src/app.py</code>: Ponto de entrada da aplicação Flask. Define as rotas, gerencia as requisições e delega a lógica para a camada de serviço.</li>
-                    <li><code>src/services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados e coordena a geração de relatórios.</li>
-                    <li><code>src/analisar_alertas.py</code>: Motor de análise que processa um arquivo <code>.csv</code>, agrupa alertas em casos e calcula o score de prioridade.</li>
-                    <li><code>src/analise_tendencia.py</code>: Motor que compara dois períodos de análise e gera o relatório de tendência.</li>
-                    <li><code>data/meu_dash.db</code>: Banco de dados SQLite que persiste os metadados dos relatórios, essencial para a análise de tendência.</li>
+                    <li><code>app.py</code>: Ponto de entrada da aplicação Flask. Define as rotas (<code>/</code>, <code>/upload</code>), gerencia as requisições e delega a lógica para a camada de serviço.</li>
+                    <li><code>services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados e coordena a chamada aos motores de análise e geradores de página.</li>
+                    <li><code>analisar_alertas.py</code>: Motor de análise principal. Processa um arquivo <code>.csv</code>, agrupa alertas em casos e calcula o score de prioridade para cada um.</li>
+                    <li><code>analise_tendencia.py</code>: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência.</li>
+                    <li><code>gerador_paginas.py</code>: Responsável por usar os dados analisados para gerar o conjunto completo de páginas HTML do relatório.</li>
+                </ul>
+
+                <h5 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Módulos de Suporte e Configuração</h5>
+                <ul>
+                    <li><code>context_builder.py</code>: Prepara os dicionários de dados (contexto) que são passados para os templates, formatando os resultados da análise para a visualização.</li>
+                    <li><code>gerador_html.py</code>: Contém funções auxiliares de baixo nível para renderizar componentes HTML específicos, como tabelas e gráficos.</li>
+                    <li><code>constants.py</code>: Centraliza todas as constantes da aplicação, como nomes de colunas, pesos para cálculos de score e textos de ações.</li>
+                    <li><code>utils.py</code>: Fornece funções utilitárias genéricas, como a ordenação de arquivos por data.</li>
+                    <li><code>get_date_range.py</code>: Script utilitário para extrair o intervalo de datas de um arquivo de dados.</li>
+                    <li><code>logging_config.py</code>: Configura o sistema de logging da aplicação.</li>
+                    <li style="margin-top:15px;"><code>data/meu_dash.db</code>: Banco de dados SQLite que persiste os metadados dos relatórios, essencial para a análise de tendência.</li>
                 </ul>
             </div>
         </section>
 
         <section id="fluxo">
-            <h2>2. Fluxo de Dados (Upload de Arquivo)</h2>
-            <p>O diagrama abaixo ilustra o fluxo de dados quando um usuário faz o upload de um novo arquivo para análise.</p>
+            <h2>2. Fluxo de Dados Detalhado</h2>
+            <p>O fluxo abaixo detalha as etapas e os componentes envolvidos desde o upload do arquivo até a visualização do relatório.</p>
             <div class="card">
-                <div class="mermaid">
-sequenceDiagram
-    participant User as Usuário
-    participant App as Flask App (app.py)
-    participant Service as Camada de Serviço (services.py)
-    participant Analysis as Módulos de Análise
-    participant DB as Banco de Dados (SQLite)
-
-    User->>+App: POST /upload com arquivo.csv
-    App->>+Service: Chama `process_upload_and_generate_reports()`
-    Service->>Service: Salva o arquivo em `data/uploads`
-    Service->>DB: Consulta o último relatório (para tendência)
-    DB-->>Service: Retorna metadados do relatório anterior
-    
-    alt Análise de Tendência Aplicável
-        Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise leve do arquivo atual)
-        Analysis-->>-Service: Retorna JSON temporário
-        Service->>+Analysis: Chama `gerar_relatorio_tendencia()` com JSON anterior e atual
-        Analysis-->>-Service: Gera `resumo_tendencia.html`
-    end
-
-    Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise completa)
-    Analysis-->>-Service: Retorna dataframes e sumários
-    Service->>Service: Chama `context_builder` e `gerador_paginas`
-    Service->>Service: Gera todo o ecossistema de relatórios HTML
-    
-    Service->>+DB: Salva metadados do novo relatório
-    DB-->>-Service: Confirmação
-    
-    Service-->>-App: Retorna o caminho para o relatório principal
-    App->>-User: Redireciona para a página do relatório
-
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <span class="icon">📤</span>
+                        <h4>1. Upload</h4>
+                        <p>Usuário envia o <code>.csv</code> via <code>POST /upload</code>.</p>
+                    </div>
+                    <div class="flow-step">
+                        <span class="icon">⚙️</span>
+                        <h4>2. Orquestração</h4>
+                        <p><code>services.py</code> recebe o arquivo, consulta o histórico no DB e coordena as análises.</p>
+                    </div>
+                    <div class="flow-step">
+                        <span class="icon">🔬</span>
+                        <h4>3. Motores de Análise</h4>
+                        <p><code>analise_tendencia.py</code> e <code>analisar_alertas.py</code> processam os dados e geram os sumários.</p>
+                    </div>
+                    <div class="flow-step">
+                        <span class="icon">📄</span>
+                        <h4>4. Geração de Relatórios</h4>
+                        <p><code>gerador_paginas.py</code> cria os artefatos HTML a partir dos dados analisados.</p>
+                    </div>
+                    <div class="flow-step">
+                        <span class="icon">💾➡️</span>
+                        <h4>5. Finalização</h4>
+                        <p><code>services.py</code> salva os metadados no DB e <code>app.py</code> redireciona o usuário para o resultado.</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -177,24 +226,31 @@ sequenceDiagram
             <h3>Desenvolvimento Local</h3>
             <div class="card">
                 <p>Para executar a aplicação localmente, siga os passos abaixo. Para mais detalhes, consulte o <a href="../CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
-                <pre><code># 1. Clone o repositório e entre no diretório
-
-# 2. Crie um ambiente virtual e ative-o
+                <pre><code># 1. Crie um ambiente virtual e ative-o
 python3 -m venv .venv
 source .venv/bin/activate
+# Seu prompt do terminal deve mudar para indicar que o ambiente `(.venv)` está ativo.
 
-# 3. Instale as dependências
+# 2. Instale as dependências
 pip install -r requirements.txt
 
-# 4. Exporte as variáveis de ambiente do Flask
-export FLASK_APP=src/app.py
+# 3. Exporte as variáveis de ambiente
+export PYTHONPATH=$(pwd)
+export FLASK_APP=src.app
 export FLASK_DEBUG=True
 
-# 5. Inicialize/Atualize o banco de dados
+# 4. Inicialize e atualize o banco de dados
+# Se esta for a primeira vez, execute os três comandos:
+flask db init
+flask db migrate -m "Initial migration"
 flask db upgrade
+# Para atualizações futuras, apenas `flask db upgrade` é necessário.
 
-# 6. Inicie o servidor de desenvolvimento
-flask run</code></pre>
+# 5. Inicie o servidor de desenvolvimento
+flask run
+
+# NOTA: Se o comando `flask` não for encontrado, certifique-se de que
+# o ambiente virtual está ativado (passo 2).</code></pre>
                 <p>A aplicação estará disponível em <a href="http://127.0.0.1:5000">http://127.0.0.1:5000</a>.</p>
             </div>
 

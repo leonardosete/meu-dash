@@ -230,3 +230,7 @@ ajustar.md
 
 # Make
 Makefile
+
+# Flask DB
+data/
+migrations/
