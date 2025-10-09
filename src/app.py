@@ -390,8 +390,6 @@ def delete_report(report_id):
 # --- INICIALIZAÇÃO DA APLICAÇÃO ---
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     # Executa em modo debug apenas se a variável de ambiente FLASK_DEBUG for 'True'
     is_debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
     app.run(debug=is_debug_mode)

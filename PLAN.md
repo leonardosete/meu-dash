@@ -24,4 +24,4 @@ Este documento descreve o plano de ação para implementar a funcionalidade de h
 - [x] **Criar Teste de Modelo:** Validar a criação do objeto `TrendAnalysis`.
 - [x] **Atualizar Teste de Serviço:** Verificar se um registro `TrendAnalysis` é criado após a análise.
 - [x] **Criar Teste de Rota:** Validar se a rota `/` carrega e exibe o histórico.
-- [ ] **Teste Manual:** Executar o fluxo completo na interface.
+- [x] **Teste Manual:** Executar o fluxo completo na interface.

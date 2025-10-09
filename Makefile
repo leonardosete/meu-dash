@@ -14,6 +14,7 @@ help:
 	@echo "  make install        - Instala as dependências do requirements.txt."
 	@echo "  make setup          - Cria o ambiente virtual e instala as dependências."
 	@echo "  make run            - Inicia a aplicação Flask em modo de desenvolvimento."
+	@echo "  make migrate        - Aplica as migrações do banco de dados (cria as tabelas)."
 	@echo "  make test           - Executa a suíte de testes com pytest."
 	@echo "  make format         - Formata o código com 'black'."
 	@echo "  make lint           - Executa o linter 'ruff check --fix' para corrigir erros."
@@ -43,6 +44,12 @@ test:
 	@echo ">>> Executando testes com pytest..."
 	@export PYTHONPATH=$(shell pwd) && \
 	.venv/bin/pytest
+
+migrate:
+	@echo ">>> Aplicando migrações do banco de dados..."
+	@export PYTHONPATH=$(shell pwd) && \
+	export FLASK_APP=src.app && \
+	.venv/bin/flask db upgrade
 
 format:
 	@echo ">>> Formatando o código com black..."
