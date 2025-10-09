@@ -6,14 +6,16 @@ Ficamos felizes com o seu interesse em contribuir para o projeto! Este guia forn
 
 O projeto utiliza um `Makefile` para automatizar todo o processo de configuração. Para preparar seu ambiente, siga os passos:
 
-1.  **Clone o repositório:**
+1. **Clone o repositório:**
+
     ```bash
     git clone <URL_DO_REPOSITORIO>
     cd meu-dash
     ```
 
-2.  **Execute o setup automatizado:**
+2. **Execute o setup automatizado:**
     Este comando irá criar o ambiente virtual, instalar todas as dependências e deixar o projeto pronto para ser executado.
+
     ```bash
     make setup
     ```
@@ -34,13 +36,16 @@ Para o setup inicial do banco de dados, pode ser necessário rodar os comandos d
 
 A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados.
 
--   **Primeira vez:** Se for a primeira configuração, inicialize o banco de dados:
+- **Primeira vez:** Se for a primeira configuração, inicialize o banco de dados:
+
     ```bash
     flask db init
     flask db migrate -m "Initial migration"
     flask db upgrade
     ```
--   **Atualizações futuras:** Para aplicar novas migrações, execute:
+
+- **Atualizações futuras:** Para aplicar novas migrações, execute:
+
     ```bash
     flask db upgrade
     ```
@@ -49,12 +54,14 @@ A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados.
 
 Para manter o código limpo, consistente e livre de erros, utilizamos a ferramenta **Ruff**. O `Makefile` fornece comandos para simplificar o uso.
 
--   **Para formatar seu código:**
+- **Para formatar seu código:**
+
     ```bash
     make format
     ```
 
--   **Para corrigir erros de linting automaticamente:**
+- **Para corrigir erros de linting automaticamente:**
+
     ```bash
     make lint
     ```
@@ -77,8 +84,8 @@ Certifique-se de que todos os testes passam antes de abrir um Pull Request.
 
 ## 📄 Processo de Pull Request (PR)
 
-1.  **Crie uma nova branch:** (`git checkout -b feature/minha-feature`).
-2.  **Faça suas alterações.**
-3.  **Garanta a qualidade do código:** Rode `make check` e `make test` para formatar, lintar e testar seu código.
-4.  **Faça o commit:** Escreva uma mensagem de commit clara e concisa.
-5.  **Abra o Pull Request:** Envie o PR para a branch `main`. Descreva suas alterações e o motivo delas.
+1. **Crie uma nova branch:** (`git checkout -b feature/minha-feature`).
+2. **Faça suas alterações.**
+3. **Garanta a qualidade do código:** Rode `make check` e `make test` para formatar, lintar e testar seu código.
+4. **Faça o commit:** Escreva uma mensagem de commit clara e concisa.
+5. **Abra o Pull Request:** Envie o PR para a branch `main`. Descreva suas alterações e o motivo delas.

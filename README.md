@@ -19,35 +19,38 @@ Esta é uma aplicação web que automatiza a análise de alertas de monitorament
 
 Para configurar e executar o projeto localmente, utilize os comandos automatizados do `Makefile`.
 
-1.  **Clone o repositório:**
+1. **Clone o repositório:**
+
     ```bash
     git clone <URL_DO_REPOSITORIO>
     cd meu-dash
     ```
 
-2.  **Configure o ambiente e instale as dependências:**
+2. **Configure o ambiente e instale as dependências:**
     Este comando cria o ambiente virtual, instala as dependências e prepara tudo para você.
+
     ```bash
     make setup
     ```
 
-3.  **Inicie a aplicação:**
+3. **Inicie a aplicação:**
+
     ```bash
     make run
     ```
 
-4.  Acesse `http://127.0.0.1:5000` em seu navegador.
+4. Acesse `http://127.0.0.1:5000` em seu navegador.
 
 ---
 
 ### 💻 Tecnologias Utilizadas
 
--   **Backend:** Python / Flask
--   **Análise de Dados:** Pandas / NumPy
--   **Banco de Dados:** SQLite / SQLAlchemy
--   **Testes:** Pytest
--   **Qualidade de Código:** Black
--   **Infraestrutura:** Docker / Kubernetes / Gunicorn
+- **Backend:** Python / Flask
+- **Análise de Dados:** Pandas / NumPy
+- **Banco de Dados:** SQLite / SQLAlchemy
+- **Testes:** Pytest
+- **Qualidade de Código:** Black
+- **Infraestrutura:** Docker / Kubernetes / Gunicorn
 
 ---
 
