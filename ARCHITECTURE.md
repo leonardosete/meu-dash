@@ -36,25 +36,25 @@ graph TD
         direction TB
 
         subgraph "Camada de Apresentação"
-            A[app.py<br><b>(Flask Controller)</b><br>Recebe uploads, gerencia rotas HTTP.]
+            A["app.py<br><b>(Flask Controller)</b><br>Recebe uploads, gerencia rotas HTTP."]
         end
 
         subgraph "Camada de Serviço"
-            B[services.py<br><b>(Orquestrador)</b><br>Coordena a lógica de negócio.]
+            B["services.py<br><b>(Orquestrador)</b><br>Coordena a lógica de negócio."]
         end
 
         subgraph "Camada de Análise"
-            C[analisar_alertas.py<br><b>(Motor de Análise)</b><br>Calcula scores e agrupa casos.]
-            D[analise_tendencia.py<br><b>(Motor de Tendência)</b><br>Compara relatórios.]
+            C["analisar_alertas.py<br><b>(Motor de Análise)</b><br>Calcula scores e agrupa casos."]
+            D["analise_tendencia.py<br><b>(Motor de Tendência)</b><br>Compara relatórios."]
         end
 
         subgraph "Camada de Geração de Relatórios"
-            E[gerador_paginas.py<br><b>(Gerador de HTML)</b><br>Renderiza os templates.]
-            F[context_builder.py<br><b>(Builder de Contexto)</b><br>Prepara dados para a view.]
+            E["gerador_paginas.py<br><b>(Gerador de HTML)</b><br>Renderiza os templates."]
+            F["context_builder.py<br><b>(Builder de Contexto)</b><br>Prepara dados para a view."]
         end
 
         subgraph "Camada de Dados"
-            G[SQLite DB<br><b>(Banco de Dados)</b><br>Armazena metadados dos relatórios.]
+            G["SQLite DB<br><b>(Banco de Dados)</b><br>Armazena metadados dos relatórios."]
         end
 
     end
