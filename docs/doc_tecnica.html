@@ -289,7 +289,16 @@ docker run -p 8000:8000 -v ./data:/app/data meu-dash-web</code></pre>
                 <p>Penaliza casos onde a automação de remediação falhou.</p>
 
                 <h4>Pilar 3: Multiplicador de Impacto (Volume de Alertas)</h4>
-                <p>Penaliza o "ruído" operacional, usando uma escala logarítmica (<code>1 + ln(N)</code>).</p>
+            </div>
+
+            <h3>Validação e Qualidade dos Dados</h3>
+            <div class="card">
+                <p>Para garantir a confiabilidade dos relatórios, a aplicação realiza uma validação rigorosa dos dados de entrada, um processo que ocorre na função <code>carregar_dados()</code> do módulo <code>analisar_alertas.py</code>.</p>
+                <ul>
+                    <li><strong>Verificação de Colunas:</strong> O sistema verifica se as colunas essenciais para a análise estão presentes no arquivo <code>.csv</code>. A ausência de colunas críticas interrompe o processo com um erro.</li>
+                    <li><strong>Tratamento de Dados Inválidos:</strong> Linhas que contêm valores inesperados (por exemplo, no status da remediação) são separadas do conjunto de dados principal e registradas em um arquivo <code>invalidos.csv</code>, localizado na pasta do relatório.</li>
+                </ul>
+                <p>Essa abordagem assegura que a análise não seja comprometida por dados inconsistentes e fornece um artefato claro para que a equipe responsável possa corrigir a fonte dos dados.</p>
             </div>
         </section>
 
