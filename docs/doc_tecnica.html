@@ -166,7 +166,7 @@
                 
                 <h5 style="margin-top: 20px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Lógica Principal (Core)</h5>
                 <ul>
-                    <li><code>app.py</code>: Ponto de entrada da aplicação Flask. Define as rotas (<code>/</code>, <code>/upload</code>), gerencia as requisições e delega a lógica para a camada de serviço.</li>
+                    <li><code>app.py</code>: Ponto de entrada da aplicação Flask. Define as rotas (<code>/</code>, <code>/upload</code>), gerencia as requisições, delega a lógica para a camada de serviço e fornece filtros de template (ex: conversão de timezone).</li>
                     <li><code>services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados (usando os modelos <code>Report</code> e <code>TrendAnalysis</code> para garantir a continuidade da análise de tendência) e coordena a chamada aos motores de análise e geradores de página.</li>
                     <li><code>analisar_alertas.py</code>: Motor de análise principal. Processa um arquivo <code>.csv</code>, agrupa alertas em casos e calcula o score de prioridade para cada um.</li>
                     <li><code>analise_tendencia.py</code>: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência.</li>
@@ -240,7 +240,7 @@ make setup-and-run</code></pre>
             <h3>Implantação em Produção</h3>
             <div class="card">
                 <h4><code>Dockerfile</code></h4>
-                <p>O <code>Dockerfile</code> multi-stage constrói uma imagem de produção otimizada. Ele executa o comando <code>flask db upgrade</code> antes de iniciar o <strong>Gunicorn</strong>, garantindo que o banco de dados esteja sempre atualizado na inicialização do container.</p>
+                <p>O <code>Dockerfile</code> multi-stage constrói uma imagem de produção otimizada. Ele configura o timezone para <strong>America/Sao_Paulo</strong> e executa o comando <code>flask db upgrade</code> antes de iniciar o <strong>Gunicorn</strong>, garantindo que o ambiente e o banco de dados estejam sempre corretos na inicialização do container.</p>
 <pre><code># Build da imagem
 docker build -t meu-dash-web .
 

@@ -2,6 +2,7 @@ import os
 from io import BytesIO
 import sys
 from unittest.mock import patch
+from datetime import datetime, timezone
 
 import pytest
 
@@ -177,3 +178,21 @@ def test_compare_route_success(mock_service, client):
 
     # 3. Verifica se o redirecionamento aponta para a URL correta
     assert "/reports/run_compare_456/resumo_tendencia.html" in response.location
+
+
+def test_localtime_template_filter():
+    """
+    Testa o filtro de template 'localtime' para garantir a conversão de timezone.
+    """
+    # Arrange
+    # Cria um objeto datetime em UTC, como se viesse do banco de dados.
+    # Ex: 2025-10-09 18:30:00 UTC
+    utc_time = datetime(2025, 10, 9, 18, 30, 0, tzinfo=timezone.utc)
+
+    # Act
+    # Aplica o filtro diretamente, como o Jinja2 faria.
+    # O resultado esperado é a conversão para America/Sao_Paulo (UTC-3).
+    result = flask_app.localtime_filter(utc_time)
+
+    # Assert
+    assert result == "09/10/2025 às 15:30"
