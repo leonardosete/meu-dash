@@ -291,14 +291,29 @@
             </a>
             {% endif %}
 
-            {% if last_trend_analysis %}
-            <a href="{{ last_trend_analysis.url }}" target="_blank" class="side-card last-analysis-card">
+            {% if trend_history %}
+            <div class="side-card last-analysis-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
                 <div class="side-card-text">
-                    <h3>Ver Última Análise de Tendência</h3>
-                    <p>Gerada em: {{ last_trend_analysis.date }}</p>
+                    <a href="{{ trend_history[0].url }}" target="_blank" style="text-decoration: none; color: inherit;">
+                        <h3>Ver Última Análise de Tendência</h3>
+                        <p>Gerada em: {{ trend_history[0].date }}</p>
+                    </a>
+                    
+                    {% if trend_history|length > 1 %}
+                    <details style="margin-top: 10px;">
+                        <summary style="cursor: pointer; font-size: 0.9em;">Ver histórico anterior</summary>
+                        <ul style="list-style: none; padding-left: 10px; margin-top: 5px; font-size: 0.85em;">
+                            {% for analysis in trend_history[1:] %}
+                            <li style="margin-bottom: 5px;">
+                                <a href="{{ analysis.url }}" target="_blank">Análise de {{ analysis.date }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                    {% endif %}
                 </div>
-            </a>
+            </div>
             {% endif %}
 
         </aside>

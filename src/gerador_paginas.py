@@ -10,6 +10,7 @@ from .constants import (
     ACAO_FALHA_PERSISTENTE,
     ACAO_FLAGS_ATUACAO,
     ACAO_FLAGS_INSTABILIDADE,
+    LOG_INVALIDOS_FILENAME,  # noqa: F401
     ACAO_FLAGS_OK,
     ACAO_INCONSISTENTE,
     ACAO_INTERMITENTE,
@@ -236,7 +237,7 @@ def gerar_planos_por_squad(
         total_alertas = squad_df["alert_count"].sum()
 
         body_content = '<p><a href="../todas_as_squads.html">&larr; Voltar para Planos Squads</a></p>'
-        body_content += f'<h2>Visão Geral da Squad</h2><div class="grid-container">'
+        body_content += '<h2>Visão Geral da Squad</h2><div class="grid-container">'
         body_content += f'<div class="card kpi-card"><p class="kpi-value" style="color: var(--warning-color);">{len(squad_df)}</p><p class="kpi-label">Total de Casos</p></div>'
         body_content += f'<div class="card kpi-card"><p class="kpi-value">{total_alertas}</p><p class="kpi-label">Total de Alertas Envolvidos</p></div></div>'
         top_problemas_da_squad = (
@@ -244,7 +245,7 @@ def gerar_planos_por_squad(
             .sum()
             .nlargest(10)
         )
-        body_content += f'<div class="card" style="margin-top: 20px;"><h3>Top Problemas da Squad</h3>'
+        body_content += '<div class="card" style="margin-top: 20px;"><h3>Top Problemas da Squad</h3>'
         if not top_problemas_da_squad.empty:
             body_content += '<div class="bar-chart-container">'
             min_prob_val, max_prob_val = (
@@ -261,7 +262,7 @@ def gerar_planos_por_squad(
         else:
             body_content += "<p>Nenhum problema recorrente para esta squad. ✅</p>"
         body_content += "</div>"
-        body_content += f"<h2>Detalhes por Categoria de Métrica</h2>"
+        body_content += "<h2>Detalhes por Categoria de Métrica</h2>"
 
         row_index = 0
         metric_priority = (
@@ -472,7 +473,7 @@ def gerar_paginas_detalhe_problema(
                 squad_info = f'<a href="{plan_path}">{escape(squad_name)}</a>'
             else:
                 squad_info = escape(squad_name)
-            body_content += f'<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{row["alert_count"]}</td><td>{squad_info}</td></tr>'
+            body_content += f"<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{row['alert_count']}</td><td>{squad_info}</td></tr>"
         body_content += "</tbody></table>"
         html_content = gerador_html.renderizar_pagina_html(
             HTML_TEMPLATE, title, body_content, footer_text

@@ -2,26 +2,6 @@ import os
 import re
 from html import escape
 from typing import Dict, Any
-import pandas as pd
-from .constants import (
-    ACAO_INTERMITENTE,
-    ACAO_FALHA_PERSISTENTE,
-    ACAO_STATUS_AUSENTE,
-    ACAO_INCONSISTENTE,
-    ACAO_SEMPRE_OK,
-    ACAO_ESTABILIZADA,
-    ACAO_INSTABILIDADE_CRONICA,
-    ACAO_FLAGS_ATUACAO,
-    COL_ASSIGNMENT_GROUP,
-    COL_SHORT_DESCRIPTION,
-    COL_NODE,
-    COL_CMDB_CI,
-    COL_METRIC_NAME,
-    STATUS_OK,
-    STATUS_NOT_OK,
-    NO_STATUS,
-    UNKNOWN,
-)
 
 # =============================================================================
 # CONSTANTES VISUAIS
@@ -254,7 +234,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
 
     # NOVO: Substitui o botão "Voltar" por um ícone "Home" moderno e consistente.
     # REVISÃO: Envolve o botão e a data em um contêiner de cabeçalho para melhor controle de layout e espaçamento.
-    body_content += f"""
+    body_content += """
     <div class="report-header">
         <a href="/" class="home-button">Página Inicial</a>
     </div>
@@ -443,7 +423,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}VISÃO GERAL</button>'
     body_content += '<div class="content" style="display: block; padding-top: 20px;">'
 
-    body_content += f'<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">'
+    body_content += '<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">'
 
     gauge_color_class = "var(--success-color)"
     automation_card_class = "card-neon-green"
@@ -467,7 +447,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         if grupos_atuacao > 0
         else "Tudo certo! Nenhum caso precisa de intervenção manual."
     )
-    status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{'flashing-icon' if grupos_atuacao > 0 else ''}" style="font-size: 1.5em;">{'🚨' if grupos_atuacao > 0 else '✅'}</span><div class="tooltip-content" style="width: 240px; left: 0; margin-left: 0;">{escape(tooltip_text)}</div></div>"""
+    status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{"flashing-icon" if grupos_atuacao > 0 else ""}" style="font-size: 1.5em;">{"🚨" if grupos_atuacao > 0 else "✅"}</span><div class="tooltip-content" style="width: 240px; left: 0; margin-left: 0;">{escape(tooltip_text)}</div></div>"""
     kpi_color_style = (
         "color: var(--danger-color);"
         if grupos_atuacao > 0
@@ -504,7 +484,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         if grupos_instabilidade > 0
         else "Nenhum ponto de alta recorrência crônica detectado."
     )
-    instabilidade_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{'flashing-icon' if grupos_instabilidade > 0 else ''}" style="font-size: 1.5em;">{'⚠️' if grupos_instabilidade > 0 else '✅'}</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_instabilidade_text)}</div></div>"""
+    instabilidade_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{"flashing-icon" if grupos_instabilidade > 0 else ""}" style="font-size: 1.5em;">{"⚠️" if grupos_instabilidade > 0 else "✅"}</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_instabilidade_text)}</div></div>"""
 
     body_content += f"""
     <div class="card kpi-card {instabilidade_card_class}">
@@ -600,7 +580,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
                     {SQUAD_ICON_SVG}
                     <span class="squad-name-new">{squad_name} <small style="color:var(--text-secondary-color)">{total_casos_txt}</small></span>
                 </div>
-                <span class="priority-score-new" style="background-color: {score_color};">{row['score_acumulado']:.1f}</span>
+                <span class="priority-score-new" style="background-color: {score_color};">{row["score_acumulado"]:.1f}</span>
             </a>
             """
     else:
@@ -716,7 +696,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
         )
         for problem, count in top_problemas_remediados.items():
             bar_width = (count / max_val) * 100
-            background_color, text_color = f"hsl(155, 60%, 45%)", "white"
+            background_color, text_color = "hsl(155, 60%, 45%)", "white"
             sanitized_name = re.sub(
                 r"[^a-zA-Z0-9_-]", "", problem[:50].replace(" ", "_")
             )

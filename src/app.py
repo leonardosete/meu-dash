@@ -1,6 +1,6 @@
 import os
 import shutil  # Para deletar diretórios recursivamente
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import abort
 from flask import (
     Flask,
@@ -13,7 +13,6 @@ from flask import (
     flash,
 )
 from . import services
-from .utils import sort_files_by_date
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -38,7 +37,7 @@ migrate = Migrate(app, db)
 
 class Report(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     original_filename = db.Column(db.String(255))
     report_path = db.Column(db.String(255))
     json_summary_path = db.Column(db.String(255))
@@ -46,6 +45,31 @@ class Report(db.Model):
 
     def __repr__(self):
         return f"<Report {self.original_filename}>"
+
+
+class TrendAnalysis(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    trend_report_path = db.Column(db.String(255), nullable=False)
+
+    # Chaves estrangeiras para os relatórios que geraram a tendência
+    current_report_id = db.Column(
+        db.Integer, db.ForeignKey("report.id"), nullable=False
+    )
+    previous_report_id = db.Column(
+        db.Integer, db.ForeignKey("report.id"), nullable=False
+    )
+
+    # Relacionamentos para fácil acesso aos objetos Report
+    current_report = db.relationship(
+        "Report", foreign_keys=[current_report_id], backref="trend_as_current"
+    )
+    previous_report = db.relationship(
+        "Report", foreign_keys=[previous_report_id], backref="trend_as_previous"
+    )
+
+    def __repr__(self):
+        return f"<TrendAnalysis {self.timestamp}>"
 
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -82,7 +106,7 @@ def index():
     Returns:
         str: O conteúdo HTML renderizado da página de upload.
     """
-    last_trend_analysis = None
+    trend_history = []
     last_action_plan = None
 
     # Lógica para o plano de ação continua a mesma: sempre o mais recente.
@@ -101,31 +125,28 @@ def index():
                 "date": last_report.timestamp.strftime("%d/%m/%Y às %H:%M"),
             }
 
-    # NOVA LÓGICA: Encontra o relatório de tendência mais recente, independentemente da última análise.
-    all_reports_desc = Report.query.order_by(Report.timestamp.desc()).all()
-    for report in all_reports_desc:
-        # Adicionado um bloco try/except para o caso de o report.report_path ser inválido
+    # NOVA LÓGICA: Busca o histórico de tendências diretamente do banco de dados.
+    trend_analyses = (
+        TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).limit(60).all()
+    )
+    for analysis in trend_analyses:
         try:
-            run_folder_path = os.path.dirname(report.report_path)
-            trend_report_path = os.path.join(run_folder_path, "resumo_tendencia.html")
-            if os.path.exists(trend_report_path):
-                run_folder_name = os.path.basename(run_folder_path)
-                last_trend_analysis = {
+            run_folder = os.path.basename(os.path.dirname(analysis.trend_report_path))
+            filename = os.path.basename(analysis.trend_report_path)
+            trend_history.append(
+                {
                     "url": url_for(
-                        "serve_report",
-                        run_folder=run_folder_name,
-                        filename="resumo_tendencia.html",
+                        "serve_report", run_folder=run_folder, filename=filename
                     ),
-                    "date": report.timestamp.strftime("%d/%m/%Y às %H:%M"),
+                    "date": analysis.timestamp.strftime("%d/%m/%Y às %H:%M"),
                 }
-                break  # Encontrou o mais recente, pode parar
+            )
         except Exception:
-            # Ignora relatórios com caminhos inválidos que poderiam quebrar a página inicial
-            continue
+            continue  # Ignora entradas com caminhos inválidos
 
     return render_template(
         "upload.html",
-        last_trend_analysis=last_trend_analysis,
+        trend_history=trend_history,
         last_action_plan=last_action_plan,
     )
 
@@ -160,6 +181,7 @@ def upload_file():
             reports_folder=app.config["REPORTS_FOLDER"],
             db=db,
             Report=Report,
+            TrendAnalysis=TrendAnalysis,  # Passa o novo modelo
             base_dir=BASE_DIR,
         )
         if result:
@@ -222,7 +244,7 @@ def compare_files():
     except ValueError as e:
         flash(str(e), "error")
         return redirect(url_for("index"))
-    except Exception as e:
+    except Exception:
         flash(
             "Ocorreu um erro inesperado durante a comparação. Verifique os logs.",
             "error",
@@ -368,8 +390,6 @@ def delete_report(report_id):
 # --- INICIALIZAÇÃO DA APLICAÇÃO ---
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     # Executa em modo debug apenas se a variável de ambiente FLASK_DEBUG for 'True'
     is_debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
     app.run(debug=is_debug_mode)

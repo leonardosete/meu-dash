@@ -1,6 +1,5 @@
 import os
 import pytest
-import sys
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
@@ -12,12 +11,20 @@ def mock_dependencies():
     """Cria mocks para as dependências externas do serviço."""
     mock_db = MagicMock()
     mock_Report = MagicMock()
+    mock_TrendAnalysis = MagicMock()  # Mock para o novo modelo
     mock_file = MagicMock()
     mock_file.filename = "test.csv"
 
-    return {"db": mock_db, "Report": mock_Report, "file_atual": mock_file}
+    return {
+        "db": mock_db,
+        "Report": mock_Report,
+        "TrendAnalysis": mock_TrendAnalysis,  # Adiciona ao dicionário
+        "file_atual": mock_file,
+    }
 
 
+@patch("src.services.os.path.exists", return_value=True)
+@patch("src.services.gerar_relatorio_tendencia")
 @patch("src.services.analisar_arquivo_csv")
 @patch("src.services.gerador_paginas")
 @patch("src.services.context_builder")
@@ -27,21 +34,24 @@ def test_process_upload_and_generate_reports(
     mock_context_builder,
     mock_gerador_paginas,
     mock_analisar_csv,
+    mock_gerar_tendencia,
+    mock_path_exists,
     tmp_path,
     mock_dependencies,
 ):
     """
-    Testa o orquestrador principal na camada de serviço, garantindo que ele
-    chama os submódulos corretos na sequência esperada.
+    Testa o orquestrador principal, garantindo que ele salva a análise de tendência
+    quando um relatório anterior existe.
     """
     # Arrange
-    # Simula um relatório anterior encontrado no banco de dados.
-    # Isso é feito configurando o mock do 'Report' que já está na fixture.
     mock_last_report = MagicMock()
+    mock_last_report.id = 1
     mock_last_report.json_summary_path = "fake/path/to/old_summary.json"
     mock_last_report.date_range = "01/01/2024 a 31/01/2024"
 
-    # Pega o mock do Report da fixture e configura seu comportamento
+    mock_new_report = mock_dependencies["Report"].return_value
+    mock_new_report.id = 2
+
     mock_Report_from_fixture = mock_dependencies["Report"]
     mock_Report_from_fixture.query.order_by.return_value.first.return_value = (
         mock_last_report
@@ -52,17 +62,21 @@ def test_process_upload_and_generate_reports(
     upload_folder.mkdir()
     reports_folder.mkdir()
 
-    # Configura o retorno do mock da análise
-    mock_analisar_csv.return_value = {
-        "summary": MagicMock(),
-        "df_atuacao": MagicMock(),
-        "num_logs_invalidos": 0,
-        "json_path": "fake/path/summary.json",
-    }
+    # A service chama analisar_arquivo_csv duas vezes (light e full)
+    mock_analisar_csv.side_effect = [
+        {"json_path": "fake/path/light_summary.json"},
+        {
+            "summary": MagicMock(),
+            "df_atuacao": MagicMock(),
+            "num_logs_invalidos": 0,
+            "json_path": "fake/path/full_summary.json",
+        },
+    ]
 
-    # Configura o retorno do novo orquestrador de páginas
+    # O gerador de páginas principal retorna o caminho do dashboard como uma STRING
+    mock_dashboard_path = "fake/path/resumo_geral.html"
     mock_gerador_paginas.gerar_ecossistema_de_relatorios.return_value = (
-        "fake/path/resumo_geral.html"
+        mock_dashboard_path
     )
 
     # Act
@@ -74,25 +88,30 @@ def test_process_upload_and_generate_reports(
     )
 
     # Assert
-    assert (
-        mock_analisar_csv.call_count >= 1
-    ), "A função de análise de CSV deveria ter sido chamada pelo menos uma vez."
-    assert (
-        mock_context_builder.build_dashboard_context.called
-    ), "O construtor de contexto deveria ter sido chamado."
-    assert (
-        mock_gerador_paginas.gerar_ecossistema_de_relatorios.called
-    ), "O orquestrador de geração de relatórios deveria ter sido chamado."
-    assert mock_dependencies[
-        "db"
-    ].session.add.called, (
-        "Um novo relatório deveria ter sido adicionado à sessão do DB."
+    mock_db_session = mock_dependencies["db"].session
+    NewTrendAnalysisInstance = mock_dependencies["TrendAnalysis"].return_value
+
+    # Verifica se o novo Report e a nova TrendAnalysis foram adicionados
+    mock_db_session.add.assert_any_call(mock_new_report)
+    mock_db_session.add.assert_any_call(NewTrendAnalysisInstance)
+
+    # Valida que a TrendAnalysis foi instanciada com o ID do relatório anterior
+    # O caminho absoluto é dinâmico, então usamos ANY da unittest.mock
+    from unittest.mock import ANY
+
+    mock_dependencies["TrendAnalysis"].assert_called_with(
+        trend_report_path=ANY,
+        previous_report_id=mock_last_report.id,
     )
-    assert mock_dependencies[
-        "db"
-    ].session.commit.called, "A sessão do DB deveria ter sido 'commitada'."
-    assert "run_folder" in result
-    assert "report_filename" in result
+
+    # Valida que o ID do novo relatório foi atribuído à análise de tendência
+    assert NewTrendAnalysisInstance.current_report_id == mock_new_report.id
+
+    # Valida o commit final
+    mock_db_session.commit.assert_called_once()
+
+    # Valida o dicionário de retorno
+    assert result["report_filename"] == os.path.basename(mock_dashboard_path)
 
 
 @patch("src.services.shutil.rmtree")

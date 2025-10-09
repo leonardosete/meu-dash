@@ -13,14 +13,6 @@ from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
 from . import context_builder, gerador_paginas
 from .constants import MAX_REPORTS_HISTORY
-from .constants import (
-    ACAO_FLAGS_INSTABILIDADE,
-    ACAO_FLAGS_OK,
-    COL_ASSIGNMENT_GROUP,
-    COL_METRIC_NAME,
-    COL_SHORT_DESCRIPTION,
-    LOG_INVALIDOS_FILENAME,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +59,13 @@ def _enforce_report_limit(db, Report):
 
 
 def process_upload_and_generate_reports(
-    file_atual, upload_folder: str, reports_folder: str, db, Report, base_dir: str
+    file_atual,
+    upload_folder: str,
+    reports_folder: str,
+    db,
+    Report,
+    TrendAnalysis,
+    base_dir: str,
 ):
     """Orquestra o fluxo completo de processamento para um único arquivo de upload.
 
@@ -91,6 +89,7 @@ def process_upload_and_generate_reports(
             serão salvos.
         db (flask_sqlalchemy.SQLAlchemy): A instância do banco de dados SQLAlchemy.
         Report (db.Model): A classe do modelo `Report` para interagir com o banco.
+        TrendAnalysis (db.Model): A classe do modelo `TrendAnalysis`.
         base_dir (str): O diretório base da aplicação, usado para resolver caminhos
             de templates.
 
@@ -114,6 +113,7 @@ def process_upload_and_generate_reports(
     # 2. Análise de Tendência (se aplicável)
     last_report = Report.query.order_by(Report.timestamp.desc()).first()
     trend_report_path_relative = None
+    new_trend_analysis = None
 
     if (
         last_report
@@ -154,6 +154,13 @@ def process_upload_and_generate_reports(
             )
             trend_report_path_relative = os.path.basename(output_trend_path)
             logger.info(f"Relatório de tendência gerado em: {output_trend_path}")
+
+            # Prepara o objeto TrendAnalysis para ser salvo depois
+            new_trend_analysis = TrendAnalysis(
+                trend_report_path=output_trend_path,
+                previous_report_id=last_report.id,
+            )
+
         else:
             logger.warning(
                 "O arquivo enviado não é cronologicamente mais recente. A análise de tendência será pulada."
@@ -180,7 +187,6 @@ def process_upload_and_generate_reports(
     )
 
     # 5. Geração de todas as páginas HTML
-    # Encapsula a geração de todas as páginas em uma única chamada de orquestração
     summary_html_path = gerador_paginas.gerar_ecossistema_de_relatorios(
         dashboard_context=dashboard_context,
         analysis_results=analysis_results,
@@ -196,6 +202,13 @@ def process_upload_and_generate_reports(
         date_range=date_range_atual,
     )
     db.session.add(new_report)
+
+    # Se uma análise de tendência foi criada, associa o ID do novo relatório e a salva
+    if new_trend_analysis:
+        db.session.flush()  # Garante que new_report receba um ID
+        new_trend_analysis.current_report_id = new_report.id
+        db.session.add(new_trend_analysis)
+
     db.session.commit()
 
     # 7. Aplicar política de retenção de histórico

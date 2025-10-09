@@ -1,5 +1,4 @@
 import pandas as pd
-import sys
 import os
 import json
 from html import escape
@@ -271,7 +270,7 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
         squad_cases_df = detailed_df[detailed_df["assignment_group"] == name]
         details_content = "<h4>Detalhes dos Casos Persistentes</h4><table class='sub-table'><thead><tr><th>Problema</th><th>Recurso Afetado</th><th>Alertas (Atual)</th><th>Alertas (Anterior)</th></tr></thead><tbody>"
         for _, case_row in squad_cases_df.iterrows():
-            details_content += f'<tr><td>{escape(case_row["short_description"])}</td><td>{escape(case_row["cmdb_ci"])}</td><td>{int(case_row["alert_count_p2"])}</td><td>{int(case_row["alert_count_p1"])}</td></tr>'
+            details_content += f"<tr><td>{escape(case_row['short_description'])}</td><td>{escape(case_row['cmdb_ci'])}</td><td>{int(case_row['alert_count_p2'])}</td><td>{int(case_row['alert_count_p1'])}</td></tr>"
         details_content += "</tbody></table>"
 
         table_body += f"<tr id='{details_id}' class='details-row'><td colspan='5'><div class='details-row-content'>{details_content}</div></td></tr>"
@@ -288,7 +287,7 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
         )
     )
 
-    table_footer = f"<tfoot><tr><td>Total</td>"
+    table_footer = "<tfoot><tr><td>Total</td>"
     table_footer += f"<td><div class='change-bar-container'><span class='change-value' style='color: {total_change_color}; width: 100%; text-align: right;'>{total_change_sign}{total_change}</span></div></td>"
     table_footer += f"<td class='center'>{total_alerts_p2}</td><td class='center'>{total_alerts_p1}</td><td class='center'>{total_num_cases}</td></tr></tfoot>"
 
@@ -353,7 +352,7 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
         )
     )
 
-    table_footer = f"<tfoot><tr><td>Total</td>"
+    table_footer = "<tfoot><tr><td>Total</td>"
     table_footer += f"<td><div class='change-bar-container'><span class='change-value' style='color: {total_change_color}; width: 100%; text-align: right;'>{total_change_sign}{int(total_change)}</span></div></td>"
     table_footer += f"<td class='center'>{int(total_p2)}</td><td class='center'>{int(total_p1)}</td>"
     if has_case_count:
