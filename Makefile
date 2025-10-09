@@ -15,9 +15,9 @@ help:
 	@echo "  make setup          - Cria o ambiente virtual e instala as dependências."
 	@echo "  make run            - Inicia a aplicação Flask em modo de desenvolvimento."
 	@echo "  make test           - Executa a suíte de testes com pytest."
-	@echo "  make format         - Formata o código com 'ruff format'."
+	@echo "  make format         - Formata o código com 'black'."
 	@echo "  make lint           - Executa o linter 'ruff check --fix' para corrigir erros."
-	@echo "  make check          - Roda o linter e o formatador em modo de verificação (para CI)."
+	@echo "  make check          - Roda o formatador e o linter em modo de verificação (para CI)."
 	@echo "  make clean          - Remove arquivos temporários e caches."
 	@echo "  make docker-build   - Constrói a imagem Docker da aplicação."
 	@echo "  make docker-run     - Executa a aplicação a partir da imagem Docker."
@@ -45,16 +45,16 @@ test:
 	.venv/bin/pytest
 
 format:
-	@echo ">>> Formatando o código com ruff format..."
-	@.venv/bin/ruff format .
+	@echo ">>> Formatando o código com black..."
+	@.venv/bin/black .
 
 lint:
 	@echo ">>> Executando linter com ruff check..."
 	@.venv/bin/ruff check --fix .
 
 check:
-	@echo ">>> Verificando formatação com ruff format..."
-	@.venv/bin/ruff format --check .
+	@echo ">>> Verificando formatação com black..."
+	@.venv/bin/black --check .
 	@echo ">>> Verificando código com ruff check..."
 	@.venv/bin/ruff check .
 

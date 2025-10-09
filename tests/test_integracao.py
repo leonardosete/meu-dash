@@ -1,8 +1,9 @@
 import os
-import pytest
-import sys
 from io import BytesIO
+import sys
 from unittest.mock import patch
+
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src import analisar_alertas, services, app as flask_app
@@ -43,15 +44,15 @@ def test_criar_relatorio_completo_gera_arquivos(tmp_path, sample_file):
     assert "summary" in result
     assert "df_atuacao" in result
 
-    assert os.path.exists(result["json_path"]), (
-        "O arquivo de resumo JSON não foi gerado."
-    )
-    assert os.path.exists(os.path.join(output_dir, "atuar.csv")), (
-        "O CSV de atuação não foi gerado."
-    )
-    assert os.path.exists(os.path.join(output_dir, "remediados.csv")), (
-        "O CSV de remediados não foi gerado."
-    )
+    assert os.path.exists(
+        result["json_path"]
+    ), "O arquivo de resumo JSON não foi gerado."
+    assert os.path.exists(
+        os.path.join(output_dir, "atuar.csv")
+    ), "O CSV de atuação não foi gerado."
+    assert os.path.exists(
+        os.path.join(output_dir, "remediados.csv")
+    ), "O CSV de remediados não foi gerado."
 
 
 @pytest.mark.parametrize("file_order", ["normal", "inverted"])
@@ -104,9 +105,9 @@ def test_path_traversal_is_blocked(client):
     response = client.get("/reports/some_run/../../requirements.txt")
 
     # Assert: Verifica se a resposta é 404 Not Found, e não 200 OK.
-    assert response.status_code == 404, (
-        "A vulnerabilidade de Path Traversal ainda existe!"
-    )
+    assert (
+        response.status_code == 404
+    ), "A vulnerabilidade de Path Traversal ainda existe!"
 
 
 @patch("src.app.services")

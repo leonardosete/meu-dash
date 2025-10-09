@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from typing import Tuple, Dict, Any
 import logging
 
@@ -18,18 +17,11 @@ from .constants import (
     ACAO_SEMPRE_OK,
     ACAO_STATUS_AUSENTE,
     ACAO_WEIGHTS,
-    COL_ASSIGNMENT_GROUP,
-    COL_CMDB_CI,
-    COL_CMDB_CI_SYS_CLASS_NAME,
     COL_CREATED_ON,
-    COL_METRIC_NAME,
-    COL_NODE,
     COL_NUMBER,
     COL_PRIORITY_GROUP,
     COL_SELF_HEALING_STATUS,
     COL_SEVERITY,
-    COL_SHORT_DESCRIPTION,
-    COL_SOURCE,
     ESSENTIAL_COLS,
     GROUP_COLS,
     LIMIAR_ALERTAS_RECORRENTES,

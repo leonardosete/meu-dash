@@ -13,14 +13,6 @@ from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
 from . import context_builder, gerador_paginas
 from .constants import MAX_REPORTS_HISTORY
-from .constants import (
-    ACAO_FLAGS_INSTABILIDADE,
-    ACAO_FLAGS_OK,
-    COL_ASSIGNMENT_GROUP,
-    COL_METRIC_NAME,
-    COL_SHORT_DESCRIPTION,
-    LOG_INVALIDOS_FILENAME,
-)
 
 logger = logging.getLogger(__name__)
 

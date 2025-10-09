@@ -13,7 +13,6 @@ from flask import (
     flash,
 )
 from . import services
-from .utils import sort_files_by_date
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -245,7 +244,7 @@ def compare_files():
     except ValueError as e:
         flash(str(e), "error")
         return redirect(url_for("index"))
-    except Exception as e:
+    except Exception:
         flash(
             "Ocorreu um erro inesperado durante a comparação. Verifique os logs.",
             "error",

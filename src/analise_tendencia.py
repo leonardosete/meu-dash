@@ -1,5 +1,4 @@
 import pandas as pd
-import sys
 import os
 import json
 from html import escape
@@ -288,7 +287,7 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
         )
     )
 
-    table_footer = f"<tfoot><tr><td>Total</td>"
+    table_footer = "<tfoot><tr><td>Total</td>"
     table_footer += f"<td><div class='change-bar-container'><span class='change-value' style='color: {total_change_color}; width: 100%; text-align: right;'>{total_change_sign}{total_change}</span></div></td>"
     table_footer += f"<td class='center'>{total_alerts_p2}</td><td class='center'>{total_alerts_p1}</td><td class='center'>{total_num_cases}</td></tr></tfoot>"
 
@@ -353,7 +352,7 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
         )
     )
 
-    table_footer = f"<tfoot><tr><td>Total</td>"
+    table_footer = "<tfoot><tr><td>Total</td>"
     table_footer += f"<td><div class='change-bar-container'><span class='change-value' style='color: {total_change_color}; width: 100%; text-align: right;'>{total_change_sign}{int(total_change)}</span></div></td>"
     table_footer += f"<td class='center'>{int(total_p2)}</td><td class='center'>{int(total_p1)}</td>"
     if has_case_count:
@@ -445,13 +444,10 @@ def gerar_relatorio_tendencia(
     else:
         back_link = '<a href="resumo_geral.html">&larr; Voltar para o Dashboard</a>'
 
-    periodo_anterior_text = (
-        f"<code>{escape(os.path.basename(csv_anterior_name))}</code>"
-        + (
-            f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>"
-            if date_range_anterior
-            else ""
-        )
+    periodo_anterior_text = f"<code>{escape(os.path.basename(csv_anterior_name))}</code>" + (
+        f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>"
+        if date_range_anterior
+        else ""
     )
     periodo_atual_text = f"<code>{escape(os.path.basename(csv_atual_name))}</code>" + (
         f" <span style='color: var(--text-secondary-color);'>({escape(date_range_atual)})</span>"
