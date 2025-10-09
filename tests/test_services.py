@@ -1,6 +1,5 @@
 import os
 import pytest
-import sys
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 

@@ -75,6 +75,27 @@ class TrendAnalysis(db.Model):
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
 
+# --- FILTRO DE TEMPLATE PARA TIMEZONE ---
+
+
+@app.template_filter("localtime")
+def localtime_filter(utc_dt):
+    """Converte um datetime UTC para o fuso horário local (America/Sao_Paulo)."""
+    if not utc_dt:
+        return ""
+    try:
+        # Garante que o datetime de entrada é 'aware' (tem timezone)
+        utc_dt = utc_dt.replace(tzinfo=timezone.utc)
+        # Tenta importar a biblioteca pytz, se não, usa a nativa (Python 3.9+)
+        from zoneinfo import ZoneInfo
+
+        local_tz = ZoneInfo("America/Sao_Paulo")
+        return utc_dt.astimezone(local_tz).strftime("%d/%m/%Y às %H:%M")
+    except (ImportError, Exception):
+        # Fallback para um formato simples se a conversão falhar
+        return utc_dt.strftime("%d/%m/%Y %H:%M (UTC)")
+
+
 # --- ROTAS DE HEALTH CHECK PARA KUBERNETES ---
 
 
@@ -122,7 +143,7 @@ def index():
                     run_folder=run_folder_name,
                     filename="atuar.html",
                 ),
-                "date": last_report.timestamp.strftime("%d/%m/%Y às %H:%M"),
+                "date": last_report.timestamp,  # Passa o objeto datetime diretamente
             }
 
     # NOVA LÓGICA: Busca o histórico de tendências diretamente do banco de dados.
@@ -138,7 +159,7 @@ def index():
                     "url": url_for(
                         "serve_report", run_folder=run_folder, filename=filename
                     ),
-                    "date": analysis.timestamp.strftime("%d/%m/%Y às %H:%M"),
+                    "date": analysis.timestamp,  # Passa o objeto datetime diretamente
                 }
             )
         except Exception:
