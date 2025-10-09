@@ -6,4 +6,5 @@ gunicorn
 numpy
 pandas
 pytest
+ruff
 Werkzeug

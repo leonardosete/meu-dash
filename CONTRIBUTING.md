@@ -4,101 +4,81 @@ Ficamos felizes com o seu interesse em contribuir para o projeto! Este guia forn
 
 ## 🛠️ Configuração do Ambiente de Desenvolvimento
 
-Para facilitar o desenvolvimento e garantir a consistência, recomendamos o uso de um ambiente virtual Python.
+O projeto utiliza um `Makefile` para automatizar todo o processo de configuração. Para preparar seu ambiente, siga os passos:
 
 1.  **Clone o repositório:**
-
     ```bash
     git clone <URL_DO_REPOSITORIO>
     cd meu-dash
     ```
 
-2.  **Crie e ative um ambiente virtual:**
-
+2.  **Execute o setup automatizado:**
+    Este comando irá criar o ambiente virtual, instalar todas as dependências e deixar o projeto pronto para ser executado.
     ```bash
-    # Para macOS/Linux
-    python3 -m venv .venv
-    source .venv/bin/activate
-
-    # Para Windows
-    python -m venv .venv
-    .venv\Scripts\activate
-    ```
-
-3.  **Instale as dependências:**
-
-    O arquivo `requirements.txt` contém todas as dependências de produção e desenvolvimento.
-
-    ```bash
-    pip install -r requirements.txt
+    make setup
     ```
 
 ## 🚀 Executando a Aplicação Localmente
 
-Com o ambiente configurado e as dependências instaladas, siga os passos abaixo para iniciar a aplicação.
+Com o ambiente configurado, basta executar o seguinte comando para iniciar o servidor de desenvolvimento:
 
-1.  **Exporte as variáveis de ambiente:**
+```bash
+make run
+```
 
-    Essas variáveis configuram o contexto da aplicação para o Flask. Execute os seguintes comandos no seu terminal:
+A aplicação estará disponível em `http://127.0.0.1:5000`.
 
+Para o setup inicial do banco de dados, pode ser necessário rodar os comandos de migração manualmente. Consulte a seção de banco de dados abaixo.
+
+### 🗄️ Banco de Dados
+
+A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados.
+
+-   **Primeira vez:** Se for a primeira configuração, inicialize o banco de dados:
     ```bash
-    export PYTHONPATH=$(pwd)
-    export FLASK_APP=src.app
-    export FLASK_DEBUG=True
+    flask db init
+    flask db migrate -m "Initial migration"
+    flask db upgrade
     ```
-
-2.  **Inicialize e atualize o banco de dados:**
-
-    A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados.
-    
-    *   **Se esta for a primeira vez** que você configura o projeto, execute os três comandos abaixo em sequência para criar o diretório de migrações, gerar a migração inicial e aplicar o esquema ao banco de dados (que será criado em `data/meu_dash.db`):
-        ```bash
-        flask db init
-        flask db migrate -m "Initial migration"
-        flask db upgrade
-        ```
-
-    *   **Para atualizações futuras**, se você puxar novas alterações que modifiquem o banco de dados, apenas o seguinte comando é necessário:
-        ```bash
-        flask db upgrade
-        ```
-
-3.  **Inicie o servidor de desenvolvimento:**
-
+-   **Atualizações futuras:** Para aplicar novas migrações, execute:
     ```bash
-    flask run
+    flask db upgrade
     ```
-
-    A aplicação estará disponível em `http://127.0.0.1:5000`.
-
-    > **Nota:** Se o comando `flask` não for encontrado, certifique-se de que seu ambiente virtual (`.venv`) está ativado.
 
 ## ✅ Padrões de Código e Qualidade
 
-Para manter o código limpo e consistente, utilizamos o formatador de código **Black**.
+Para manter o código limpo, consistente e livre de erros, utilizamos a ferramenta **Ruff**. O `Makefile` fornece comandos para simplificar o uso.
 
-Antes de submeter seu código (fazer um commit), certifique-se de formatá-lo executando o Black na raiz do projeto:
+-   **Para formatar seu código:**
+    ```bash
+    make format
+    ```
+
+-   **Para corrigir erros de linting automaticamente:**
+    ```bash
+    make lint
+    ```
+
+Antes de submeter seu código, é uma boa prática rodar o verificador completo, que garante que o código está formatado e sem erros de linting:
 
 ```bash
-black .
+make check
 ```
 
 ## 🧪 Executando os Testes
 
-Utilizamos `pytest` para os testes. Para garantir que suas alterações não quebraram nenhuma funcionalidade existente, execute a suíte de testes:
+Para garantir que suas alterações não quebraram nenhuma funcionalidade, execute a suíte de testes com `pytest` através do Makefile:
 
 ```bash
-pytest
+make test
 ```
 
 Certifique-se de que todos os testes passam antes de abrir um Pull Request.
 
 ## 📄 Processo de Pull Request (PR)
 
-1.  **Crie uma nova branch:** Crie uma branch descritiva para a sua feature ou correção (`git checkout -b feature/minha-feature` ou `git checkout -b fix/meu-bug`).
-2.  **Faça suas alterações:** Implemente sua feature ou correção de bug.
-3.  **Formate e teste seu código:** Execute `black .` e `pytest`.
+1.  **Crie uma nova branch:** (`git checkout -b feature/minha-feature`).
+2.  **Faça suas alterações.**
+3.  **Garanta a qualidade do código:** Rode `make check` e `make test` para formatar, lintar e testar seu código.
 4.  **Faça o commit:** Escreva uma mensagem de commit clara e concisa.
-5.  **Abra o Pull Request:** Envie o PR para a branch principal do repositório.
-
-No seu PR, descreva as alterações que você fez e por quê. Se o PR resolve uma issue existente, mencione-a na descrição (e.g., "Closes #123").
+5.  **Abra o Pull Request:** Envie o PR para a branch `main`. Descreva suas alterações e o motivo delas.

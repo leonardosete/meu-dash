@@ -1,54 +1,53 @@
 # 🕵️‍♂️📈 Aplicação Web para Análise de Alertas e Tendências
 
-Esta é uma aplicação web, projetada para ser executada em um ambiente Kubernetes, que automatiza a análise de alertas de monitoramento. Através de uma interface simples, os usuários podem fazer upload de arquivos `.csv` para gerar dashboards interativos e identificar tendências de problemas.
+[![CI - Build, Test, and Publish](https://github.com/leonardosete/meu-dash/actions/workflows/ci.yml/badge.svg)](https://github.com/leonardosete/meu-dash/actions/workflows/ci.yml)
 
-O principal diferencial do sistema é a sua capacidade de classificar problemas com base em um **Score de Prioridade Ponderado**, que considera o **Risco** para o negócio, a **Ineficiência** da automação e o **Impacto** operacional (volume de alertas), permitindo que as equipes foquem no que é mais crítico.
+Esta é uma aplicação web que automatiza a análise de alertas de monitoramento, permitindo que equipes foquem em problemas críticos através de um **Score de Prioridade Ponderado**.
+
+---
+
+### 🧭 Navegação
+
+- **[Guia de Arquitetura (`ARCHITECTURE.md`)](./ARCHITECTURE.md)**: Entenda a estrutura do sistema e o fluxo de dados.
+- **[Como Contribuir (`CONTRIBUTING.md`)](./CONTRIBUTING.md)**: Padrões e processos para desenvolver.
+- **[Documentação Gerencial](https://leonardosete.github.io/meu-dash/doc_gerencial.html)**: Visão geral do projeto para stakeholders.
+- **[Documentação Técnica](https://leonardosete.github.io/meu-dash/doc_tecnica.html)**: Detalhes técnicos e de implementação.
+
+---
+
+### 🚀 Desenvolvimento Local (Getting Started)
+
+Para configurar e executar o projeto localmente, utilize os comandos automatizados do `Makefile`.
+
+1.  **Clone o repositório:**
+    ```bash
+    git clone <URL_DO_REPOSITORIO>
+    cd meu-dash
+    ```
+
+2.  **Configure o ambiente e instale as dependências:**
+    Este comando cria o ambiente virtual, instala as dependências e prepara tudo para você.
+    ```bash
+    make setup
+    ```
+
+3.  **Inicie a aplicação:**
+    ```bash
+    make run
+    ```
+
+4.  Acesse `http://127.0.0.1:5000` em seu navegador.
 
 ---
 
 ### 💻 Tecnologias Utilizadas
 
--   **Backend:** Python
--   **Framework Web:** Flask
--   **Análise de Dados:** Pandas e NumPy
--   **Banco de Dados:** SQLite com Flask-SQLAlchemy
--   **Servidor de Produção:** Gunicorn
+-   **Backend:** Python / Flask
+-   **Análise de Dados:** Pandas / NumPy
+-   **Banco de Dados:** SQLite / SQLAlchemy
 -   **Testes:** Pytest
--   **Containerização:** Docker
--   **Orquestração:** Kubernetes
-
-### 🚀 Desenvolvimento Local
-
-Para executar a aplicação em seu ambiente local, siga estes passos. Para mais detalhes, consulte o `CONTRIBUTING.md`.
-
-1.  **Clone e instale as dependências:**
-
-    ```bash
-    # Clone o repositório
-    git clone <URL_DO_REPOSITORIO>
-    cd meu-dash
-
-    # Crie um ambiente virtual e instale as dependências
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    ```
-
-2.  **Configure e inicie a aplicação:**
-
-    ```bash
-    # Exporte as variáveis de ambiente do Flask
-    export FLASK_APP=src/app.py
-    export FLASK_DEBUG=True
-
-    # Inicialize/Atualize o banco de dados
-    flask db upgrade
-
-    # Inicie o servidor
-    flask run
-    ```
-
-3.  Acesse `http://127.0.0.1:5000` em seu navegador.
+-   **Qualidade de Código:** Black
+-   **Infraestrutura:** Docker / Kubernetes / Gunicorn
 
 ---
 
@@ -73,14 +72,9 @@ Para focar na causa raiz, a análise distingue **Alertas** de **Casos**:
 
 #### ⚖️ Score de Prioridade Ponderado
 
-A criticidade de um caso é calculada pela fórmula:
-**Score Final = (Risco) * (Ineficiência) * (Impacto)**
+A criticidade de um caso é calculada através de um **Score de Prioridade Ponderado**, que considera fatores como Risco, Ineficiência da automação e Impacto (volume de alertas).
 
-- **Risco:** Qual a gravidade do problema? (Baseado na severidade e prioridade do alerta).
-- **Ineficiência:** A automação de correção falhou? (Casos onde a automação não funcionou recebem um peso maior).
-- **Impacto:** Qual o volume de ruído operacional? (Casos que geram muitos alertas também são priorizados).
-
-A lógica detalhada do cálculo está disponível na seção "Conceitos" do dashboard principal.
+A justificativa e os detalhes desta decisão arquitetônica estão documentados em **[ADR 001: Definição do Score de Prioridade Ponderado](./docs/adrs/001-definicao-do-score-de-prioridade.md)**.
 
 ---
 
