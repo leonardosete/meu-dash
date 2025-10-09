@@ -26,20 +26,14 @@ Para configurar e executar o projeto localmente, utilize os comandos automatizad
     cd meu-dash
     ```
 
-2. **Configure o ambiente e instale as dependências:**
-    Este comando cria o ambiente virtual, instala as dependências e prepara tudo para você.
+2. **Configure e execute a aplicação com um único comando:**
+    Este comando automatiza todo o processo: cria o ambiente virtual, instala as dependências, configura o banco de dados e inicia o servidor.
 
     ```bash
-    make setup
+    make setup-and-run
     ```
 
-3. **Inicie a aplicação:**
-
-    ```bash
-    make run
-    ```
-
-4. Acesse `http://127.0.0.1:5000` em seu navegador.
+3. Acesse `http://127.0.0.1:5000` em seu navegador.
 
 ---
 

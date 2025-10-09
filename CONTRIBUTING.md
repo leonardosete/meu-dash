@@ -13,16 +13,16 @@ O projeto utiliza um `Makefile` para automatizar todo o processo de configuraç�
     cd meu-dash
     ```
 
-2. **Execute o setup automatizado:**
-    Este comando irá criar o ambiente virtual, instalar todas as dependências e deixar o projeto pronto para ser executado.
+2. **Execute o setup completo e inicie a aplicação:**
+    Este comando único cuida de tudo: cria o ambiente virtual, instala dependências, inicializa o banco de dados e inicia o servidor.
 
     ```bash
-    make setup
+    make setup-and-run
     ```
 
 ## 🚀 Executando a Aplicação Localmente
 
-Com o ambiente configurado, basta executar o seguinte comando para iniciar o servidor de desenvolvimento:
+Após a configuração inicial com `make setup-and-run`, nos dias seguintes você pode parar e iniciar o servidor de desenvolvimento usando apenas:
 
 ```bash
 make run
@@ -30,24 +30,24 @@ make run
 
 A aplicação estará disponível em `http://127.0.0.1:5000`.
 
-Para o setup inicial do banco de dados, pode ser necessário rodar os comandos de migração manualmente. Consulte a seção de banco de dados abaixo.
+## 🧹 Limpando o Ambiente
+
+Para redefinir completamente seu ambiente de desenvolvimento, removendo todos os arquivos gerados (ambiente virtual, banco de dados, relatórios, etc.), execute:
+
+```bash
+make distclean
+```
+
+Este comando é útil quando você quer começar do zero, como se tivesse acabado de clonar o repositório. Após a limpeza, você pode executar `make setup-and-run` para reconfigurar tudo.
 
 ### 🗄️ Banco de Dados
 
-A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados.
+A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados. O `Makefile` automatiza este processo.
 
-- **Primeira vez:** Se for a primeira configuração, inicialize o banco de dados:
-
-    ```bash
-    flask db init
-    flask db migrate -m "Initial migration"
-    flask db upgrade
-    ```
-
-- **Atualizações futuras:** Para aplicar novas migrações, execute:
+- **Para aplicar novas migrações** ou garantir que o banco de dados esteja atualizado, execute:
 
     ```bash
-    flask db upgrade
+    make migrate
     ```
 
 ## ✅ Padrões de Código e Qualidade
@@ -89,3 +89,4 @@ Certifique-se de que todos os testes passam antes de abrir um Pull Request.
 3. **Garanta a qualidade do código:** Rode `make check` e `make test` para formatar, lintar e testar seu código.
 4. **Faça o commit:** Escreva uma mensagem de commit clara e concisa.
 5. **Abra o Pull Request:** Envie o PR para a branch `main`. Descreva suas alterações e o motivo delas.
+6. **Faça suas alterações.**
