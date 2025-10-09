@@ -158,9 +158,11 @@
                             <td>
                                 <div class="action-buttons">
                                     <a href="{{ report.url }}" class="action-link">Visualizar</a>
+                                    {% if session.is_admin %}
                                     <form action="{{ url_for('delete_report', report_id=report.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este relatório? Esta ação não pode ser desfeita.');">
                                         <button type="submit" class="action-button delete-button">Excluir</button>
                                     </form>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

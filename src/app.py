@@ -8,6 +8,7 @@ from flask import (
     request,
     redirect,
     url_for,
+    session,
     send_from_directory,
     jsonify,
     flash,
@@ -31,6 +32,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = (
     "uma-chave-secreta-forte-para-flash"  # NOVO: Chave secreta necessária para usar flash
 )
+app.config["ADMIN_TOKEN"] = os.getenv("ADMIN_TOKEN")
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -42,6 +44,20 @@ class Report(db.Model):
     report_path = db.Column(db.String(255))
     json_summary_path = db.Column(db.String(255))
     date_range = db.Column(db.String(100), nullable=True)
+
+    # Relacionamentos com TrendAnalysis para exclusão em cascata
+    trends_as_current = db.relationship(
+        "TrendAnalysis",
+        foreign_keys="TrendAnalysis.current_report_id",
+        back_populates="current_report",
+        cascade="all, delete-orphan",
+    )
+    trends_as_previous = db.relationship(
+        "TrendAnalysis",
+        foreign_keys="TrendAnalysis.previous_report_id",
+        back_populates="previous_report",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<Report {self.original_filename}>"
@@ -62,10 +78,10 @@ class TrendAnalysis(db.Model):
 
     # Relacionamentos para fácil acesso aos objetos Report
     current_report = db.relationship(
-        "Report", foreign_keys=[current_report_id], backref="trend_as_current"
+        "Report", foreign_keys=[current_report_id], back_populates="trends_as_current"
     )
     previous_report = db.relationship(
-        "Report", foreign_keys=[previous_report_id], backref="trend_as_previous"
+        "Report", foreign_keys=[previous_report_id], back_populates="trends_as_previous"
     )
 
     def __repr__(self):
@@ -205,7 +221,11 @@ def upload_file():
             TrendAnalysis=TrendAnalysis,  # Passa o novo modelo
             base_dir=BASE_DIR,
         )
-        if result:
+        if result and result.get("warning"):
+            # NOVO: Verifica primeiro se há um aviso.
+            flash(result["warning"], "warning")
+            return redirect(url_for("index"))
+        elif result:
             return redirect(
                 url_for(
                     "serve_report",
@@ -384,6 +404,14 @@ def delete_report(report_id):
         werkzeug.wrappers.Response: Uma resposta de redirecionamento de volta
         para a página de histórico de relatórios.
     """
+    # Protege a rota, permitindo acesso apenas a administradores.
+    if not session.get("is_admin"):
+        flash(
+            "Acesso negado. Você precisa ser um administrador para excluir relatórios.",
+            "error",
+        )
+        return redirect(url_for("admin_login_page"))
+
     report = Report.query.get_or_404(report_id)
 
     try:
@@ -406,6 +434,40 @@ def delete_report(report_id):
         print(f"❌ Erro ao excluir o relatório {report_id}: {e}")
 
     return redirect(url_for("relatorios"))
+
+
+# --- NOVAS ROTAS DE ADMINISTRAÇÃO ---
+
+
+@app.route("/admin", methods=["GET"])
+def admin_login_page():
+    """Renderiza a página de login do administrador."""
+    # O template admin_login.html será criado na próxima etapa do plano.
+    return render_template("admin_login.html")
+
+
+@app.route("/admin/login", methods=["POST"])
+def admin_login():
+    """Processa a tentativa de login do administrador."""
+    token_fornecido = request.form.get("token")
+    admin_token_config = app.config.get("ADMIN_TOKEN")
+
+    # Verifica se o token de admin está configurado e se corresponde ao fornecido
+    if admin_token_config and token_fornecido == admin_token_config:
+        session["is_admin"] = True
+        flash("Login de administrador realizado com sucesso!", "success")
+        return redirect(url_for("relatorios"))
+    else:
+        flash("Token de administrador inválido.", "error")
+        return redirect(url_for("admin_login_page"))
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    """Remove o status de administrador da sessão."""
+    session.pop("is_admin", None)
+    flash("Logout realizado com sucesso.", "info")
+    return redirect(url_for("index"))
 
 
 # --- INICIALIZAÇÃO DA APLICAÇÃO ---

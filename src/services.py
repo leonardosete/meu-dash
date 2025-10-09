@@ -186,6 +186,10 @@ def process_upload_and_generate_reports(
             logger.warning(
                 "O arquivo enviado não é cronologicamente mais recente. A análise de tendência será pulada."
             )
+            # Retorna um dicionário com o aviso para ser exibido na interface
+            return {
+                "warning": "Análise de tendência pulada: o arquivo enviado não é mais recente que o último analisado."
+            }
     else:
         logger.info(
             "Nenhum relatório anterior encontrado para comparação de tendência."

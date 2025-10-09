@@ -1,12 +1,10 @@
 import os
 from io import BytesIO
-import sys
 from unittest.mock import patch
 from datetime import datetime, timezone
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src import analisar_alertas, services, app as flask_app
 
 # Define o caminho para os fixtures de teste
