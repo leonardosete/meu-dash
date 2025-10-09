@@ -113,9 +113,9 @@ def process_upload_and_generate_reports(
     # 2. Análise de Tendência (se aplicável)
     # LÓGICA REVISADA: Busca o relatório correto para comparação.
     # Prioriza o último relatório que foi 'current' em uma análise de tendência.
-    last_trend_analysis_obj = (
-        TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).first()
-    )
+    last_trend_analysis_obj = TrendAnalysis.query.order_by(
+        TrendAnalysis.timestamp.desc()
+    ).first()
     previous_report_for_trend = None
 
     if last_trend_analysis_obj:
@@ -126,7 +126,9 @@ def process_upload_and_generate_reports(
         )
     else:
         # Se não há tendências, usa o último relatório geral como base (para a primeira tendência).
-        previous_report_for_trend = Report.query.order_by(Report.timestamp.desc()).first()
+        previous_report_for_trend = Report.query.order_by(
+            Report.timestamp.desc()
+        ).first()
         if previous_report_for_trend:
             logger.info(
                 f"Nenhuma análise de tendência anterior encontrada. Usando o último relatório geral '{previous_report_for_trend.original_filename}' como base."
@@ -135,9 +137,13 @@ def process_upload_and_generate_reports(
     trend_report_path_relative = None
     new_trend_analysis = None
 
-    if previous_report_for_trend and os.path.exists(previous_report_for_trend.json_summary_path):
+    if previous_report_for_trend and os.path.exists(
+        previous_report_for_trend.json_summary_path
+    ):
         date_range_anterior_obj = (
-            datetime.strptime(previous_report_for_trend.date_range.split(" a ")[0], "%d/%m/%Y")
+            datetime.strptime(
+                previous_report_for_trend.date_range.split(" a ")[0], "%d/%m/%Y"
+            )
             if previous_report_for_trend.date_range
             else None
         )

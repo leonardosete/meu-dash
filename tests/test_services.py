@@ -50,6 +50,13 @@ def test_process_upload_and_generate_reports(
     mock_last_report.json_summary_path = "fake/path/to/old_summary.json"
     mock_last_report.date_range = "01/01/2024 a 31/01/2024"
 
+    # NOVO: Garante que o mock da TrendAnalysis retorne None.
+    # Isso força o service a usar a lógica de fallback (buscar o último Report),
+    # que é o cenário que este teste específico valida.
+    mock_dependencies[
+        "TrendAnalysis"
+    ].query.order_by.return_value.first.return_value = None
+
     mock_new_report = mock_dependencies["Report"].return_value
     mock_new_report.id = 2
 
@@ -99,6 +106,7 @@ def test_process_upload_and_generate_reports(
     # Valida que a TrendAnalysis foi instanciada com o ID do relatório anterior
     # O caminho absoluto é dinâmico, então usamos ANY da unittest.mock
     from unittest.mock import ANY
+
     mock_dependencies["TrendAnalysis"].assert_called_with(
         trend_report_path=ANY,
         previous_report_id=mock_last_report.id,
@@ -159,15 +167,27 @@ def test_process_upload_for_continuous_trend_analysis(
     MockReport.query.order_by.return_value.first.return_value = None
     MockTrendAnalysis.query.order_by.return_value.first.return_value = None
     # Mock para o novo objeto Report que será criado
-    report_A = MagicMock(id=1, original_filename="file_A.csv", json_summary_path="path/A.json", date_range="01/01/2025 a 01/01/2025")
+    report_A = MagicMock(
+        id=1,
+        original_filename="file_A.csv",
+        json_summary_path="path/A.json",
+        date_range="01/01/2025 a 01/01/2025",
+    )
     MockReport.return_value = report_A
     # Mock para a função get_date_range
-    with patch("src.services.get_date_range_from_file", return_value="01/01/2025 a 01/01/2025"):
-        services.process_upload_and_generate_reports(**mock_dependencies, upload_folder=str(upload_folder), reports_folder=str(reports_folder), base_dir=str(tmp_path))
+    with patch(
+        "src.services.get_date_range_from_file", return_value="01/01/2025 a 01/01/2025"
+    ):
+        services.process_upload_and_generate_reports(
+            **mock_dependencies,
+            upload_folder=str(upload_folder),
+            reports_folder=str(reports_folder),
+            base_dir=str(tmp_path),
+        )
 
     # Assert A: Nenhuma tendência deve ser gerada
     mock_gerar_tendencia.assert_not_called()
-    assert mock_db.session.add.call_count == 1 # Apenas o Report A
+    assert mock_db.session.add.call_count == 1  # Apenas o Report A
     mock_db.session.add.assert_called_with(report_A)
     mock_db.session.commit.assert_called_once()
 
@@ -180,21 +200,42 @@ def test_process_upload_for_continuous_trend_analysis(
     MockReport.query.order_by.return_value.first.return_value = report_A
     MockTrendAnalysis.query.order_by.return_value.first.return_value = None
     # Mock para o novo objeto Report B
-    report_B = MagicMock(id=2, original_filename="file_B.csv", json_summary_path="path/B.json", date_range="02/01/2025 a 02/01/2025")
+    report_B = MagicMock(
+        id=2,
+        original_filename="file_B.csv",
+        json_summary_path="path/B.json",
+        date_range="02/01/2025 a 02/01/2025",
+    )
     MockReport.return_value = report_B
     # Mock para a nova TrendAnalysis
     trend_B_vs_A = MagicMock(current_report=report_B)
     MockTrendAnalysis.return_value = trend_B_vs_A
 
-    with patch("src.services.get_date_range_from_file", return_value="02/01/2025 a 02/01/2025"):
-        services.process_upload_and_generate_reports(**mock_dependencies, upload_folder=str(upload_folder), reports_folder=str(reports_folder), base_dir=str(tmp_path))
+    with patch(
+        "src.services.get_date_range_from_file", return_value="02/01/2025 a 02/01/2025"
+    ):
+        services.process_upload_and_generate_reports(
+            **mock_dependencies,
+            upload_folder=str(upload_folder),
+            reports_folder=str(reports_folder),
+            base_dir=str(tmp_path),
+        )
 
     # Assert B: Tendência B vs A deve ser gerada
     mock_gerar_tendencia.assert_called_once()
     # Verifica se a comparação usou o JSON do relatório A
     # Usamos ANY para o output_path, pois o timestamp no nome da pasta é dinâmico
     from unittest.mock import ANY
-    mock_gerar_tendencia.assert_called_with(json_anterior=report_A.json_summary_path, json_atual=mock_analisar_csv.return_value["json_path"], csv_anterior_name=report_A.original_filename, csv_atual_name=mock_dependencies["file_atual"].filename, output_path=ANY, date_range_anterior=report_A.date_range, date_range_atual="02/01/2025 a 02/01/2025")
+
+    mock_gerar_tendencia.assert_called_with(
+        json_anterior=report_A.json_summary_path,
+        json_atual=mock_analisar_csv.return_value["json_path"],
+        csv_anterior_name=report_A.original_filename,
+        csv_atual_name=mock_dependencies["file_atual"].filename,
+        output_path=ANY,
+        date_range_anterior=report_A.date_range,
+        date_range_atual="02/01/2025 a 02/01/2025",
+    )
     # Verifica se o Report B e a Trend B vs A foram salvos
     assert mock_db.session.add.call_count == 2
     assert trend_B_vs_A.current_report_id == 2
@@ -207,19 +248,39 @@ def test_process_upload_for_continuous_trend_analysis(
     # Simula que a última TrendAnalysis é a B vs A. O sistema deve usar `trend_B_vs_A.current_report` (que é o report_B)
     MockTrendAnalysis.query.order_by.return_value.first.return_value = trend_B_vs_A
     # Mock para o novo objeto Report C
-    report_C = MagicMock(id=3, original_filename="file_C.csv", json_summary_path="path/C.json", date_range="03/01/2025 a 03/01/2025")
+    report_C = MagicMock(
+        id=3,
+        original_filename="file_C.csv",
+        json_summary_path="path/C.json",
+        date_range="03/01/2025 a 03/01/2025",
+    )
     MockReport.return_value = report_C
     # Mock para a nova TrendAnalysis
     trend_C_vs_B = MagicMock()
     MockTrendAnalysis.return_value = trend_C_vs_B
 
-    with patch("src.services.get_date_range_from_file", return_value="03/01/2025 a 03/01/2025"):
-        services.process_upload_and_generate_reports(**mock_dependencies, upload_folder=str(upload_folder), reports_folder=str(reports_folder), base_dir=str(tmp_path))
+    with patch(
+        "src.services.get_date_range_from_file", return_value="03/01/2025 a 03/01/2025"
+    ):
+        services.process_upload_and_generate_reports(
+            **mock_dependencies,
+            upload_folder=str(upload_folder),
+            reports_folder=str(reports_folder),
+            base_dir=str(tmp_path),
+        )
 
     # Assert C: Tendência C vs B deve ser gerada
     mock_gerar_tendencia.assert_called_once()
     # Verifica se a comparação usou o JSON do relatório B
-    mock_gerar_tendencia.assert_called_with(json_anterior=report_B.json_summary_path, json_atual=mock_analisar_csv.return_value["json_path"], csv_anterior_name=report_B.original_filename, csv_atual_name=mock_dependencies["file_atual"].filename, output_path=ANY, date_range_anterior=report_B.date_range, date_range_atual="03/01/2025 a 03/01/2025")
+    mock_gerar_tendencia.assert_called_with(
+        json_anterior=report_B.json_summary_path,
+        json_atual=mock_analisar_csv.return_value["json_path"],
+        csv_anterior_name=report_B.original_filename,
+        csv_atual_name=mock_dependencies["file_atual"].filename,
+        output_path=ANY,
+        date_range_anterior=report_B.date_range,
+        date_range_atual="03/01/2025 a 03/01/2025",
+    )
     assert mock_db.session.add.call_count == 2
     assert trend_C_vs_B.current_report_id == 3
 
