@@ -84,5 +84,7 @@ Aderir a estas regras é obrigatório para manter a integridade do projeto.
 
 **(Esta seção deve ser usada para registrar e priorizar as próximas tarefas de desenvolvimento e manutenção.)*
 
-- ...
-- ...
+- [ ] **Finalizar Iniciativa de UX:** Realizar a validação da nova interface conforme definido no `PLAN-UX.md`.
+  - [ ] Teste de Aceitação do Analista (Fluxo "Análise Padrão").
+  - [ ] Teste de Aceitação do Gestor (Fluxo "Comparação Direta").
+  - [ ] Coletar feedback qualitativo das personas.

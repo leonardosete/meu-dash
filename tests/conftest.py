@@ -1,32 +1,35 @@
 import pytest
-from src.app import app as flask_app, db
+from src.app import app as create_flask_app, db
 
 
 @pytest.fixture
 def app():
     """Cria e configura uma nova instância da aplicação para cada teste."""
-    # Configurações de teste
-    flask_app.config.update(
+    # Garante que a aplicação seja criada com a configuração de teste desde o início,
+    # usando um banco de dados em memória para total isolamento.
+    create_flask_app.config.update(
         {
             "TESTING": True,
-            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",  # Usa um banco de dados em memória
+            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+            "WTF_CSRF_ENABLED": False,  # Desativa CSRF para testes de formulário
+            "SECRET_KEY": "test-secret-key",
         }
     )
 
-    with flask_app.app_context():
+    with create_flask_app.app_context():
         db.create_all()
-        yield flask_app
+        yield create_flask_app
         db.session.remove()
         db.drop_all()
 
 
 @pytest.fixture
 def client(app):
-    """Um cliente de teste para a aplicação."""
+    """Um cliente de teste para a aplicação, derivado da fixture 'app'."""
     return app.test_client()
 
 
 @pytest.fixture
 def runner(app):
-    """Um runner para executar comandos CLI do Flask."""
+    """Um runner para executar comandos CLI do Flask, derivado da fixture 'app'."""
     return app.test_cli_runner()

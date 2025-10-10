@@ -1,6 +1,6 @@
 import os
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone
 
 import pytest
@@ -194,3 +194,50 @@ def test_localtime_template_filter():
 
     # Assert
     assert result == "09/10/2025 às 15:30"
+
+
+def test_kpi_dashboard_on_index_page(client):
+    """
+    GIVEN um mock que simula a leitura de um arquivo JSON de resumo,
+    WHEN a página inicial ('/') é acessada,
+    THEN o dashboard de KPIs deve ser renderizado com os dados corretos.
+    """
+    # Envolve o teste no contexto da aplicação para garantir que o DB esteja acessível
+    with client.application.app_context():
+        # Mocka a função de cálculo de KPI e TODAS as queries ao DB feitas pela rota
+        with patch("src.app._calculate_kpi_summary") as mock_calculate_kpi, patch(
+            "src.app.Report.query"
+        ) as mock_report_query, patch(
+            "src.app.TrendAnalysis.query"
+        ) as mock_trend_query:
+            # Arrange
+            # 1. Simula o retorno da função de cálculo de KPI.
+            # Isso isola o teste da lógica de leitura de arquivos.
+            mock_calculate_kpi.return_value = {
+                "casos_atuacao": 1,
+                "casos_instabilidade": 1,
+                "taxa_sucesso_automacao": "66.7%",
+                "taxa_sucesso_valor": 66.7,  # Adiciona a chave que faltava
+            }
+
+            # 2. Simula que existe um relatório no banco de dados.
+            # Isso é necessário para que a rota `index` chame a função de KPI.
+            mock_report = MagicMock()
+            mock_report.report_path = "/fake/path/report.html"  # Apenas para existir
+            mock_report_query.order_by.return_value.first.return_value = mock_report
+
+            # 3. Simula a query de tendência para retornar uma lista vazia
+            mock_trend_query.order_by.return_value.limit.return_value.all.return_value = (
+                []
+            )
+
+            # Act
+            response = client.get("/")
+            response_data = response.get_data(as_text=True)
+
+            # Assert
+            assert response.status_code == 200
+            # As asserções foram atualizadas para corresponder à nova estrutura HTML dos cards de KPI
+            assert '<p class="kpi-value text-danger">1</p>' in response_data
+            assert '<p class="kpi-value text-warning">1</p>' in response_data
+            assert '<p class="kpi-value text-warning">66.7%</p>' in response_data

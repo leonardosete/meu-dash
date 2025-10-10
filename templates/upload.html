@@ -14,23 +14,15 @@
             --text-color: #E0E0E0;
             --primary-text-color: #FFFFFF;
             --border-color: #3A3D5A;
-            --accent-color: #6A5AF9;
-            --accent-color-hover: #5848d8;
+            --accent-color: #3b8bec;
+            --accent-color-hover: #1818bb;
             --font-family: 'Poppins', sans-serif;
+            /* Cores de Status */
             --success-color: #1cc88a;
+            --warning-color: #f6c23e;
             --danger-color: #e74a3b;
-        }
-        body {
-            --bg-color: #12141D;
-            --card-color: #1B1E2C;
-            --text-color: #E0E0E0;
-            --primary-text-color: #FFFFFF;
-            --border-color: #3A3D5A;
-            --accent-color: #6A5AF9;
-            --accent-color-hover: #5848d8;
-            --font-family: 'Poppins', sans-serif;
-            --success-color: #1cc88a;
-            --danger-color: #e74a3b;
+            --info-color: #36b9cc;
+            --text-color-dark: #333;
         }
         body {
             font-family: var(--font-family);
@@ -66,6 +58,9 @@
         .main-content-column {
             flex-grow: 1; /* A coluna principal ocupa o espaço restante */
             min-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* NOVO: Espaçamento entre os cards */
         }
         
         /* --- ESTILOS DOS CARDS (maioria movida ou ajustada) --- */
@@ -77,6 +72,31 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.25);
             text-align: center;
             width: 100%;
+        }
+
+        /* NOVO: Classe para o card de formulários com altura mínima */
+        .form-card {
+            min-height: 520px;
+        }
+
+        /* --- NOVO: ESTILOS PARA O INDICADOR DE PROGRESSO --- */
+        .progress-container {
+            display: none; /* Começa escondido */
+            padding: 80px 40px;
+            text-align: center;
+        }
+        .progress-container .spinner {
+            /* Adicione aqui seu spinner/loader CSS preferido */
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-left-color: var(--accent-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         h1 {
@@ -175,8 +195,7 @@
             border-radius: 12px;
             text-decoration: none;
             color: var(--text-color);
-            transition: all 0.3s ease;
-            width: 100%;
+            transition: all 0.3s ease; /* A propriedade 'width: 100%' foi removida para restaurar o tamanho original */
             box-sizing: border-box;
             text-align: left;
         }
@@ -207,9 +226,16 @@
         .last-analysis-card svg { color: var(--success-color); }
         .action-plan-card { border-left: 4px solid var(--danger-color); }
         .action-plan-card svg { color: var(--danger-color); }
-        .admin-card { border-left: 4px solid var(--accent-color); } /* NOVO */
-        .admin-card svg { color: var(--accent-color); } /* NOVO */
         .doc-gerencial-card svg { color: var(--accent-color); }
+        .doc-tecnica-card svg { color: #38bdf8; }
+
+        /* --- NOVO: Estilos para o Dashboard Gerencial --- */
+        .kpi-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
         .doc-tecnica-card svg { color: #38bdf8; }
 
         /* --- NOVO: ESTILOS PARA ABAS --- */
@@ -289,6 +315,120 @@
             opacity: 1;
             text-decoration: underline;
         }
+
+        /* Estilos KPI Card */
+        .kpi-card {
+            position: relative;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px; /* NOVO: Controla o espaço entre o valor e o rótulo */
+        }
+        .kpi-value {
+            font-size: 3.5em;
+            font-weight: 600;
+            margin: 0; /* REMOVIDO: Margens verticais removidas para um alinhamento perfeito */
+            text-align: center; /* NOVO: Garante a centralização do texto do valor */
+        }
+        .kpi-label {
+            font-size: 1em;
+            font-weight: 500;
+            margin: 0;
+            opacity: 0.9;
+        }
+        /* NOVO: Estilos para os sub-valores nos KPIs */
+        .kpi-sub-value {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 15px 0 0 0;
+        }
+        .kpi-sub-label {
+            font-size: 0.8em;
+            margin: 0;
+            opacity: 0.7;
+        }
+        .card-neon-green { border-left: 4px solid var(--success-color); }
+        .card-neon-warning { border-left: 4px solid var(--warning-color); }
+        .card-neon-red { border-left: 4px solid var(--danger-color); }
+        .card-neon-blue { border-left: 4px solid var(--accent-color); }
+
+        /* NOVO: Estilos para a "Orelha de Aba" clicável no card de KPI */
+        .kpi-card .report-link-ear {
+            position: absolute;
+            top: -1px;
+            right: -1px;
+            width: 40px;
+            height: 40px;
+            background-color: var(--accent-color);
+            border-bottom-left-radius: 16px;
+            border-top-right-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            opacity: 0; /* Começa invisível */
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .kpi-card .report-link-ear.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .kpi-card .report-link-ear:hover {
+            background-color: var(--accent-color-hover);
+        }
+        .kpi-card .report-link-ear svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+        }
+
+
+        /* NOVO: Estilos para o botão de relatório e notificação toast */
+        .report-button-container {
+            margin-top: -20px; /* Puxa para perto do dashboard */
+            margin-bottom: 40px;
+            text-align: center;
+            display: none; /* Começa escondido */
+        }
+        .report-button {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .report-button:hover {
+            background-color: var(--accent-color-hover);
+        }
+        /* NOVO: Classes de utilidade para cores de texto */
+        .text-success { color: var(--success-color); }
+        .text-warning { color: var(--warning-color); }
+        .text-danger { color: var(--danger-color); }
+
+        /* NOVO: Efeito de destaque para o card de relatório recente */
+        @keyframes pulse-animation {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 139, 236, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(59, 139, 236, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 139, 236, 0);
+            }
+        }
+        .highlight-pulse {
+            animation: pulse-animation 2s infinite;
+        }
+        /* Adicionar estilos para o toast notification aqui se desejar customizar */
+
+
     </style>
 </head>
 <body>
@@ -331,6 +471,17 @@
                 </div>
             </a>
             
+            {# NOVO: Card para acessar a análise mais recente, movido para a sidebar #}
+            {% if kpi_summary and kpi_summary.report_url %}
+            <a href="{{ kpi_summary.report_url }}" target="_blank" class="side-card highlight-pulse" style="border-color: var(--accent-color); background: linear-gradient(135deg, rgba(59, 139, 236, 0.25), var(--card-color));">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-color);"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                <div class="side-card-text">
+                    <h3>Acessar Análise Recente</h3>
+                    <p>Clique para ver o relatório gerado.</p>
+                </div>
+            </a>
+            {% endif %}
+
             {% if last_action_plan %}
             <a href="{{ last_action_plan.url }}" target="_blank" class="side-card action-plan-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
@@ -369,7 +520,63 @@
         </aside>
 
         <main class="main-content-column">
-            <div class="card">
+            {# NOVO: Card 1 - Apenas para os KPIs #}
+                {% if kpi_summary %}
+                <div class="card">
+                <div id="kpi-dashboard-container" class="kpi-dashboard">
+                    {# Card 1: Casos sem Remediação #}
+                    {% set atuacao_class = 'card-neon-red' if kpi_summary.casos_atuacao > 0 else 'card-neon-green' %}
+                    {% set atuacao_color_class = 'text-danger' if kpi_summary.casos_atuacao > 0 else 'text-success' %}
+                    <div class="kpi-card {{ atuacao_class }}">
+                        <p class="kpi-value {{ atuacao_color_class }}">{{ kpi_summary.casos_atuacao }}</p>
+                        <p class="kpi-label">Casos sem Remediação</p>
+                        {# NOVO: Exibe a contagem de alertas correspondente #}
+                        {% if kpi_summary.alertas_atuacao is defined and kpi_summary.alertas_atuacao > 0 %}
+                            <p class="kpi-sub-value {{ atuacao_color_class }}">{{ kpi_summary.alertas_atuacao }}</p>
+                            <p class="kpi-sub-label">Alertas</p>
+                        {% endif %}
+                    </div>
+
+                    {# Card 2: Casos com Instabilidade #}
+                    {% set instabilidade_class = 'card-neon-warning' if kpi_summary.casos_instabilidade > 0 else 'card-neon-green' %}
+                    {% set instabilidade_color_class = 'text-warning' if kpi_summary.casos_instabilidade > 0 else 'text-success' %}
+                    <div class="kpi-card {{ instabilidade_class }}">
+                        <p class="kpi-value {{ instabilidade_color_class }}">{{ kpi_summary.casos_instabilidade }}</p>
+                        <p class="kpi-label">Casos com Instabilidade</p>
+                        {# NOVO: Exibe a contagem de alertas de instabilidade #}
+                        {% if kpi_summary.alertas_instabilidade is defined and kpi_summary.alertas_instabilidade > 0 %}
+                            <p class="kpi-sub-value {{ instabilidade_color_class }}">{{ kpi_summary.alertas_instabilidade }}</p>
+                            <p class="kpi-sub-label">Alertas</p>
+                        {% endif %}
+                    </div>
+
+                    {# Card 3: Sucesso da Automação #}
+                    {% set taxa_valor = kpi_summary.taxa_sucesso_valor %}
+                    {% if taxa_valor < 50.0 %}
+                        {% set sucesso_class = 'card-neon-red' %}
+                        {% set sucesso_color_class = 'text-danger' %}
+                    {% elif taxa_valor < 70.0 %}
+                        {% set sucesso_class = 'card-neon-warning' %}
+                        {% set sucesso_color_class = 'text-warning' %}
+                    {% else %}
+                        {% set sucesso_class = 'card-neon-green' %}
+                        {% set sucesso_color_class = 'text-success' %}
+                    {% endif %}
+                    <div class="kpi-card {{ sucesso_class }}">
+                        {# Link da "orelha" removido para evitar duplicidade com o botão principal #}
+                        <p class="kpi-value {{ sucesso_color_class }}">{{ kpi_summary.taxa_sucesso_automacao }}</p>
+                        <p class="kpi-label">Sucesso da Automação</p>
+                        {# NOVO: Exibe a contagem de alertas de sucesso #}
+                        {% if kpi_summary.casos_sucesso is defined %}
+                            <p class="kpi-sub-value {{ sucesso_color_class }}" style="font-size: 1.2em;">{{ kpi_summary.casos_sucesso }} de {{ kpi_summary.total_casos }} Casos</p>
+                            {# O sub-label não é mais necessário neste formato #}
+                        {% endif %}
+                    </div>
+                </div>
+                </div>
+                {% endif %}
+            {# NOVO: Card 2 - Apenas para os formulários e interações #}
+            <div class="card form-card">
                 {# NOVO: Bloco para exibir mensagens flash #}
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -403,23 +610,29 @@
                             <div class="button-group">
                                 <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico de Análises</button>
                             </div>
+                            {# NOVO: Link de Acesso Administrativo #}
+                            <div class="admin-link-container">
+                                {% if session.is_admin %}
+                                    <a href="{{ url_for('admin_logout') }}">Sair do modo Admin</a>
+                                {% else %}
+                                    <a href="{{ url_for('admin_login_page') }}">Acesso Admin</a>
+                                {% endif %}
+                            </div>
                         </form>
+                        <div class="progress-container" id="progress-view">
+                            <div class="spinner"></div>
+                            <p>Analisando dados e gerando relatórios... Por favor, aguarde.</p>
+                        </div>
                     </div>
 
                     <div id="tab-comparativa" class="tab-content">
                         <h1>Análise Comparativa Direta</h1>
                         <form action="{{ url_for('compare_files') }}" method="post" enctype="multipart/form-data" id="compare-form">
-                            <label for="file1">Arquivo 1 (será ordenado por data):</label>
-                            <div class="file-input-wrapper" id="wrapper_file1">
-                                <input type="file" name="files" id="file1" required>
-                                <span class="file-input-text" id="text_file1">Clique ou arraste o arquivo aqui</span>
-                                <span class="file-name" id="name_file1"></span>
-                            </div>
-                            <label for="file2">Arquivo 2 (será ordenado por data):</label>
-                            <div class="file-input-wrapper" id="wrapper_file2">
-                                <input type="file" name="files" id="file2" required>
-                                <span class="file-input-text" id="text_file2">Clique ou arraste o arquivo aqui</span>
-                                <span class="file-name" id="name_file2"></span>
+                            <label for="file_comparativa">Selecione exatamente dois arquivos para comparar:</label>
+                            <div class="file-input-wrapper" id="wrapper_comparativa">
+                                <input type="file" name="files" id="file_comparativa" required multiple>
+                                <span class="file-input-text" id="text_comparativa">Clique ou arraste os arquivos aqui</span>
+                                <span class="file-name" id="name_comparativa"></span>
                             </div>
                             <button type="submit" id="compare-submit-btn">Comparar Arquivos</button>
                         </form>
@@ -431,7 +644,7 @@
     </div>
 
     <script>
-        function setupFileInput(inputId, wrapperId, textId, nameId) {
+        function setupFileInput(inputId, wrapperId, textId, nameId, isMultiple = false) {
             const input = document.getElementById(inputId);
             const wrapper = document.getElementById(wrapperId);
             const text = document.getElementById(textId);
@@ -457,7 +670,11 @@
             
             input.addEventListener('change', () => {
                 if (input.files.length > 0) {
-                    name.textContent = input.files[0].name;
+                    if (isMultiple) {
+                        name.textContent = `${input.files.length} arquivo(s) selecionado(s)`;
+                    } else {
+                        name.textContent = input.files[0].name;
+                    }
                     text.style.display = 'none';
                 } else {
                     name.textContent = '';
@@ -467,9 +684,8 @@
         }
         setupFileInput('file_atual', 'wrapper_atual', 'text_atual', 'name_atual');
         
-        // NOVO: Configuração para os novos inputs de comparação
-        setupFileInput('file1', 'wrapper_file1', 'text_file1', 'name_file1');
-        setupFileInput('file2', 'wrapper_file2', 'text_file2', 'name_file2');
+        // NOVO: Configuração para o input de múltiplos arquivos
+        setupFileInput('file_comparativa', 'wrapper_comparativa', 'text_comparativa', 'name_comparativa', true);
 
         // NOVO: Lógica para controlar as abas
         const tabLinks = document.querySelectorAll('.tab-link');
@@ -487,24 +703,155 @@
             });
         });
 
-        document.getElementById('compare-form').addEventListener('submit', function() {
-            const submitBtn = document.getElementById('compare-submit-btn');
-            const fileInput1 = document.getElementById('file1');
-            const fileInput2 = document.getElementById('file2');
-            if(fileInput1.files.length > 0 && fileInput2.files.length > 0) {
+        document.getElementById("compare-form").addEventListener("submit", function () {
+            const submitBtn = document.getElementById("compare-submit-btn");
+            const fileInput = document.getElementById('file_comparativa');
+            if(fileInput.files.length === 2) {
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Comparando...';
             }
         });
 
-        document.getElementById('upload-form').addEventListener('submit', function() {
-            const submitBtn = document.getElementById('submit-btn');
+        // --- LÓGICA AJAX COMPLETAMENTE REFEITA ---
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formView = document.getElementById('upload-form');
+            const progressView = document.getElementById('progress-view');
             const fileInput = document.getElementById('file_atual');
-            if(fileInput.files.length > 0) {
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Processando...';
+            const formData = new FormData(formView);
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showActionableToast("Por favor, selecione um arquivo.", null, true);
+                return;
             }
+
+            // Esconde o formulário e mostra o progresso
+            formView.style.display = 'none';
+            progressView.style.display = 'block';
+
+            fetch(formView.action, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errData => {
+                        throw new Error(errData.error || `Erro no servidor: ${response.statusText}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Ação final: Recarrega a página para exibir os novos dados e o botão de acesso.
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Erro na requisição:', error);
+                showActionableToast(`Erro: ${error.message}`, null, true);
+            })
+            .finally(() => {
+                // Esconde o progresso e mostra o formulário novamente
+                progressView.style.display = 'none';
+                formView.style.display = 'block';
+            });
         });
+
+        // Função de notificação completamente nova
+        function showActionableToast(message, reportUrl, isError = false, onCloseCallback = null) {
+            // Remove qualquer toast antigo
+            const oldToast = document.querySelector('.actionable-toast');
+            if (oldToast) oldToast.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'actionable-toast';
+            if (isError) toast.classList.add('error');
+
+            let content = `
+                <div class="toast-message">${message}</div>
+                <div class="toast-actions">
+            `;
+
+            if (reportUrl) {
+                content += `<a href="${reportUrl}" target="_blank" class="toast-link">Acessar Relatório</a>`;
+            }
+
+            content += `<button class="toast-close-btn">×</button></div>`;
+            toast.innerHTML = content;
+
+            Object.assign(toast.style, {
+                position: 'fixed', bottom: '20px', right: '20px',
+                backgroundColor: isError ? 'var(--danger-color)' : 'var(--accent-color)',
+                color: 'white', padding: '15px 20px', borderRadius: '8px',
+                zIndex: 1000, boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px'
+            });
+            
+            const link = toast.querySelector('.toast-link');
+            if(link) {
+                Object.assign(link.style, { color: 'white', fontWeight: 'bold', textDecoration: 'underline' });
+            }
+
+            const closeBtn = toast.querySelector('.toast-close-btn');
+            Object.assign(closeBtn.style, {
+                background: 'none', border: 'none', color: 'white',
+                fontSize: '24px', cursor: 'pointer', padding: '0 5px', lineHeight: '1'
+            });
+
+            closeBtn.addEventListener('click', () => {
+                toast.remove();
+                if (onCloseCallback) {
+                    onCloseCallback(); // Executa a atualização do KPI
+                }
+            });
+
+            document.body.appendChild(toast);
+        }
+
+        function updateKpiDashboard(kpi, reportUrl) {
+            const container = document.getElementById("kpi-dashboard-container");
+            if (!container || !kpi) return;
+
+            const atuacaoClass = kpi.casos_atuacao > 0 ? 'card-neon-red' : 'card-neon-green';
+            const atuacaoColor = kpi.casos_atuacao > 0 ? 'var(--danger-color)' : 'var(--success-color)';
+
+            const instabilidadeClass = kpi.casos_instabilidade > 0 ? 'card-neon-warning' : 'card-neon-green';
+            const instabilidadeColor = kpi.casos_instabilidade > 0 ? 'var(--warning-color)' : 'var(--success-color)';
+
+            let sucessoClass, sucessoColor;
+            if (kpi.taxa_sucesso_valor < 50.0) {
+                sucessoClass = 'card-neon-red';
+                sucessoColor = 'var(--danger-color)';
+            } else if (kpi.taxa_sucesso_valor < 70.0) {
+                sucessoClass = 'card-neon-warning';
+                sucessoColor = 'var(--warning-color)';
+            } else {
+                sucessoClass = 'card-neon-green';
+                sucessoColor = 'var(--success-color)';
+            }
+
+            container.innerHTML = `
+                <div class="kpi-card ${atuacaoClass}">
+                    <p class="kpi-value" style="color: ${atuacaoColor};">${kpi.casos_atuacao}</p>
+                    <p class="kpi-label">Casos sem Remediação</p>
+                </div>
+                <div class="kpi-card ${instabilidadeClass}">
+                    <p class="kpi-value" style="color: ${instabilidadeColor};">${kpi.casos_instabilidade}</p>
+                    <p class="kpi-label">Casos com Instabilidade</p>
+                </div>
+                <div class="kpi-card ${sucessoClass}">
+                    <a href="${reportUrl || '#'}" target="_blank" class="report-link-ear visible">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                    <p class="kpi-value" style="color: ${sucessoColor};">${kpi.taxa_sucesso_automacao}</p>
+                    <p class="kpi-label">Sucesso da Automação</p>
+                </div>
+            `;
+        }
+
     </script>
 </body>
 </html>

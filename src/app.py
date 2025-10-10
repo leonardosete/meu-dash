@@ -1,5 +1,6 @@
 import os
 import shutil  # Para deletar diretórios recursivamente
+import json
 from datetime import datetime, timezone
 from flask import abort
 from flask import (
@@ -14,6 +15,7 @@ from flask import (
     flash,
 )
 from . import services
+from .constants import ACAO_FLAGS_ATUACAO, ACAO_FLAGS_INSTABILIDADE
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -112,6 +114,75 @@ def localtime_filter(utc_dt):
         return utc_dt.strftime("%d/%m/%Y %H:%M (UTC)")
 
 
+def _calculate_kpi_summary(report_path: str) -> dict | None:
+    """Calcula os KPIs gerenciais a partir de um arquivo de resumo JSON.
+
+    Args:
+        report_path (str): O caminho para o arquivo JSON de resumo.
+
+    Returns:
+        dict | None: Um dicionário com os KPIs ou None se ocorrer um erro.
+    """
+    try:
+        with open(report_path, "r") as f:
+            summary_data = json.load(f)
+
+        if not summary_data:
+            return None
+
+        total_casos = len(summary_data)
+        casos_atuacao = sum(
+            1
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_ATUACAO
+        )
+        casos_instabilidade = sum(
+            1
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_INSTABILIDADE
+        )
+        # NOVO: Soma a contagem de alertas para os casos de instabilidade.
+        alertas_instabilidade = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_INSTABILIDADE
+        )
+        # NOVO: Soma a contagem de alertas para os casos resolvidos com sucesso.
+        alertas_sucesso = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") not in ACAO_FLAGS_ATUACAO
+        )
+        # NOVO: Soma a contagem de alertas para os casos que precisam de atuação.
+        alertas_atuacao = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_ATUACAO
+        )
+        taxa_sucesso = (
+            (1 - (casos_atuacao / total_casos)) * 100 if total_casos > 0 else 100
+        )
+        casos_sucesso = total_casos - casos_atuacao
+
+        return {
+            "casos_atuacao": casos_atuacao,
+            # NOVO: Passa a contagem de alertas para o template.
+            "alertas_atuacao": alertas_atuacao,
+            "casos_instabilidade": casos_instabilidade,
+            # NOVO: Passa a contagem de alertas de instabilidade.
+            "alertas_instabilidade": alertas_instabilidade,
+            # NOVO: Passa a contagem de alertas de sucesso.
+            "alertas_sucesso": alertas_sucesso,
+            "taxa_sucesso_automacao": f"{taxa_sucesso:.1f}%",
+            "taxa_sucesso_valor": taxa_sucesso,
+            "casos_sucesso": casos_sucesso,
+            "total_casos": total_casos,
+        }
+    except (json.JSONDecodeError, FileNotFoundError, Exception) as e:
+        print(f"Erro ao ler ou processar o JSON de resumo: {e}")
+        return None
+
+
 # --- ROTAS DE HEALTH CHECK PARA KUBERNETES ---
 
 
@@ -145,6 +216,7 @@ def index():
     """
     trend_history = []
     last_action_plan = None
+    kpi_summary = None  # NOVO: Dicionário para os KPIs do dashboard
 
     # Lógica para o plano de ação continua a mesma: sempre o mais recente.
     last_report = Report.query.order_by(Report.timestamp.desc()).first()
@@ -161,6 +233,21 @@ def index():
                 ),
                 "date": last_report.timestamp,  # Passa o objeto datetime diretamente
             }
+        # NOVO: Extrai KPIs do último relatório para o Dashboard Gerencial
+        if last_report.json_summary_path and os.path.exists(
+            last_report.json_summary_path
+        ):
+            kpi_data = _calculate_kpi_summary(last_report.json_summary_path)
+            if kpi_data:
+                # Adiciona a URL do relatório aos dados do KPI
+                kpi_data["report_url"] = url_for(
+                    "serve_report",
+                    run_folder=os.path.basename(
+                        os.path.dirname(last_report.report_path)
+                    ),
+                    filename=os.path.basename(last_report.report_path),
+                )
+                kpi_summary = kpi_data
 
     # NOVA LÓGICA: Busca o histórico de tendências diretamente do banco de dados.
     trend_analyses = (
@@ -185,6 +272,7 @@ def index():
         "upload.html",
         trend_history=trend_history,
         last_action_plan=last_action_plan,
+        kpi_summary=kpi_summary,  # Passa os KPIs para o template
     )
 
 
@@ -221,11 +309,29 @@ def upload_file():
             TrendAnalysis=TrendAnalysis,  # Passa o novo modelo
             base_dir=BASE_DIR,
         )
-        if result and result.get("warning"):
-            # NOVO: Verifica primeiro se há um aviso.
-            flash(result["warning"], "warning")
-            return redirect(url_for("index"))
-        elif result:
+
+        # Se a requisição for AJAX (feita pelo nosso script), retorna JSON
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            if result and result.get("warning"):
+                return jsonify(success=False, error=result["warning"]), 400
+
+            report_url = url_for(
+                "serve_report",
+                run_folder=result["run_folder"],
+                filename=result["report_filename"],
+            )
+            new_kpi_summary = (
+                _calculate_kpi_summary(result["json_summary_path"])
+                if result.get("json_summary_path")
+                else None
+            )
+
+            return jsonify(
+                success=True, report_url=report_url, kpi_summary=new_kpi_summary
+            )
+
+        # Comportamento padrão (fallback para clientes sem JS): redireciona.
+        if result and not result.get("warning"):
             return redirect(
                 url_for(
                     "serve_report",
@@ -233,11 +339,23 @@ def upload_file():
                     filename=result["report_filename"],
                 )
             )
-        else:
-            flash("Ocorreu um erro durante o processamento do arquivo.", "error")
-            return redirect(url_for("index"))
+
+        flash(
+            result.get("warning")
+            or "Ocorreu um erro durante o processamento do arquivo.",
+            "error",
+        )
+        return redirect(url_for("index"))
+
     except Exception as e:
-        flash(f"Erro fatal no processo de upload: {e}", "error")
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return (
+                jsonify(
+                    success=False, error=f"Erro fatal no processo de upload: {str(e)}"
+                ),
+                500,
+            )
+        flash(f"Erro fatal no processo de upload: {str(e)}", "error")
         return redirect(url_for("index"))
 
 
