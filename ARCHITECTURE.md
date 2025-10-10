@@ -90,7 +90,7 @@ sequenceDiagram
         Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise leve do arquivo atual)
         Analysis-->>-Service: Retorna JSON temporário
         Service->>+Analysis: Chama `gerar_relatorio_tendencia()` com JSON anterior e atual
-        Analysis-->>-Service: Gera `resumo_tendencia.html`
+        Analysis-->>-Service: Gera `comparativo_periodos.html`
     end
 
     Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise completa)

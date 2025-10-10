@@ -30,7 +30,7 @@
             color: var(--text-color);
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* Alterado para alinhar o conteúdo no topo */
             min-height: 100vh;
             margin: 0;
             padding: 20px;
@@ -59,6 +59,7 @@
             flex-grow: 1; /* A coluna principal ocupa o espaço restante */
             min-width: 400px;
             display: flex;
+            align-self: stretch; /* NOVO: Faz a coluna se esticar para a altura do wrapper */
             flex-direction: column;
             gap: 30px; /* NOVO: Espaçamento entre os cards */
         }
@@ -76,7 +77,11 @@
 
         /* NOVO: Classe para o card de formulários com altura mínima */
         .form-card {
-            min-height: 520px;
+            flex-grow: 1; /* Faz este card ocupar o espaço vertical restante */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centraliza o conteúdo verticalmente */
+            padding: 20px 40px; /* Reduz o padding vertical para torná-lo mais compacto */
         }
 
         /* --- NOVO: ESTILOS PARA O INDICADOR DE PROGRESSO --- */
@@ -117,7 +122,7 @@
         .file-input-wrapper {
             border: 2px dashed var(--border-color);
             border-radius: 10px;
-            padding: 35px;
+            padding: 25px; /* Reduz o padding para um visual mais compacto */
             cursor: pointer;
             transition: background-color 0.3s, border-color 0.3s;
             margin-bottom: 30px;
@@ -227,6 +232,53 @@
         .action-plan-card { border-left: 4px solid var(--danger-color); }
         .action-plan-card svg { color: var(--danger-color); }
         .doc-gerencial-card svg { color: var(--accent-color); }
+        .admin-card svg { color: var(--warning-color); }
+
+        /* NOVO: Estilo para o card de admin quando ativo */
+        .admin-card.admin-active {
+            border-color: var(--danger-color);
+            background: linear-gradient(135deg, rgba(231, 74, 59, 0.15), var(--card-color));
+        }
+        .admin-card.admin-active h3 {
+            color: var(--danger-color);
+        }
+        /* NOVO: Estilo para tooltip customizada, mais legível */
+        .has-tooltip {
+            position: relative;
+        }
+        .has-tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 0; /* Alinha com o topo do card */
+            right: 100%; /* Posiciona à esquerda do card */
+            
+            /* Estado inicial da animação */
+            transform: scaleY(0); /* Animação vertical */
+            transform-origin: top; /* Animação começa de cima para baixo */
+            opacity: 0;
+            pointer-events: none; /* Impede que a tooltip capture eventos do mouse */
+            
+            /* Transição */
+            transition: transform 0.2s ease-out, opacity 0.15s ease-out;
+            
+            /* Aparência */
+            background-color: #333;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-right: 15px; /* Adiciona espaço entre o card e a tooltip */
+            z-index: 10;
+            font-size: 0.9em;
+            line-height: 1.4;
+            max-width: 280px; /* LARGURA RESPONSIVA: Usa max-width em vez de width fixo */
+            text-align: center;
+            white-space: normal;
+        }
+        .has-tooltip:hover::after {
+            transform: scaleY(1); /* Estado final da animação */
+            opacity: 1;
+        }
+
         .doc-tecnica-card svg { color: #38bdf8; }
 
         /* --- NOVO: Estilos para o Dashboard Gerencial --- */
@@ -280,6 +332,18 @@
         }
         .tab-content.active {
             display: block;
+        }
+
+        /* NOVO: Estilo para a descrição dentro das abas */
+        .tab-description {
+            font-size: 0.95em;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-top: 0;
+            margin-bottom: 30px;
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* --- MEDIA QUERY PARA RESPONSIVIDADE --- */
@@ -438,7 +502,7 @@
             
             {# NOVO: Card de Acesso Administrativo #}
             {% if session.is_admin %}
-            <a href="{{ url_for('admin_logout') }}" class="side-card admin-card">
+            <a href="{{ url_for('admin_logout') }}" class="side-card admin-card admin-active has-tooltip" data-tooltip="Apenas administradores podem excluir relatórios.">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <div class="side-card-text">
                     <h3>Modo Admin Ativo</h3>
@@ -446,7 +510,7 @@
                 </div>
             </a>
             {% else %}
-            <a href="{{ url_for('admin_login_page') }}" class="side-card admin-card">
+            <a href="{{ url_for('admin_login_page') }}" class="side-card admin-card has-tooltip" data-tooltip="Acessar funcionalidades de gerenciamento, como a exclusão de relatórios antigos.">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <div class="side-card-text">
                     <h3>Acesso Administrativo</h3>
@@ -455,7 +519,7 @@
             </a>
             {% endif %}
 
-            <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" target="_blank" class="side-card doc-gerencial-card">
+            <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" class="side-card doc-gerencial-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                 <div class="side-card-text">
                     <h3>Documentação Gerencial</h3>
@@ -463,7 +527,7 @@
                 </div>
             </a>
             
-            <a href="{{ url_for('serve_docs', filename='doc_tecnica.html') }}" target="_blank" class="side-card doc-tecnica-card">
+            <a href="{{ url_for('serve_docs', filename='doc_tecnica.html') }}" class="side-card doc-tecnica-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                 <div class="side-card-text">
                     <h3>Documentação Técnica</h3>
@@ -473,7 +537,7 @@
             
             {# NOVO: Card para acessar a análise mais recente, movido para a sidebar #}
             {% if kpi_summary and kpi_summary.report_url %}
-            <a href="{{ kpi_summary.report_url }}" target="_blank" class="side-card highlight-pulse" style="border-color: var(--accent-color); background: linear-gradient(135deg, rgba(59, 139, 236, 0.25), var(--card-color));">
+            <a href="{{ kpi_summary.report_url }}" class="side-card highlight-pulse" style="border-color: var(--accent-color); background: linear-gradient(135deg, rgba(59, 139, 236, 0.25), var(--card-color));">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-color);"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                 <div class="side-card-text">
                     <h3>Acessar Análise Recente</h3>
@@ -483,7 +547,7 @@
             {% endif %}
 
             {% if last_action_plan %}
-            <a href="{{ last_action_plan.url }}" target="_blank" class="side-card action-plan-card">
+            <a href="{{ last_action_plan.url }}" class="side-card action-plan-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
                 <div class="side-card-text">
                     <h3>Plano de Ação</h3>
@@ -496,18 +560,18 @@
             <div class="side-card last-analysis-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
                 <div class="side-card-text">
-                    <a href="{{ trend_history[0].url }}" target="_blank" style="text-decoration: none; color: inherit;">
+                    <a href="{{ trend_history[0].url }}" style="text-decoration: none; color: inherit;">
                         <h3>Ver Última Análise de Tendência</h3>
                         <p>Gerada em: {{ trend_history[0].date | localtime }}</p>
                     </a>
                     
                     {% if trend_history|length > 1 %}
                     <details style="margin-top: 10px;">
-                        <summary style="cursor: pointer; font-size: 0.9em;">Ver histórico anterior</summary>
+                        <summary style="cursor: pointer; font-size: 0.9em;">Histórico anterior</summary>
                         <ul style="list-style: none; padding-left: 10px; margin-top: 5px; font-size: 0.85em;">
                             {% for analysis in trend_history[1:] %}
                             <li style="margin-bottom: 5px;">
-                                <a href="{{ analysis.url }}" target="_blank">Análise de {{ analysis.date | localtime }}</a>
+                                <a href="{{ analysis.url }}">Análise de {{ analysis.date | localtime }}</a>
                             </li>
                             {% endfor %}
                         </ul>
@@ -594,11 +658,11 @@
                 <div class="tab-container">
                     <div class="tab-links">
                         <button class="tab-link active" data-target="tab-padrao">Análise Padrão</button>
-                        <button class="tab-link" data-target="tab-comparativa">Comparação Direta</button>
+                        <button class="tab-link" data-target="tab-comparativa">Análise Comparativa</button>
                     </div>
 
                     <div id="tab-padrao" class="tab-content active">
-                        <h1>Análise de Alertas e Tendências</h1>
+                        <p class="tab-description">Processe o arquivo de dados mais recente. O sistema o comparará com a última análise registrada no histórico para gerar um relatório completo e a análise de tendência contínua.</p>
                         <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
                             <label for="file_atual">Selecione o arquivo de dados mais recente:</label>
                             <div class="file-input-wrapper" id="wrapper_atual">
@@ -608,16 +672,10 @@
                             </div>
                             <button type="submit" id="submit-btn">Analisar e Comparar com Histórico</button>
                             <div class="button-group">
-                                <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Ver Histórico de Análises</button>
+                                <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Histórico de Análises</button>
                             </div>
                             {# NOVO: Link de Acesso Administrativo #}
-                            <div class="admin-link-container">
-                                {% if session.is_admin %}
-                                    <a href="{{ url_for('admin_logout') }}">Sair do modo Admin</a>
-                                {% else %}
-                                    <a href="{{ url_for('admin_login_page') }}">Acesso Admin</a>
-                                {% endif %}
-                            </div>
+                            {# O link de admin foi removido daqui para centralizar na sidebar #}
                         </form>
                         <div class="progress-container" id="progress-view">
                             <div class="spinner"></div>
@@ -626,7 +684,7 @@
                     </div>
 
                     <div id="tab-comparativa" class="tab-content">
-                        <h1>Análise Comparativa Direta</h1>
+                        <p class="tab-description">Compare dois arquivos de dados específicos para gerar um relatório de tendência sob demanda. Ideal para análises pontuais e investigativas entre períodos não sequenciais.</p>
                         <form action="{{ url_for('compare_files') }}" method="post" enctype="multipart/form-data" id="compare-form">
                             <label for="file_comparativa">Selecione exatamente dois arquivos para comparar:</label>
                             <div class="file-input-wrapper" id="wrapper_comparativa">

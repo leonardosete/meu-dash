@@ -1,6 +1,6 @@
 # 🧪 Plano de Testes de Aceitação - Redesign da Interface
 
-Este documento descreve os cenários de teste para validar a nova experiência do usuário (UX) implementada na página `upload.html`, conforme definido no `PLAN-UX.md`.
+Este documento descreve os cenários de teste para validar a nova experiência do usuário (UX) implementada na página `index.html`, conforme definido no `PLAN-UX.md`.
 
 **Objetivo:** Garantir que a nova interface atende às necessidades das personas definidas (Analista, Gestor) e que todos os fluxos de trabalho são intuitivos e funcionais.
 
@@ -29,11 +29,11 @@ Este documento descreve os cenários de teste para validar a nova experiência d
 
 | Passo | Ação do Usuário | Resultado Esperado | Status |
 | :--- | :--- | :--- | :--- |
-| 1 | Acessar a página principal. | A página carrega normalmente. | `[ ]` |
-| 2 | Clicar na aba "Comparação Direta". | O conteúdo da aba muda, exibindo dois campos de upload e o título "Análise Comparativa Direta". | `[ ]` |
-| 3 | Selecionar dois arquivos `.csv` nos respectivos campos de upload. | Os nomes dos arquivos aparecem corretamente em cada campo. | `[ ]` |
-| 4 | Clicar no botão "Comparar Arquivos". | O botão fica desabilitado com o texto "Comparando...". A página é redirecionada para o relatório de tendência (`resumo_tendencia.html`) após o processamento. | `[ ]` |
-| 5 | Verificar o relatório de tendência. | O relatório gerado contém a comparação dos dois arquivos selecionados, e não do histórico automático. | `[ ]` |
+| 1 | Acessar a página principal. | A página carrega normalmente. | `[x]` |
+| 2 | Clicar na aba "Comparação Direta". | O conteúdo da aba muda, exibindo um único campo de upload múltiplo. | `[x]` |
+| 3 | Selecionar dois arquivos `.csv` nos respectivos campos de upload. | Os nomes dos arquivos aparecem corretamente em cada campo. | `[x]` |
+| 4 | Clicar no botão "Comparar Arquivos". | O botão fica desabilitado com o texto "Comparando...". A página é redirecionada para o relatório de tendência (`comparativo_periodos.html`) após o processamento. | `[x]` |
+| 5 | Verificar o relatório de tendência. | O relatório gerado contém a comparação dos dois arquivos selecionados, e não do histórico automático. | `[x]` |
 
 ---
 
@@ -44,11 +44,11 @@ Este documento descreve os cenários de teste para validar a nova experiência d
 
 | Passo | Ação do Usuário | Resultado Esperado | Status |
 | :--- | :--- | :--- | :--- |
-| 1 | Clicar no link "Documentação Gerencial" na barra lateral. | O `doc_gerencial.html` abre em uma nova aba. | `[ ]` |
-| 2 | Clicar no link "Documentação Técnica" na barra lateral. | O `doc_tecnica.html` abre em uma nova aba. | `[ ]` |
-| 3 | Clicar no link "Ver Última Análise de Tendência" (se disponível). | O último relatório de tendência abre em uma nova aba. | `[ ]` |
-| 4 | Clicar no link "Ver Histórico de Análises" no card da "Análise Padrão". | O usuário é redirecionado para a página `/relatorios`. | `[ ]` |
-| 5 | Clicar no link "Acesso Admin" no rodapé do formulário. | O usuário é redirecionado para a página de login de administrador. | `[ ]` |
+| 1 | Clicar no link "Documentação Gerencial" na barra lateral. | O `doc_gerencial.html` abre em uma nova aba. | `[x]` |
+| 2 | Clicar no link "Documentação Técnica" na barra lateral. | O `doc_tecnica.html` abre em uma nova aba. | `[x]` |
+| 3 | Clicar no link "Ver Última Análise de Tendência" (se disponível). | O último relatório de tendência abre em uma nova aba. | `[x]` |
+| 4 | Clicar no link "Ver Histórico de Análises" no card da "Análise Padrão". | O usuário é redirecionado para a página `/relatorios`. | `[x]` |
+| 5 | Clicar no link "Acesso Admin" no rodapé do formulário. | O usuário é redirecionado para a página de login de administrador. | `[x]` |
 
 ---
 

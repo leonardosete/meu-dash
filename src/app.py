@@ -269,7 +269,7 @@ def index():
             continue  # Ignora entradas com caminhos inválidos
 
     return render_template(
-        "upload.html",
+        "index.html",
         trend_history=trend_history,
         last_action_plan=last_action_plan,
         kpi_summary=kpi_summary,  # Passa os KPIs para o template
@@ -574,7 +574,7 @@ def admin_login():
     if admin_token_config and token_fornecido == admin_token_config:
         session["is_admin"] = True
         flash("Login de administrador realizado com sucesso!", "success")
-        return redirect(url_for("relatorios"))
+        return redirect(url_for("index"))
     else:
         flash("Token de administrador inválido.", "error")
         return redirect(url_for("admin_login_page"))

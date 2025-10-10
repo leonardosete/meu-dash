@@ -7,20 +7,20 @@ Este documento descreve o plano de ação para redesenhar a interface principal 
 ### Prioridade 1: Descoberta e Estratégia
 
 - [x] **Definir Personas de Usuário:**
-  - **Analista de Operações:** Focado em fazer uploads diários e acompanhar a evolução dos problemas (Análise Padrão).
-  - **Gestor de Equipe:** Precisa de visões comparativas para reuniões e análises pontuais (Comparação Direta).
+  - **Analista de Operações:** Focado em fazer uploads diários e acompanhar a evolução dos problemas (fluxo de "Análise Padrão").
+  - **Gestor de Equipe:** Precisa de visões comparativas para reuniões e análises pontuais (fluxo de "Análise Comparativa").
   - **Administrador do Sistema:** Responsável pela manutenção e gerenciamento dos relatórios (Acesso Admin).
 
 - [x] **Definir o Problema e as Métricas de Sucesso (KPIs):**
   - **Problema do Gestor:** "Preciso de uma visão geral e rápida dos KPIs mais importantes sem ter que navegar por múltiplos relatórios."
-  - **Problema do Analista:** "A distinção entre 'Análise Padrão' e 'Comparação Direta' poderia ser mais clara para evitar erros no fluxo."
+  - **Problema do Analista:** "A distinção entre 'Análise Padrão' e 'Análise Comparativa' poderia ser mais clara para evitar erros no fluxo."
   - **KPIs de Sucesso:** Definir como mediremos o sucesso do redesign. Ex: "Reduzir o tempo para um gestor encontrar o número de casos críticos em 50%" ou "Aumentar a taxa de sucesso no primeiro clique para a funcionalidade correta (padrão vs. direta) em 30%".
 
 ### Prioridade 2: Wireframing e Design da Interface
 
 - [x] **Criar Wireframes de Baixa Fidelidade:**
   - **Concluído:** A estrutura da página principal foi redesenhada para um layout de duas colunas: uma barra lateral (`sidebar-column`) para links de acesso rápido (documentação, histórico, admin) e uma coluna de conteúdo principal (`main-content-column`).
-  - A coluna principal agora destaca o "Dashboard Gerencial" no topo, seguido por uma interface de abas que separa claramente os fluxos de "Análise Padrão" e "Comparação Direta".
+  - A coluna principal agora destaca o "Dashboard Gerencial" no topo, seguido por uma interface de abas que separa claramente os fluxos de "Análise Padrão" e "Análise Comparativa".
 
 - [x] **Criar um Dashboard Gerencial na Página Principal:**
   - Em vez de apenas links, a página inicial deve exibir um resumo visual com os KPIs mais importantes da última análise (ex: "Casos Críticos", "Taxa de Resolução", "Problemas Persistentes").
@@ -32,7 +32,7 @@ Este documento descreve o plano de ação para redesenhar a interface principal 
 ### Prioridade 3: Implementação e Validação
 
 - [x] **Implementar o Novo Layout:**
-  - Aplicar as mudanças de layout e estilo no template `templates/upload.html`.
+  - Aplicar as mudanças de layout e estilo no template `templates/index.html`.
   - Refatorar o CSS para ser mais modular e fácil de manter, possivelmente usando variáveis CSS para o tema.
 
 - [x] **Refinamentos Adicionais de UI/UX (Pós-implementação):**
@@ -40,11 +40,11 @@ Este documento descreve o plano de ação para redesenhar a interface principal 
   - [x] Fixar a altura do card de formulários para evitar redimensionamento ao trocar de aba.
   - [x] Mover o botão "Acessar Análise" para a barra lateral, com destaque visual (pulso e gradiente).
   - [x] Enriquecer os cards de KPI com sub-valores (contagem de alertas e casos) para maior densidade de informação.
-  - [x] Simplificar a aba "Comparação Direta" para um único campo de upload de múltiplos arquivos, melhorando a consistência.
+  - [x] Simplificar a aba "Análise Comparativa" para um único campo de upload de múltiplos arquivos, melhorando a consistência.
   - [x] Realizar ajustes finos de alinhamento e estilo nos componentes da interface para um acabamento mais profissional.
 
-- [ ] **Validar a Experiência do Usuário (UX) e o Fluxo de Trabalho:**
-  - **Teste de Aceitação do Analista:** Executar o fluxo de "Análise Padrão", garantindo que o upload, processamento e atualização dos KPIs via AJAX funcionem de forma intuitiva.
-  - **Teste de Aceitação do Gestor:** Executar o fluxo de "Comparação Direta", validando a clareza e a facilidade de uso.
-  - **Revisão de Acessos Rápidos:** Verificar se todos os links na barra lateral (documentação, histórico, admin) estão funcionando e são úteis.
+- [x] **Validar a Experiência do Usuário (UX) e o Fluxo de Trabalho:**
+  - [x] **Teste de Aceitação do Analista:** O fluxo de "Análise Padrão" foi validado, garantindo que o upload, processamento e recarregamento da página funcionam de forma intuitiva.
+  - [x] **Teste de Aceitação do Gestor:** O fluxo de "Análise Comparativa" foi validado, confirmando a clareza e a facilidade de uso.
+  - [x] **Revisão de Acessos Rápidos:** Todos os links na barra lateral e nos formulários foram verificados e estão funcionando corretamente.
   - **Coletar Feedback:** Apresentar a nova interface para um usuário de cada persona e coletar feedback qualitativo.

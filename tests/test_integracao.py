@@ -88,7 +88,7 @@ def test_comparacao_direta_gera_relatorio_tendencia(tmp_path, file_order):
 
     # Assert: Verifica se o resultado aponta para o relatório de tendência
     assert result is not None
-    assert result["report_filename"] == "resumo_tendencia.html"
+    assert result["report_filename"] == "comparativo_periodos.html"
     assert os.path.exists(
         os.path.join(tmp_path, result["run_folder"], result["report_filename"])
     ), "O relatório de tendência da comparação direta não foi gerado."
@@ -153,7 +153,7 @@ def test_compare_route_success(mock_service, client):
     # Configura o retorno do serviço de comparação mockado
     mock_service.return_value = {
         "run_folder": "run_compare_456",
-        "report_filename": "resumo_tendencia.html",
+        "report_filename": "comparativo_periodos.html",
     }
 
     # Cria dois arquivos CSV em memória para o upload
@@ -175,7 +175,7 @@ def test_compare_route_success(mock_service, client):
     assert response.status_code == 302, "A rota /compare não redirecionou."
 
     # 3. Verifica se o redirecionamento aponta para a URL correta
-    assert "/reports/run_compare_456/resumo_tendencia.html" in response.location
+    assert "/reports/run_compare_456/comparativo_periodos.html" in response.location
 
 
 def test_localtime_template_filter():

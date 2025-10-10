@@ -88,6 +88,9 @@ def calculate_kpis_and_merged_df(df_p1, df_p2):
     ].sum()
     alerts_new = merged_df[merged_df["_merge"] == "right_only"]["alert_count_p2"].sum()
     alerts_persistent = merged_df[merged_df["_merge"] == "both"]["alert_count_p2"].sum()
+    alerts_persistent_p1 = merged_df[merged_df["_merge"] == "both"][
+        "alert_count_p1"
+    ].sum()
 
     improvement_rate = (resolved / total_p1 * 100) if total_p1 > 0 else 100
 
@@ -102,6 +105,7 @@ def calculate_kpis_and_merged_df(df_p1, df_p2):
         "alerts_resolved": int(alerts_resolved),
         "alerts_new": int(alerts_new),
         "alerts_persistent": int(alerts_persistent),
+        "alerts_persistent_p1": int(alerts_persistent_p1),
         "improvement_rate": improvement_rate,
     }
 
@@ -132,6 +136,21 @@ def analyze_persistent_cases(merged_df):
 def generate_kpis_html(kpis):
     """Gera o HTML para a seção de KPIs do panorama geral."""
     saldo_icon = ""
+
+    # NOVO: Calcula a variação de alertas nos casos persistentes
+    persistent_alerts_variation = (
+        kpis["alerts_persistent"] - kpis["alerts_persistent_p1"]
+    )
+    variation_text = ""
+    if persistent_alerts_variation != 0:
+        sign = "+" if persistent_alerts_variation > 0 else ""
+        color = (
+            "var(--danger-color)"
+            if persistent_alerts_variation > 0
+            else "var(--success-color)"
+        )
+        variation_text = f'<span style="color: {color}; font-weight: 600;">({sign}{persistent_alerts_variation})</span>'
+
     if kpis["total_p2"] > kpis["total_p1"]:
         saldo_icon = (
             "<span style='font-size: 0.7em; color: var(--danger-color);'>▲</span>"
@@ -161,7 +180,7 @@ def generate_kpis_html(kpis):
             <div class="kpi-flow-item" style="flex:auto;"><div class="kpi-card-enhanced">
                 <p class="kpi-value" style="color: var(--persistent-color);">{kpis["persistent"]}</p>
                 <p class="kpi-label">Casos Persistentes</p>
-                <p class="kpi-subtitle" title="Problemas que já existiam no período anterior e que continuam sem uma remediação efetiva no período atual.">{kpis["alerts_persistent"]} alertas</p>
+                <p class="kpi-subtitle" title="Problemas que já existiam e continuam sem remediação. O número de alertas reflete o volume do período ATUAL, e a variação em parênteses mostra se o impacto desses problemas aumentou ou diminuiu.">{kpis["alerts_persistent"]} alertas {variation_text}</p>
             </div></div>
         </div>
         <div class="kpi-flow-connector icon-plus"></div>

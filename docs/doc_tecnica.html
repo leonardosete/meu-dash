@@ -24,6 +24,17 @@
             margin: 0;
             padding: 0;
         }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--accent-color);
+            font-size: 1.1em;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
         .container {
             max-width: 900px;
             margin: 40px auto;
@@ -145,6 +156,7 @@
 </head>
 <body>
     <div class="container">
+        <a href="/" class="back-link">&larr; Voltar para a Página Inicial</a>
         <h1>📄 Documentação Técnica - meu-dash</h1>
         <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados, lógica de análise e guia de desenvolvimento do projeto <code>meu-dash</code>.</p>
 

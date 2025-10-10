@@ -162,7 +162,7 @@ def process_upload_and_generate_reports(
             temp_analysis_results = analisar_arquivo_csv(
                 filepath_atual, output_dir, light_analysis=True
             )
-            output_trend_path = os.path.join(output_dir, "resumo_tendencia.html")
+            output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
 
             gerar_relatorio_tendencia(
                 json_anterior=previous_report_for_trend.json_summary_path,
@@ -314,7 +314,7 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
             filepath_anterior, output_dir_anterior, light_analysis=False
         )
 
-        output_trend_path = os.path.join(output_dir, "resumo_tendencia.html")
+        output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
         gerar_relatorio_tendencia(
             json_anterior=results_anterior["json_path"],
             json_atual=results_atual["json_path"],
@@ -327,7 +327,7 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
         )
         return {
             "run_folder": run_folder_name,
-            "report_filename": "resumo_tendencia.html",
+            "report_filename": "comparativo_periodos.html",
         }
 
     finally:

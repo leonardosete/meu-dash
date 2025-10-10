@@ -6,47 +6,47 @@
 
 ---
 # --- Headless Service: Necessário para o StatefulSet ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: meu-dash-headless
-  namespace: meu-dash-alertas
-spec:
-  clusterIP: None
-  selector:
-    app: meu-dash-web
-  ports:
-  - port: 80
-    targetPort: 5000
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: meu-dash-headless
+#   namespace: meu-dash-alertas
+# spec:
+#   clusterIP: None
+#   selector:
+#     app: meu-dash-web
+#   ports:
+#   - port: 80
+#     targetPort: 5000
 
 ---
 # --- Service ClusterIP: Ponto de acesso interno para o Ingress ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: meu-dash-web
-  namespace: meu-dash-alertas
-spec:
-  type: ClusterIP
-  selector:
-    app: meu-dash-web
-  ports:
-  - name: http
-    port: 80
-    targetPort: 5000
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: meu-dash-web
+#   namespace: meu-dash-alertas
+# spec:
+#   type: ClusterIP
+#   selector:
+#     app: meu-dash-web
+#   ports:
+#   - name: http
+#     port: 80
+#     targetPort: 5000
 
 ---
 # --- PodDisruptionBudget (PDB): Garante a alta disponibilidade ---
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: meu-dash-pdb
-  namespace: meu-dash-alertas
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app: meu-dash-web
+# apiVersion: policy/v1
+# kind: PodDisruptionBudget
+# metadata:
+#   name: meu-dash-pdb
+#   namespace: meu-dash-alertas
+# spec:
+#   minAvailable: 1
+#   selector:
+#     matchLabels:
+#       app: meu-dash-web
 
 ---
 # --- StatefulSet: Orquestração dos Pods da aplicação ---
@@ -131,20 +131,17 @@ spec:
         requests:
           storage: 1Gi
 ---
-#--- Ingress: Ponto de entrada para o tráfego externo via HTTPS ---
 # apiVersion: networking.k8s.io/v1
 # kind: Ingress
 # metadata:
 #   name: meu-dash-web-ingress
 #   namespace: meu-dash-alertas
-#   annotations:
-#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 # spec:
 #   ingressClassName: nginx
 #   tls:
 #   - hosts:
 #     - meu-dash-web-teste.devops-master.shop
-#     secretName: meu-dash-tls-secret # O cert-manager criará e gerenciará este Secret
+#     secretName: meu-dash-tls-secret
 #   rules:
 #   - host: meu-dash-web-teste.devops-master.shop
 #     http:
