@@ -78,21 +78,25 @@ def generate_executive_summary_html(
         sanitized_squad_name = re.sub(
             r"[^a-zA-Z0-9_-]", "", top_new_squad.replace(" ", "_")
         )
+        squad_highlight_html = (
+            f'<span style="color: var(--danger-color);">{escape(top_new_squad)}</span>'
+        )
         if is_direct_comparison:
-            action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad '{escape(top_new_squad)}'</strong> foi a que mais gerou novos problemas. Focar a investigação nesta equipe."
+            action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad '{squad_highlight_html}'</strong> foi a que mais gerou novos problemas. Focar a investigação nesta equipe."
         else:
             action_plan_url = f"atuar-{sanitized_squad_name}.html"
-            action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_new_squad)}\'</strong> foi a que mais gerou novos problemas. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
+            action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{squad_highlight_html}\'</strong> foi a que mais gerou novos problemas. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
     elif not persistent_summary.empty:
         top_persistent_squad = persistent_summary.index[0]
         sanitized_squad_name = re.sub(
             r"[^a-zA-Z0-9_-]", "", top_persistent_squad.replace(" ", "_")
         )
+        squad_highlight_html = f'<span style="color: var(--warning-color);">{escape(top_persistent_squad)}</span>'
         if is_direct_comparison:
-            action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad '{escape(top_persistent_squad)}'</strong> concentra o maior número de problemas persistentes. Ação de causa raiz é necessária."
+            action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad '{squad_highlight_html}'</strong> concentra o maior número de problemas persistentes. Ação de causa raiz é necessária."
         else:
             action_plan_url = f"atuar-{sanitized_squad_name}.html"
-            action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_persistent_squad)}\'</strong> concentra o maior número de problemas persistentes. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
+            action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{squad_highlight_html}\'</strong> concentra o maior número de problemas persistentes. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
 
     # 3. Principal Vitória (Reconhecimento)
     recognition_point = ""
