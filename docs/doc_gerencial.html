@@ -103,6 +103,7 @@
         .highlight-success { background-color: rgba(28, 200, 138, 0.1); border-left: 5px solid var(--success-color); }
         .highlight-danger { background-color: rgba(231, 74, 59, 0.1); border-left: 5px solid var(--danger-color); }
         .highlight-warning { background-color: rgba(246, 194, 62, 0.1); border-left: 5px solid var(--warning-color); }
+        .highlight-info { background-color: rgba(23, 162, 184, 0.1); border-left: 5px solid var(--info-color); }
         
         .flow-diagram {
             display: flex;
@@ -142,8 +143,8 @@
         <section id="proposito">
             <h2>1. O Problema que Resolvemos</h2>
             <div class="card highlight highlight-warning" style="border-color: var(--warning-color);">
-                <p>Relatórios tradicionais (como Power BI) são excelentes para mostrar "o que aconteceu": tivemos 20 mil alertas, a equipe X foi a mais acionada. No entanto, essa visão, por si só, não gera um plano para tratar a causa dos problemas. O resultado é uma operação reativa, que gasta tempo e recursos "apagando os mesmos incêndios" todos os meses.</p>
-                <p style="font-size: 1.1em; color: var(--text-color); margin-top: 20px;"><strong>Esta ferramenta foi criada para quebrar esse ciclo.</strong> Ela não é um substituto para os dashboards existentes, mas um "motor de priorização" que se senta sobre os dados de alertas. Sua missão é transformar o ruído em um plano de ação claro, apontando exatamente para os problemas que mais impactam a estabilidade e a performance da infraestrutura.</p>
+                <p>Relatórios tradicionais (como Power BI) são excelentes para mostrar "o que aconteceu": tivemos 20 mil alertas, a equipe X foi a mais acionada. No entanto, essa visão descritiva, por si só, não gera um plano para tratar a causa dos problemas. O resultado é uma operação reativa, que gasta tempo e recursos "apagando os mesmos incêndios" todos os meses.</p>
+                <p style="font-size: 1.1em; color: var(--text-color); margin-top: 20px;"><strong>Esta ferramenta foi criada para quebrar esse ciclo.</strong> Ela não é "mais um dashboard", mas um <strong>motor de análise programado em Python</strong> que aplica uma lógica de negócio customizada para ir além dos dados brutos. Sua missão é transformar o ruído em um plano de ação claro, respondendo à pergunta que os relatórios tradicionais não respondem: "Dado tudo o que aconteceu, qual é o problema mais importante para resolvermos agora?".</p>
             </div>
         </section>
 
@@ -233,9 +234,22 @@
                 </div>
 
         <h3>Gerenciamento de Relatórios</h3>
-        <div class="card">
+        <div class="card highlight highlight-info">
             <p>Além do fluxo de geração, a aplicação permite o gerenciamento ativo do histórico. Na página de "Histórico de Relatórios", usuários com perfil de administrador podem excluir análises antigas ou irrelevantes. Esta funcionalidade é protegida para evitar exclusões acidentais e garantir a integridade dos dados históricos.</p>
         </div>
+            </div>
+        </section>
+
+        <section id="diferencial">
+            <h2>5. Por que uma Ferramenta Customizada? (vs. Power BI)</h2>
+            <div class="card highlight highlight-info">
+                <p>Uma pergunta comum é: "Isso não poderia ser feito no Power BI?". A resposta está na diferença fundamental de propósito entre uma ferramenta de Business Intelligence (BI) e um motor de análise prescritiva como este.</p>
+                
+                <h4 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">🧠 1. Além da Visualização: A Lógica Prescritiva</h4>
+                <p>Ferramentas como o Power BI são excelentes para visualizar dados e responder à pergunta "O que aconteceu?". Nossa aplicação foi construída para responder à pergunta seguinte e mais crítica: <strong>"Dado o que aconteceu, o que devemos fazer agora?"</strong>. Para isso, ela utiliza um motor de análise em Python que aplica uma lógica de negócio customizada (o Score Ponderado) para priorizar problemas, algo complexo e de difícil manutenção em uma ferramenta de BI.</p>
+
+                <h4 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">⚙️ 2. Geração de um Ecossistema de Ação</h4>
+                <p>A principal diferença é que nossa ferramenta não gera apenas um dashboard. Ela cria um ecossistema de relatórios e planos de ação interligados (como os arquivos <code>atuar-&lt;squad&gt;.html</code>), que são artefatos de trabalho projetados para facilitar a delegação e a ação. Uma ferramenta de BI mostra o problema; nossa aplicação entrega o ponto de partida para a solução.</p>
             </div>
         </section>
 
