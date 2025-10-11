@@ -19,7 +19,7 @@ def mock_dependencies():
         "db": mock_db,
         "Report": mock_Report,
         "TrendAnalysis": mock_TrendAnalysis,  # Adiciona ao dicionário
-        "file_atual": mock_file,
+        "file_recente": mock_file,
     }
 
 
@@ -228,12 +228,12 @@ def test_process_upload_for_continuous_trend_analysis(
 
     mock_gerar_tendencia.assert_called_with(
         json_anterior=report_A.json_summary_path,
-        json_atual=mock_analisar_csv.return_value["json_path"],
+        json_recente=mock_analisar_csv.return_value["json_path"],
         csv_anterior_name=report_A.original_filename,
-        csv_atual_name=mock_dependencies["file_atual"].filename,
+        csv_recente_name=mock_dependencies["file_recente"].filename,
         output_path=ANY,
         date_range_anterior=report_A.date_range,
-        date_range_atual="02/01/2025 a 02/01/2025",
+        date_range_recente="02/01/2025 a 02/01/2025",
     )
     # Verifica se o Report B e a Trend B vs A foram salvos
     assert mock_db.session.add.call_count == 2
@@ -273,12 +273,12 @@ def test_process_upload_for_continuous_trend_analysis(
     # Verifica se a comparação usou o JSON do relatório B
     mock_gerar_tendencia.assert_called_with(
         json_anterior=report_B.json_summary_path,
-        json_atual=mock_analisar_csv.return_value["json_path"],
+        json_recente=mock_analisar_csv.return_value["json_path"],
         csv_anterior_name=report_B.original_filename,
-        csv_atual_name=mock_dependencies["file_atual"].filename,
+        csv_recente_name=mock_dependencies["file_recente"].filename,
         output_path=ANY,
         date_range_anterior=report_B.date_range,
-        date_range_atual="03/01/2025 a 03/01/2025",
+        date_range_recente="03/01/2025 a 03/01/2025",
     )
     assert mock_db.session.add.call_count == 2
     assert trend_C_vs_B.current_report_id == 3

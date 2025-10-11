@@ -62,7 +62,7 @@ def test_comparacao_direta_gera_relatorio_tendencia(tmp_path, file_order):
     """
     # Arrange: Prepara os caminhos de entrada e o serviço
     input_csv_anterior = os.path.join(FIXTURE_DIR, "csv-dummy-1.csv")
-    input_csv_atual = os.path.join(FIXTURE_DIR, "csv-dummy-2.csv")
+    input_csv_recente = os.path.join(FIXTURE_DIR, "csv-dummy-2.csv")
 
     # Simula os objetos de arquivo que o Flask forneceria
     class MockFile:
@@ -77,9 +77,9 @@ def test_comparacao_direta_gera_relatorio_tendencia(tmp_path, file_order):
 
     # Parametriza a ordem dos arquivos para testar a lógica de ordenação
     if file_order == "normal":
-        files = [MockFile(input_csv_anterior), MockFile(input_csv_atual)]
+        files = [MockFile(input_csv_anterior), MockFile(input_csv_recente)]
     else:  # inverted
-        files = [MockFile(input_csv_atual), MockFile(input_csv_anterior)]
+        files = [MockFile(input_csv_recente), MockFile(input_csv_anterior)]
 
     # Act: Executa o serviço de comparação direta
     result = services.process_direct_comparison(
@@ -124,8 +124,8 @@ def test_upload_route_success(mock_service, client):
 
     # Cria um arquivo CSV em memória para o upload
     data = {
-        # The key 'file_atual' must match the 'name' attribute of the file input in the HTML form.
-        "file_atual": (BytesIO(b"header1;header2\nvalue1;value2"), "test.csv")
+        # The key 'file_recente' must match the 'name' attribute of the file input in the HTML form.
+        "file_recente": (BytesIO(b"header1;header2\nvalue1;value2"), "test.csv")
     }
 
     # Act
@@ -237,7 +237,7 @@ def test_kpi_dashboard_on_index_page(client):
 
             # Assert
             assert response.status_code == 200
-            # As asserções foram atualizadas para corresponder à nova estrutura HTML dos cards de KPI
+            # As asserções foram recenteizadas para corresponder à nova estrutura HTML dos cards de KPI
             assert '<p class="kpi-value text-danger">1</p>' in response_data
             assert '<p class="kpi-value text-warning">1</p>' in response_data
             assert '<p class="kpi-value text-warning">66.7%</p>' in response_data

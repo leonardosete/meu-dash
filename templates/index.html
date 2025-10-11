@@ -664,11 +664,11 @@
                     <div id="tab-padrao" class="tab-content active">
                         <p class="tab-description">Processe o arquivo de dados mais recente. O sistema o comparará com a última análise registrada no histórico para gerar um relatório completo e a análise de tendência contínua.</p>
                         <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
-                            <label for="file_atual">Selecione o arquivo de dados mais recente:</label>
-                            <div class="file-input-wrapper" id="wrapper_atual">
-                                <input type="file" name="file_atual" id="file_atual" required>
-                                <span class="file-input-text" id="text_atual">Clique ou arraste o arquivo aqui</span>
-                                <span class="file-name" id="name_atual"></span>
+                            <label for="file_recente">Selecione o arquivo de dados mais recente:</label>
+                            <div class="file-input-wrapper" id="wrapper_recente">
+                                <input type="file" name="file_recente" id="file_recente" required>
+                                <span class="file-input-text" id="text_recente">Clique ou arraste o arquivo aqui</span>
+                                <span class="file-name" id="name_recente"></span>
                             </div>
                             <button type="submit" id="submit-btn">Analisar e Comparar com Histórico</button>
                             <div class="button-group">
@@ -740,7 +740,7 @@
                 }
             });
         }
-        setupFileInput('file_atual', 'wrapper_atual', 'text_atual', 'name_atual');
+        setupFileInput('file_recente', 'wrapper_recente', 'text_recente', 'name_recente');
         
         // NOVO: Configuração para o input de múltiplos arquivos
         setupFileInput('file_comparativa', 'wrapper_comparativa', 'text_comparativa', 'name_comparativa', true);
@@ -776,7 +776,7 @@
 
             const formView = document.getElementById('upload-form');
             const progressView = document.getElementById('progress-view');
-            const fileInput = document.getElementById('file_atual');
+            const fileInput = document.getElementById('file_recente');
             const formData = new FormData(formView);
 
             if (!fileInput.files || fileInput.files.length === 0) {
@@ -862,7 +862,7 @@
             closeBtn.addEventListener('click', () => {
                 toast.remove();
                 if (onCloseCallback) {
-                    onCloseCallback(); // Executa a atualização do KPI
+                    onCloseCallback(); // Executa a recenteização do KPI
                 }
             });
 

@@ -183,21 +183,21 @@
             <h3>Como os Casos são Priorizados?</h3>
             <div class="card">
                 <p>A prioridade de um caso é definida por um <strong>Score Ponderado</strong>, que responde a três perguntas:</p>
-                <ul>
+                <ul style="list-style-type: '→'; padding-left: 20px;">
                     <li><strong>Qual o risco para a operação?</strong> (Severidade e Prioridade do alerta)</li>
                     <li><strong>Nossa automação de self-healing está sendo eficiente?</strong> (A remediação falhou? Com que frequência?)</li>
                     <li><strong>Qual o impacto operacional?</strong> (Quantos alertas (ruído) este caso está gerando?)</li>
                 </ul>
                 <p>Casos com scores mais altos são os mais críticos e devem ser o foco principal da equipe. Para facilitar o entendimento, o próprio dashboard principal contém uma seção "Conceitos" que detalha essa lógica.</p>
             </div>
-
+            
             <h3>Análise Comparativa e de Tendência: Estamos Melhorando?</h3>
             <div class="card">
                 <p>A ferramenta oferece duas formas de análise comparativa, cada uma com um propósito estratégico distinto, refletindo as abas "Análise Padrão" e "Análise Comparativa" da interface principal.</p>
                 
                 <h4 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Análise de Tendência Contínua (Fluxo Padrão)</h4>
                 <p>Este é o fluxo principal, projetado para o acompanhamento da saúde operacional. A cada novo arquivo processado na aba "Análise Padrão", o sistema o compara automaticamente com o histórico mais recente. O resultado é um <strong>Relatório de Tendência</strong> que mede a evolução natural da operação, respondendo a perguntas como:</p>
-                <ul>
+                <ul style="list-style-type: '•';">
                     <li>Quantos problemas do período passado foram efetivamente resolvidos? (<strong>Taxa de Resolução</strong>)</li>
                     <li>Quantos problemas novos surgiram e exigem atenção? (<strong>Taxa de Novos Problemas</strong>)</li>
                     <li>Quais problemas são "crônicos" e persistem ao longo do tempo?</li>
@@ -206,8 +206,39 @@
                 <h4 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Análise Comparativa Direta (Fluxo Investigativo)</h4>
                 <p>A aba "Análise Comparativa" permite uma comparação pontual e direta entre quaisquer dois arquivos de dados. Esta é uma ferramenta poderosa para investigações específicas, como "Qual foi o impacto da implantação X na semana passada?" ou "Como o volume de alertas de hoje se compara com o do mesmo dia no mês anterior?".</p>
 
+                <h3 style="margin-top: 30px;">O Diagnóstico Rápido: A Inteligência do Relatório de Tendência</h3>
+                <p>O principal diferencial do Relatório de Tendência é o <strong>"Diagnóstico Rápido"</strong>, posicionado no topo da página. Ele aplica uma lógica de negócio para interpretar os dados e fornecer um veredito claro e acionável sobre o cenário recente. Os possíveis cenários são:</p>
+
                 <div class="highlight highlight-success">
-                    <strong>Ação Gerencial (80/20):</strong> Em ambos os tipos de análise, o relatório gerado apresenta um "Diagnóstico Rápido" que aponta a principal squad problemática. No fluxo de tendência contínua, este diagnóstico oferece um link direto para o plano de ação pré-filtrado da equipe, permitindo um direcionamento imediato e baseado em dados. Use a <strong>Taxa de Resolução</strong> como o principal KPI para medir a eficácia das equipes na solução de problemas de causa raiz.
+                    <strong>🏆 Excelência Operacional Atingida:</strong> O melhor cenário possível. Indica que todos os casos que exigiam ação foram resolvidos e nenhum novo surgiu.
+                </div>
+                <div class="highlight highlight-success">
+                    <strong>✅ Evolução Positiva:</strong> O número total de casos que exigem ação diminuiu. A operação está se tornando mais estável.
+                </div>
+                <div class="highlight highlight-info">
+                    <strong>➖ Estabilidade Neutra:</strong> O número de casos permaneceu o mesmo, com uma troca equilibrada entre problemas resolvidos e novos.
+                </div>
+                <div class="highlight highlight-warning">
+                    <strong>⚠️ Primeira Regressão:</strong> Um ponto de atenção crítico. A operação estava estável (sem casos) e agora registrou o surgimento de novos problemas.
+                </div>
+                <div class="highlight highlight-warning">
+                    <strong>⚠️ Alta Eficácia, Baixa Estabilidade:</strong> A equipe resolveu muitos problemas antigos, mas um volume quase igual de novos problemas surgiu. Indica um ciclo reativo de "apagar incêndios".
+                </div>
+                <div class="highlight highlight-warning">
+                    <strong>⚠️ Estagnação por Inércia:</strong> O número de casos não mudou porque os problemas antigos não foram resolvidos. Indica falta de ação ou dificuldade na resolução.
+                </div>
+                <div class="highlight highlight-danger">
+                    <strong>❌ Regressão:</strong> O pior cenário. O número total de casos que exigem ação aumentou, indicando uma piora na saúde operacional.
+                </div>
+
+                <div class="highlight highlight-success">
+                    <strong>Ação Gerencial (80/20):</strong> O Relatório de Tendência foi desenhado seguindo o princípio da "pirâmide invertida".
+                    <ol>
+                        <li><strong>Leia o Diagnóstico Rápido primeiro.</strong> Em menos de 10 segundos, você saberá o status da operação (melhorou, piorou, estagnou) e qual a principal equipe para acionar.</li>
+                        <li><strong>Use os links de ação.</strong> O diagnóstico oferece links diretos para os planos de ação pré-filtrados, permitindo um direcionamento imediato e baseado em dados.</li>
+                        <li><strong>Analise os detalhes (se necessário).</strong> Os gráficos e tabelas abaixo do diagnóstico servem como a evidência que suporta a conclusão, permitindo uma análise mais profunda caso seja necessário.</li>
+                    </ol>
+                    Use a <strong>Taxa de Resolução</strong> como o principal KPI para medir a eficácia das equipes na solução de problemas de causa raiz.
                 </div>
             </div>
         </section>

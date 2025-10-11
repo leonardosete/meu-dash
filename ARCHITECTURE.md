@@ -20,7 +20,7 @@ O sistema utiliza um banco de dados **SQLite** para persistir metadados sobre os
 - `src/app.py`: Ponto de entrada da aplicação Flask. Define as rotas (endpoints), gerencia as requisições e respostas HTTP e interage com a camada de serviço.
 - `src/services.py`: O coração da lógica de negócio. Orquestra o salvamento de arquivos, chama os módulos de análise, gerencia o banco de dados e coordena a geração dos relatórios.
 - `src/analisar_alertas.py`: Módulo que contém a lógica para analisar um único arquivo `.csv`. Ele lê o arquivo, o transforma em um dataframe do `pandas`, agrupa alertas em "Casos", calcula o Score de Prioridade e gera os dados base para os relatórios.
-- `src/analise_tendencia.py`: Módulo responsável por comparar dois resultados de análise (um atual e um anterior) e gerar o relatório de tendência, destacando novos problemas, problemas resolvidos e a evolução geral.
+- `src/analise_tendencia.py`: Módulo responsável por comparar dois resultados de análise (um recente e um anterior) e gerar o relatório de tendência, destacando novos problemas, problemas resolvidos e a evolução geral.
 - `src/context_builder.py`: Constrói o dicionário de contexto que é passado para os templates HTML, agregando todos os dados necessários para a renderização.
 - `src/gerador_paginas.py`: Utiliza o contexto e os templates para gerar o ecossistema de arquivos HTML (dashboard principal, planos de ação, etc.).
 - `data/`: Diretório persistido que armazena os arquivos de upload, os relatórios gerados e o banco de dados SQLite.
@@ -87,9 +87,9 @@ sequenceDiagram
     DB-->>Service: Retorna metadados do relatório anterior
     
     alt Análise de Tendência Aplicável
-        Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise leve do arquivo atual)
+        Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise leve do arquivo recente)
         Analysis-->>-Service: Retorna JSON temporário
-        Service->>+Analysis: Chama `gerar_relatorio_tendencia()` com JSON anterior e atual
+        Service->>+Analysis: Chama `gerar_relatorio_tendencia()` com JSON anterior e recente
         Analysis-->>-Service: Gera `comparativo_periodos.html`
     end
 

@@ -296,16 +296,16 @@ def upload_file():
         werkzeug.wrappers.Response: Uma resposta de redirecionamento para a página
         do relatório gerado ou de volta para a página inicial em caso de erro.
     """
-    file_atual = request.files.get("file_atual")
+    file_recente = request.files.get("file_recente")
 
-    if not file_atual or file_atual.filename == "":
+    if not file_recente or file_recente.filename == "":
         flash("Nenhum arquivo selecionado.", "error")
         return redirect(url_for("index"))
 
     try:
         # Delega toda a lógica de negócio para a camada de serviço
         result = services.process_upload_and_generate_reports(
-            file_atual=file_atual,
+            file_recente=file_recente,
             upload_folder=app.config["UPLOAD_FOLDER"],
             reports_folder=app.config["REPORTS_FOLDER"],
             db=db,

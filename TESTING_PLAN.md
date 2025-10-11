@@ -9,7 +9,7 @@ Este documento descreve os cenários de teste para validar a nova experiência d
 ## Cenário 1: Fluxo do Analista de Operações
 
 **Persona:** Analista de Operações
-**Objetivo:** Realizar uma análise de rotina, comparando um novo arquivo de dados com o histórico mais recente, e verificar os KPIs atualizados sem sair da página.
+**Objetivo:** Realizar uma análise de rotina, comparando um novo arquivo de dados com o histórico mais recente, e verificar os KPIs recenteizados sem sair da página.
 
 | Passo | Ação do Usuário | Resultado Esperado | Status |
 | :--- | :--- | :--- | :--- |
@@ -17,7 +17,7 @@ Este documento descreve os cenários de teste para validar a nova experiência d
 | 2 | Arrastar e soltar (ou selecionar) um arquivo `.csv` no campo de upload da aba "Análise Padrão". | O nome do arquivo aparece, e o texto "Clique ou arraste..." desaparece. | `[x]` |
 | 3 | Clicar no botão "Analisar e Comparar com Histórico". | O botão fica desabilitado com o texto "Processando...". | `[x]` |
 | 4 | Aguardar o processamento. | Uma notificação "toast" de sucesso aparece no canto da tela. O botão volta ao estado normal. | `[x]` |
-| 5 | Observar o dashboard de KPIs. | O dashboard de KPIs no topo da página é atualizado com os novos valores da análise recém-concluída. | `[x]` |
+| 5 | Observar o dashboard de KPIs. | O dashboard de KPIs no topo da página é recenteizado com os novos valores da análise recém-concluída. | `[x]` |
 | 6 | Clicar na "orelha" de link no card de KPI "Sucesso da Automação". | O relatório completo (`resumo_geral.html`) da nova análise é aberto em uma nova aba do navegador. | `[x]` |
 
 ---

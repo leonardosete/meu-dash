@@ -68,7 +68,7 @@ A melhor prática é automatizar a criação do Secret durante o deploy. O fluxo
     * **GitHub Actions:** Vá em `Settings > Secrets and variables > Actions` e crie um novo "Repository secret" (ex: `ADMIN_TOKEN_PROD`).
     * **Azure DevOps:** Use "Variable groups" e marque a variável como secreta.
 
-2. **Use o Segredo no Pipeline:** No seu script de pipeline, use a variável para criar ou atualizar o Kubernetes Secret de forma segura. O comando `kubectl apply` com `--dry-run` é uma forma robusta de fazer isso.
+2. **Use o Segredo no Pipeline:** No seu script de pipeline, use a variável para criar ou recenteizar o Kubernetes Secret de forma segura. O comando `kubectl apply` com `--dry-run` é uma forma robusta de fazer isso.
 
     *Exemplo conceitual para um passo no GitHub Actions:*
 
@@ -97,7 +97,7 @@ Este comando é útil quando você quer começar do zero, como se tivesse acabad
 
 A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados. O `Makefile` automatiza este processo.
 
-* **Para aplicar novas migrações** ou garantir que o banco de dados esteja atualizado, execute:
+* **Para aplicar novas migrações** ou garantir que o banco de dados esteja recenteizado, execute:
 
     ```bash
     make migrate

@@ -16,12 +16,7 @@
                         // Verifica se o caminho de volta precisa de ajuste de diretório
                         // Se o link original já tem '../', o novo link também precisa.
                         const isSubdirectory = backButton.getAttribute('href').startsWith('../');
-                        if (isSubdirectory && !backPage.startsWith('../')) {
-                            backButton.href = '../' + backPage;
-                        } else {
-                            backButton.href = backPage;
-                        }
-                        backButton.href = backPage;
+                        backButton.href = (isSubdirectory && !backPage.startsWith('../')) ? '../' + backPage : backPage;
                         backButton.textContent = '← Voltar para a Análise';
                     }
                 }

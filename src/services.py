@@ -59,7 +59,7 @@ def _enforce_report_limit(db, Report):
 
 
 def process_upload_and_generate_reports(
-    file_atual,
+    file_recente,
     upload_folder: str,
     reports_folder: str,
     db,
@@ -82,7 +82,7 @@ def process_upload_and_generate_reports(
     8. Aplicar a política de retenção para limpar relatórios antigos.
 
     Args:
-        file_atual (werkzeug.datastructures.FileStorage): O objeto do arquivo enviado
+        file_recente (werkzeug.datastructures.FileStorage): O objeto do arquivo enviado
             pelo Flask.
         upload_folder (str): O caminho absoluto para a pasta de uploads.
         reports_folder (str): O caminho absoluto para a pasta onde os relatórios
@@ -99,12 +99,12 @@ def process_upload_and_generate_reports(
         ocorrer uma falha no processo.
     """
     # 1. Salvar arquivo e preparar ambiente
-    filename_atual = secure_filename(file_atual.filename)
-    filepath_atual = os.path.join(
-        upload_folder, f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_atual}"
+    filename_recente = secure_filename(file_recente.filename)
+    filepath_recente = os.path.join(
+        upload_folder, f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_recente}"
     )
-    file_atual.save(filepath_atual)
-    date_range_atual = get_date_range_from_file(filepath_atual)
+    file_recente.save(filepath_recente)
+    date_range_recente = get_date_range_from_file(filepath_recente)
 
     run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     output_dir = os.path.join(reports_folder, run_folder_name)
@@ -119,7 +119,7 @@ def process_upload_and_generate_reports(
     previous_report_for_trend = None
 
     if last_trend_analysis_obj:
-        # Se já existe uma tendência, o próximo ponto de comparação é o relatório 'atual' da última tendência.
+        # Se já existe uma tendência, o próximo ponto de comparação é o relatório 'recente' da última tendência.
         previous_report_for_trend = last_trend_analysis_obj.current_report
         logger.info(
             f"Última análise de tendência encontrada. Usando o relatório '{previous_report_for_trend.original_filename}' como base para a próxima tendência."
@@ -147,31 +147,31 @@ def process_upload_and_generate_reports(
             if previous_report_for_trend.date_range
             else None
         )
-        date_range_atual_obj = (
-            datetime.strptime(date_range_atual.split(" a ")[0], "%d/%m/%Y")
-            if date_range_atual
+        date_range_recente_obj = (
+            datetime.strptime(date_range_recente.split(" a ")[0], "%d/%m/%Y")
+            if date_range_recente
             else None
         )
 
         if (
             date_range_anterior_obj
-            and date_range_atual_obj
-            and date_range_atual_obj > date_range_anterior_obj
+            and date_range_recente_obj
+            and date_range_recente_obj > date_range_anterior_obj
         ):
             logger.info("Período do upload é mais recente. Gerando tendência...")
             temp_analysis_results = analisar_arquivo_csv(
-                filepath_atual, output_dir, light_analysis=True
+                filepath_recente, output_dir, light_analysis=True
             )
             output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
 
             gerar_relatorio_tendencia(
                 json_anterior=previous_report_for_trend.json_summary_path,
-                json_atual=temp_analysis_results["json_path"],
+                json_recente=temp_analysis_results["json_path"],
                 csv_anterior_name=previous_report_for_trend.original_filename,
-                csv_atual_name=filename_atual,
+                csv_recente_name=filename_recente,
                 output_path=output_trend_path,
                 date_range_anterior=previous_report_for_trend.date_range,
-                date_range_atual=date_range_atual,
+                date_range_recente=date_range_recente,
             )
             trend_report_path_relative = os.path.basename(output_trend_path)
             logger.info(f"Relatório de tendência gerado em: {output_trend_path}")
@@ -197,7 +197,7 @@ def process_upload_and_generate_reports(
 
     # 3. Análise Principal (Completa)
     analysis_results = analisar_arquivo_csv(
-        input_file=filepath_atual, output_dir=output_dir, light_analysis=False
+        input_file=filepath_recente, output_dir=output_dir, light_analysis=False
     )
 
     # 4. Construção do Contexto
@@ -221,10 +221,10 @@ def process_upload_and_generate_reports(
 
     # 6. Salvar registro no banco de dados
     new_report = Report(
-        original_filename=filename_atual,
+        original_filename=filename_recente,
         report_path=summary_html_path,
         json_summary_path=analysis_results["json_path"],
-        date_range=date_range_atual,
+        date_range=date_range_recente,
     )
     db.session.add(new_report)
 
@@ -288,9 +288,9 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
                 "Não foi possível determinar a ordem cronológica dos arquivos."
             )
 
-        filepath_atual, filepath_anterior = sorted_paths
-        filename_atual = os.path.basename(filepath_atual).replace(
-            f"temp_{os.path.basename(filepath_atual).split('_')[1]}_", ""
+        filepath_recente, filepath_anterior = sorted_paths
+        filename_recente = os.path.basename(filepath_recente).replace(
+            f"temp_{os.path.basename(filepath_recente).split('_')[1]}_", ""
         )
         filename_anterior = os.path.basename(filepath_anterior).replace(
             f"temp_{os.path.basename(filepath_anterior).split('_')[1]}_", ""
@@ -299,13 +299,13 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
         run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}_compare"
         output_dir = os.path.join(reports_folder, run_folder_name)
         output_dir_anterior = os.path.join(output_dir, "anterior")
-        output_dir_atual = os.path.join(output_dir, "atual")
+        output_dir_recente = os.path.join(output_dir, "recente")
 
         logger.info(
-            f"Executando análise completa para o arquivo ATUAL: {filename_atual}"
+            f"Executando análise completa para o arquivo ATUAL: {filename_recente}"
         )
-        results_atual = analisar_arquivo_csv(
-            filepath_atual, output_dir_atual, light_analysis=False
+        results_recente = analisar_arquivo_csv(
+            filepath_recente, output_dir_recente, light_analysis=False
         )
         logger.info(
             f"Executando análise completa para o arquivo ANTERIOR: {filename_anterior}"
@@ -317,12 +317,12 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
         output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
         gerar_relatorio_tendencia(
             json_anterior=results_anterior["json_path"],
-            json_atual=results_atual["json_path"],
+            json_recente=results_recente["json_path"],
             csv_anterior_name=filename_anterior,
-            csv_atual_name=filename_atual,
+            csv_recente_name=filename_recente,
             output_path=output_trend_path,
             date_range_anterior=get_date_range_from_file(filepath_anterior),
-            date_range_atual=get_date_range_from_file(filepath_atual),
+            date_range_recente=get_date_range_from_file(filepath_recente),
             is_direct_comparison=True,
         )
         return {

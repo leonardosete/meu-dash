@@ -83,7 +83,7 @@ def generate_executive_summary_html(
             + ponto_positivo_texto
             + """</li><li style="color: var(--danger-color);"><strong>Ponto de Atenção:</strong> A operação continua instável, gerando <strong>"""
             + str(kpis["new"])
-            + """ novos casos</strong> que consumirão tempo manual da equipe.</li></ul></span>"""
+            + """ novos casos</strong> que precisam de atuaçao - tratar causa raiz ou criar remediação.</li></ul></span>"""
         )
         verdict_class = "highlight-warning"
     elif kpis["total_p2"] < kpis["total_p1"]:
@@ -280,19 +280,19 @@ def generate_kpis_html(kpis):
             <div class="kpi-flow-item" style="flex:auto;"><div class="kpi-card-enhanced">
                 <p class="kpi-value" style="color: var(--persistent-color);">{kpis["persistent"]}</p>
                 <p class="kpi-label">Casos Persistentes</p>
-                <p class="kpi-subtitle" title="Problemas que já existiam e continuam sem remediação. O número de alertas reflete o volume do período ATUAL, e a variação em parênteses mostra se o impacto desses problemas aumentou ou diminuiu.">{kpis["alerts_persistent"]} alertas{variation_text}</p>
+                <p class="kpi-subtitle" title="Problemas que já existiam e continuam sem remediação. O número de alertas reflete o volume do período recente, e a variação em parênteses mostra se o impacto desses problemas aumentou ou diminuiu.">{kpis["alerts_persistent"]} alertas{variation_text}</p>
             </div></div>
         </div>
         <div class="kpi-flow-connector icon-plus"></div>
         <div class="kpi-flow-item"><div class="kpi-card-enhanced">
             <p class="kpi-value" style="color: var(--warning-color);">{kpis["new"]}</p>
             <p class="kpi-label">Novos Casos</p>
-            <p class="kpi-subtitle" title="Problemas que não existiam no período anterior e que surgiram no período atual já necessitando de ação.">{kpis["alerts_new"]} alertas</p>
+            <p class="kpi-subtitle" title="Problemas que não existiam no período anterior e que surgiram no período recente já necessitando de ação.">{kpis["alerts_new"]} alertas</p>
         </div></div>
         <div class="kpi-flow-connector">=</div>
         <div class="kpi-flow-item"><div class="kpi-card-enhanced">
             <p class="kpi-value" style="color: {"var(--danger-color)" if kpis["total_p2"] > kpis["total_p1"] else "var(--success-color)"};">{saldo_icon} {kpis["total_p2"]}</p>
-            <p class="kpi-label">Saldo Atual de Casos</p>
+            <p class="kpi-label">Saldo Recente de Casos</p>
             <p class="kpi-subtitle" title="Resultado final: a soma dos Casos Persistentes com os Novos Casos. Representa o total de problemas que exigem ação neste período.">{kpis["alerts_total_p2"]} alertas</p>
         </div></div>
     </div>"""
@@ -327,7 +327,7 @@ def generate_kpis_html(kpis):
         imp_gauge_color = "var(--danger-color)"
         imp_card_bg = "background-color: rgba(231, 74, 59, 0.1);"
 
-    # --- Card 2: Taxa de Novos Problemas (Período Atual) ---
+    # --- Card 2: Taxa de Novos Problemas (Período Recente) ---
     regression_percent = kpis.get("regression_rate", 0)
     new_count = kpis["new"]
     total_current = kpis["total_p2"]
@@ -362,7 +362,7 @@ def generate_kpis_html(kpis):
                 </div>
             </div>
             <div class="kpi-split-layout__text">
-                <h2>Taxa de Novos Problemas (Período Atual)</h2>
+                <h2>Taxa de Novos Problemas (Período Recente)</h2>
                 <p>Dos <strong>{total_current} casos</strong> atuais, <strong>{new_count} são novos</strong>, representando uma taxa de regressão.</p>
                 <small>Este KPI mede a capacidade da operação de prevenir novos problemas.</small>
             </div>
@@ -427,7 +427,7 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
         table_body += f"<td>{bar_html}</td><td class='center'>{p2_count}</td><td class='center'>{p1_count}</td><td class='center' style='font-weight: bold;'>{num_cases}</td></tr>"
 
         squad_cases_df = detailed_df[detailed_df["assignment_group"] == name]
-        details_content = "<h4>Detalhes dos Casos Persistentes</h4><table class='sub-table'><thead><tr><th>Problema</th><th>Recurso Afetado</th><th>Alertas (Atual)</th><th>Alertas (Anterior)</th></tr></thead><tbody>"
+        details_content = "<h4>Detalhes dos Casos Persistentes</h4><table class='sub-table'><thead><tr><th>Problema</th><th>Recurso Afetado</th><th>Alertas (Recente)</th><th>Alertas (Anterior)</th></tr></thead><tbody>"
         for _, case_row in squad_cases_df.iterrows():
             details_content += f"<tr><td>{escape(case_row['short_description'])}</td><td>{escape(case_row['cmdb_ci'])}</td><td>{int(case_row['alert_count_p2'])}</td><td>{int(case_row['alert_count_p1'])}</td></tr>"
         details_content += "</tbody></table>"
@@ -523,17 +523,17 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
 
 def gerar_relatorio_tendencia(
     json_anterior: str,
-    json_atual: str,
+    json_recente: str,
     csv_anterior_name: str,
-    csv_atual_name: str,
+    csv_recente_name: str,
     output_path: str,
     date_range_anterior: str = None,
-    date_range_atual: str = None,
+    date_range_recente: str = None,
     is_direct_comparison: bool = False,
 ):
     """Função principal para gerar o relatório de tendência."""
     df_p1 = load_summary_from_json(json_anterior)
-    df_p2 = load_summary_from_json(json_atual)
+    df_p2 = load_summary_from_json(json_recente)
 
     if df_p1 is None or df_p2 is None:
         logger.error(
@@ -606,9 +606,9 @@ def gerar_relatorio_tendencia(
         if date_range_anterior
         else ""
     )
-    periodo_atual_text = f"<code>{escape(os.path.basename(csv_atual_name))}</code>" + (
-        f" <span style='color: var(--text-secondary-color);'>({escape(date_range_atual)})</span>"
-        if date_range_atual
+    periodo_recente_text = f"<code>{escape(os.path.basename(csv_recente_name))}</code>" + (
+        f" <span style='color: var(--text-secondary-color);'>({escape(date_range_recente)})</span>"
+        if date_range_recente
         else ""
     )
 
@@ -627,7 +627,7 @@ def gerar_relatorio_tendencia(
     <h1>Análise Comparativa de Períodos</h1>
     <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Foco nos casos onde a remediação (self-healing) falhou ou não existe. </p>
     """
-    body += f"<div class='definition-box' style='margin-top: 30px;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Atual:</strong> {periodo_atual_text}</div>"
+    body += f"<div class='definition-box' style='margin-top: 30px;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Recente:</strong> {periodo_recente_text}</div>"
     body += generate_executive_summary_html(
         kpis, persistent_squads_summary, new_cases_df, is_direct_comparison
     )
@@ -640,14 +640,14 @@ def gerar_relatorio_tendencia(
     body += '<div id="tab-persistentes" class="tab-content active"><div class="definition-box">Casos que já precisavam de ação no período anterior e continuam precisando. <strong>Clique em uma linha da tabela para ver os detalhes.</strong></div>'
     body += (
         generate_persistent_cases_table_html(
-            persistent_squads_summary, both_cases_df, "Anterior", "Atual"
+            persistent_squads_summary, both_cases_df, "Anterior", "Recente"
         )
         + "</div>"
     )
-    body += '<div id="tab-novos-problemas" class="tab-content"><div class="definition-box">Problemas que não precisavam de ação no período anterior, mas que surgiram no período atual já necessitando de uma.</div>'
+    body += '<div id="tab-novos-problemas" class="tab-content"><div class="definition-box">Problemas que não precisavam de ação no período anterior, mas que surgiram no período recente já necessitando de uma.</div>'
     body += (
         generate_trend_table_html(
-            new_problems_summary.set_index("short_description"), "Anterior", "Atual"
+            new_problems_summary.set_index("short_description"), "Anterior", "Recente"
         )
         + "</div></div></div>"
     )
@@ -657,7 +657,7 @@ def gerar_relatorio_tendencia(
     body += '<div id="tab-variacao-squad" class="tab-content active"><div class="definition-box">Visão geral da variação no volume de alertas por squad, considerando todos os casos que necessitam de ação.</div>'
     body += (
         generate_trend_table_html(
-            squad_trends_merged.set_index("assignment_group"), "Anterior", "Atual"
+            squad_trends_merged.set_index("assignment_group"), "Anterior", "Recente"
         )
         + "</div>"
     )
@@ -666,7 +666,7 @@ def gerar_relatorio_tendencia(
         generate_trend_table_html(
             varying_problems_summary.set_index("short_description"),
             "Anterior",
-            "Atual",
+            "Recente",
         )
         + "</div></div></div>"
     )
@@ -678,7 +678,7 @@ def gerar_relatorio_tendencia(
         generate_trend_table_html(
             resolved_problems_summary.set_index("short_description"),
             "Anterior",
-            "Atual",
+            "Recente",
         )
         + "</div></div></div>"
     )
@@ -774,23 +774,23 @@ def main_cli():
         help="Caminho para o arquivo de resumo JSON do período anterior.",
     )
     parser.add_argument(
-        "json_atual", help="Caminho para o arquivo de resumo JSON do período atual."
+        "json_recente", help="Caminho para o arquivo de resumo JSON do período recente."
     )
     parser.add_argument(
         "csv_anterior_name",
         help="Nome do arquivo CSV original do período anterior.",
     )
     parser.add_argument(
-        "csv_atual_name", help="Nome do arquivo CSV original do período atual."
+        "csv_recente_name", help="Nome do arquivo CSV original do período recente."
     )
     args = parser.parse_args()
 
     output_path = "resumo_tendencia.html"  # Saída padrão para CLI
     gerar_relatorio_tendencia(
         args.json_anterior,
-        args.json_atual,
+        args.json_recente,
         args.csv_anterior_name,
-        args.csv_atual_name,
+        args.csv_recente_name,
         output_path,
     )
 
