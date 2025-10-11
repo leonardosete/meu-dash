@@ -46,5 +46,6 @@ Este documento descreve o plano de ação para redesenhar a interface principal 
 - [x] **Validar a Experiência do Usuário (UX) e o Fluxo de Trabalho:**
   - [x] **Teste de Aceitação do Analista:** O fluxo de "Análise Padrão" foi validado, garantindo que o upload, processamento e recarregamento da página funcionam de forma intuitiva.
   - [x] **Teste de Aceitação do Gestor:** O fluxo de "Análise Comparativa" foi validado, confirmando a clareza e a facilidade de uso.
+  - [x] **Coleta de Feedback (Gestor):** O feedback da persona "Gestor" foi coletado, resultando em melhorias significativas no relatório de tendência, como o "Diagnóstico Rápido" e a geração de planos de ação pré-filtrados.
   - [x] **Revisão de Acessos Rápidos:** Todos os links na barra lateral e nos formulários foram verificados e estão funcionando corretamente.
-  - **Coletar Feedback:** Apresentar a nova interface para um usuário de cada persona e coletar feedback qualitativo.
+  - [ ] **Coletar Feedback (Analista):** Apresentar a nova interface para um usuário da persona "Analista" para validar o fluxo de trabalho do dia a dia.

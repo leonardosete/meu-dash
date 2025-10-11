@@ -54,20 +54,22 @@ def load_summary_from_json(filepath: str):
         return None
 
 
-def generate_executive_summary_html(kpis, persistent_summary, new_cases_summary):
+def generate_executive_summary_html(
+    kpis, persistent_summary, new_cases_summary, is_direct_comparison: bool
+):
     """Gera um resumo executivo com os principais insights e pontos de ação."""
     verdict_text = ""
     verdict_class = "highlight-neutral"
 
     # 1. O Veredito Geral
     if kpis["total_p2"] < kpis["total_p1"]:
-        verdict_text = "<strong>Veredito: Melhora.</strong> O número total de casos que exigem ação diminuiu."
+        verdict_text = "✅ <strong>Veredito: Melhora.</strong> O número total de casos que exigem ação diminuiu."
         verdict_class = "highlight-success"
     elif kpis["total_p2"] > kpis["total_p1"]:
-        verdict_text = "<strong>Veredito: Piora.</strong> O número total de casos que exigem ação aumentou, indicando uma regressão."
+        verdict_text = "❌ <strong>Veredito: Piora.</strong> O número total de casos que exigem ação aumentou, indicando uma regressão."
         verdict_class = "highlight-danger"
     else:
-        verdict_text = "<strong>Veredito: Estabilidade.</strong> O número total de casos permaneceu o mesmo."
+        verdict_text = "➖ <strong>Veredito: Estabilidade.</strong> O número total de casos permaneceu o mesmo."
 
     # 2. Principal Ponto de Ação (Foco no maior problema)
     action_point = ""
@@ -76,17 +78,21 @@ def generate_executive_summary_html(kpis, persistent_summary, new_cases_summary)
         sanitized_squad_name = re.sub(
             r"[^a-zA-Z0-9_-]", "", top_new_squad.replace(" ", "_")
         )
-        # ALTERAÇÃO: O link agora aponta para o plano de ação da squad.
-        plan_path = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html"
-        action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_new_squad)}\'</strong> foi a que mais gerou novos problemas. <a href="{plan_path}" style="font-weight: 600;">Ver plano de ação.</a>'
+        if is_direct_comparison:
+            action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad '{escape(top_new_squad)}'</strong> foi a que mais gerou novos problemas. Focar a investigação nesta equipe."
+        else:
+            action_plan_url = f"atuar-{sanitized_squad_name}.html"
+            action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_new_squad)}\'</strong> foi a que mais gerou novos problemas. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
     elif not persistent_summary.empty:
         top_persistent_squad = persistent_summary.index[0]
         sanitized_squad_name = re.sub(
             r"[^a-zA-Z0-9_-]", "", top_persistent_squad.replace(" ", "_")
         )
-        # ALTERAÇÃO: O link agora aponta para o plano de ação da squad.
-        plan_path = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html"
-        action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_persistent_squad)}\'</strong> concentra o maior número de problemas persistentes. <a href="{plan_path}" style="font-weight: 600;">Ver plano de ação.</a>'
+        if is_direct_comparison:
+            action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad '{escape(top_persistent_squad)}'</strong> concentra o maior número de problemas persistentes. Ação de causa raiz é necessária."
+        else:
+            action_plan_url = f"atuar-{sanitized_squad_name}.html"
+            action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_persistent_squad)}\'</strong> concentra o maior número de problemas persistentes. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
 
     # 3. Principal Vitória (Reconhecimento)
     recognition_point = ""
@@ -568,7 +574,7 @@ def gerar_relatorio_tendencia(
 
     body += f"<div class='card'>{generate_kpis_html(kpis)}</div>"
     body += generate_executive_summary_html(
-        kpis, persistent_squads_summary, new_cases_df
+        kpis, persistent_squads_summary, new_cases_df, is_direct_comparison
     )
 
     chevron_svg_collapsible = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>'
