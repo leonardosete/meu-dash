@@ -48,7 +48,7 @@ Este documento descreve os cenários de teste para validar a nova experiência d
 | 2 | Clicar no link "Documentação Técnica" na barra lateral. | O `doc_tecnica.html` abre em uma nova aba. | `[x]` |
 | 3 | Clicar no link "Ver Última Análise de Tendência" (se disponível). | O último relatório de tendência abre em uma nova aba. | `[x]` |
 | 4 | Clicar no link "Ver Histórico de Análises" no card da "Análise Padrão". | O usuário é redirecionado para a página `/relatorios`. | `[x]` |
-| 5 | Clicar no link "Acesso Admin" no rodapé do formulário. | O usuário é redirecionado para a página de login de administrador. | `[x]` |
+| 5 | Clicar no card "Acesso Administrativo" na barra lateral. | O usuário é redirecionado para a página de login de administrador. | `[x]` |
 
 ---
 

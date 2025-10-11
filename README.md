@@ -97,8 +97,8 @@ A documentação técnica e gerencial do projeto está disponível publicamente 
 ### ✨ Principais Funcionalidades
 
 1. 🧠 **Análise Inteligente**: Identifica problemas únicos (Casos) e os prioriza com base em Risco, Ineficiência e Impacto.
-2. 📊 **Geração de Relatórios**: Cria dashboards HTML interativos com KPIs e gráficos. O dashboard principal (`resumo_geral.html`) inclui uma seção "Conceitos" que explica a lógica da análise.
-3. 📋 **Planos de Ação Acionáveis**: Gera um plano de ação geral e editável (`atuar.html`) e, para facilitar a delegação, cria planos de ação pré-filtrados por squad (`atuar-<squad>.html`).
+2. 📊 **Geração de Relatórios**: Cria dashboards HTML interativos com KPIs, gráficos e uma seção de "Conceitos" que explica a lógica da análise.
+3. 📋 **Planos de Ação Acionáveis**: O "Diagnóstico Rápido" no relatório de tendência oferece um link direto para um plano de ação pré-filtrado por squad (`atuar-<squad>.html`), conectando o insight à ação e facilitando a delegação.
 4. 📈 **Análise de Tendência Contínua**: A cada novo upload, o sistema identifica o último período analisado e gera um relatório comparativo (`comparativo_periodos.html`), criando uma cadeia contínua de comparações que mostra a evolução dos problemas, a taxa de resolução e os problemas persistentes ao longo do tempo.
 5. ✅ **Validação da Qualidade dos Dados**: Detecta e isola alertas com dados de remediação inválidos (`qualidade_dados_remediacao.html`=> `invalid_self_healing_status.csv`), garantindo a confiabilidade da análise e notificando no dashboard principal.
 6. 🗂️ **Histórico de Análises**: Mantém um histórico de todas as análises de tendência geradas, permitindo acesso rápido aos relatórios comparativos anteriores diretamente da página inicial.
