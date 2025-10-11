@@ -73,13 +73,17 @@ def generate_executive_summary_html(kpis, persistent_summary, new_cases_summary)
     action_point = ""
     if not new_cases_summary.empty:
         top_new_squad = new_cases_summary.groupby("assignment_group").size().idxmax()
-        sanitized_squad_name = re.sub(r"[^a-zA-Z0-9_-]", "", top_new_squad.replace(" ", "_"))
+        sanitized_squad_name = re.sub(
+            r"[^a-zA-Z0-9_-]", "", top_new_squad.replace(" ", "_")
+        )
         # ALTERAÇÃO: O link agora aponta para o plano de ação da squad.
         plan_path = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html"
         action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_new_squad)}\'</strong> foi a que mais gerou novos problemas. <a href="{plan_path}" style="font-weight: 600;">Ver plano de ação.</a>'
     elif not persistent_summary.empty:
         top_persistent_squad = persistent_summary.index[0]
-        sanitized_squad_name = re.sub(r"[^a-zA-Z0-9_-]", "", top_persistent_squad.replace(" ", "_"))
+        sanitized_squad_name = re.sub(
+            r"[^a-zA-Z0-9_-]", "", top_persistent_squad.replace(" ", "_")
+        )
         # ALTERAÇÃO: O link agora aponta para o plano de ação da squad.
         plan_path = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html"
         action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_persistent_squad)}\'</strong> concentra o maior número de problemas persistentes. <a href="{plan_path}" style="font-weight: 600;">Ver plano de ação.</a>'
