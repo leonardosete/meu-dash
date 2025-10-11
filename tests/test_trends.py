@@ -59,7 +59,7 @@ def test_trend_history_on_index_page(client):
 
     # THEN: Verifica se o link para a análise de tendência está na página
     response_data = response.get_data(as_text=True)
-    assert "Ver Última Análise de Tendência" in response_data
+    assert "Análise de Tendência" in response_data
     assert trend_run_folder in response_data
     assert trend_filename in response_data
 

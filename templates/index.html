@@ -540,8 +540,8 @@
             <a href="{{ kpi_summary.report_url }}" class="side-card highlight-pulse" style="border-color: var(--accent-color); background: linear-gradient(135deg, rgba(59, 139, 236, 0.25), var(--card-color));">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-color);"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                 <div class="side-card-text">
-                    <h3>Acessar Análise Padrão</h3>
-                    <p>Análise completa mais recente.</p>
+                    <h3> Análise Padrão Completa</h3>
+                    <p>Gerado em: {{ last_action_plan.date | localtime }}</p>
                 </div>
             </a>
             {% endif %}
@@ -550,7 +550,7 @@
             <a href="{{ last_action_plan.url }}" class="side-card action-plan-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
                 <div class="side-card-text">
-                    <h3>Plano de Ação</h3>
+                    <h3> Plano de Ação</h3>
                     <p>Gerado em: {{ last_action_plan.date | localtime }}</p>
                 </div>
             </a>
@@ -561,7 +561,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
                 <div class="side-card-text">
                     <a href="{{ trend_history[0].url }}" style="text-decoration: none; color: inherit;">
-                        <h3>Ver Última Análise de Tendência</h3>
+                        <h3> Análise de Tendência</h3>
                         <p>Gerada em: {{ trend_history[0].date | localtime }}</p>
                     </a>
                     
