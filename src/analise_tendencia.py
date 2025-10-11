@@ -61,15 +61,40 @@ def generate_executive_summary_html(
     verdict_text = ""
     verdict_class = "highlight-neutral"
 
-    # 1. O Veredito Geral
-    if kpis["total_p2"] < kpis["total_p1"]:
-        verdict_text = "✅ <strong>Veredito: Melhora.</strong> O número total de casos que exigem ação diminuiu."
+    # 1. O Veredito Geral - A ordem das condições é importante
+    if kpis["total_p1"] == 0 and kpis["total_p2"] > 0:
+        verdict_text = "⚠️ <strong>Cenário: Primeira Regressão.</strong> A operação, que estava estável, registrou o surgimento de novos problemas. É um ponto de atenção crítico para evitar a degradação do serviço."
+        verdict_class = "highlight-warning"
+    elif kpis["total_p2"] == 0 and kpis["total_p1"] > 0:
+        verdict_text = "🏆 <strong>Cenário: Excelência Operacional Atingida.</strong> Todos os casos do período anterior foram resolvidos e nenhum problema novo surgiu. A operação atingiu um estado de estabilidade ideal."
         verdict_class = "highlight-success"
     elif kpis["total_p2"] > kpis["total_p1"]:
-        verdict_text = "❌ <strong>Veredito: Piora.</strong> O número total de casos que exigem ação aumentou, indicando uma regressão."
+        verdict_text = "❌ <strong>Cenário: Regressão.</strong> O número total de casos que exigem ação aumentou. A piora é uma combinação de problemas persistentes não resolvidos e o surgimento de novos. É crucial atacar ambas as frentes para reverter a tendência."
         verdict_class = "highlight-danger"
+    elif kpis["resolved"] > 0 and (kpis["new"] / kpis["resolved"]) > 0.75:
+        ponto_positivo_texto = (
+            "<strong>Todos os casos</strong> do período anterior foram resolvidos."
+            if kpis["improvement_rate"] == 100
+            else "Alta eficácia na resolução de casos do período anterior."
+        )
+        verdict_text = (
+            """⚠️ <strong>Cenário: Alta Eficácia, Baixa Estabilidade.</strong><br>
+        <span style="display: block; margin-top: 10px; font-size: 0.95em;">A análise mostra dois pontos distintos:<ul><li style="color: var(--success-color);"><strong>Ponto Positivo:</strong> """
+            + ponto_positivo_texto
+            + """</li><li style="color: var(--danger-color);"><strong>Ponto de Atenção:</strong> A operação continua instável, gerando <strong>"""
+            + str(kpis["new"])
+            + """ novos casos</strong> que consumirão tempo manual da equipe.</li></ul></span>"""
+        )
+        verdict_class = "highlight-warning"
+    elif kpis["total_p2"] < kpis["total_p1"]:
+        verdict_text = "✅ <strong>Cenário: Evolução Positiva.</strong> O número total de casos diminuiu e a quantidade de novos problemas foi controlada. A operação está se tornando mais estável e eficiente."
+        verdict_class = "highlight-success"
+    elif kpis["total_p1"] == kpis["total_p2"] and kpis["resolved"] == 0:
+        verdict_text = "⚠️ <strong>Cenário: Estagnação por Inércia.</strong> O número de casos não mudou porque os problemas antigos não foram resolvidos. A ação de causa raiz é necessária."
+        verdict_class = "highlight-warning"
     else:
-        verdict_text = "➖ <strong>Veredito: Estabilidade.</strong> O número total de casos permaneceu o mesmo."
+        verdict_text = "➖ <strong>Cenário: Estabilidade Neutra.</strong> O número total de casos permaneceu o mesmo, com uma troca equilibrada entre problemas resolvidos e novos."
+        verdict_class = "highlight-info"
 
     # 2. Principal Ponto de Ação (Foco no maior problema)
     action_point = ""
@@ -84,7 +109,8 @@ def generate_executive_summary_html(
         if is_direct_comparison:
             action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad '{squad_highlight_html}'</strong> foi a que mais gerou novos problemas. Focar a investigação nesta equipe."
         else:
-            action_plan_url = f"atuar-{sanitized_squad_name}.html"
+            # CORREÇÃO: Aponta para o novo caminho e nome do arquivo de plano de ação.
+            action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
             action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{squad_highlight_html}\'</strong> foi a que mais gerou novos problemas. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
     elif not persistent_summary.empty:
         top_persistent_squad = persistent_summary.index[0]
@@ -95,7 +121,8 @@ def generate_executive_summary_html(
         if is_direct_comparison:
             action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad '{squad_highlight_html}'</strong> concentra o maior número de problemas persistentes. Ação de causa raiz é necessária."
         else:
-            action_plan_url = f"atuar-{sanitized_squad_name}.html"
+            # CORREÇÃO: Aponta para o novo caminho e nome do arquivo de plano de ação.
+            action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
             action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{squad_highlight_html}\'</strong> concentra o maior número de problemas persistentes. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
 
     # 3. Principal Vitória (Reconhecimento)
@@ -103,13 +130,19 @@ def generate_executive_summary_html(
     if kpis["resolved"] > 0:
         recognition_point = f"<li>✅ <strong>Principal Vitória:</strong> <strong>{kpis['resolved']} casos</strong> foram resolvidos desde o último período, demonstrando eficácia na remediação."
 
+    # 4. Link para o Plano de Ação Geral
+    general_action_plan_link = ""
+    if not is_direct_comparison:
+        general_action_plan_link = '<li>📋 <strong>Plano de Ação Geral:</strong> <a href="atuar.html" style="font-weight: 600;">Ver todos os casos que necessitam de ação.</a>'
+
     summary_html = f"""
-    <div class="card {verdict_class}" style="margin-bottom: 30px;">
+    <div class="card highlight {verdict_class}" style="margin-bottom: 30px;">
         <h2 style="margin-top: 0; border: none;">Diagnóstico Rápido</h2>
         <p style="font-size: 1.1em; margin-bottom: 20px;">{verdict_text}</p>
         <ul style="text-align: left; padding-left: 20px; font-size: 1.05em; line-height: 1.8;">
             {action_point}
             {recognition_point}
+            {general_action_plan_link}
         </ul>
     </div>
     """
@@ -154,7 +187,7 @@ def calculate_kpis_and_merged_df(df_p1, df_p2):
         "alert_count_p1"
     ].sum()
 
-    improvement_rate = (resolved / total_p1 * 100) if total_p1 > 0 else 100
+    improvement_rate = (resolved / total_p1 * 100) if total_p1 > 0 else 0
     # NOVO: Calcula a "Taxa de Regressão" ou "Taxa de Novos Problemas"
     regression_rate = (new / total_p2 * 100) if total_p2 > 0 else 0
 
@@ -202,7 +235,16 @@ def generate_kpis_html(kpis):
     """Gera o HTML para a seção de KPIs do panorama geral."""
     saldo_icon = ""
 
-    # NOVO: Calcula a variação de alertas nos casos persistentes
+    if kpis["total_p2"] > kpis["total_p1"]:
+        saldo_icon = (
+            "<span style='font-size: 0.7em; color: var(--danger-color);'>▲</span>"
+        )
+    elif kpis["total_p2"] < kpis["total_p1"]:
+        saldo_icon = (
+            "<span style='font-size: 0.7em; color: var(--success-color);'>▼</span>"
+        )
+
+    # Calcula a variação de alertas nos casos persistentes para exibição no funil
     persistent_alerts_variation = (
         kpis["alerts_persistent"] - kpis["alerts_persistent_p1"]
     )
@@ -214,18 +256,9 @@ def generate_kpis_html(kpis):
             if persistent_alerts_variation > 0
             else "var(--success-color)"
         )
-        variation_text = f'<span style="color: {color}; font-weight: 600;">({sign}{persistent_alerts_variation})</span>'
+        variation_text = f' <span style="font-weight: 600; color: {color};">({sign}{persistent_alerts_variation})</span>'
 
-    if kpis["total_p2"] > kpis["total_p1"]:
-        saldo_icon = (
-            "<span style='font-size: 0.7em; color: var(--danger-color);'>▲</span>"
-        )
-    elif kpis["total_p2"] < kpis["total_p1"]:
-        saldo_icon = (
-            "<span style='font-size: 0.7em; color: var(--success-color);'>▼</span>"
-        )
-
-    kpi_html = "<h2>Panorama Geral: O Funil de Resolução</h2>"
+    kpi_html = "<h2>Balanço Operacional: O Fluxo de Casos</h2>"
     kpi_html += "<div class='definition-box'><strong>Definição:</strong> Um 'Caso' é um problema único que precisa de ação. O fluxo abaixo mostra a evolução do número de casos e do volume total de alertas entre os dois períodos.</div>"
 
     kpi_html += f"""
@@ -245,7 +278,7 @@ def generate_kpis_html(kpis):
             <div class="kpi-flow-item" style="flex:auto;"><div class="kpi-card-enhanced">
                 <p class="kpi-value" style="color: var(--persistent-color);">{kpis["persistent"]}</p>
                 <p class="kpi-label">Casos Persistentes</p>
-                <p class="kpi-subtitle" title="Problemas que já existiam e continuam sem remediação. O número de alertas reflete o volume do período ATUAL, e a variação em parênteses mostra se o impacto desses problemas aumentou ou diminuiu.">{kpis["alerts_persistent"]} alertas {variation_text}</p>
+                <p class="kpi-subtitle" title="Problemas que já existiam e continuam sem remediação. O número de alertas reflete o volume do período ATUAL, e a variação em parênteses mostra se o impacto desses problemas aumentou ou diminuiu.">{kpis["alerts_persistent"]} alertas{variation_text}</p>
             </div></div>
         </div>
         <div class="kpi-flow-connector icon-plus"></div>
@@ -262,63 +295,74 @@ def generate_kpis_html(kpis):
         </div></div>
     </div>"""
 
+    # Gera um insight dinâmico com base nos KPIs
+    insight_text = ""
+    if kpis["total_p1"] == 0 and kpis["total_p2"] > 0:
+        insight_text = f"A operação estava estável e registrou <strong>{kpis['new']} novo(s) problema(s)</strong>. O foco deve ser em entender a causa dessa regressão."
+    elif kpis["total_p2"] == 0:
+        insight_text = "A operação atingiu um estado de <strong>zero casos</strong> que necessitam de ação. Um marco de excelência em estabilidade."
+    elif kpis["resolved"] > kpis["new"]:
+        insight_text = f"A equipe conseguiu resolver mais problemas do que os que surgiram (<strong>{kpis['resolved']} resolvidos</strong> vs. <strong>{kpis['new']} novos</strong>), resultando em uma melhora líquida na saúde operacional."
+    else:
+        insight_text = f"O número de <strong>novos problemas ({kpis['new']})</strong> foi maior ou igual ao de <strong>problemas resolvidos ({kpis['resolved']})</strong>. Isso indica que a operação está em um ciclo reativo, sem ganhos de estabilidade."
+
     kpi_html += f"""
     <div class="insight-box">
-        💡 <strong>Análise e Insight:</strong> A taxa de resolução de <strong>{kpis["improvement_rate"]:.1f}%</strong> indica a porcentagem de casos do período anterior que foram efetivamente resolvidos. O saldo atual é o resultado dos casos que persistiram somados aos novos que surgiram.
+        💡 <strong>Análise e Insight:</strong> {insight_text}
     </div>"""
 
-    # --- Card 1: Taxa de Resolução ---
-    improvement_percent = kpis["improvement_rate"]
+    # --- Card 1: Taxa de Resolução (Período Anterior) ---
+    improvement_percent = kpis.get("improvement_rate", 0)
     resolved_count = kpis["resolved"]
     total_previous = kpis["total_p1"]
 
     imp_gauge_color = "var(--success-color)"
     imp_card_bg = "background-color: rgba(28, 200, 138, 0.1);"
-    if improvement_percent < 75:
+    if improvement_percent < 75 and improvement_percent >= 50:
         imp_gauge_color = "var(--warning-color)"
         imp_card_bg = "background-color: rgba(246, 194, 62, 0.1);"
-    if improvement_percent < 50:
+    elif improvement_percent < 50:
         imp_gauge_color = "var(--danger-color)"
         imp_card_bg = "background-color: rgba(231, 74, 59, 0.1);"
 
-    # --- Card 2: Taxa de Regressão (Novos Problemas) ---
-    regression_percent = kpis["regression_rate"]
+    # --- Card 2: Taxa de Novos Problemas (Período Atual) ---
+    regression_percent = kpis.get("regression_rate", 0)
     new_count = kpis["new"]
     total_current = kpis["total_p2"]
 
-    reg_gauge_color = "var(--success-color)"
-    reg_card_bg = "background-color: rgba(28, 200, 138, 0.1);"
-    if regression_percent > 10:  # Mais de 10% de novos casos é um alerta
+    reg_gauge_color = "var(--danger-color)"
+    reg_card_bg = "background-color: rgba(231, 74, 59, 0.1);"
+    if regression_percent <= 25 and regression_percent > 10:
         reg_gauge_color = "var(--warning-color)"
         reg_card_bg = "background-color: rgba(246, 194, 62, 0.1);"
-    if regression_percent > 25:  # Mais de 25% é crítico
-        reg_gauge_color = "var(--danger-color)"
-        reg_card_bg = "background-color: rgba(231, 74, 59, 0.1);"
+    elif regression_percent <= 10:
+        reg_gauge_color = "var(--success-color)"
+        reg_card_bg = "background-color: rgba(28, 200, 138, 0.1);"
 
     kpi_html += f"""
     <div class="kpi-grid-container">
         <div class="card kpi-split-layout" style="{imp_card_bg}">
             <div class="kpi-split-layout__chart">
-                <div class="progress-donut" style="--p:{improvement_percent}; --c:{imp_gauge_color};">
-                    <div class="progress-donut-text-content"><div class="progress-donut__value">{improvement_percent:.1f}%</div></div>
+                <div class="progress-donut" style="--p:{improvement_percent:.1f}; --c:{imp_gauge_color};">
+                    <div class="progress-donut-text-content"><div class="progress-donut__value">{improvement_percent:.0f}%</div></div>
                 </div>
             </div>
             <div class="kpi-split-layout__text">
                 <h2>Taxa de Resolução (Período Anterior)</h2>
                 <p>Dos <strong>{total_previous} casos</strong> que precisavam de ação, <strong>{resolved_count} foram resolvidos</strong>.</p>
-                <small>Mede a eficácia na eliminação de problemas pendentes.</small>
+                <small>Este KPI mede a eficácia na eliminação de problemas que já existiam.</small>
             </div>
         </div>
         <div class="card kpi-split-layout" style="{reg_card_bg}">
             <div class="kpi-split-layout__chart">
-                <div class="progress-donut" style="--p:{regression_percent}; --c:{reg_gauge_color};">
-                    <div class="progress-donut-text-content"><div class="progress-donut__value">{regression_percent:.1f}%</div></div>
+                <div class="progress-donut" style="--p:{regression_percent:.1f}; --c:{reg_gauge_color};">
+                    <div class="progress-donut-text-content"><div class="progress-donut__value">{regression_percent:.0f}%</div></div>
                 </div>
             </div>
             <div class="kpi-split-layout__text">
                 <h2>Taxa de Novos Problemas (Período Atual)</h2>
                 <p>Dos <strong>{total_current} casos</strong> atuais, <strong>{new_count} são novos</strong>, representando uma taxa de regressão.</p>
-                <small>Mede a quantidade de novos problemas que surgiram.</small>
+                <small>Este KPI mede a capacidade da operação de prevenir novos problemas.</small>
             </div>
         </div>
     </div>"""
@@ -551,11 +595,9 @@ def gerar_relatorio_tendencia(
     title = "📊 Análise de Tendência de Alertas"
 
     if is_direct_comparison:
-        # For direct comparisons, link back to the root/home page.
-        # ALTERAÇÃO: Substituído ícone por um botão de texto para consistência.
         back_link = '<a href="/" class="home-button">Página Inicial</a>'
     else:
-        back_link = '<a href="resumo_geral.html">&larr; Voltar para o Dashboard</a>'
+        back_link = '<a href="resumo_geral.html" class="back-to-dashboard">&larr; Voltar para o Dashboard</a>'
 
     periodo_anterior_text = f"<code>{escape(os.path.basename(csv_anterior_name))}</code>" + (
         f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>"
@@ -572,14 +614,22 @@ def gerar_relatorio_tendencia(
     <div class="report-header">
         {back_link}
     </div>
+    <style>
+        .highlight {{ padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid; }}
+        .highlight-success {{ background-color: rgba(28, 200, 138, 0.1); border-left-color: var(--success-color); }}
+        .highlight-danger {{ background-color: rgba(231, 74, 59, 0.1); border-left-color: var(--danger-color); }}
+        .highlight-warning {{ background-color: rgba(246, 194, 62, 0.1); border-left-color: var(--warning-color); }}
+        .highlight-info {{ background-color: rgba(23, 162, 184, 0.1); border-left-color: var(--info-color); }}
+        .highlight-neutral {{ background-color: rgba(108, 117, 125, 0.1); border-left-color: var(--text-secondary-color); }}
+    </style>
     <h1>Análise Comparativa de Períodos</h1>
+    <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Análise focada nos problemas onde a automação (self-healing) falhou ou não existe, os principais drenos de tempo das equipes.</p>
     """
-    body += f"<div class='definition-box' style='text-align: center;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Atual:</strong> {periodo_atual_text}</div>"
-
-    body += f"<div class='card'>{generate_kpis_html(kpis)}</div>"
+    body += f"<div class='definition-box' style='margin-top: 30px;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Atual:</strong> {periodo_atual_text}</div>"
     body += generate_executive_summary_html(
         kpis, persistent_squads_summary, new_cases_df, is_direct_comparison
     )
+    body += f"<div class='card'>{generate_kpis_html(kpis)}</div>"
 
     chevron_svg_collapsible = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>'
 

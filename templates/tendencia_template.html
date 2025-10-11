@@ -3,7 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>$title</title>
+    <title>${title}</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // Seletor mais robusto que pega o link de voltar em qualquer contexto
+                const backButton = document.querySelector('.report-header a');
+                if (backButton) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const backPage = urlParams.get('back');
+                    if (backPage) {
+                        // Verifica se o caminho de volta precisa de ajuste de diretório
+                        // Se o link original já tem '../', o novo link também precisa.
+                        const isSubdirectory = backButton.getAttribute('href').startsWith('../');
+                        if (isSubdirectory && !backPage.startsWith('../')) {
+                            backButton.href = '../' + backPage;
+                        } else {
+                            backButton.href = backPage;
+                        }
+                        backButton.href = backPage;
+                        backButton.textContent = '← Voltar para a Análise';
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao configurar o botão de voltar contextual:', e);
+            }
+        });
+    </script>
     <style>
         :root {
             --bg-color: #1a1c2f;
@@ -206,85 +232,9 @@
         .expandable-row.active .chevron { transform: rotate(90deg); }
     </style>
 </head>
-    <style>
-        /* ... (existing styles) ... */
-        .home-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary-color);
-        }
-        .home-link:hover { color: var(--info-color); }
-    </style>
-</head>
 <body>
     <div class="container">
-        $body
+        ${body}
     </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            function updateParentHeights(element) {
-                let parentContent = element.closest('.collapsible-content');
-                if (parentContent && parentContent.style.maxHeight && parentContent.style.maxHeight !== '0px') {
-                    parentContent.style.maxHeight = parentContent.scrollHeight + 50 + 'px';
-                    updateParentHeights(parentContent);
-                }
-            }
-
-            document.querySelectorAll(".collapsible").forEach(button => {
-                button.addEventListener("click", function() {
-                    this.classList.toggle("active");
-                    const content = this.nextElementSibling;
-                    if (content.style.maxHeight && content.style.maxHeight !== '0px') {
-                        content.style.maxHeight = null;
-                    } else {
-                        content.style.maxHeight = content.scrollHeight + 50 + "px";
-                    }
-                    updateParentHeights(content);
-                });
-            });
-
-            setTimeout(() => {
-                document.querySelectorAll('.collapsible.active').forEach(button => {
-                    const content = button.nextElementSibling;
-                    if (content) {
-                        content.style.maxHeight = content.scrollHeight + 50 + "px";
-                        updateParentHeights(content);
-                    }
-                });
-            }, 150);
-
-            document.querySelectorAll('.tab-container').forEach(container => {
-                const tabLinks = container.querySelectorAll('.tab-link');
-                const tabContents = container.querySelectorAll('.tab-content');
-                tabLinks.forEach(link => {
-                    link.addEventListener('click', (event) => {
-                        const targetId = link.dataset.target;
-                        if (link.classList.contains('active')) return;
-                        tabLinks.forEach(l => l.classList.remove('active'));
-                        tabContents.forEach(c => c.classList.remove('active'));
-                        link.classList.add('active');
-                        const targetContent = container.querySelector('#' + targetId);
-                        if(targetContent) {
-                            targetContent.classList.add('active');
-                        }
-                        updateParentHeights(targetContent || link);
-                    });
-                });
-            });
-
-            document.querySelectorAll(".expandable-row").forEach(function(row) {
-                row.addEventListener("click", function() {
-                    this.classList.toggle("active");
-                    var targetId = this.dataset.target;
-                    var detailRow = document.getElementById(targetId);
-                    if (detailRow) {
-                        detailRow.classList.toggle("active");
-                        updateParentHeights(detailRow);
-                    }
-                });
-            });
-        });
-    </script>
 </body>
 </html>

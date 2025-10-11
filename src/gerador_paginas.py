@@ -238,7 +238,11 @@ def gerar_relatorios_por_squad(  # type: ignore
         if squad_df.empty:
             continue
 
+        # CORREÇÃO: Restaurado o nome e caminho originais para os relatórios de squad.
+        # Esta função gera os relatórios detalhados (squad-*.html), não os planos de ação.
         sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", squad_name.replace(" ", "_"))
+        # Garante que o diretório de squads exista.
+        os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f"squad-{sanitized_name}.html")
         title = f"Relatório da Squad: {escape(squad_name)}"
         total_alertas = squad_df["alert_count"].sum()
@@ -709,10 +713,13 @@ def gerar_paginas_atuar_por_squad(
             continue
 
         sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", squad_name.replace(" ", "_"))
-        csv_filename = f"atuar-{sanitized_name}.csv"
-        html_filename = f"atuar-{sanitized_name}.html"
-        csv_path = os.path.join(output_dir, csv_filename)
-        html_path = os.path.join(output_dir, html_filename)
+        # CORREÇÃO: Define o diretório e o nome do arquivo corretamente.
+        planos_dir = os.path.join(output_dir, "planos_de_acao")
+        os.makedirs(planos_dir, exist_ok=True)
+        csv_filename = f"plano-de-acao-{sanitized_name}.csv"
+        html_filename = f"plano-de-acao-{sanitized_name}.html"
+        csv_path = os.path.join(planos_dir, csv_filename)
+        html_path = os.path.join(planos_dir, html_filename)
 
         df_to_save = squad_df.copy()
         # CORREÇÃO: Adiciona o emoji na coluna 'acao_sugerida' antes de salvar.
@@ -730,6 +737,26 @@ def gerar_paginas_atuar_por_squad(
         final_html = gerador_html.renderizar_pagina_csv_viewer(
             template_content, csv_content, f"Plano de Ação: {squad_name}", csv_filename
         )
+        # CORREÇÃO: Usa o caminho relativo correto para o link de "Voltar".
+        final_html = final_html.replace(
+            'href="resumo_geral.html"', 'href="../resumo_geral.html"'
+        )
+        # Adiciona o script de navegação contextual para tratar o parâmetro 'back'
+        script_navegacao = """
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const backButton = document.querySelector('a[href="../resumo_geral.html"]');
+                if (backButton) {
+                    const backPage = new URLSearchParams(window.location.search).get('back');
+                    if (backPage) {
+                        backButton.href = backPage; // O 'back' já vem com '../'
+                        backButton.textContent = '← Voltar para a Análise';
+                    }
+                }
+            });
+        </script>
+        """
+        final_html = final_html.replace("</body>", f"{script_navegacao}</body>")
         with open(html_path, "w", encoding="utf-8") as f_out:
             f_out.write(final_html)
 
