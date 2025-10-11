@@ -237,7 +237,7 @@ def gerar_planos_por_squad(
         total_alertas = squad_df["alert_count"].sum()
 
         body_content = '<p><a href="../todas_as_squads.html">&larr; Voltar para Planos Squads</a></p>'
-        body_content += '<h2>Visão Geral da Squad</h2><div class="grid-container">'
+        body_content += f'<h2>Visão Geral da Squad - {escape(squad_name)}</h2><div class="grid-container">'
         body_content += f'<div class="card kpi-card"><p class="kpi-value" style="color: var(--warning-color);">{len(squad_df)}</p><p class="kpi-label">Total de Casos</p></div>'
         body_content += f'<div class="card kpi-card"><p class="kpi-value">{total_alertas}</p><p class="kpi-label">Total de Alertas Envolvidos</p></div></div>'
         top_problemas_da_squad = (
@@ -645,6 +645,13 @@ def gerar_pagina_atuar(output_dir: str, actuation_csv_path: str, template_path: 
     try:
         with open(actuation_csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()
+        # NOVO: Verifica se o CSV tem mais do que apenas o cabeçalho.
+        # Se não tiver, não gera o atuar.html, pois não há ações.
+        if len(csv_content.splitlines()) <= 1:
+            logger.info(
+                "Arquivo 'atuar.csv' está vazio (apenas cabeçalho). Pulando a geração de 'atuar.html'."
+            )
+            return
     except FileNotFoundError:
         csv_content = ""
         logger.warning(

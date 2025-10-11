@@ -223,8 +223,12 @@ def index():
     if last_report:
         run_folder_path = os.path.dirname(last_report.report_path)
         run_folder_name = os.path.basename(run_folder_path)
-        action_plan_path = os.path.join(run_folder_path, "atuar.html")
-        if os.path.exists(action_plan_path):
+        # CORREÇÃO: Verifica a existência e o conteúdo do CSV, não do HTML.
+        action_plan_csv_path = os.path.join(run_folder_path, "atuar.csv")
+        if (
+            os.path.exists(action_plan_csv_path)
+            and os.path.getsize(action_plan_csv_path) > 100
+        ):  # Um tamanho arbitrário para garantir que não está vazio
             last_action_plan = {
                 "url": url_for(
                     "serve_report",

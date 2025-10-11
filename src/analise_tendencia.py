@@ -54,6 +54,54 @@ def load_summary_from_json(filepath: str):
         return None
 
 
+def generate_executive_summary_html(kpis, persistent_summary, new_cases_summary):
+    """Gera um resumo executivo com os principais insights e pontos de ação."""
+    verdict_text = ""
+    verdict_class = "highlight-neutral"
+
+    # 1. O Veredito Geral
+    if kpis["total_p2"] < kpis["total_p1"]:
+        verdict_text = "<strong>Veredito: Melhora.</strong> O número total de casos que exigem ação diminuiu."
+        verdict_class = "highlight-success"
+    elif kpis["total_p2"] > kpis["total_p1"]:
+        verdict_text = "<strong>Veredito: Piora.</strong> O número total de casos que exigem ação aumentou, indicando uma regressão."
+        verdict_class = "highlight-danger"
+    else:
+        verdict_text = "<strong>Veredito: Estabilidade.</strong> O número total de casos permaneceu o mesmo."
+
+    # 2. Principal Ponto de Ação (Foco no maior problema)
+    action_point = ""
+    if not new_cases_summary.empty:
+        top_new_squad = new_cases_summary.groupby("assignment_group").size().idxmax()
+        sanitized_squad_name = re.sub(r"[^a-zA-Z0-9_-]", "", top_new_squad.replace(" ", "_"))
+        # ALTERAÇÃO: O link agora aponta para o plano de ação da squad.
+        plan_path = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html"
+        action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_new_squad)}\'</strong> foi a que mais gerou novos problemas. <a href="{plan_path}" style="font-weight: 600;">Ver plano de ação.</a>'
+    elif not persistent_summary.empty:
+        top_persistent_squad = persistent_summary.index[0]
+        sanitized_squad_name = re.sub(r"[^a-zA-Z0-9_-]", "", top_persistent_squad.replace(" ", "_"))
+        # ALTERAÇÃO: O link agora aponta para o plano de ação da squad.
+        plan_path = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html"
+        action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> A <strong>Squad \'{escape(top_persistent_squad)}\'</strong> concentra o maior número de problemas persistentes. <a href="{plan_path}" style="font-weight: 600;">Ver plano de ação.</a>'
+
+    # 3. Principal Vitória (Reconhecimento)
+    recognition_point = ""
+    if kpis["resolved"] > 0:
+        recognition_point = f"<li>✅ <strong>Principal Vitória:</strong> <strong>{kpis['resolved']} casos</strong> foram resolvidos desde o último período, demonstrando eficácia na remediação."
+
+    summary_html = f"""
+    <div class="card {verdict_class}" style="margin-bottom: 30px;">
+        <h2 style="margin-top: 0; border: none;">Diagnóstico Rápido</h2>
+        <p style="font-size: 1.1em; margin-bottom: 20px;">{verdict_text}</p>
+        <ul style="text-align: left; padding-left: 20px; font-size: 1.05em; line-height: 1.8;">
+            {action_point}
+            {recognition_point}
+        </ul>
+    </div>
+    """
+    return summary_html
+
+
 def calculate_kpis_and_merged_df(df_p1, df_p2):
     """
     Calcula os KPIs e retorna o DataFrame mesclado que é a base para toda a análise.
@@ -93,6 +141,8 @@ def calculate_kpis_and_merged_df(df_p1, df_p2):
     ].sum()
 
     improvement_rate = (resolved / total_p1 * 100) if total_p1 > 0 else 100
+    # NOVO: Calcula a "Taxa de Regressão" ou "Taxa de Novos Problemas"
+    regression_rate = (new / total_p2 * 100) if total_p2 > 0 else 0
 
     kpis = {
         "total_p1": total_p1,
@@ -107,6 +157,7 @@ def calculate_kpis_and_merged_df(df_p1, df_p2):
         "alerts_persistent": int(alerts_persistent),
         "alerts_persistent_p1": int(alerts_persistent_p1),
         "improvement_rate": improvement_rate,
+        "regression_rate": regression_rate,
     }
 
     return kpis, merged_df
@@ -202,30 +253,59 @@ def generate_kpis_html(kpis):
         💡 <strong>Análise e Insight:</strong> A taxa de resolução de <strong>{kpis["improvement_rate"]:.1f}%</strong> indica a porcentagem de casos do período anterior que foram efetivamente resolvidos. O saldo atual é o resultado dos casos que persistiram somados aos novos que surgiram.
     </div>"""
 
-    progress_percent = kpis["improvement_rate"]
+    # --- Card 1: Taxa de Resolução ---
+    improvement_percent = kpis["improvement_rate"]
     resolved_count = kpis["resolved"]
     total_previous = kpis["total_p1"]
 
-    gauge_color_var = "var(--success-color)"
-    card_bg_style = "background-color: rgba(28, 200, 138, 0.1);"
-    if kpis["improvement_rate"] < 75:
-        gauge_color_var = "var(--warning-color)"
-        card_bg_style = "background-color: rgba(246, 194, 62, 0.1);"
-    if kpis["improvement_rate"] < 50:
-        gauge_color_var = "var(--danger-color)"
-        card_bg_style = "background-color: rgba(231, 74, 59, 0.1);"
+    imp_gauge_color = "var(--success-color)"
+    imp_card_bg = "background-color: rgba(28, 200, 138, 0.1);"
+    if improvement_percent < 75:
+        imp_gauge_color = "var(--warning-color)"
+        imp_card_bg = "background-color: rgba(246, 194, 62, 0.1);"
+    if improvement_percent < 50:
+        imp_gauge_color = "var(--danger-color)"
+        imp_card_bg = "background-color: rgba(231, 74, 59, 0.1);"
+
+    # --- Card 2: Taxa de Regressão (Novos Problemas) ---
+    regression_percent = kpis["regression_rate"]
+    new_count = kpis["new"]
+    total_current = kpis["total_p2"]
+
+    reg_gauge_color = "var(--success-color)"
+    reg_card_bg = "background-color: rgba(28, 200, 138, 0.1);"
+    if regression_percent > 10:  # Mais de 10% de novos casos é um alerta
+        reg_gauge_color = "var(--warning-color)"
+        reg_card_bg = "background-color: rgba(246, 194, 62, 0.1);"
+    if regression_percent > 25:  # Mais de 25% é crítico
+        reg_gauge_color = "var(--danger-color)"
+        reg_card_bg = "background-color: rgba(231, 74, 59, 0.1);"
 
     kpi_html += f"""
-    <div class="card kpi-split-layout" style="{card_bg_style}">
-        <div class="kpi-split-layout__chart">
-            <div class="progress-donut" style="--p:{progress_percent}; --c:{gauge_color_var};">
-                <div class="progress-donut-text-content"><div class="progress-donut__value">{progress_percent:.1f}%</div></div>
+    <div class="kpi-grid-container">
+        <div class="card kpi-split-layout" style="{imp_card_bg}">
+            <div class="kpi-split-layout__chart">
+                <div class="progress-donut" style="--p:{improvement_percent}; --c:{imp_gauge_color};">
+                    <div class="progress-donut-text-content"><div class="progress-donut__value">{improvement_percent:.1f}%</div></div>
+                </div>
+            </div>
+            <div class="kpi-split-layout__text">
+                <h2>Taxa de Resolução (Período Anterior)</h2>
+                <p>Dos <strong>{total_previous} casos</strong> que precisavam de ação, <strong>{resolved_count} foram resolvidos</strong>.</p>
+                <small>Mede a eficácia na eliminação de problemas pendentes.</small>
             </div>
         </div>
-        <div class="kpi-split-layout__text">
-            <h2>Taxa de Resolução de Casos - Período Anterior</h2>
-            <p>Dos <strong>{total_previous} casos</strong> que precisavam de ação no período anterior, <strong>{resolved_count} foram resolvidos</strong>, resultando na taxa de resolução ao lado.</p>
-            <small>Este indicador mede a eficácia na eliminação de problemas pendentes de um período para o outro.</small>
+        <div class="card kpi-split-layout" style="{reg_card_bg}">
+            <div class="kpi-split-layout__chart">
+                <div class="progress-donut" style="--p:{regression_percent}; --c:{reg_gauge_color};">
+                    <div class="progress-donut-text-content"><div class="progress-donut__value">{regression_percent:.1f}%</div></div>
+                </div>
+            </div>
+            <div class="kpi-split-layout__text">
+                <h2>Taxa de Novos Problemas (Período Atual)</h2>
+                <p>Dos <strong>{total_current} casos</strong> atuais, <strong>{new_count} são novos</strong>, representando uma taxa de regressão.</p>
+                <small>Mede a quantidade de novos problemas que surgiram.</small>
+            </div>
         </div>
     </div>"""
 
@@ -483,10 +563,13 @@ def gerar_relatorio_tendencia(
     body += f"<div class='definition-box' style='text-align: center;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Atual:</strong> {periodo_atual_text}</div>"
 
     body += f"<div class='card'>{generate_kpis_html(kpis)}</div>"
+    body += generate_executive_summary_html(
+        kpis, persistent_squads_summary, new_cases_df
+    )
 
     chevron_svg_collapsible = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>'
 
-    body += f'<button type="button" class="collapsible active"><span>🔥 Foco de Atuação e Novos Riscos</span>{chevron_svg_collapsible}</button><div class="collapsible-content"><div class="tab-container"><div class="tab-links">'
+    body += f'<button id="foco-atuacao" type="button" class="collapsible active"><span>🔥 Foco de Atuação e Novos Riscos</span>{chevron_svg_collapsible}</button><div class="collapsible-content"><div class="tab-container"><div class="tab-links">'
     body += '<button class="tab-link active" data-target="tab-persistentes">🚨 Casos Persistentes por Squad</button><button class="tab-link" data-target="tab-novos-problemas">⚠️ Novos Problemas</button></div>'
     body += '<div id="tab-persistentes" class="tab-content active"><div class="definition-box">Casos que já precisavam de ação no período anterior e continuam precisando. <strong>Clique em uma linha da tabela para ver os detalhes.</strong></div>'
     body += (
