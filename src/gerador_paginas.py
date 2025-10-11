@@ -680,6 +680,22 @@ def gerar_pagina_atuar(output_dir: str, actuation_csv_path: str, template_path: 
             f"const csvDataPayload = `{placeholder}`",
         )
         final_html = template_com_placeholder.replace(placeholder, csv_payload)
+        # Adiciona o script de navegação contextual para tratar o parâmetro 'back'
+        script_navegacao = """
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const backButton = document.querySelector('a[href="resumo_geral.html"]');
+                if (backButton) {
+                    const backPage = new URLSearchParams(window.location.search).get('back');
+                    if (backPage) {
+                        backButton.href = backPage;
+                        backButton.textContent = '← Voltar para a Análise';
+                    }
+                }
+            });
+        </script>
+        """
+        final_html = final_html.replace("</body>", f"{script_navegacao}</body>")
         with open(output_path, "w", encoding="utf-8") as f_out:
             f_out.write(final_html)
     except FileNotFoundError:

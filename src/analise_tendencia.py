@@ -133,7 +133,9 @@ def generate_executive_summary_html(
     # 4. Link para o Plano de Ação Geral
     general_action_plan_link = ""
     if not is_direct_comparison:
-        general_action_plan_link = '<li>📋 <strong>Plano de Ação Geral:</strong> <a href="atuar.html" style="font-weight: 600;">Ver todos os casos que necessitam de ação.</a>'
+        # CORREÇÃO: Adiciona o parâmetro 'back' para a navegação contextual.
+        action_url = "atuar.html?back=comparativo_periodos.html"
+        general_action_plan_link = f'<li>📋 <strong>Plano de Ação Geral:</strong> <a href="{action_url}" style="font-weight: 600;">Ver todos os casos que necessitam de ação.</a>'
 
     summary_html = f"""
     <div class="card highlight {verdict_class}" style="margin-bottom: 30px;">
@@ -623,7 +625,7 @@ def gerar_relatorio_tendencia(
         .highlight-neutral {{ background-color: rgba(108, 117, 125, 0.1); border-left-color: var(--text-secondary-color); }}
     </style>
     <h1>Análise Comparativa de Períodos</h1>
-    <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Análise focada nos problemas onde a automação (self-healing) falhou ou não existe, os principais drenos de tempo das equipes.</p>
+    <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Foco nos casos onde a remediação (self-healing) falhou ou não existe. </p>
     """
     body += f"<div class='definition-box' style='margin-top: 30px;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Atual:</strong> {periodo_atual_text}</div>"
     body += generate_executive_summary_html(
@@ -680,6 +682,62 @@ def gerar_relatorio_tendencia(
         )
         + "</div></div></div>"
     )
+
+    # CORREÇÃO: Reintroduz o script JavaScript para a funcionalidade dos botões "collapsible".
+    # Este script foi removido acidentalmente e é essencial para expandir/recolher as seções.
+    body += """
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            function updateParentHeights(element) {
+                let parentContent = element.closest('.collapsible-content');
+                if (parentContent && parentContent.style.maxHeight && parentContent.style.maxHeight !== '0px') {
+                    parentContent.style.maxHeight = parentContent.scrollHeight + 50 + 'px';
+                    updateParentHeights(parentContent);
+                }
+            }
+
+            document.querySelectorAll(".collapsible").forEach(button => {
+                button.addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    const content = this.nextElementSibling;
+                    if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                        content.style.maxHeight = null;
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + 50 + "px";
+                    }
+                    updateParentHeights(content);
+                });
+            });
+
+            setTimeout(() => {
+                document.querySelectorAll('.collapsible.active').forEach(button => {
+                    const content = button.nextElementSibling;
+                    if (content) {
+                        content.style.maxHeight = content.scrollHeight + 50 + "px";
+                        updateParentHeights(content);
+                    }
+                });
+            }, 150);
+
+            // CORREÇÃO: Reintroduz a lógica para a funcionalidade das abas.
+            document.querySelectorAll('.tab-container').forEach(container => {
+                const tabLinks = container.querySelectorAll('.tab-link');
+                const tabContents = container.querySelectorAll('.tab-content');
+                tabLinks.forEach(link => {
+                    link.addEventListener('click', (event) => {
+                        const targetId = link.dataset.target;
+                        if (link.classList.contains('active')) return;
+                        tabLinks.forEach(l => l.classList.remove('active'));
+                        tabContents.forEach(c => c.classList.remove('active'));
+                        link.classList.add('active');
+                        const targetContent = container.querySelector('#' + targetId);
+                        if(targetContent) { targetContent.classList.add('active'); }
+                        updateParentHeights(targetContent || link);
+                    });
+                });
+            });
+        });
+    </script>"""
 
     try:
         script_dir = os.path.dirname(__file__)
