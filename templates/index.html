@@ -564,7 +564,7 @@
             </div>
             {% endif %}
             
-            <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" target="_blank" class="side-card doc-gerencial-card">
+            <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" class="side-card doc-gerencial-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                 <div class="side-card-text">
                     <h3>Documentação Gerencial</h3>
@@ -572,7 +572,7 @@
                 </div>
             </a>
             
-            <a href="{{ url_for('serve_docs', filename='doc_tecnica.html') }}" target="_blank" class="side-card doc-tecnica-card">
+            <a href="{{ url_for('serve_docs', filename='doc_tecnica.html') }}" class="side-card doc-tecnica-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                 <div class="side-card-text">
                     <h3>Guia do Desenvolvedor</h3>
@@ -833,7 +833,7 @@
             `;
 
             if (reportUrl) {
-                content += `<a href="${reportUrl}" target="_blank" class="toast-link">Acessar Relatório</a>`;
+                content += `<a href="${reportUrl}" class="toast-link">Acessar Relatório</a>`;
             }
 
             content += `<button class="toast-close-btn">×</button></div>`;
@@ -900,7 +900,7 @@
                     <p class="kpi-label">Casos com Instabilidade</p>
                 </div>
                 <div class="kpi-card ${sucessoClass}">
-                    <a href="${reportUrl || '#'}" target="_blank" class="report-link-ear visible">
+                    <a href="${reportUrl || '#'}" class="report-link-ear visible">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     </a>
                     <p class="kpi-value" style="color: ${sucessoColor};">${kpi.taxa_sucesso_automacao}</p>
