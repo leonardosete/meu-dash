@@ -69,16 +69,13 @@ def test_process_upload_and_generate_reports(
     upload_folder.mkdir()
     reports_folder.mkdir()
 
-    # A service chama analisar_arquivo_csv duas vezes (light e full)
-    mock_analisar_csv.side_effect = [
-        {"json_path": "fake/path/light_summary.json"},
-        {
-            "summary": MagicMock(),
-            "df_atuacao": MagicMock(),
-            "num_logs_invalidos": 0,
-            "json_path": "fake/path/full_summary.json",
-        },
-    ]
+    # A service chama analisar_arquivo_csv uma vez (análise completa)
+    mock_analisar_csv.return_value = {
+        "summary": MagicMock(),
+        "df_atuacao": MagicMock(),
+        "num_logs_invalidos": 0,
+        "json_path": "fake/path/full_summary.json",
+    }
 
     # O gerador de páginas principal retorna o caminho do dashboard como uma STRING
     mock_dashboard_path = "fake/path/resumo_geral.html"

@@ -98,7 +98,7 @@ def process_upload_and_generate_reports(
         construir a URL de redirecionamento em caso de sucesso. Retorna `None` se
         ocorrer uma falha no processo.
     """
-    # 1. Salvar arquivo e preparar ambiente
+    # 1. Salvar arquivo, preparar ambiente e executar a análise completa UMA VEZ
     filename_recente = secure_filename(file_recente.filename)
     filepath_recente = os.path.join(
         upload_folder, f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_recente}"
@@ -109,6 +109,11 @@ def process_upload_and_generate_reports(
     run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     output_dir = os.path.join(reports_folder, run_folder_name)
     os.makedirs(output_dir, exist_ok=True)
+
+    logger.info(f"Executando análise completa para o arquivo: {filename_recente}")
+    analysis_results = analisar_arquivo_csv(
+        input_file=filepath_recente, output_dir=output_dir, light_analysis=False
+    )
 
     # 2. Análise de Tendência (se aplicável)
     # LÓGICA REVISADA: Busca o relatório correto para comparação.
@@ -159,14 +164,14 @@ def process_upload_and_generate_reports(
             and date_range_recente_obj > date_range_anterior_obj
         ):
             logger.info("Período do upload é mais recente. Gerando tendência...")
-            temp_analysis_results = analisar_arquivo_csv(
-                filepath_recente, output_dir, light_analysis=True
-            )
             output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
 
+            # REFATORADO: Usa o resultado da análise completa já executada
             gerar_relatorio_tendencia(
                 json_anterior=previous_report_for_trend.json_summary_path,
-                json_recente=temp_analysis_results["json_path"],
+                json_recente=analysis_results[
+                    "json_path"
+                ],  # Alterado para usar o resultado da análise completa
                 csv_anterior_name=previous_report_for_trend.original_filename,
                 csv_recente_name=filename_recente,
                 output_path=output_trend_path,
@@ -195,12 +200,7 @@ def process_upload_and_generate_reports(
             "Nenhum relatório anterior encontrado para comparação de tendência."
         )
 
-    # 3. Análise Principal (Completa)
-    analysis_results = analisar_arquivo_csv(
-        input_file=filepath_recente, output_dir=output_dir, light_analysis=False
-    )
-
-    # 4. Construção do Contexto
+    # 3. Construção do Contexto (Análise principal já foi feita)
     dashboard_context = context_builder.build_dashboard_context(
         summary_df=analysis_results["summary"],
         df_atuacao=analysis_results["df_atuacao"],
@@ -211,7 +211,7 @@ def process_upload_and_generate_reports(
         trend_report_path=trend_report_path_relative,
     )
 
-    # 5. Geração de todas as páginas HTML
+    # 4. Geração de todas as páginas HTML
     summary_html_path = gerador_paginas.gerar_ecossistema_de_relatorios(
         dashboard_context=dashboard_context,
         analysis_results=analysis_results,
@@ -219,7 +219,7 @@ def process_upload_and_generate_reports(
         base_dir=base_dir,
     )
 
-    # 6. Salvar registro no banco de dados
+    # 5. Salvar registro no banco de dados
     new_report = Report(
         original_filename=filename_recente,
         report_path=summary_html_path,
@@ -236,12 +236,14 @@ def process_upload_and_generate_reports(
 
     db.session.commit()
 
-    # 7. Aplicar política de retenção de histórico
+    # 6. Aplicar política de retenção de histórico
     _enforce_report_limit(db, Report)
 
+    # 7. Retornar resultado
     return {
         "run_folder": run_folder_name,
         "report_filename": os.path.basename(summary_html_path),
+        "json_summary_path": analysis_results["json_path"],
     }
 
 

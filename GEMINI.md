@@ -88,5 +88,4 @@ Aderir a estas regras é obrigatório para manter a integridade do projeto.
 ## 6. ROADMAP DE PRÓXIMAS ATIVIDADES
 
 - [x] **Implementar e Refinar a Nova UX:** Concluída a implementação do novo layout, fluxo de usuário e todos os refinamentos de UI.
-- [ ] **Finalizar Coleta de Feedback Qualitativo:** Concluir a validação da nova interface com a persona "Analista" para coletar as impressões finais, conforme definido no `PLAN-UX.md`.
 - [x] **Finalizar Coleta de Feedback Qualitativo:** Concluída a validação da nova interface com a persona "Analista" para coletar as impressões finais, conforme definido no `PLAN-UX.md`.
