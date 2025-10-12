@@ -244,30 +244,28 @@
             color: var(--danger-color);
         }
         /* NOVO: Estilo para tooltip customizada, mais legível */
-        .has-tooltip {
-            position: relative;
-        }
+        /* A posição relativa foi movida para o seletor específico abaixo para corrigir o contexto de posicionamento */
         .has-tooltip::after {
             content: attr(data-tooltip);
             position: absolute;
-            top: 0; /* Alinha com o topo do card */
-            right: 100%; /* Posiciona à esquerda do card */
+            top: 50%; /* Centraliza verticalmente */
+            left: 100%; /* Posiciona à direita do ícone */
             
             /* Estado inicial da animação */
-            transform: scaleY(0); /* Animação vertical */
-            transform-origin: top; /* Animação começa de cima para baixo */
+            transform: translateY(-50%) scaleX(0); /* Animação horizontal */
+            transform-origin: left; /* Animação começa da esquerda para a direita */
             opacity: 0;
             pointer-events: none; /* Impede que a tooltip capture eventos do mouse */
             
             /* Transição */
-            transition: transform 0.2s ease-out, opacity 0.15s ease-out;
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
             
             /* Aparência */
             background-color: #333;
             color: #fff;
             padding: 10px 15px;
             border-radius: 6px;
-            margin-right: 15px; /* Adiciona espaço entre o card e a tooltip */
+            margin-left: 15px; /* Adiciona espaço entre o ícone e a tooltip */
             z-index: 10;
             font-size: 0.9em;
             line-height: 1.4;
@@ -276,7 +274,7 @@
             white-space: normal;
         }
         .has-tooltip:hover::after {
-            transform: scaleY(1); /* Estado final da animação */
+            transform: translateY(-50%) scaleX(1); /* Estado final da animação */
             opacity: 1;
         }
 
@@ -448,6 +446,30 @@
             height: 20px;
             color: white;
         }
+        /* NOVO: Contêiner para as "orelhas" de link no card de KPI */
+        .kpi-ear-links {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px; /* Espaço entre as orelhas */
+        }
+        .kpi-ear-links .report-link-ear {
+            position: static; /* Remove o posicionamento absoluto individual */
+            border-top-right-radius: 0; /* Ajusta o raio para o novo layout */
+            border-bottom-left-radius: 8px;
+            /* CORREÇÃO: Revertendo para o estilo de ícone único */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            text-decoration: none;
+            /* NOVO: Define o contexto de posicionamento para o tooltip */
+            position: relative;
+        }
 
 
         /* NOVO: Estilos para o botão de relatório e notificação toast */
@@ -518,49 +540,6 @@
                 </div>
             </a>
             {% endif %}
-            {# NOVO: Card para acessar a análise mais recente, movido para a sidebar #}
-            {% if kpi_summary and kpi_summary.report_url %}
-            <a href="{{ kpi_summary.report_url }}" class="side-card highlight-pulse" style="border-color: var(--accent-color); background: linear-gradient(135deg, rgba(59, 139, 236, 0.25), var(--card-color));">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-color);"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                <div class="side-card-text">
-                    <h3> Análise Padrão Completa</h3>
-                    <p>Gerado em: {{ last_action_plan.date | localtime }}</p>
-                </div>
-            </a>
-            {% endif %}
-
-            {% if last_action_plan %}
-            <a href="{{ last_action_plan.url }}" class="side-card action-plan-card">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
-                <div class="side-card-text">
-                    <h3> Plano de Ação</h3>
-                    <p>Gerado em: {{ last_action_plan.date | localtime }}</p>
-                </div>
-            </a>
-            {% endif %}
-
-            {% if trend_history %}
-            <a href="{{ trend_history[0].url }}" class="side-card last-analysis-card">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                <div class="side-card-text">
-                    <h3> Análise de Tendência</h3>
-                    <p>Gerada em: {{ trend_history[0].date | localtime }}</p>
-                    
-                    {% if trend_history|length > 1 %}
-                    <details style="margin-top: 10px;">
-                        <summary style="cursor: pointer; font-size: 0.9em;">Histórico anterior</summary>
-                        <ul style="list-style: none; padding-left: 10px; margin-top: 5px; font-size: 0.85em;">
-                            {% for analysis in trend_history[1:] %}
-                            <li style="margin-bottom: 5px;">
-                                <a href="{{ analysis.url }}">Análise de {{ analysis.date | localtime }}</a>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </details>
-                    {% endif %}
-                </div>
-            </a>
-            {% endif %}
             
             <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" class="side-card doc-gerencial-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
@@ -578,12 +557,38 @@
                 </div>
             </a>
 
+            <a href="{{ url_for('relatorios') }}" class="side-card">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <div class="side-card-text">
+                    <h3>Histórico de Análises</h3>
+                    <p>Visualize e gerencie todos os relatórios.</p>
+                </div>
+            </a>
+
         </aside>
 
         <main class="main-content-column">
             {# NOVO: Card 1 - Apenas para os KPIs #}
                 {% if kpi_summary %}
                 <div class="card">
+                    {# NOVO: Contêiner para os links de "orelha" #}
+                    <div class="kpi-ear-links">
+                        {% if kpi_summary and kpi_summary.report_url %}
+                        <a href="{{ kpi_summary.report_url }}" class="report-link-ear visible has-tooltip" data-tooltip="Acessar Relatório Completo" style="background-color: var(--accent-color);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                        {% endif %}
+                        {% if last_action_plan %}
+                        <a href="{{ last_action_plan.url }}" class="report-link-ear visible has-tooltip" data-tooltip="Ver Plano de Ação" style="background-color: var(--danger-color);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                        </a>
+                        {% endif %}
+                        {% if trend_history %}
+                        <a href="{{ trend_history[0].url }}" class="report-link-ear visible has-tooltip" data-tooltip="Ver Análise de Tendência" style="background-color: var(--success-color);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                        </a>
+                        {% endif %}
+                    </div>
                 <div id="kpi-dashboard-container" class="kpi-dashboard">
                     {# Card 1: Casos sem Remediação #}
                     {% set atuacao_class = 'card-neon-red' if kpi_summary.casos_atuacao > 0 else 'card-neon-green' %}
@@ -628,9 +633,7 @@
                     {% endif %}
                     <div class="kpi-card {{ sucesso_class }}">
                         {# CORREÇÃO: Reintroduz a "orelha" de link para consistência da UI. #}
-                        <a href="{{ kpi_summary.report_url or '#' }}" class="report-link-ear visible" style="background-color: {{ sucesso_ear_color }};">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                        </a>
+                        {# A orelha foi movida para o contêiner kpi-ear-links #}
                         <p class="kpi-value {{ sucesso_color_class }}">{{ kpi_summary.taxa_sucesso_automacao }}</p>
                         <p class="kpi-label">Sucesso da Automação</p>
                         {# NOVO: Exibe a contagem de alertas de sucesso #}
@@ -674,9 +677,6 @@
                                 <span class="file-name" id="name_recente"></span>
                             </div>
                             <button type="submit" id="submit-btn">Analisar e Comparar com Histórico</button>
-                            <div class="button-group">
-                                <button type="button" id="history-btn" onclick="window.location.href='/relatorios'">Histórico de Análises</button>
-                            </div>
                             {# NOVO: Link de Acesso Administrativo #}
                             {# O link de admin foi removido daqui para centralizar na sidebar #}
                         </form>
@@ -687,7 +687,7 @@
                     </div>
 
                     <div id="tab-comparativa" class="tab-content">
-                        <p class="tab-description">Compare dois arquivos de dados específicos para gerar um relatório de tendência sob demanda. Ideal para análises pontuais e investigativas entre períodos não sequenciais.</p>
+                        <p class="tab-description">Compare dois arquivos de dados específicos para gerar um relatório de tendência sob demanda - Temporário. Ideal para análises pontuais e investigativas entre períodos não sequenciais.</p>
                         <form action="{{ url_for('compare_files') }}" method="post" enctype="multipart/form-data" id="compare-form">
                             <label for="file_comparativa">Selecione exatamente dois arquivos para comparar:</label>
                             <div class="file-input-wrapper" id="wrapper_comparativa">
@@ -904,9 +904,7 @@
                     <p class="kpi-label">Casos com Instabilidade</p>
                 </div>
                 <div class="kpi-card ${sucessoClass}">
-                    <a href="${reportUrl || '#'}" class="report-link-ear visible" style="background-color: ${sucessoColor};">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                    </a>
+                    <!-- A orelha agora é renderizada no servidor e não precisa ser atualizada dinamicamente aqui -->
                     <p class="kpi-value" style="color: ${sucessoColor};">${kpi.taxa_sucesso_automacao}</p>
                     <p class="kpi-label">Sucesso da Automação</p>
                 </div>

@@ -15,6 +15,9 @@ FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 def client():
     """Configura o cliente de teste do Flask."""
     flask_app.app.config["TESTING"] = True
+    flask_app.app.config["SERVER_NAME"] = (
+        "localhost"  # Essencial para url_for funcionar nos testes
+    )
     with flask_app.app.test_client() as client:
         yield client
 
@@ -220,6 +223,7 @@ def test_kpi_dashboard_on_index_page(client):
                 "casos_instabilidade": 1,
                 "taxa_sucesso_automacao": "66.7%",
                 "taxa_sucesso_valor": 66.7,  # Adiciona a chave que faltava
+                "report_url": "/fake/url/to/report.html",  # Adiciona a URL para consistência
             }
 
             # 2. Simula que existe um relatório no banco de dados.
@@ -242,4 +246,6 @@ def test_kpi_dashboard_on_index_page(client):
             # As asserções foram recenteizadas para corresponder à nova estrutura HTML dos cards de KPI
             assert '<p class="kpi-value text-danger">1</p>' in response_data
             assert '<p class="kpi-value text-warning">1</p>' in response_data
+            # CORREÇÃO: Com a lógica de cores atualizada, 66.7% de sucesso cai na faixa de 'warning'.
+            # O teste é ajustado para refletir a cor correta.
             assert '<p class="kpi-value text-warning">66.7%</p>' in response_data
