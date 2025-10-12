@@ -6,19 +6,18 @@
     <title>Documentação Técnica - Dash Alertas</title>
     <style>
         :root {
-            --bg-color: #0d0c0f;
-            --card-color: #1a1a1a;
+            --bg-color: #1a1c2f;
+            --card-color: #2c2f48;
             --text-color: #f0f0f0;
             --text-secondary-color: #a0a0b0;
-            --border-color: #4a4a4a;
-            --accent-color: #2a7f3b;
+            --border-color: #404466;
+            --accent-color: #4e73df;
             --success-color: #1cc88a;
             --warning-color: #d2c83b;
             --danger-color: #e74a3b;
-            --font-family: 'Press Start 2P', cursive;
         }
         body {
-            font-family: var(--font-family);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             line-height: 1.7;
             color: var(--text-color);
             background-color: var(--bg-color);
@@ -28,7 +27,7 @@
         .back-link {
             display: inline-block;
             margin-bottom: 20px;
-            font-weight: normal;
+            font-weight: 600;
             color: var(--accent-color);
             font-size: 1.1em;
             text-decoration: none;
@@ -43,7 +42,7 @@
         }
         h1, h2, h3, h4 {
             color: var(--text-color);
-            font-weight: normal;
+            font-weight: 600;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
@@ -52,7 +51,7 @@
         h3 { font-size: 1.4em; margin-top: 40px; border-bottom-style: dashed; }
         h4 { font-size: 1.1em; margin-top: 30px; border-bottom: none; color: var(--accent-color); }
         p { color: var(--text-secondary-color); }
-        a { color: var(--accent-color); text-decoration: none; font-weight: normal; }
+        a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
         a:hover { text-decoration: underline; }
         code {
             background-color: var(--card-color);
@@ -100,7 +99,7 @@
             border-bottom: 1px solid var(--border-color);
         }
         th {
-            background-color: #2a2a2a;
+            background-color: #262940;
             font-weight: bold;
             text-align: center;
         }
@@ -108,7 +107,7 @@
             background-color: #33365a;
         }
         td:first-child {
-            font-weight: normal;
+            font-weight: 500;
             color: var(--text-color);
         }
         td:nth-child(2) { text-align: center; }
@@ -146,7 +145,7 @@
             border: none;
             padding-bottom: 5px;
             color: var(--text-color);
-            font-weight: normal;
+            font-weight: 500;
         }
         .flow-diagram p {
             font-size: 0.85em;
@@ -157,7 +156,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="/" class="back-link">&larr; Voltar para a Página Inicial</a>
+        <a href="../" class="back-link">&larr; Voltar para a Página Inicial</a>
         <h1>📄 Documentação Técnica - meu-dash</h1>
         <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados, lógica de análise e guia de desenvolvimento do projeto <code>meu-dash</code>.</p>
 
@@ -182,8 +181,8 @@
                     <li><code>app.py</code>: Ponto de entrada da aplicação Flask. Define as rotas (<code>/</code>, <code>/upload</code>), gerencia as requisições, delega a lógica para a camada de serviço e fornece filtros de template (ex: conversão de timezone).</li>
                     <li><code>services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados (usando os modelos <code>Report</code> e <code>TrendAnalysis</code> para garantir a continuidade da análise de tendência) e coordena a chamada aos motores de análise e geradores de página.</li>
                     <li><code>analisar_alertas.py</code>: Motor de análise principal. Processa um arquivo <code>.csv</code>, agrupa alertas em casos e calcula o score de prioridade para cada um.</li>
-                    <li><code>analise_tendencia.py</code>: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência, incluindo o "Diagnóstico Rápido" com links contextuais.</li>
-                    <li><code>gerador_paginas.py</code>: Responsável por usar os dados analisados para gerar o conjunto completo de páginas HTML, incluindo o dashboard principal, relatórios de detalhe e os planos de ação pré-filtrados por squad (<code>atuar-&lt;squad&gt;.html</code>).</li>
+                    <li><code>analise_tendencia.py</code>: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência, incluindo o "Diagnóstico Rápido" com links contextuais para os planos de ação.</li>
+                    <li><code>gerador_paginas.py</code>: Responsável por usar os dados analisados para gerar o conjunto completo de páginas HTML, incluindo o dashboard principal, relatórios de detalhe e os planos de ação pré-filtrados por squad (<code>plano-de-acao-&lt;squad&gt;.html</code>).</li>
                 </ul>
 
                 <h5 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Módulos de Suporte e Configuração</h5>
