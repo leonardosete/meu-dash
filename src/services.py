@@ -2,6 +2,7 @@
 Módulo de Serviço para encapsular a lógica de negócio principal da aplicação.
 """
 
+import json
 import shutil
 import os
 from datetime import datetime
@@ -12,7 +13,11 @@ from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
 from . import context_builder, gerador_paginas
-from .constants import MAX_REPORTS_HISTORY
+from .constants import (
+    MAX_REPORTS_HISTORY,
+    ACAO_FLAGS_ATUACAO,
+    ACAO_FLAGS_INSTABILIDADE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +61,110 @@ def _enforce_report_limit(db, Report):
     except Exception as e:
         logger.error(f"Erro ao tentar aplicar o limite de histórico: {e}")
         db.session.rollback()
+
+
+def calculate_kpi_summary(report_path: str) -> dict | None:
+    """Calcula os KPIs gerenciais a partir de um arquivo de resumo JSON.
+
+    Args:
+        report_path (str): O caminho para o arquivo JSON de resumo.
+
+    Returns:
+        dict | None: Um dicionário com os KPIs ou None se ocorrer um erro.
+    """
+    try:
+        with open(report_path, "r") as f:
+            summary_data = json.load(f)
+
+        if not summary_data:
+            return None
+
+        total_casos = len(summary_data)
+        casos_atuacao = sum(
+            1
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_ATUACAO
+        )
+        casos_instabilidade = sum(
+            1
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_INSTABILIDADE
+        )
+        alertas_instabilidade = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_INSTABILIDADE
+        )
+        alertas_sucesso = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") not in ACAO_FLAGS_ATUACAO
+        )
+        alertas_atuacao = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_ATUACAO
+        )
+        taxa_sucesso = (
+            (1 - (casos_atuacao / total_casos)) * 100 if total_casos > 0 else 100
+        )
+        casos_sucesso = total_casos - casos_atuacao
+
+        return {
+            "casos_atuacao": casos_atuacao,
+            "alertas_atuacao": alertas_atuacao,
+            "casos_instabilidade": casos_instabilidade,
+            "alertas_instabilidade": alertas_instabilidade,
+            "alertas_sucesso": alertas_sucesso,
+            "taxa_sucesso_automacao": f"{taxa_sucesso:.1f}%",
+            "taxa_sucesso_valor": taxa_sucesso,
+            "casos_sucesso": casos_sucesso,
+            "total_casos": total_casos,
+        }
+    except (json.JSONDecodeError, FileNotFoundError, Exception) as e:
+        logger.error(f"Erro ao ler ou processar o JSON de resumo: {e}")
+        return None
+
+
+def delete_report_and_artifacts(report_id: int, db, Report) -> bool:
+    """
+    Exclui um relatório e todos os seus artefatos associados (arquivos e registro no DB).
+
+    Args:
+        report_id (int): O ID do relatório a ser excluído.
+        db (SQLAlchemy): A instância do banco de dados.
+        Report (Model): A classe do modelo Report.
+
+    Returns:
+        bool: True se a exclusão for bem-sucedida, False caso contrário.
+    """
+    report = Report.query.get(report_id)
+    if not report:
+        logger.warning(
+            f"Tentativa de excluir relatório inexistente com ID: {report_id}"
+        )
+        return False
+
+    try:
+        # Pega o diretório do relatório (ex: '.../data/reports/run_20251005_103000')
+        report_dir = os.path.dirname(report.report_path)
+
+        # Deleta a pasta inteira do 'run', garantindo que todos os arquivos associados sejam removidos
+        if os.path.isdir(report_dir):
+            shutil.rmtree(report_dir)
+            logger.info(f"Diretório '{report_dir}' excluído com sucesso.")
+
+        # Deleta o registro do banco de dados (e TrendAnalysis em cascata)
+        db.session.delete(report)
+        db.session.commit()
+        logger.info(
+            f"Relatório '{report.original_filename}' (ID: {report_id}) excluído do banco de dados."
+        )
+        return True
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao excluir o relatório {report_id}: {e}", exc_info=True)
+        return False
 
 
 def process_upload_and_generate_reports(

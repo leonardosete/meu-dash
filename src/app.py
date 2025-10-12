@@ -1,6 +1,4 @@
 import os
-import shutil  # Para deletar diretórios recursivamente
-import json
 from datetime import datetime, timezone
 from flask import abort
 from flask import (
@@ -15,7 +13,6 @@ from flask import (
     flash,
 )
 from . import services
-from .constants import ACAO_FLAGS_ATUACAO, ACAO_FLAGS_INSTABILIDADE
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -114,75 +111,6 @@ def localtime_filter(utc_dt):
         return utc_dt.strftime("%d/%m/%Y %H:%M (UTC)")
 
 
-def _calculate_kpi_summary(report_path: str) -> dict | None:
-    """Calcula os KPIs gerenciais a partir de um arquivo de resumo JSON.
-
-    Args:
-        report_path (str): O caminho para o arquivo JSON de resumo.
-
-    Returns:
-        dict | None: Um dicionário com os KPIs ou None se ocorrer um erro.
-    """
-    try:
-        with open(report_path, "r") as f:
-            summary_data = json.load(f)
-
-        if not summary_data:
-            return None
-
-        total_casos = len(summary_data)
-        casos_atuacao = sum(
-            1
-            for item in summary_data
-            if item.get("acao_sugerida") in ACAO_FLAGS_ATUACAO
-        )
-        casos_instabilidade = sum(
-            1
-            for item in summary_data
-            if item.get("acao_sugerida") in ACAO_FLAGS_INSTABILIDADE
-        )
-        # NOVO: Soma a contagem de alertas para os casos de instabilidade.
-        alertas_instabilidade = sum(
-            item.get("alert_count", 0)
-            for item in summary_data
-            if item.get("acao_sugerida") in ACAO_FLAGS_INSTABILIDADE
-        )
-        # NOVO: Soma a contagem de alertas para os casos resolvidos com sucesso.
-        alertas_sucesso = sum(
-            item.get("alert_count", 0)
-            for item in summary_data
-            if item.get("acao_sugerida") not in ACAO_FLAGS_ATUACAO
-        )
-        # NOVO: Soma a contagem de alertas para os casos que precisam de atuação.
-        alertas_atuacao = sum(
-            item.get("alert_count", 0)
-            for item in summary_data
-            if item.get("acao_sugerida") in ACAO_FLAGS_ATUACAO
-        )
-        taxa_sucesso = (
-            (1 - (casos_atuacao / total_casos)) * 100 if total_casos > 0 else 100
-        )
-        casos_sucesso = total_casos - casos_atuacao
-
-        return {
-            "casos_atuacao": casos_atuacao,
-            # NOVO: Passa a contagem de alertas para o template.
-            "alertas_atuacao": alertas_atuacao,
-            "casos_instabilidade": casos_instabilidade,
-            # NOVO: Passa a contagem de alertas de instabilidade.
-            "alertas_instabilidade": alertas_instabilidade,
-            # NOVO: Passa a contagem de alertas de sucesso.
-            "alertas_sucesso": alertas_sucesso,
-            "taxa_sucesso_automacao": f"{taxa_sucesso:.1f}%",
-            "taxa_sucesso_valor": taxa_sucesso,
-            "casos_sucesso": casos_sucesso,
-            "total_casos": total_casos,
-        }
-    except (json.JSONDecodeError, FileNotFoundError, Exception) as e:
-        print(f"Erro ao ler ou processar o JSON de resumo: {e}")
-        return None
-
-
 # --- ROTAS DE HEALTH CHECK PARA KUBERNETES ---
 
 
@@ -241,7 +169,7 @@ def index():
         if last_report.json_summary_path and os.path.exists(
             last_report.json_summary_path
         ):
-            kpi_data = _calculate_kpi_summary(last_report.json_summary_path)
+            kpi_data = services.calculate_kpi_summary(last_report.json_summary_path)
             if kpi_data:
                 # Adiciona a URL do relatório aos dados do KPI
                 kpi_data["report_url"] = url_for(
@@ -325,7 +253,7 @@ def upload_file():
                 filename=result["report_filename"],
             )
             new_kpi_summary = (
-                _calculate_kpi_summary(result["json_summary_path"])
+                services.calculate_kpi_summary(result["json_summary_path"])
                 if result.get("json_summary_path")
                 else None
             )
@@ -535,25 +463,23 @@ def delete_report(report_id):
         return redirect(url_for("admin_login_page"))
 
     report = Report.query.get_or_404(report_id)
+    report_filename = report.original_filename  # Salva o nome para a mensagem flash
 
-    try:
-        # Pega o diretório do relatório (ex: '.../data/reports/run_20251005_103000')
-        report_dir = os.path.dirname(report.report_path)
+    # Delega a lógica de exclusão para a camada de serviço
+    success = services.delete_report_and_artifacts(
+        report_id=report_id, db=db, Report=Report
+    )
 
-        # Deleta a pasta inteira do 'run', garantindo que todos os arquivos associados sejam removidos
-        if os.path.isdir(report_dir):
-            shutil.rmtree(report_dir)
-            print(f"🗑️ Diretório '{report_dir}' excluído com sucesso.")
-
-        # Deleta o registro do banco de dados
-        db.session.delete(report)
-        db.session.commit()
-
-        print(f"✅ Relatório '{report.original_filename}' excluído do banco de dados.")
-
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Erro ao excluir o relatório {report_id}: {e}")
+    if success:
+        flash(
+            f"Relatório '{report_filename}' e seus arquivos foram excluídos com sucesso.",
+            "success",
+        )
+    else:
+        flash(
+            f"Erro ao tentar excluir o relatório '{report_filename}'. Consulte os logs.",
+            "error",
+        )
 
     return redirect(url_for("relatorios"))
 

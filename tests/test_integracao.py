@@ -204,9 +204,11 @@ def test_kpi_dashboard_on_index_page(client):
     """
     # Envolve o teste no contexto da aplicação para garantir que o DB esteja acessível
     with client.application.app_context():
-        # Mocka a função de cálculo de KPI e TODAS as queries ao DB feitas pela rota
-        with patch("src.app._calculate_kpi_summary") as mock_calculate_kpi, patch(
-            "src.app.Report.query"
+        # Mocka a chamada para a função de serviço e as queries ao DB feitas pela rota
+        with patch(
+            "src.app.services.calculate_kpi_summary"
+        ) as mock_calculate_kpi, patch(
+            "src.app.Report.query"  # Continua mockando a query
         ) as mock_report_query, patch(
             "src.app.TrendAnalysis.query"
         ) as mock_trend_query:

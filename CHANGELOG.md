@@ -2,6 +2,21 @@
 
 Este documento registra as principais evoluções, refatorações e decisões de design ao longo do ciclo de vida do projeto `meu-dash`.
 
+## Outubro 2025 - Refatoração Arquitetural
+
+Este ciclo focou em alinhar a implementação do código com a arquitetura de camadas documentada, melhorando a manutenibilidade, testabilidade e clareza do sistema.
+
+### Principais Entregas
+
+- **Implementação da Camada de Serviço (`REFACTOR_PLAN.md`):**
+  - Toda a lógica de negócio que residia no controller (`src/app.py`) foi movida para a camada de serviço (`src/services.py`).
+  - O `app.py` agora atua como um *Controller fino*, responsável apenas por gerenciar rotas HTTP e delegar as operações.
+  - Funções como `calculate_kpi_summary` e `delete_report_and_artifacts` foram encapsuladas no serviço, desacoplando a lógica de negócio do framework web.
+
+- **Fortalecimento dos Testes:**
+  - Foram criados testes unitários específicos para as novas funções na camada de serviço, garantindo que a lógica de negócio seja testável de forma isolada.
+  - Os testes de integração foram atualizados para refletir a nova arquitetura, mockando as chamadas de serviço em vez de funções internas do controller.
+
 ## Outubro 2025 - Redesign da UX e Análise de Tendência
 
 Este ciclo de desenvolvimento focou em transformar a aplicação de uma ferramenta de análise única para uma plataforma de monitoramento contínuo e análise de tendência.

@@ -1,5 +1,6 @@
 import os
 import pytest
+import json
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
@@ -355,3 +356,123 @@ def test_enforce_report_limit_deletes_oldest(
 
     # 5. Verifica se o commit foi feito no final
     mock_db.session.commit.assert_called_once()
+
+
+def test_calculate_kpi_summary_success(tmp_path):
+    """
+    GIVEN um arquivo JSON de resumo válido,
+    WHEN a função calculate_kpi_summary é chamada,
+    THEN ela deve retornar um dicionário com os KPIs calculados corretamente.
+    """
+    # Arrange
+    # Importa as constantes reais para garantir que o teste use os mesmos valores da aplicação
+    from src.constants import (
+        ACAO_FALHA_PERSISTENTE,
+        ACAO_INSTABILIDADE_CRONICA,
+        ACAO_SEMPRE_OK,
+    )
+
+    # Simula os diferentes tipos de casos que a função espera
+    summary_data = [
+        # Usa as constantes reais para garantir a consistência do teste
+        {"acao_sugerida": ACAO_FALHA_PERSISTENTE, "alert_count": 10},
+        {"acao_sugerida": ACAO_INSTABILIDADE_CRONICA, "alert_count": 5},
+        {"acao_sugerida": ACAO_SEMPRE_OK, "alert_count": 2},
+    ]
+    json_path = tmp_path / "summary.json"
+    with open(json_path, "w") as f:
+        json.dump(summary_data, f)
+
+    # Act
+    result = services.calculate_kpi_summary(str(json_path))
+
+    # Assert
+    assert result is not None
+    assert result["total_casos"] == 3
+    assert result["casos_atuacao"] == 1
+    assert result["casos_instabilidade"] == 1
+    assert result["casos_sucesso"] == 2  # (total_casos - casos_atuacao)
+    assert result["alertas_atuacao"] == 10
+    assert result["alertas_instabilidade"] == 5
+    assert result["alertas_sucesso"] == 7  # (alertas_instabilidade + alertas_sucesso)
+    assert result["taxa_sucesso_automacao"] == "66.7%"
+
+
+@pytest.mark.parametrize(
+    "file_content, file_exists",
+    [
+        ("[]", True),  # Arquivo JSON vazio
+        ('{"key": "value"}', False),  # Arquivo não existe
+        ("{malformed", True),  # JSON inválido
+    ],
+)
+def test_calculate_kpi_summary_failures(tmp_path, file_content, file_exists):
+    """Testa se a função retorna None em cenários de falha."""
+    json_path = tmp_path / "summary.json"
+    if file_exists:
+        json_path.write_text(file_content)
+
+    assert services.calculate_kpi_summary(str(json_path)) is None
+
+
+@patch("src.services.shutil.rmtree")
+@patch("src.services.os.path.isdir", return_value=True)
+def test_delete_report_and_artifacts_success(
+    mock_isdir, mock_rmtree, mock_dependencies
+):
+    """
+    GIVEN um report_id válido,
+    WHEN delete_report_and_artifacts é chamado,
+    THEN o diretório do relatório e o registro no DB devem ser excluídos.
+    """
+    # Arrange
+    mock_db = mock_dependencies["db"]
+    MockReport = mock_dependencies["Report"]
+
+    mock_report_instance = MagicMock()
+    mock_report_instance.report_path = "/fake/dir/report.html"
+    MockReport.query.get.return_value = mock_report_instance
+
+    # Act
+    result = services.delete_report_and_artifacts(1, mock_db, MockReport)
+
+    # Assert
+    assert result is True
+    MockReport.query.get.assert_called_once_with(1)
+    mock_isdir.assert_called_once_with("/fake/dir")
+    mock_rmtree.assert_called_once_with("/fake/dir")
+    mock_db.session.delete.assert_called_once_with(mock_report_instance)
+    mock_db.session.commit.assert_called_once()
+    mock_db.session.rollback.assert_not_called()
+
+
+def test_delete_report_and_artifacts_not_found(mock_dependencies):
+    """Testa se a função retorna False se o relatório não for encontrado."""
+    mock_db = mock_dependencies["db"]
+    MockReport = mock_dependencies["Report"]
+    MockReport.query.get.return_value = None
+
+    result = services.delete_report_and_artifacts(999, mock_db, MockReport)
+
+    assert result is False
+    mock_db.session.delete.assert_not_called()
+    mock_db.session.commit.assert_not_called()
+
+
+@patch("src.services.shutil.rmtree", side_effect=Exception("Permission denied"))
+@patch("src.services.os.path.isdir", return_value=True)
+def test_delete_report_and_artifacts_exception(
+    mock_isdir, mock_rmtree, mock_dependencies
+):
+    """Testa se a função faz rollback em caso de exceção."""
+    mock_db = mock_dependencies["db"]
+    MockReport = mock_dependencies["Report"]
+    mock_report_instance = MagicMock()
+    MockReport.query.get.return_value = mock_report_instance
+
+    result = services.delete_report_and_artifacts(1, mock_db, MockReport)
+
+    assert result is False
+    mock_db.session.delete.assert_not_called()
+    mock_db.session.commit.assert_not_called()
+    mock_db.session.rollback.assert_called_once()

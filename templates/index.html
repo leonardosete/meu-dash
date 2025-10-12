@@ -66,6 +66,7 @@
         
         /* --- ESTILOS DOS CARDS (maioria movida ou ajustada) --- */
         .card {
+            position: relative;
             background: var(--card-color);
             border: 1px solid var(--border-color);
             border-radius: 16px;
@@ -382,7 +383,6 @@
 
         /* Estilos KPI Card */
         .kpi-card {
-            position: relative;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -421,8 +421,8 @@
         /* NOVO: Estilos para a "Orelha de Aba" clicável no card de KPI */
         .kpi-card .report-link-ear {
             position: absolute;
-            top: -1px;
-            right: -1px;
+            top: 0;
+            right: 0;
             width: 40px;
             height: 40px;
             background-color: var(--accent-color);
@@ -540,13 +540,11 @@
             {% endif %}
 
             {% if trend_history %}
-            <div class="side-card last-analysis-card">
+            <a href="{{ trend_history[0].url }}" class="side-card last-analysis-card">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
                 <div class="side-card-text">
-                    <a href="{{ trend_history[0].url }}" style="text-decoration: none; color: inherit;">
-                        <h3> Análise de Tendência</h3>
-                        <p>Gerada em: {{ trend_history[0].date | localtime }}</p>
-                    </a>
+                    <h3> Análise de Tendência</h3>
+                    <p>Gerada em: {{ trend_history[0].date | localtime }}</p>
                     
                     {% if trend_history|length > 1 %}
                     <details style="margin-top: 10px;">
@@ -561,7 +559,7 @@
                     </details>
                     {% endif %}
                 </div>
-            </div>
+            </a>
             {% endif %}
             
             <a href="{{ url_for('serve_docs', filename='doc_gerencial.html') }}" class="side-card doc-gerencial-card">
@@ -618,15 +616,21 @@
                     {% if taxa_valor < 50.0 %}
                         {% set sucesso_class = 'card-neon-red' %}
                         {% set sucesso_color_class = 'text-danger' %}
+                        {% set sucesso_ear_color = 'var(--danger-color)' %}
                     {% elif taxa_valor < 70.0 %}
                         {% set sucesso_class = 'card-neon-warning' %}
                         {% set sucesso_color_class = 'text-warning' %}
+                        {% set sucesso_ear_color = 'var(--warning-color)' %}
                     {% else %}
                         {% set sucesso_class = 'card-neon-green' %}
                         {% set sucesso_color_class = 'text-success' %}
+                        {% set sucesso_ear_color = 'var(--success-color)' %}
                     {% endif %}
                     <div class="kpi-card {{ sucesso_class }}">
-                        {# Link da "orelha" removido para evitar duplicidade com o botão principal #}
+                        {# CORREÇÃO: Reintroduz a "orelha" de link para consistência da UI. #}
+                        <a href="{{ kpi_summary.report_url or '#' }}" class="report-link-ear visible" style="background-color: {{ sucesso_ear_color }};">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
                         <p class="kpi-value {{ sucesso_color_class }}">{{ kpi_summary.taxa_sucesso_automacao }}</p>
                         <p class="kpi-label">Sucesso da Automação</p>
                         {# NOVO: Exibe a contagem de alertas de sucesso #}
@@ -900,7 +904,7 @@
                     <p class="kpi-label">Casos com Instabilidade</p>
                 </div>
                 <div class="kpi-card ${sucessoClass}">
-                    <a href="${reportUrl || '#'}" class="report-link-ear visible">
+                    <a href="${reportUrl || '#'}" class="report-link-ear visible" style="background-color: ${sucessoColor};">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     </a>
                     <p class="kpi-value" style="color: ${sucessoColor};">${kpi.taxa_sucesso_automacao}</p>
