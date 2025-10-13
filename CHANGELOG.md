@@ -26,6 +26,7 @@ Este ciclo de desenvolvimento focou em transformar a aplicação de uma ferramen
 - **Refatoração da Interface Principal (`PLAN-UX.md`):**
   - Implementação de um novo layout com dashboard gerencial na página inicial.
   - Separação clara dos fluxos de "Análise Padrão" e "Comparação Direta".
+  - Consolidação dos links de ação (Relatório Completo, Plano de Ação, Análise de Tendência) no card de KPIs para uma interface mais limpa e focada.
   - Melhorias de usabilidade com base em testes de aceitação e feedback qualitativo.
 
 - **Implementação da Análise de Tendência Contínua (`PLAN.md`):**

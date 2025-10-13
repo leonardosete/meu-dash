@@ -102,8 +102,8 @@ A documentação técnica e gerencial do projeto está disponível publicamente 
 4. 📈 **Análise de Tendência Contínua**: A cada novo upload, o sistema identifica o último período analisado e gera um relatório comparativo (`comparativo_periodos.html`), criando uma cadeia contínua de comparações que mostra a evolução dos problemas, a taxa de resolução e os problemas persistentes ao longo do tempo.
 5. ✅ **Validação da Qualidade dos Dados**: Detecta e isola alertas com dados de remediação inválidos (`qualidade_dados_remediacao.html`=> `invalid_self_healing_status.csv`), garantindo a confiabilidade da análise e notificando no dashboard principal.
 6. 🗂️ **Histórico de Análises**: Mantém um histórico de todas as análises de tendência geradas, permitindo acesso rápido aos relatórios comparativos anteriores diretamente da página inicial.
-7. 🗑️ **Gerenciamento de Relatórios**: Permite a exclusão de análises individuais diretamente pela interface de histórico, liberando espaço e mantendo o ambiente organizado.
-8. 🧠 **Navegação Contextual Inteligente**: Ao navegar para um plano de ação a partir de um relatório de tendência, o botão "Voltar" leva o usuário de volta à análise, mantendo o fluxo de trabalho e o contexto da investigação.
+7. 🗑️ **Gerenciamento de Relatórios**: Permite a exclusão de relatórios individuais diretamente pela interface de histórico, liberando espaço e mantendo o ambiente organizado.
+8. 🧠 **Navegação Contextual Inteligente**: O dashboard de KPIs centraliza os links de ação para o Relatório Completo, Plano de Ação e Análise de Tendência, permitindo que o usuário navegue diretamente do insight para a ação com um único clique.
 
 ---
 
