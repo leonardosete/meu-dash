@@ -7,7 +7,7 @@ PYTHON := $(shell if [ -d ".venv" ]; then echo ".venv/bin/python"; else echo "py
 DOCKER_IMAGE_NAME := meu-dash
 DOCKER_IMAGE_TAG := latest
 
-.PHONY: help install setup run test format lint check clean distclean docker-build docker-run
+.PHONY: help install setup run test format lint check clean distclean docker-build docker-run validate
 
 help:
 	@echo "Comandos disponíveis:"
@@ -16,11 +16,13 @@ help:
 	@echo "  make setup-and-run  - (FAZ-TUDO) Configura o ambiente do zero e inicia a aplicação."
 	@echo "  make run            - Inicia a aplicação Flask em modo de desenvolvimento."
 	@echo "  make fresh-run      - Limpa o DB, aplica migrações e inicia a aplicação (para testes)."
-	@echo "  make migrate        - Aplica as migrações do banco de dados (cria as tabelas)."
+	@echo "  make migrate        - Aplica as migrações do banco de dados."
 	@echo "  make test           - Executa a suíte de testes com pytest."
-	@echo "  make format         - Formata o código com 'black'."
+	@echo "  make format         - Formata o código com 'ruff format'."
 	@echo "  make lint           - Executa o linter 'ruff check --fix' para corrigir erros."
-	@echo "  make check          - Roda o formatador e o linter em modo de verificação (para CI)."
+	@echo "  make security-scan  - Roda a verificação de segurança com 'bandit'."
+	@echo "  make check          - Roda todas as verificações: formatação, linting e segurança (para CI)."
+	@echo "  make validate       - (TUDO-EM-UM) Instala dependências, formata e testa o projeto."
 	@echo "  make clean          - Remove arquivos temporários e caches."
 	@echo "  make distclean      - Remove TODOS os arquivos gerados (venv, db, relatórios)."
 	@echo "  make docker-build   - Constrói a imagem Docker da aplicação."
@@ -82,21 +84,38 @@ migrate:
 	@export PYTHONPATH=$(shell pwd) && export FLASK_APP=src.app && .venv/bin/flask db upgrade
 
 format:
-	@echo ">>> Formatando o código com black..."
-	@.venv/bin/black .
+	@echo ">>> Formatando o código com ruff..."
+	@.venv/bin/ruff format .
 
 lint:
-	@echo ">>> Executando linter com ruff check..."
+	@echo ">>> Executando linter com ruff (com auto-correção)..."
 	@.venv/bin/ruff check --fix .
 
+security-scan:
+	@echo ">>> Verificando vulnerabilidades de segurança com bandit..."
+	@.venv/bin/bandit -r src -ll -ii
+
 check:
-	@echo ">>> Verificando formatação com black..."
-	@.venv/bin/black --check .
+	@echo ">>> Verificando formatação com ruff..."
+	@.venv/bin/ruff format --check .
 	@echo ">>> Verificando código com ruff check..."
 	@.venv/bin/ruff check .
+	@$(MAKE) security-scan
+
+validate:
+	@echo ">>> Executando validação completa..."
+	@if [ ! -d ".venv" ]; then \
+		echo ">>> Ambiente virtual não encontrado. Configurando automaticamente..."; \
+		$(MAKE) setup; \
+	fi
+	@$(MAKE) install
+	@$(MAKE) format
+	@$(MAKE) test
+	@echo ">>> ✅ Validação completa concluída com sucesso."
 
 clean:
 	@echo ">>> Removendo caches e arquivos temporários..."
+
 	@find . -type f -name "*.pyc" -delete
 	@find . -type d -name "__pycache__" -exec rm -rf {} +
 	@rm -f .coverage
@@ -118,3 +137,6 @@ docker-build:
 docker-run:
 	@echo ">>> Executando container Docker..."
 	@docker run -p 5000:5000 -v $(shell pwd)/data:/app/data $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+
+
+

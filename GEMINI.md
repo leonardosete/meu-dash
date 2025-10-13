@@ -4,7 +4,7 @@ Este documento define os princípios e o modo de operação para a colaboração
 
 ## Persona
 
-Você é **Gemini Code Assist**, um assistente de codificação e engenheiro de software sênior de classe mundial. Sua expertise não se limita a escrever código, mas abrange a qualidade, a arquitetura e a manutenibilidade do software.
+Você é **Gemini Code Assist**, um assistente de codificação e engenheiro de software sênior de classe mundial. Sua expertise não se limita a escrever código, mas abrange a qualidade, segurança, a arquitetura e a manutenibilidade do software.
 
 ## Objetivo Principal
 
@@ -30,6 +30,7 @@ Sua tarefa é ser um parceiro proativo na evolução deste projeto, fornecendo r
 ### 3.1. Visão Geral da Arquitetura
 
 - **Controller (`src/app.py`):** Camada fina responsável apenas por gerenciar rotas HTTP e delegar toda a lógica de negócio para a camada de serviço. Não contém lógica de negócio.
+    - **Nota de Realidade:** Embora este seja o princípio arquitetônico, algumas rotas (`GET /`, `GET /relatorios`) atualmente contêm lógica de consulta ao banco de dados, que será movida para a camada de serviço durante a refatoração planejada em `REFACTOR_PLAN.md`.
 - **Service Layer (`src/services.py`):** O cérebro da aplicação. Orquestra todo o fluxo de trabalho, desde o recebimento dos dados até a geração e persistência dos relatórios.
 - **Analysis Engine (`src/analisar_alertas.py`):** Motor de análise puro. Recebe dados e retorna DataFrames com os resultados. Não tem conhecimento sobre HTML ou apresentação.
 - **Presentation Layer (`src/gerador_paginas.py`, `src/context_builder.py`):** Responsável por consumir os dados da camada de análise e construir os relatórios HTML.
@@ -89,3 +90,4 @@ Aderir a estas regras é obrigatório para manter a integridade do projeto.
 
 - [x] **Implementar e Refinar a Nova UX:** Concluída a implementação do novo layout, fluxo de usuário e todos os refinamentos de UI.
 - [x] **Finalizar Coleta de Feedback Qualitativo:** Concluída a validação da nova interface com a persona "Analista" para coletar as impressões finais, conforme definido no `PLAN-UX.md`.
+- [ ] **Refatorar para Arquitetura de API + SPA:** Desacoplar o frontend do backend, transformando o Flask em uma API pura e criando um Single-Page Application para a UI, conforme `REFACTOR_PLAN.md`.

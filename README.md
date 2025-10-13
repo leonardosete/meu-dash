@@ -43,7 +43,7 @@ Para configurar e executar o projeto localmente, utilize os comandos automatizad
 - **Análise de Dados:** Pandas / NumPy
 - **Banco de Dados:** SQLite / SQLAlchemy
 - **Testes:** Pytest
-- **Qualidade de Código:** Black
+- **Qualidade de Código:** Ruff / Bandit
 - **Infraestrutura:** Docker / Kubernetes / Gunicorn
 
 ---

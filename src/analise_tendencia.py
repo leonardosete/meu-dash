@@ -627,15 +627,21 @@ def gerar_relatorio_tendencia(
     else:
         back_link = '<a href="resumo_geral.html" class="back-to-dashboard">&larr; Voltar para o Dashboard</a>'
 
-    periodo_anterior_text = f"<code>{escape(os.path.basename(csv_anterior_name))}</code>" + (
-        f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>"
-        if date_range_anterior
-        else ""
+    periodo_anterior_text = (
+        f"<code>{escape(os.path.basename(csv_anterior_name))}</code>"
+        + (
+            f" <span style='color: var(--text-secondary-color);'>({escape(date_range_anterior)})</span>"
+            if date_range_anterior
+            else ""
+        )
     )
-    periodo_recente_text = f"<code>{escape(os.path.basename(csv_recente_name))}</code>" + (
-        f" <span style='color: var(--text-secondary-color);'>({escape(date_range_recente)})</span>"
-        if date_range_recente
-        else ""
+    periodo_recente_text = (
+        f"<code>{escape(os.path.basename(csv_recente_name))}</code>"
+        + (
+            f" <span style='color: var(--text-secondary-color);'>({escape(date_range_recente)})</span>"
+            if date_range_recente
+            else ""
+        )
     )
 
     body = f"""

@@ -50,9 +50,19 @@ jobs:
       - name: Run tests
         run: pytest
 
-      # 5. Check Code Formatting: Fails if code is not formatted with black.
-      - name: Check code formatting
-        run: black --check .
+      # 5. Check Code Quality & Formatting
+      - name: Check formatting with ruff format
+        run: ruff format --check .
+
+      - name: Lint with Ruff
+        run: ruff check .
+
+      # 6. Run Security Scan with Bandit
+      # Scans the src directory for common security vulnerabilities.
+      # -ll: Report issues of medium severity or higher.
+      # -ii: Report issues of medium confidence or higher.
+      - name: Run security scan
+        run: bandit -r src -ll -ii
 
       # 5. Login no Docker Hub: Só executa em pushes para a branch 'main'.
       - name: Log in to Docker Hub

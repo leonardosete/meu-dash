@@ -126,6 +126,111 @@ def calculate_kpi_summary(report_path: str) -> dict | None:
         return None
 
 
+def get_dashboard_summary_data(db, Report, TrendAnalysis, reports_folder: str) -> dict:
+    """
+    Busca e consolida todos os dados necessários para o dashboard principal.
+
+    Esta função é chamada pelo endpoint da API e encapsula a lógica de negócio
+    de buscar o último relatório, calcular KPIs, verificar o plano de ação e
+    obter o histórico de tendências.
+
+    Args:
+        db: Instância do SQLAlchemy.
+        Report: Modelo Report.
+        TrendAnalysis: Modelo TrendAnalysis.
+        reports_folder: Caminho para a pasta de relatórios.
+
+    Returns:
+        Um dicionário contendo os dados brutos para o dashboard.
+    """
+    trend_history = []
+    last_action_plan = None
+    kpi_summary = None
+    last_report_info = None
+
+    last_report = Report.query.order_by(Report.timestamp.desc()).first()
+    if last_report:
+        run_folder_path = os.path.dirname(last_report.report_path)
+        run_folder_name = os.path.basename(run_folder_path)
+
+        last_report_info = {
+            "run_folder": run_folder_name,
+            "filename": os.path.basename(last_report.report_path),
+            "timestamp": last_report.timestamp,
+        }
+
+        action_plan_csv_path = os.path.join(run_folder_path, "atuar.csv")
+        if os.path.exists(action_plan_csv_path) and os.path.getsize(
+            action_plan_csv_path
+        ) > 100:
+            last_action_plan = {"date": last_report.timestamp}
+
+        if last_report.json_summary_path and os.path.exists(
+            last_report.json_summary_path
+        ):
+            kpi_summary = calculate_kpi_summary(last_report.json_summary_path)
+
+    trend_analyses = (
+        TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).limit(60).all()
+    )
+    for analysis in trend_analyses:
+        try:
+            run_folder = os.path.basename(os.path.dirname(analysis.trend_report_path))
+            filename = os.path.basename(analysis.trend_report_path)
+            trend_history.append(
+                {
+                    "run_folder": run_folder,
+                    "filename": filename,
+                    "date": analysis.timestamp,
+                }
+            )
+        except Exception as e:
+            logger.warning(
+                f"Erro ao processar histórico de tendência para o relatório {analysis.id}: {e}"
+            )
+            continue
+
+    return {
+        "kpi_summary": kpi_summary,
+        "last_action_plan": last_action_plan,
+        "trend_history": trend_history,
+        "last_report_info": last_report_info,
+    }
+
+
+def get_reports_list(Report) -> list:
+    """
+    Busca e retorna uma lista de todos os relatórios do banco de dados.
+
+    Args:
+        Report: Modelo Report do SQLAlchemy.
+
+    Returns:
+        Uma lista de dicionários, onde cada dicionário contém os metadados
+        de um relatório.
+    """
+    reports = Report.query.order_by(Report.timestamp.desc()).all()
+    report_data = []
+    for report in reports:
+        try:
+            report_data.append(
+                {
+                    "id": report.id,
+                    "timestamp": report.timestamp,
+                    "original_filename": report.original_filename,
+                    "date_range": report.date_range,
+                    "run_folder": os.path.basename(os.path.dirname(report.report_path)),
+                    "filename": os.path.basename(report.report_path),
+                }
+            )
+        except Exception as e:
+            logger.warning(
+                f"Erro ao processar dados do relatório {report.id} para a lista: {e}"
+            )
+            continue
+    return report_data
+
+
 def delete_report_and_artifacts(report_id: int, db, Report) -> bool:
     """
     Exclui um relatório e todos os seus artefatos associados (arquivos e registro no DB).
@@ -138,7 +243,7 @@ def delete_report_and_artifacts(report_id: int, db, Report) -> bool:
     Returns:
         bool: True se a exclusão for bem-sucedida, False caso contrário.
     """
-    report = Report.query.get(report_id)
+    report = db.session.get(Report, report_id)
     if not report:
         logger.warning(
             f"Tentativa de excluir relatório inexistente com ID: {report_id}"

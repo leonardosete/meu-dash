@@ -1,19 +1,18 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from flask import abort
+from functools import wraps
+import jwt
 from flask import (
     Flask,
-    render_template,
     request,
-    redirect,
     url_for,
-    session,
     send_from_directory,
     jsonify,
-    flash,
 )
 from . import services
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 from flask_migrate import Migrate
 
 app = Flask(__name__, template_folder="../templates")
@@ -34,6 +33,17 @@ app.config["SECRET_KEY"] = (
 app.config["ADMIN_TOKEN"] = os.getenv("ADMIN_TOKEN")
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+# --- CONFIGURAÇÃO DE CORS ---
+# Configura o CORS para permitir requisições da nossa futura aplicação frontend
+# em ambiente de desenvolvimento, apenas para as rotas de API.
+CORS(
+    app,
+    resources={
+        r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}
+    },
+    supports_credentials=True,
+)
 
 
 class Report(db.Model):
@@ -90,26 +100,6 @@ class TrendAnalysis(db.Model):
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
 
-# --- FILTRO DE TEMPLATE PARA TIMEZONE ---
-
-
-@app.template_filter("localtime")
-def localtime_filter(utc_dt):
-    """Converte um datetime UTC para o fuso horário local (America/Sao_Paulo)."""
-    if not utc_dt:
-        return ""
-    try:
-        # Garante que o datetime de entrada é 'aware' (tem timezone)
-        utc_dt = utc_dt.replace(tzinfo=timezone.utc)
-        # Tenta importar a biblioteca pytz, se não, usa a nativa (Python 3.9+)
-        from zoneinfo import ZoneInfo
-
-        local_tz = ZoneInfo("America/Sao_Paulo")
-        return utc_dt.astimezone(local_tz).strftime("%d/%m/%Y às %H:%M")
-    except (ImportError, Exception):
-        # Fallback para um formato simples se a conversão falhar
-        return utc_dt.strftime("%d/%m/%Y %H:%M (UTC)")
-
 
 # --- ROTAS DE HEALTH CHECK PARA KUBERNETES ---
 
@@ -131,104 +121,65 @@ def health_check():
 # --- ROTAS PRINCIPAIS DA APLICAÇÃO ---
 
 
-@app.route("/")
-def index():
-    """Renderiza a página de upload principal (`upload.html`).
-
-    Busca no banco de dados os links para o último relatório de tendência e para o
-    plano de ação mais recente. Esses links são passados para o template para
-    serem exibidos como atalhos na interface do usuário.
-
-    Returns:
-        str: O conteúdo HTML renderizado da página de upload.
+@app.route("/api/v1/dashboard-summary")
+def get_dashboard_summary():
     """
-    trend_history = []
-    last_action_plan = None
-    kpi_summary = None  # NOVO: Dicionário para os KPIs do dashboard
+    Endpoint da API que retorna um resumo dos dados para o dashboard principal.
 
-    # Lógica para o plano de ação continua a mesma: sempre o mais recente.
-    last_report = Report.query.order_by(Report.timestamp.desc()).first()
-    if last_report:
-        run_folder_path = os.path.dirname(last_report.report_path)
-        run_folder_name = os.path.basename(run_folder_path)
-        # CORREÇÃO: Verifica a existência e o conteúdo do CSV, não do HTML.
-        action_plan_csv_path = os.path.join(run_folder_path, "atuar.csv")
-        if (
-            os.path.exists(action_plan_csv_path)
-            and os.path.getsize(action_plan_csv_path) > 100
-        ):  # Um tamanho arbitrário para garantir que não está vazio
-            last_action_plan = {
-                "url": url_for(
-                    "serve_report",
-                    run_folder=run_folder_name,
-                    filename="atuar.html",
-                ),
-                "date": last_report.timestamp,  # Passa o objeto datetime diretamente
-            }
-        # NOVO: Extrai KPIs do último relatório para o Dashboard Gerencial
-        if last_report.json_summary_path and os.path.exists(
-            last_report.json_summary_path
-        ):
-            kpi_data = services.calculate_kpi_summary(last_report.json_summary_path)
-            if kpi_data:
-                # Adiciona a URL do relatório aos dados do KPI
-                kpi_data["report_url"] = url_for(
-                    "serve_report",
-                    run_folder=os.path.basename(
-                        os.path.dirname(last_report.report_path)
-                    ),
-                    filename=os.path.basename(last_report.report_path),
-                )
-                kpi_summary = kpi_data
-
-    # NOVA LÓGICA: Busca o histórico de tendências diretamente do banco de dados.
-    trend_analyses = (
-        TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).limit(60).all()
-    )
-    for analysis in trend_analyses:
-        try:
-            run_folder = os.path.basename(os.path.dirname(analysis.trend_report_path))
-            filename = os.path.basename(analysis.trend_report_path)
-            trend_history.append(
-                {
-                    "url": url_for(
-                        "serve_report", run_folder=run_folder, filename=filename
-                    ),
-                    "date": analysis.timestamp,  # Passa o objeto datetime diretamente
-                }
-            )
-        except Exception:
-            continue  # Ignora entradas com caminhos inválidos
-
-    return render_template(
-        "index.html",
-        trend_history=trend_history,
-        last_action_plan=last_action_plan,
-        kpi_summary=kpi_summary,  # Passa os KPIs para o template
-    )
-
-
-@app.route("/upload", methods=["POST"])
-def upload_file():
-    """Recebe o arquivo enviado pelo usuário e orquestra a análise.
-
-    Este endpoint é ativado pelo formulário de upload de arquivo único. Ele
-    valida o arquivo, delega o processamento completo para a camada de serviço
-    (`services.process_upload_and_generate_reports`) e, se bem-sucedido,
-    redireciona o usuário para o relatório recém-gerado.
-
-    Em caso de erro, exibe uma mensagem flash para o usuário e o redireciona
-    de volta para a página inicial.
+    Delega a busca dos dados para a camada de serviço e, em seguida, formata
+    a resposta como JSON, enriquecendo-a com as URLs necessárias para o frontend.
 
     Returns:
-        werkzeug.wrappers.Response: Uma resposta de redirecionamento para a página
-        do relatório gerado ou de volta para a página inicial em caso de erro.
+        Response: Uma resposta JSON contendo os dados do dashboard.
+    """
+    # Delega a busca de dados para a camada de serviço
+    summary_data = services.get_dashboard_summary_data(
+        db=db,
+        Report=Report,
+        TrendAnalysis=TrendAnalysis,
+        reports_folder=app.config["REPORTS_FOLDER"],
+    )
+
+    # Enriquece os dados com URLs geradas pelo Flask
+    if summary_data["kpi_summary"]:
+        last_report_info = summary_data["last_report_info"]
+        summary_data["kpi_summary"]["report_url"] = url_for(
+            "serve_report",
+            run_folder=last_report_info["run_folder"],
+            filename=last_report_info["filename"],
+        )
+
+    if summary_data["last_action_plan"]:
+        last_report_info = summary_data["last_report_info"]
+        summary_data["last_action_plan"]["url"] = url_for(
+            "serve_report",
+            run_folder=last_report_info["run_folder"],
+            filename="atuar.html",
+        )
+
+    for trend in summary_data["trend_history"]:
+        trend["url"] = url_for(
+            "serve_report", run_folder=trend["run_folder"], filename=trend["filename"]
+        )
+
+    return jsonify(summary_data)
+
+
+@app.route("/api/v1/upload", methods=["POST"])
+def upload_file_api():
+    """
+    Endpoint da API para upload e processamento de um novo arquivo de análise.
+
+    Recebe um arquivo, delega o processamento para a camada de serviço e
+    retorna uma resposta JSON indicando sucesso ou falha.
+
+    Returns:
+        Response: Uma resposta JSON com o resultado do processamento.
     """
     file_recente = request.files.get("file_recente")
 
     if not file_recente or file_recente.filename == "":
-        flash("Nenhum arquivo selecionado.", "error")
-        return redirect(url_for("index"))
+        return jsonify({"error": "Nenhum arquivo selecionado."}), 400
 
     try:
         # Delega toda a lógica de negócio para a camada de serviço
@@ -238,109 +189,70 @@ def upload_file():
             reports_folder=app.config["REPORTS_FOLDER"],
             db=db,
             Report=Report,
-            TrendAnalysis=TrendAnalysis,  # Passa o novo modelo
+            TrendAnalysis=TrendAnalysis,
             base_dir=BASE_DIR,
         )
 
-        # Se a requisição for AJAX (feita pelo nosso script), retorna JSON
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            if result and result.get("warning"):
-                return jsonify(success=False, error=result["warning"]), 400
+        if result and result.get("warning"):
+            return jsonify({"error": result["warning"]}), 400
 
-            report_url = url_for(
-                "serve_report",
-                run_folder=result["run_folder"],
-                filename=result["report_filename"],
-            )
-            new_kpi_summary = (
-                services.calculate_kpi_summary(result["json_summary_path"])
-                if result.get("json_summary_path")
-                else None
-            )
-
-            return jsonify(
-                success=True, report_url=report_url, kpi_summary=new_kpi_summary
-            )
-
-        # Comportamento padrão (fallback para clientes sem JS): redireciona.
-        if result and not result.get("warning"):
-            return redirect(
-                url_for(
-                    "serve_report",
-                    run_folder=result["run_folder"],
-                    filename=result["report_filename"],
-                )
-            )
-
-        flash(
-            result.get("warning")
-            or "Ocorreu um erro durante o processamento do arquivo.",
-            "error",
+        report_url = url_for(
+            "serve_report",
+            run_folder=result["run_folder"],
+            filename=result["report_filename"],
         )
-        return redirect(url_for("index"))
+        new_kpi_summary = (
+            services.calculate_kpi_summary(result["json_summary_path"])
+            if result.get("json_summary_path")
+            else None
+        )
+
+        return jsonify(success=True, report_url=report_url, kpi_summary=new_kpi_summary)
 
     except Exception as e:
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return (
-                jsonify(
-                    success=False, error=f"Erro fatal no processo de upload: {str(e)}"
-                ),
-                500,
-            )
-        flash(f"Erro fatal no processo de upload: {str(e)}", "error")
-        return redirect(url_for("index"))
+        return jsonify({"error": f"Erro fatal no processo de upload: {str(e)}"}), 500
 
 
-@app.route("/compare", methods=["POST"])
-def compare_files():
-    """Recebe dois arquivos e orquestra a comparação direta entre eles.
+@app.route("/api/v1/compare", methods=["POST"])
+def compare_files_api():
+    """
+    Endpoint da API para comparação direta entre dois arquivos.
 
-    Este endpoint é ativado pelo formulário de comparação. Ele espera exatamente
-    dois arquivos, delega a lógica de comparação para a camada de serviço
-    (`services.process_direct_comparison`), e redireciona o usuário para o
-    relatório de tendência resultante.
+    Recebe dois arquivos, delega a comparação para a camada de serviço e
+    retorna uma resposta JSON com a URL do relatório de tendência gerado.
 
     Returns:
-        werkzeug.wrappers.Response: Uma resposta de redirecionamento para o
-        relatório de tendência ou de volta para a página inicial em caso de erro.
+        Response: Uma resposta JSON com o resultado da comparação.
     """
-    if "files" not in request.files:
-        flash("Nenhum arquivo enviado.", "error")
-        return redirect(url_for("index"))
+    if "files" not in request.files or len(request.files.getlist("files")) == 0:
+        return jsonify({"error": "Nenhum arquivo enviado."}), 400
 
     files = request.files.getlist("files")
 
     if len(files) != 2:
-        flash("Por favor, selecione exatamente dois arquivos para comparação.", "error")
-        return redirect(url_for("index"))
+        return (
+            jsonify({"error": "Por favor, selecione exatamente dois arquivos."}),
+            400,
+        )
 
     try:
-        # Delega toda a lógica de negócio para a camada de serviço
         result = services.process_direct_comparison(
             files=files,
             upload_folder=app.config["UPLOAD_FOLDER"],
             reports_folder=app.config["REPORTS_FOLDER"],
         )
         if result:
-            return redirect(
-                url_for(
-                    "serve_report",
-                    run_folder=result["run_folder"],
-                    filename=result["report_filename"],
-                )
+            report_url = url_for(
+                "serve_report",
+                run_folder=result["run_folder"],
+                filename=result["report_filename"],
             )
-        else:
-            flash("Não foi possível processar a comparação.", "error")
-            return redirect(url_for("index"))
+            return jsonify({"success": True, "report_url": report_url})
+        return jsonify({"error": "Não foi possível processar a comparação."}), 500
     except ValueError as e:
-        flash(str(e), "error")
-        return redirect(url_for("index"))
-    except Exception:
-        flash(
-            "Ocorreu um erro inesperado durante a comparação. Verifique os logs.",
-            "error",
-        )
-        return redirect(url_for("index"))
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Erro inesperado: {str(e)}"}), 500
 
 
 # --- FUNÇÃO DE SEGURANÇA PARA SERVIR ARQUIVOS ---
@@ -408,114 +320,112 @@ def serve_docs(filename):
     return secure_send_from_directory(docs_dir, filename)
 
 
-@app.route("/relatorios")
-def relatorios():
-    """Renderiza a página de histórico de relatórios (`relatorios.html`).
+@app.route("/api/v1/reports")
+def get_reports():
+    """
+    Endpoint da API que retorna a lista de todos os relatórios gerados.
 
-    Consulta o banco de dados para obter uma lista de todos os relatórios gerados,
-    ordenados do mais recente para o mais antigo. Os dados são então passados
-    para o template para exibição em uma tabela.
+    Delega a busca dos dados para a camada de serviço e formata a resposta
+    como uma lista de objetos JSON, cada um representando um relatório.
 
     Returns:
-        str: O conteúdo HTML renderizado da página de histórico.
+        Response: Uma resposta JSON contendo a lista de relatórios.
     """
-    reports = Report.query.order_by(Report.timestamp.desc()).all()
-    report_data = []
-    for report in reports:
-        report_data.append(
-            {
-                "id": report.id,  # NOVO: Passando o ID para a exclusão
-                "timestamp": report.timestamp,
-                "original_filename": report.original_filename,
-                "url": url_for(
-                    "serve_report",
-                    run_folder=os.path.basename(os.path.dirname(report.report_path)),
-                    filename=os.path.basename(report.report_path),
-                ),
-            }
+    # Delega a busca para a camada de serviço
+    reports_data = services.get_reports_list(Report)
+
+    # Enriquece com as URLs antes de retornar
+    for report in reports_data:
+        report["url"] = url_for(
+            "serve_report", run_folder=report["run_folder"], filename=report["filename"]
         )
-    return render_template("relatorios.html", reports=report_data)
+
+    return jsonify(reports_data)
+
+
+def token_required(f):
+    """Decorador para proteger rotas que exigem autenticação via token JWT."""
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if "Authorization" in request.headers:
+            # Extrai o token do cabeçalho 'Bearer <token>'
+            token = request.headers["Authorization"].split(" ")[1]
+
+        if not token:
+            return jsonify({"error": "Token de autenticação ausente."}), 401
+
+        try:
+            # Decodifica e valida o token
+            jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expirado."}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Token inválido."}), 401
+
+        return f(*args, **kwargs)
+
+    return decorated
 
 
 # --- NOVA ROTA PARA EXCLUSÃO ---
-@app.route("/report/delete/<int:report_id>", methods=["POST"])
-def delete_report(report_id):
-    """Processa a exclusão de um relatório específico.
-
-    Ativado por um POST na página de histórico. A função localiza o relatório
-    no banco de dados pelo seu ID, remove a pasta de execução correspondente
-    (que contém todos os arquivos HTML e JSON daquela análise) do sistema de
-    arquivos e, em seguida, remove o registro do banco de dados.
+@app.route("/api/v1/reports/<int:report_id>", methods=["DELETE"])
+@token_required
+def delete_report_api(report_id):
+    """
+    Endpoint da API para excluir um relatório e seus artefatos.
 
     Args:
         report_id (int): O ID do relatório a ser excluído, capturado da URL.
 
     Returns:
-        werkzeug.wrappers.Response: Uma resposta de redirecionamento de volta
-        para a página de histórico de relatórios.
+        Response: Uma resposta JSON indicando sucesso ou falha.
     """
-    # Protege a rota, permitindo acesso apenas a administradores.
-    if not session.get("is_admin"):
-        flash(
-            "Acesso negado. Você precisa ser um administrador para excluir relatórios.",
-            "error",
-        )
-        return redirect(url_for("admin_login_page"))
-
-    report = Report.query.get_or_404(report_id)
-    report_filename = report.original_filename  # Salva o nome para a mensagem flash
-
-    # Delega a lógica de exclusão para a camada de serviço
-    success = services.delete_report_and_artifacts(
-        report_id=report_id, db=db, Report=Report
-    )
-
-    if success:
-        flash(
-            f"Relatório '{report_filename}' e seus arquivos foram excluídos com sucesso.",
-            "success",
-        )
-    else:
-        flash(
-            f"Erro ao tentar excluir o relatório '{report_filename}'. Consulte os logs.",
-            "error",
+    try:
+        # Delega a lógica de exclusão para a camada de serviço
+        success = services.delete_report_and_artifacts(
+            report_id=report_id, db=db, Report=Report
         )
 
-    return redirect(url_for("relatorios"))
+        if success:
+            return jsonify({"success": True}), 200
+        else:
+            # O serviço já logou o erro, aqui apenas informamos o cliente.
+            # O relatório pode não ter sido encontrado no serviço.
+            return (
+                jsonify({"error": f"Relatório com ID {report_id} não encontrado."}),
+                404,
+            )
+    except Exception as e:
+        # Captura qualquer outra exceção inesperada durante o processo.
+        return (
+            jsonify({"error": f"Erro interno ao tentar excluir o relatório: {e}"}),
+            500,
+        )
 
 
-# --- NOVAS ROTAS DE ADMINISTRAÇÃO ---
+@app.route("/api/v1/auth/login", methods=["POST"])
+def login_api():
+    """Endpoint da API para autenticação e geração de token JWT."""
+    auth_data = request.get_json()
+    if not auth_data or not auth_data.get("token"):
+        return jsonify({"error": "Token de administrador não fornecido."}), 400
 
-
-@app.route("/admin", methods=["GET"])
-def admin_login_page():
-    """Renderiza a página de login do administrador."""
-    # O template admin_login.html será criado na próxima etapa do plano.
-    return render_template("admin_login.html")
-
-
-@app.route("/admin/login", methods=["POST"])
-def admin_login():
-    """Processa a tentativa de login do administrador."""
-    token_fornecido = request.form.get("token")
+    token_fornecido = auth_data.get("token")
     admin_token_config = app.config.get("ADMIN_TOKEN")
 
-    # Verifica se o token de admin está configurado e se corresponde ao fornecido
     if admin_token_config and token_fornecido == admin_token_config:
-        session["is_admin"] = True
-        flash("Login de administrador realizado com sucesso!", "success")
-        return redirect(url_for("index"))
+        # Gera o token JWT
+        payload = {
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "iat": datetime.now(timezone.utc),
+            "sub": "admin",
+        }
+        jwt_token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
+        return jsonify({"token": jwt_token})
     else:
-        flash("Token de administrador inválido.", "error")
-        return redirect(url_for("admin_login_page"))
-
-
-@app.route("/admin/logout")
-def admin_logout():
-    """Remove o status de administrador da sessão."""
-    session.pop("is_admin", None)
-    flash("Logout realizado com sucesso.", "info")
-    return redirect(url_for("index"))
+        return jsonify({"error": "Token de administrador inválido."}), 401
 
 
 # --- INICIALIZAÇÃO DA APLICAÇÃO ---

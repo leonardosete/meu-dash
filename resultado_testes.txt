@@ -1,0 +1,13 @@
+>>> Executando testes com pytest...
+============================= test session starts ==============================
+platform darwin -- Python 3.13.7, pytest-8.4.2, pluggy-1.6.0
+rootdir: /Users/leonardosete/meu-dash
+configfile: pyproject.toml
+collected 19 items
+
+tests/test_analysis.py ..                                                [ 10%]
+tests/test_api.py ......                                                 [ 42%]
+tests/test_services.py ..........                                        [ 94%]
+tests/test_trends.py .                                                   [100%]
+
+============================== 19 passed in 0.16s ==============================

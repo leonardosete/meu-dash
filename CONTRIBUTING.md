@@ -20,6 +20,16 @@ O projeto utiliza um `Makefile` para automatizar todo o processo de configuraç�
     make setup-and-run
     ```
 
+### 📦 Instalando ou Atualizando Dependências
+
+Se você já tem o ambiente configurado, mas precisa instalar novas dependências que foram adicionadas ao `requirements.txt` (como no caso do `PyJWT`), use o comando:
+
+```bash
+make install
+```
+
+Isso garantirá que seu ambiente virtual esteja sempre sincronizado com o projeto.
+
 ## 🚀 Executando a Aplicação Localmente
 
 Após a configuração inicial com `make setup-and-run`, nos dias seguintes você pode parar e iniciar o servidor de desenvolvimento usando apenas:
@@ -105,21 +115,21 @@ A aplicação usa Flask-Migrate para gerenciar o esquema do banco de dados. O `M
 
 ## ✅ Padrões de Código e Qualidade
 
-Para manter o código limpo, consistente e livre de erros, utilizamos a ferramenta **Ruff**. O `Makefile` fornece comandos para simplificar o uso.
+Para manter o código limpo, consistente e seguro, utilizamos a ferramenta **Ruff** para formatação e linting, e **Bandit** para análise de segurança. O `Makefile` fornece comandos para simplificar o uso.
 
 * **Para formatar seu código:**
 
     ```bash
-    make format
+    make format  # Usa o Ruff para formatar automaticamente o código
     ```
 
 * **Para corrigir erros de linting automaticamente:**
 
     ```bash
-    make lint
+    make lint    # Usa o Ruff para corrigir o que for possível (`ruff check --fix`)
     ```
 
-Antes de submeter seu código, é uma boa prática rodar o verificador completo, que garante que o código está formatado e sem erros de linting:
+Antes de submeter seu código, é uma boa prática rodar o verificador completo, que garante que o código está formatado, sem erros de linting e sem vulnerabilidades de segurança conhecidas. Este comando espelha as verificações feitas no pipeline de CI:
 
 ```bash
 make check
@@ -142,4 +152,3 @@ Certifique-se de que todos os testes passam antes de abrir um Pull Request.
 3. **Garanta a qualidade do código:** Rode `make check` e `make test` para formatar, lintar e testar seu código.
 4. **Faça o commit:** Escreva uma mensagem de commit clara e concisa.
 5. **Abra o Pull Request:** Envie o PR para a branch `main`. Descreva suas alterações e o motivo delas.
-6. **Faça suas alterações.**

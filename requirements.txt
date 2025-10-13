@@ -1,10 +1,11 @@
-black
 Flask
+Flask-Cors
 Flask-Migrate
 Flask-SQLAlchemy
 gunicorn
 numpy
 pandas
+PyJWT
 pytest
 ruff
 Werkzeug

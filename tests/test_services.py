@@ -1,8 +1,9 @@
-import os
-import pytest
 import json
+import os
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src import services
 
@@ -431,14 +432,14 @@ def test_delete_report_and_artifacts_success(
 
     mock_report_instance = MagicMock()
     mock_report_instance.report_path = "/fake/dir/report.html"
-    MockReport.query.get.return_value = mock_report_instance
+    mock_db.session.get.return_value = mock_report_instance
 
     # Act
     result = services.delete_report_and_artifacts(1, mock_db, MockReport)
 
     # Assert
     assert result is True
-    MockReport.query.get.assert_called_once_with(1)
+    mock_db.session.get.assert_called_once_with(MockReport, 1)
     mock_isdir.assert_called_once_with("/fake/dir")
     mock_rmtree.assert_called_once_with("/fake/dir")
     mock_db.session.delete.assert_called_once_with(mock_report_instance)
@@ -450,7 +451,7 @@ def test_delete_report_and_artifacts_not_found(mock_dependencies):
     """Testa se a função retorna False se o relatório não for encontrado."""
     mock_db = mock_dependencies["db"]
     MockReport = mock_dependencies["Report"]
-    MockReport.query.get.return_value = None
+    mock_db.session.get.return_value = None
 
     result = services.delete_report_and_artifacts(999, mock_db, MockReport)
 
@@ -468,7 +469,7 @@ def test_delete_report_and_artifacts_exception(
     mock_db = mock_dependencies["db"]
     MockReport = mock_dependencies["Report"]
     mock_report_instance = MagicMock()
-    MockReport.query.get.return_value = mock_report_instance
+    mock_db.session.get.return_value = mock_report_instance
 
     result = services.delete_report_and_artifacts(1, mock_db, MockReport)
 
