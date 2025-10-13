@@ -80,10 +80,10 @@ O trabalho será dividido em fases para mitigar riscos e permitir entregas incre
 
 ### Fase 1: Transformar o Backend em uma API Pura
 
-O objetivo desta fase é fazer com que o Flask pare de servir a UI principal e exponha apenas dados.
+**Status: Concluída**
 
-- [ ] **Implementar CORS:** Configurar o Flask para aceitar requisições do domínio do frontend em desenvolvimento.
-- [ ] **Refatorar Rota `GET /`:**
+- [x] **Implementar CORS:** Configurar o Flask para aceitar requisições do domínio do frontend em desenvolvimento.
+- [x] **Refatorar Rota `GET /`:**
   - Mover a lógica de consulta ao banco de dados e cálculo de KPIs de `app.py` para uma nova função em `services.py`.
   - Transformar em `GET /api/v1/dashboard-summary`.
   - A rota deve retornar um JSON contendo os dados que hoje são passados para `index.html` (`kpi_summary`, `trend_history`, `last_action_plan`).
@@ -93,7 +93,7 @@ O objetivo desta fase é fazer com que o Flask pare de servir a UI principal e e
   - A rota deve retornar um JSON com a lista de metadados de todos os relatórios.
 - [x] **Refatorar Rota `POST /upload`:**
   - Modificar para sempre retornar uma resposta JSON (sucesso com a URL do relatório ou erro), eliminando o `redirect`.
-- [ ] **Refatorar Rota de Exclusão `POST /report/delete/:id`:**
+- [x] **Refatorar Rota de Exclusão `POST /report/delete/:id`:**
   - Garantir que a rota retorne uma resposta JSON clara de sucesso ou falha.
 - [x] **Refatorar Rota `POST /compare`:**
   - Transformar em `POST /api/v1/compare` e garantir que retorne apenas JSON.
