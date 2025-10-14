@@ -30,10 +30,9 @@ Sua tarefa é ser um parceiro proativo na evolução deste projeto, fornecendo r
 ### 3.1. Visão Geral da Arquitetura
 
 - **Controller (`src/app.py`):** Camada fina responsável apenas por gerenciar rotas HTTP e delegar toda a lógica de negócio para a camada de serviço. Não contém lógica de negócio.
-    - **Nota de Realidade:** Embora este seja o princípio arquitetônico, algumas rotas (`GET /`, `GET /relatorios`) atualmente contêm lógica de consulta ao banco de dados, que será movida para a camada de serviço durante a refatoração planejada em `REFACTOR_PLAN.md`.
 - **Service Layer (`src/services.py`):** O cérebro da aplicação. Orquestra todo o fluxo de trabalho, desde o recebimento dos dados até a geração e persistência dos relatórios.
 - **Analysis Engine (`src/analisar_alertas.py`):** Motor de análise puro. Recebe dados e retorna DataFrames com os resultados. Não tem conhecimento sobre HTML ou apresentação.
-- **Presentation Layer (`src/gerador_paginas.py`, `src/context_builder.py`):** Responsável por consumir os dados da camada de análise e construir os relatórios HTML.
+- **Presentation Layer (`src/gerador_paginas.py`, `src/context_builder.py`):** Responsável por consumir os dados da camada de análise e construir os **artefatos** de relatório em HTML.
 - **Logging (`src/logging_config.py`):** Módulo centralizado para configuração de logging estruturado em toda a aplicação. `print()` não é utilizado.
 - **Database (`data/meu_dash.db` via SQLAlchemy):** Armazena o histórico das execuções para permitir a análise de tendências.
 
@@ -43,17 +42,19 @@ Esta arquitetura foi o resultado de um plano de refatoração bem-sucedido, docu
 
 ## 4. FLUXO DE EXECUÇÃO LÓGICO
 
-1. **Upload:** O usuário envia um arquivo `.csv` via `POST` para a rota `/upload` em `app.py`.
-2. **Delegação:** A rota em `app.py` não faz nenhum processamento. Ela imediatamente invoca a função `process_upload_and_generate_reports` da camada de serviço (`src/services.py`), passando o arquivo.
-3. **Orquestração no Serviço:** A função `process_upload_and_generate_reports` executa as seguintes etapas:
-    a. Salva o arquivo de upload.
-    b. Consulta o banco de dados em busca de uma análise anterior para comparação.
-    c. Invoca o **Analysis Engine** (`analisar_alertas.py`) para processar os dados e obter os DataFrames resultantes.
-    d. Invoca a **Presentation Layer** (`gerador_paginas.py`, `context_builder.py`) para gerar todos os artefatos HTML e CSV.
-    e. Se uma análise anterior existia, invoca a análise de tendência.
-    f. Salva um registro da nova análise no banco de dados.
-    g. Retorna o caminho do relatório principal para a camada de controller.
-4. **Redirecionamento:** `app.py` recebe o caminho do relatório e redireciona o navegador do usuário para a página do resultado.
+Com a arquitetura de API + SPA, o fluxo é o seguinte:
+
+1. **Requisição do Frontend (SPA):** O usuário interage com a interface (React/Vue/etc.), que dispara uma chamada de API para o backend (ex: `POST /api/v1/upload` com um arquivo).
+2. **Delegação no Controller:** A rota em `app.py` recebe a requisição, valida os parâmetros básicos e imediatamente invoca a função correspondente na camada de serviço (`src/services.py`).
+3. **Orquestração no Serviço:** A função de serviço (ex: `process_upload_and_generate_reports`) executa toda a lógica de negócio:
+    a. Salva o arquivo.
+    b. Consulta o banco de dados.
+    c. Invoca o **Analysis Engine** (`analisar_alertas.py`).
+    d. Invoca a **Presentation Layer** (`gerador_paginas.py`) para gerar os artefatos de relatório (arquivos `.html`, `.csv`).
+    e. Salva o resultado da análise no banco de dados.
+    f. Retorna uma resposta (ex: um JSON com a URL do relatório gerado) para a camada de controller.
+4. **Resposta da API:** O controller em `app.py` formata a resposta do serviço em um JSON e a retorna para o frontend com o código de status HTTP apropriado.
+5. **Atualização da UI:** O frontend recebe a resposta da API e atualiza a interface do usuário (ex: exibe um link para o novo relatório ou mostra uma mensagem de erro).
 
 ---
 
@@ -84,10 +85,14 @@ Aderir a estas regras é obrigatório para manter a integridade do projeto.
 
 - **Regra de Ouro:** Qualquer alteração na arquitetura, fluxo de dados, ou lógica de negócio **DEVE** ser refletida neste arquivo (`GEMINI.md`). Este documento é o contrato.
 
+- **Diretiva de Scripting:** NÃO DEVO CRIAR NENHUM SCRIPT BASH (ex: `entrypoint.sh`) SE NÃO FOR SOLICITADO EXPLICITAMENTE.
+
 ---
 
 ## 6. ROADMAP DE PRÓXIMAS ATIVIDADES
 
 - [x] **Implementar e Refinar a Nova UX:** Concluída a implementação do novo layout, fluxo de usuário e todos os refinamentos de UI.
 - [x] **Finalizar Coleta de Feedback Qualitativo:** Concluída a validação da nova interface com a persona "Analista" para coletar as impressões finais, conforme definido no `PLAN-UX.md`.
-- [ ] **Refatorar para Arquitetura de API + SPA:** Desacoplar o frontend do backend, transformando o Flask em uma API pura e criando um Single-Page Application para a UI, conforme `REFACTOR_PLAN.md`.
+- [ ] **Refatorar para Arquitetura de API + SPA:** Desacoplar o frontend do backend.
+  - [x] **Fase 1:** Transformar o backend Flask em uma API pura (Concluído).
+  - [ ] **Fase 2:** Construir o frontend como um Single-Page Application (SPA).

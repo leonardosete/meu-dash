@@ -10,8 +10,7 @@ from flask import (
     send_from_directory,
     jsonify,
 )
-from . import services
-from flask_sqlalchemy import SQLAlchemy
+from . import db  # Importa a instância única de __init__.py
 from flask_cors import CORS
 from flask_migrate import Migrate
 
@@ -31,8 +30,16 @@ app.config["SECRET_KEY"] = (
     "uma-chave-secreta-forte-para-flash"  # NOVO: Chave secreta necessária para usar flash
 )
 app.config["ADMIN_TOKEN"] = os.getenv("ADMIN_TOKEN")
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+
+# Inicializa a instância do DB com a aplicação Flask
+db.init_app(app)
+# Configuração do Flask-Migrate para gerenciamento de migrações do banco de dados
+# O caminho para o diretório de migrações é especificado explicitamente para garantir
+# que os comandos 'flask db' funcionem de forma consistente tanto localmente
+# quanto dentro do contêiner Docker, sem a necessidade da flag --directory.
+migrate = Migrate(
+    app, db, directory=os.path.join(os.path.dirname(__file__), "..", "migrations")
+)
 
 # --- CONFIGURAÇÃO DE CORS ---
 # Configura o CORS para permitir requisições da nossa futura aplicação frontend
@@ -46,56 +53,8 @@ CORS(
 )
 
 
-class Report(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    original_filename = db.Column(db.String(255))
-    report_path = db.Column(db.String(255))
-    json_summary_path = db.Column(db.String(255))
-    date_range = db.Column(db.String(100), nullable=True)
-
-    # Relacionamentos com TrendAnalysis para exclusão em cascata
-    trends_as_current = db.relationship(
-        "TrendAnalysis",
-        foreign_keys="TrendAnalysis.current_report_id",
-        back_populates="current_report",
-        cascade="all, delete-orphan",
-    )
-    trends_as_previous = db.relationship(
-        "TrendAnalysis",
-        foreign_keys="TrendAnalysis.previous_report_id",
-        back_populates="previous_report",
-        cascade="all, delete-orphan",
-    )
-
-    def __repr__(self):
-        return f"<Report {self.original_filename}>"
-
-
-class TrendAnalysis(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    trend_report_path = db.Column(db.String(255), nullable=False)
-
-    # Chaves estrangeiras para os relatórios que geraram a tendência
-    current_report_id = db.Column(
-        db.Integer, db.ForeignKey("report.id"), nullable=False
-    )
-    previous_report_id = db.Column(
-        db.Integer, db.ForeignKey("report.id"), nullable=False
-    )
-
-    # Relacionamentos para fácil acesso aos objetos Report
-    current_report = db.relationship(
-        "Report", foreign_keys=[current_report_id], back_populates="trends_as_current"
-    )
-    previous_report = db.relationship(
-        "Report", foreign_keys=[previous_report_id], back_populates="trends_as_previous"
-    )
-
-    def __repr__(self):
-        return f"<TrendAnalysis {self.timestamp}>"
-
+# Importações que dependem da inicialização do 'app' e 'db'
+from . import services, models  # noqa: E402
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
@@ -135,8 +94,8 @@ def get_dashboard_summary():
     # Delega a busca de dados para a camada de serviço
     summary_data = services.get_dashboard_summary_data(
         db=db,
-        Report=Report,
-        TrendAnalysis=TrendAnalysis,
+        Report=models.Report,
+        TrendAnalysis=models.TrendAnalysis,
         reports_folder=app.config["REPORTS_FOLDER"],
     )
 
@@ -188,8 +147,8 @@ def upload_file_api():
             upload_folder=app.config["UPLOAD_FOLDER"],
             reports_folder=app.config["REPORTS_FOLDER"],
             db=db,
-            Report=Report,
-            TrendAnalysis=TrendAnalysis,
+            Report=models.Report,
+            TrendAnalysis=models.TrendAnalysis,
             base_dir=BASE_DIR,
         )
 
@@ -332,7 +291,7 @@ def get_reports():
         Response: Uma resposta JSON contendo a lista de relatórios.
     """
     # Delega a busca para a camada de serviço
-    reports_data = services.get_reports_list(Report)
+    reports_data = services.get_reports_list(models.Report)
 
     # Enriquece com as URLs antes de retornar
     for report in reports_data:
@@ -385,7 +344,7 @@ def delete_report_api(report_id):
     try:
         # Delega a lógica de exclusão para a camada de serviço
         success = services.delete_report_and_artifacts(
-            report_id=report_id, db=db, Report=Report
+            report_id=report_id, db=db, Report=models.Report
         )
 
         if success:

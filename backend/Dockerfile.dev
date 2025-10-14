@@ -1,0 +1,17 @@
+FROM python:3.14-alpine
+
+WORKDIR /app
+
+COPY requirements.txt .
+# Adiciona as ferramentas de build necessárias para compilar dependências como 'greenlet'.
+RUN apk add --no-cache build-base
+
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+
+# O comando será fornecido pelo docker-compose
+CMD ["make", "run"]

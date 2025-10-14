@@ -52,9 +52,12 @@ RUN mkdir -p /app/data/uploads /app/data/reports && \
 USER nonroot
 
 # Copia o código da aplicação e o script de entrypoint
-COPY --chown=nonroot:nonroot src/ ./src
-COPY --chown=nonroot:nonroot templates/ ./templates
-COPY --chown=nonroot:nonroot docs/ ./docs
+COPY --chown=nonroot:nonroot src ./src
+COPY --chown=nonroot:nonroot migrations ./migrations
+COPY --chown=nonroot:nonroot entrypoint.sh .
+
+# Garante que o script de entrypoint seja executável
+RUN chmod +x ./entrypoint.sh
 
 EXPOSE 5000
 
@@ -63,5 +66,5 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Força a saída de logs (stdout/stderr) a não ter buffer, garantindo que os logs apareçam em tempo real.
 ENV PYTHONUNBUFFERED=1
 
-# O CMD executa a migração do banco de dados com Flask-Migrate e, em seguida, inicia o Gunicorn.
-CMD ["/bin/sh", "-c", "python -c 'from src.app import app, db; app.app_context().push(); db.create_all()' && gunicorn --bind 0.0.0.0:5000 src.app:app"]
+# Define o entrypoint que irá preparar o DB e iniciar a aplicação.
+ENTRYPOINT ["./entrypoint.sh"]

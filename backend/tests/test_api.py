@@ -7,7 +7,7 @@ e garantem que a refatoração não quebre a funcionalidade principal.
 
 import io
 from unittest.mock import patch
-from src.app import Report, db
+from src.models import Report, db
 
 
 def test_get_dashboard_summary(client):
@@ -116,6 +116,7 @@ def test_delete_report_with_valid_token(client):
         report_to_delete = Report(
             original_filename="delete_me.csv",
             report_path="/fake/path/to_delete/report.html",
+            json_summary_path="/fake/path/to_delete/summary.json",  # Campo obrigatório
         )
         db.session.add(report_to_delete)
         db.session.commit()
@@ -123,9 +124,10 @@ def test_delete_report_with_valid_token(client):
 
         # ACT: Chama o endpoint de exclusão com o token.
         # Mockamos tanto o rmtree quanto o isdir para simular a existência do diretório.
-        with patch("src.services.shutil.rmtree") as mock_rmtree, patch(
-            "src.services.os.path.isdir", return_value=True
-        ) as mock_isdir:
+        with (
+            patch("src.services.shutil.rmtree") as mock_rmtree,
+            patch("src.services.os.path.isdir", return_value=True) as mock_isdir,
+        ):
             response = client.delete(
                 f"/api/v1/reports/{report_id}",
                 headers={"Authorization": f"Bearer {jwt_token}"},

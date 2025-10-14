@@ -1,7 +1,5 @@
 [tool.pytest.ini_options]
-pythonpath = [
-  "."
-]
+pythonpath = ["backend"]
 
 [tool.black]
 exclude = '''

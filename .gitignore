@@ -131,6 +131,14 @@ __pypackages__/
 celerybeat-schedule
 celerybeat.pid
 
+# Node.js / Frontend stuff
+node_modules/
+frontend/dist/
+frontend/.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 # SageMath parsed files
 *.sage.py
 
@@ -227,9 +235,6 @@ meu-dash.code-workspace
 # TO DO 
 fazer.md
 ajustar.md
-
-# Make
-Makefile
 
 # Flask DB
 data/

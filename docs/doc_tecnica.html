@@ -162,128 +162,111 @@
 
         <section id="arquitetura">
             <h2>1. Arquitetura e Componentes</h2>
-            <div class="card">
-                <p>A aplicação segue uma arquitetura de <strong>3 camadas</strong>, executando sobre um framework web <strong>Flask</strong>, projetada para garantir a separação de responsabilidades e facilitar a manutenção:</p>
+            <div class="card" style="border-left: 4px solid var(--accent-color);">
+                <p>A aplicação foi refatorada para uma arquitetura moderna e desacoplada, composta por um <strong>backend de API pura</strong> e um <strong>frontend Single-Page Application (SPA)</strong>. Esta abordagem melhora a escalabilidade, a flexibilidade e a experiência de desenvolvimento.</p>
                 <ul>
-                    <li><strong>Camada de Apresentação (Flask Web):</strong> Responsável por renderizar a interface do usuário, receber requisições HTTP e servir os relatórios.</li>
-                    <li><strong>Camada de Serviço:</strong> Orquestra a lógica de negócio, atuando como uma ponte entre a camada web e os motores de análise.</li>
-                    <li><strong>Camada de Análise e Dados:</strong> Contém os motores que processam os dados, aplicam a lógica de negócio e geram os resultados.</li>
+                    <li><strong>Backend (API RESTful):</strong> Uma aplicação <strong>Flask</strong> que expõe endpoints para manipulação de dados e acionamento de análises. Ele é responsável pela lógica de negócio, mas não renderiza nenhuma página da interface principal. Sua única responsabilidade é servir e receber dados no formato <strong>JSON</strong>.</li>
+                    <li><strong>Frontend (SPA):</strong> Uma aplicação <strong>React</strong> (construída com Vite) que roda inteiramente no navegador do usuário. Ela consome a API do backend para buscar dados, enviar arquivos e apresentar a interface de forma rica e interativa.</li>
                 </ul>
-                <p>O sistema utiliza um banco de dados <strong>SQLite</strong> para persistir metadados sobre os relatórios gerados, permitindo a criação de um histórico e a funcionalidade de análise de tendência.</p>
             </div>
 
             <h4>Diagrama de Componentes</h4>
             <div class="card">
-                <p>O diagrama abaixo representa a arquitetura de componentes (baseado no modelo C4 - Nível 2), ilustrando as principais responsabilidades e interações dentro do sistema.</p>
+                <p>O diagrama abaixo ilustra a nova arquitetura desacoplada, mostrando a interação entre o usuário, o frontend e o backend.</p>
                 <div class="mermaid">
 graph TB
-    subgraph "Sistema meu-dash"
-        subgraph "Camada de Apresentação"; A["app.py<br><b>(Flask Controller)</b><br>Recebe uploads, gerencia rotas HTTP."]; end
-        subgraph "Camada de Serviço"; B["services.py<br><b>(Orquestrador)</b><br>Coordena a lógica de negócio."]; end
-        subgraph "Camada de Análise"; C["analisar_alertas.py<br><b>(Motor de Análise)</b><br>Calcula scores e agrupa casos."]; D["analise_tendencia.py<br><b>(Motor de Tendência)</b><br>Compara relatórios."]; end
-        subgraph "Camada de Geração de Relatórios"; E["gerador_paginas.py<br><b>(Gerador de HTML)</b><br>Renderiza os templates."]; F["context_builder.py<br><b>(Builder de Contexto)</b><br>Prepara dados para a view."]; end
-        subgraph "Camada de Dados"; G["SQLite DB<br><b>(Banco de Dados)</b><br>Armazena metadados dos relatórios."]; end
+    User[("Usuário")] -- "Interage com" --> Frontend
+
+    subgraph "Frontend (SPA no Navegador)"
+        Frontend["React App<br><b>(Vite)</b><br>Gerencia a UI e o estado."]
     end
-    A --"Chama process_upload()"--> B
-    B --"Executa análise"--> C
-    B --"Executa análise de tendência"--> D
-    B --"Prepara dados para renderizar"--> F
-    F --"Fornece contexto para"--> E
-    B --"Salva e consulta metadados"--> G
+
+    Frontend -- "Requisições HTTP (JSON)" --> BackendAPI
+
+    subgraph "Backend (Contêiner Docker)"
+        BackendAPI["Flask API<br><b>(Controller)</b><br>Recebe requisições e delega."]
+        Service["Camada de Serviço<br><b>(Orquestrador)</b><br>Executa a lógica de negócio."]
+        Analysis["Motores de Análise<br>Processam dados e calculam scores."]
+        DB["Banco de Dados<br><b>(SQLite)</b><br>Persiste metadados."]
+    end
+
+    BackendAPI --> Service
+    Service --> Analysis
+    Service --> DB
                 </div>
             </div>
 
             <h4>Componentes Principais</h4>
             <div class="card">
-                <p>O diretório <code>src</code> contém os seguintes módulos, divididos entre lógica principal e módulos de suporte:</p>
+                <p>O projeto está dividido em dois diretórios principais: <code>backend/</code> e <code>frontend/</code>.</p>
                 
-                <h5 style="margin-top: 20px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Lógica Principal (Core)</h5>
+                <h5 style="margin-top: 20px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Backend (<code>backend/src/</code>)</h5>
                 <ul>
-                    <li><code>app.py</code>: Ponto de entrada da aplicação Flask. Define as rotas (<code>/</code>, <code>/upload</code>), gerencia as requisições, delega a lógica para a camada de serviço e fornece filtros de template (ex: conversão de timezone).</li>
+                    <li><code>app.py</code>: Ponto de entrada da API Flask. Define os endpoints da API (ex: <code>/api/v1/dashboard-summary</code>), gerencia as requisições HTTP e delega toda a lógica para a camada de serviço.</li>
                     <li><code>services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados (usando os modelos <code>Report</code> e <code>TrendAnalysis</code> para garantir a continuidade da análise de tendência) e coordena a chamada aos motores de análise e geradores de página.</li>
                     <li><code>analisar_alertas.py</code>: Motor de análise principal. Processa um arquivo <code>.csv</code>, agrupa alertas em casos e calcula o score de prioridade para cada um.</li>
                     <li><code>analise_tendencia.py</code>: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência, incluindo o "Diagnóstico Rápido" com links contextuais para os planos de ação.</li>
-                    <li><code>gerador_paginas.py</code>: Responsável por usar os dados analisados para gerar o conjunto completo de páginas HTML, incluindo o dashboard principal, relatórios de detalhe e os planos de ação pré-filtrados por squad (<code>plano-de-acao-&lt;squad&gt;.html</code>).</li>
+                    <li><code>gerador_paginas.py</code>: Responsável por usar os dados analisados para gerar os **artefatos** de relatório (arquivos HTML estáticos).</li>
                 </ul>
 
-                <h5 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Módulos de Suporte e Configuração</h5>
+                <h5 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Frontend (<code>frontend/src/</code>)</h5>
                 <ul>
-                    <li><code>context_builder.py</code>: Prepara os dicionários de dados (contexto) que são passados para os templates, formatando os resultados da análise para a visualização.</li>
-                    <li><code>gerador_html.py</code>: Contém funções auxiliares de baixo nível para renderizar componentes HTML específicos, como tabelas e gráficos.</li>
-                    <li><code>constants.py</code>: Centraliza todas as constantes da aplicação, como nomes de colunas, pesos para cálculos de score e textos de ações.</li>
-                    <li><code>utils.py</code>: Fornece funções utilitárias genéricas, como a ordenação de arquivos por data.</li>
-                    <li><code>get_date_range.py</code>: Script utilitário para extrair o intervalo de datas de um arquivo de dados.</li>
-                    <li><code>logging_config.py</code>: Configura o sistema de logging da aplicação.</li>
-                    <li style="margin-top:15px;"><code>data/meu_dash.db</code>: Banco de dados SQLite que persiste os metadados dos relatórios (modelos <code>Report</code> e <code>TrendAnalysis</code>), essencial para o histórico e a análise de tendência.</li>
+                    <li><code>main.jsx</code>: Ponto de entrada da aplicação React.</li>
+                    <li><code>App.jsx</code>: Componente raiz que gerencia o roteamento e o layout principal.</li>
+                    <li><code>components/</code>: Diretório contendo os componentes reutilizáveis da UI (ex: `Dashboard.jsx`, `UploadForm.jsx`).</li>
+                    <li><code>services/</code>: Módulos responsáveis por fazer as chamadas à API do backend.</li>
                 </ul>
             </div>
         </section>
 
         <section id="fluxo">
             <h2>2. Fluxo de Dados Detalhado</h2>
-            <p>O fluxo abaixo detalha as etapas e os componentes envolvidos desde o upload do arquivo até a visualização do relatório.</p>
+            <p>O fluxo abaixo detalha as etapas desde a interação do usuário no frontend até a resposta da API do backend.</p>
             <div class="card" style="padding: 30px;">
                 <div class="mermaid">
 sequenceDiagram
     actor User as Usuário
-    participant App as Flask App (app.py)
-    participant Service as Camada de Serviço (services.py)
-    participant Analysis as Módulos de Análise
+    participant Frontend as React App (SPA)
+    participant Backend as Flask API
     participant DB as Banco de Dados (SQLite)
 
-    User->>+App: POST /upload com arquivo.csv
-    App->>+Service: Chama `process_upload_and_generate_reports()`
-    Service->>Service: Salva o arquivo em `data/uploads`
-    Service->>DB: Consulta o último relatório (para tendência)
-    DB-->>Service: Retorna metadados do relatório anterior
-    
-    alt Análise de Tendência Aplicável
-        Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise leve do arquivo recente)
-        Analysis-->>-Service: Retorna JSON temporário
-        Service->>+Analysis: Chama `gerar_relatorio_tendencia()` com JSON anterior e recente
-        Analysis-->>-Service: Gera `comparativo_periodos.html`
-    end
-
-    Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise completa)
-    Analysis-->>-Service: Retorna dataframes e sumários
-    Service->>Service: Chama `context_builder` e `gerador_paginas`
-    Service->>Service: Gera todo o ecossistema de relatórios HTML
-    
-    Service->>+DB: Salva metadados do novo relatório
-    DB-->>-Service: Confirmação
-    
-    Service-->>-App: Retorna o caminho para o relatório principal
-    App->>-User: Redireciona para a página do relatório
+    User->>+Frontend: Interage com a UI (ex: clica em "Upload")
+    Frontend->>+Backend: Envia requisição HTTP (ex: POST /api/v1/upload com arquivo)
+    Backend->>Backend: Camada de Serviço orquestra a análise
+    Backend->>DB: Consulta e salva metadados
+    Backend->>Backend: Gera artefatos de relatório (HTML/CSV)
+    Backend-->>-Frontend: Retorna resposta JSON (ex: { "report_url": "/path/to/report.html" })
+    Frontend-->>-User: Atualiza a UI com o resultado (ex: mostra link para o relatório)
                 </div>
             </div>
         </section>
 
         <section id="deployment">
             <h2>3. Implantação e Desenvolvimento Local</h2>
-            
-            <h3>Desenvolvimento Local</h3>
-            <div class="card">
-                <p>O projeto utiliza um <code>Makefile</code> para automatizar as tarefas comuns. Para configurar e executar a aplicação pela primeira vez, use um único comando. Para mais detalhes, consulte a seção "Guia de Contribuição" abaixo.</p>
-                <pre><code># 1. Crie um ambiente virtual e ative-o
-git clone &lt;URL_DO_REPOSITORIO&gt;
-cd meu-dash
 
-# 2. Configure o ambiente e inicie a aplicação
-# Este comando único cuida de tudo: ambiente virtual, dependências,
-# banco de dados e inicialização do servidor.
-make setup-and-run</code></pre>
-                <p>A aplicação estará disponível em <a href="http://127.0.0.1:5000">http://127.0.0.1:5000</a>.</p>
+            <h3>Desenvolvimento Local (Recomendado)</h3>
+            <div class="card">
+                <p>O método recomendado para desenvolvimento é usar <strong>Docker Compose</strong>, que orquestra os contêineres do backend e do frontend, garantindo um ambiente consistente e isolado.</p>
+                <pre><code># 1. Clone o repositório e entre no diretório
+git clone &lt;URL_DO_REPOSITORIO&gt; &amp;&amp; cd meu-dash
+
+# 2. Inicie todo o ambiente (backend + frontend)
+make up
+
+# 3. (Apenas na primeira vez) Aplique as migrações do banco de dados
+make migrate-docker</code></pre>
+                <p>Após a execução, os serviços estarão disponíveis:</p>
+                <ul>
+                    <li><strong>Frontend (Aplicação Principal):</strong> <a href="http://127.0.0.1:5174">http://127.0.0.1:5174</a></li>
+                    <li><strong>Backend (API):</strong> <a href="http://127.0.0.1:5001">http://127.0.0.1:5001</a></li>
+                </ul>
+                <p>Para parar todo o ambiente, use <code>make down</code>.</p>
             </div>
 
             <h3>Implantação em Produção</h3>
             <div class="card">
                 <h4><code>Dockerfile</code></h4>
-                <p>O <code>Dockerfile</code> multi-stage constrói uma imagem de produção otimizada. Ele configura o timezone para <strong>America/Sao_Paulo</strong> e executa o comando <code>flask db upgrade</code> antes de iniciar o <strong>Gunicorn</strong>, garantindo que o ambiente e o banco de dados estejam sempre corretos na inicialização do container.</p>
-<pre><code># Build da imagem
-docker build -t meu-dash-web .
-
-# Execução do container
-docker run -p 8000:8000 -v ./data:/app/data -e ADMIN_TOKEN="seu-token" meu-dash-web</code></pre>
+                <p>O projeto utiliza Dockerfiles multi-estágio para criar imagens de produção otimizadas tanto para o backend quanto para o frontend. O pipeline de CI/CD é responsável por construir essas imagens e publicá-las em um registro de contêineres.</p>
                 <h4><code>kubernetes.yaml</code></h4>
                 <p>Define os recursos para implantação em Kubernetes, incluindo <strong>StatefulSet</strong> e <strong>PersistentVolumeClaim</strong>. O manifesto está configurado para injetar o <code>ADMIN_TOKEN</code> como uma variável de ambiente a partir de um <strong>Kubernetes Secret</strong>. Para detalhes sobre como criar e gerenciar este segredo, consulte a seção "Guia de Contribuição" abaixo.</p>
             </div>
@@ -325,50 +308,27 @@ docker run -p 8000:8000 -v ./data:/app/data -e ADMIN_TOKEN="seu-token" meu-dash-
 
         <section id="contribuicao">
             <h2>5. Guia de Contribuição</h2>
-            <p>Este guia fornece todas as informações necessárias para configurar o ambiente, rodar os testes e contribuir com o projeto.</p>
-
-            <h3>Configuração do Ambiente</h3>
-            <div class="card">
-                <p>O projeto utiliza um <code>Makefile</code> para automatizar todo o processo de configuração. Para preparar seu ambiente, siga os passos:</p>
-                <pre><code># 1. Clone o repositório
-git clone &lt;URL_DO_REPOSITORIO&gt;
-cd meu-dash
-
-# 2. Execute o setup completo e inicie a aplicação
-make setup-and-run</code></pre>
-                <p>Após a configuração inicial, você pode parar e iniciar o servidor de desenvolvimento usando apenas <code>make run</code>.</p>
-            </div>
-
-            <h3>Configurando Funcionalidades de Administrador</h3>
-            <div class="card">
-                <h4>Para Desenvolvimento Local</h4>
-                <p>Para testar funcionalidades protegidas, defina a variável de ambiente <code>ADMIN_TOKEN</code> antes de iniciar a aplicação:</p>
-                <pre><code># Você pode usar qualquer valor para o seu token secreto
-export ADMIN_TOKEN="seu-token-secreto-aqui"
-make run</code></pre>
-
-                <h4>Para Produção (Kubernetes)</h4>
-                <p>Em produção, o token deve ser gerenciado através de <strong>Kubernetes Secrets</strong>. O manifesto <code>kubernetes.yaml</code> já está configurado para procurar um Secret com o nome <code>admin-token-secret</code>. Para criá-lo, use:</p>
-                <pre><code># Substitua pelo valor real
-kubectl create secret generic admin-token-secret \
-  --from-literal=ADMIN_TOKEN='seu-token-super-secreto-de-producao'</code></pre>
-            </div>
+            <p>Para detalhes sobre como configurar o ambiente, rodar testes e seguir os padrões de código, consulte o <a href="../CONTRIBUTING.md">Guia de Contribuição (<code>CONTRIBUTING.md</code>)</a>.</p>
 
             <h3>Padrões de Código e Qualidade</h3>
             <div class="card">
-                <p>Para manter o código limpo, consistente e seguro, utilizamos as ferramentas <strong>Ruff</strong> (para formatação e linting) e <strong>Bandit</strong> (para análise de segurança). O <code>Makefile</code> fornece comandos para simplificar o uso:</p>
+                <p>O projeto impõe um alto padrão de qualidade através de um pipeline de validação automatizado, que pode ser executado localmente com um único comando:</p>
+                <pre><code># Roda todas as verificações: lint, formatação, segurança e testes (backend + frontend)
+make validate-all-docker</code></pre>
                 <ul>
-                    <li><strong>Para formatar seu código:</strong> <code>make format</code></li>
-                    <li><strong>Para corrigir erros de linting:</strong> <code>make lint</code></li>
-                    <li><strong>Para rodar a verificação completa:</strong> <code>make check</code></li>
+                    <li><strong>Backend:</strong> Utiliza <strong>Ruff</strong> para formatação e linting, e <strong>Bandit</strong> para análise de segurança.</li>
+                    <li><strong>Frontend:</strong> Utiliza <strong>ESLint</strong> para linting e <strong>Prettier</strong> para formatação.</li>
                 </ul>
             </div>
 
             <h3>Executando os Testes</h3>
             <div class="card">
-                <p>Para garantir que suas alterações não quebraram nenhuma funcionalidade, execute a suíte de testes com <code>pytest</code> através do Makefile:</p>
-                <pre><code>make test</code></pre>
-                <p>Certifique-se de que todos os testes passam antes de abrir um Pull Request.</p>
+                <p>Os testes são uma parte crucial do pipeline e podem ser executados de forma granular:</p>
+                <pre><code># Executa os testes do backend (pytest)
+make test-backend-docker
+
+# Executa os testes do frontend (vitest)
+make test-frontend-docker</code></pre>
             </div>
 
             <h3>Processo de Pull Request (PR)</h3>

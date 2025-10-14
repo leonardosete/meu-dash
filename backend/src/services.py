@@ -160,9 +160,10 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis, reports_folder: str) -
         }
 
         action_plan_csv_path = os.path.join(run_folder_path, "atuar.csv")
-        if os.path.exists(action_plan_csv_path) and os.path.getsize(
-            action_plan_csv_path
-        ) > 100:
+        if (
+            os.path.exists(action_plan_csv_path)
+            and os.path.getsize(action_plan_csv_path) > 100
+        ):
             last_action_plan = {"date": last_report.timestamp}
 
         if last_report.json_summary_path and os.path.exists(

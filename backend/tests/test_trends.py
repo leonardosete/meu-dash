@@ -3,7 +3,7 @@ Testes para a lógica de Análise de Tendência.
 """
 
 from datetime import datetime, timezone
-from src.app import TrendAnalysis
+from src.models import TrendAnalysis
 
 
 def test_trend_analysis_model_creation():

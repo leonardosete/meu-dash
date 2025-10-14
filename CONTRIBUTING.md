@@ -4,21 +4,28 @@ Ficamos felizes com o seu interesse em contribuir para o projeto! Este guia forn
 
 ## 🛠️ Configuração do Ambiente de Desenvolvimento
 
-O projeto utiliza um `Makefile` para automatizar todo o processo de configuração. Para preparar seu ambiente, siga os passos:
+O método recomendado para o desenvolvimento é usar **Docker Compose**, que garante um ambiente isolado e consistente.
 
-1. **Clone o repositório:**
+1. **Pré-requisitos:** Docker e Docker Compose instalados.
 
-    ```bash
-    git clone <URL_DO_REPOSITORIO>
-    cd meu-dash
-    ```
+2. **Inicie o Ambiente Completo:**
+   Este comando constrói e inicia os contêineres para o backend e o frontend.
+   ```bash
+   make up
+   ```
+3. **Prepare o Banco de Dados (Primeira Vez ou Após Limpeza):**
+   Após iniciar os contêineres, execute este comando para criar e aplicar as migrações do banco de dados.
+   ```bash
+   make migrate-docker
+   ```
+   Este passo é crucial para que a API funcione corretamente.
 
-2. **Execute o setup completo e inicie a aplicação:**
-    Este comando único cuida de tudo: cria o ambiente virtual, instala dependências, inicializa o banco de dados e inicia o servidor.
+Após a execução, a API estará disponível em `http://127.0.0.1:5001` e o frontend em `http://127.0.0.1:5174` (ou as portas definidas no seu arquivo `.env`).
+Para parar tudo, use `make down`.
 
-    ```bash
-    make setup-and-run
-    ```
+### Método Legado (Ambiente Virtual Local)
+
+Se por algum motivo você não puder usar Docker, o método antigo de configuração com ambiente virtual ainda está disponível. Use `make setup-and-run` para configurar e iniciar apenas o backend.
 
 ### 📦 Instalando ou Atualizando Dependências
 

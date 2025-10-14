@@ -115,20 +115,16 @@ O trabalho será dividido em fases para mitigar riscos e permitir entregas incre
 
 O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1.
 
-- [ ] **Estrutura do Projeto:**
-  - Criar o diretório `frontend/`.
-  - Inicializar um novo projeto (ex: `npm create vite@latest frontend -- --template react-ts`).
-- [ ] **Configurar Comunicação com API:**
-  - Criar um serviço ou cliente de API para centralizar as chamadas ao backend.
-  - Configurar o proxy no `vite.config.js` para redirecionar chamadas `/api` para o servidor Flask.
+- [x] **Estrutura do Projeto:**
+  - Adicionados arquivos de configuração (`package.json`, `vite.config.ts`) para criar um projeto Vite + React + TS não-interativo.
+- [x] **Configurar Qualidade de Código:** Adicionados e configurados ESLint e Prettier no projeto frontend.
+- [x] **Implementar Testes:** Criado e configurado o ambiente de testes com Vitest e React Testing Library.
 - [ ] **Desenvolver Componentes da UI:**
-  - **Página Principal (Dashboard):** Criar o componente que chama `GET /api/v1/dashboard-summary` e renderiza os KPIs e listas.
+  - **Página Principal (Dashboard) (Em Andamento):** Criar o componente que chama `GET /api/v1/dashboard-summary` e renderiza os KPIs e listas.
   - **Componente de Upload:** Criar os formulários de upload que chamam `POST /api/v1/upload`.
   - **Página de Histórico:** Criar a tabela de relatórios que busca dados de `GET /api/v1/reports` e permite a exclusão via `POST /api/v1/report/delete/:id`.
   - **Página de Login:** Criar o formulário de login que interage com a API de autenticação.
   - **Gerenciamento de Estado de Autenticação:** Implementar a lógica para armazenar o token e enviá-lo nas requisições protegidas.
-- [ ] **Configurar Qualidade de Código:** Adicionar e configurar ESLint e Prettier no projeto frontend.
-- [ ] **Implementar Testes:** Criar testes de unidade e de integração para os componentes React.
 
 ---
 
@@ -148,5 +144,6 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
   - Remover o diretório `templates/` do backend (exceto os templates usados para gerar os artefatos de relatório, se houver).
   - Remover dependências do Flask que não são mais necessárias (ex: `Jinja2` se não for mais usado).
 - [ ] **Atualizar Documentação:**
-  - Atualizar o `GEMINI.md` para refletir a nova arquitetura de API + SPA.
+  - Atualizar o `GEMINI.md` e `README.md` para refletir a nova arquitetura de API + SPA.
+  - **Revisar e reescrever a documentação técnica (`docs/doc_tecnica.html`)** para alinhar com a nova arquitetura.
   - Marcar este plano (`REFACTOR_PLAN.md`) como concluído.

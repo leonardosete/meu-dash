@@ -17,34 +17,38 @@ Esta é uma aplicação web que automatiza a análise de alertas de monitorament
 
 ### 🚀 Desenvolvimento Local (Getting Started)
 
-Para configurar e executar o projeto localmente, utilize os comandos automatizados do `Makefile`.
+O método recomendado para o desenvolvimento local é usar **Docker Compose**, que orquestra os contêineres do backend e do frontend.
 
-1. **Clone o repositório:**
+1. **Pré-requisitos:** Certifique-se de ter o Docker e o Docker Compose instalados.
 
-    ```bash
-    git clone <URL_DO_REPOSITORIO>
-    cd meu-dash
-    ```
+2. **Inicie o Ambiente:**
+   Este comando irá construir as imagens e iniciar os serviços do backend e do frontend.
 
-2. **Configure e execute a aplicação com um único comando:**
-    Este comando automatiza todo o processo: cria o ambiente virtual, instala as dependências, configura o banco de dados e inicia o servidor.
+   ```bash
+   make up
+   ```
 
-    ```bash
-    make setup-and-run
-    ```
+3. **Acesse os serviços:**
+   - **API do Backend:** `http://127.0.0.1:5001` (ou a porta definida em `BACKEND_PORT` no seu `.env`)
+   - **Aplicação Frontend:** `http://127.0.0.1:5174` (ou a porta definida em `FRONTEND_PORT` no seu `.env`)
 
-3. Acesse `http://127.0.0.1:5000` em seu navegador.
+Para parar todo o ambiente, use `make down`.
 
 ---
 
 ### 💻 Tecnologias Utilizadas
 
-- **Backend:** Python / Flask
-- **Análise de Dados:** Pandas / NumPy
-- **Banco de Dados:** SQLite / SQLAlchemy
-- **Testes:** Pytest
-- **Qualidade de Código:** Ruff / Bandit
-- **Infraestrutura:** Docker / Kubernetes / Gunicorn
+- **Backend:**
+  - **Framework:** Python / Flask
+  - **Análise de Dados:** Pandas / NumPy
+  - **Banco de Dados:** SQLite / SQLAlchemy
+  - **Qualidade e Testes:** Pytest / Ruff / Bandit
+- **Frontend:**
+  - **Framework:** React (com Vite)
+  - **Linguagem:** TypeScript
+  - **Qualidade e Testes:** ESLint / Prettier / Vitest
+- **Infraestrutura:**
+  - **Containerização:** Docker / Docker Compose
 
 ---
 
@@ -76,12 +80,14 @@ A justificativa e os detalhes desta decisão arquitetônica estão documentados 
 ---
 
 ### 📁 Estrutura do Projeto
-
-- `src/`: Contém o código-fonte da aplicação Flask (`app.py`), os motores de análise (`analisar_alertas.py`, `analise_tendencia.py`) e módulos auxiliares.
-- `data/`: Diretório persistido no Kubernetes para armazenar uploads e relatórios.
-- `templates/`: Modelos HTML para a criação dos relatórios.
-- `docs/`: Contém a documentação técnica e gerencial do projeto.
-- `kubernetes.yaml`: Manifesto de implantação para o Kubernetes.
+A arquitetura é desacoplada em duas partes principais:
+- `backend/`: Contém a aplicação Flask que serve a API RESTful.
+  - `src/`: O código-fonte da API.
+  - `tests/`: Os testes para a API.
+- `frontend/`: Contém a Single-Page Application (SPA) em React.
+  - `src/`: O código-fonte e os componentes da UI.
+- `data/`: Diretório persistido para armazenar uploads e relatórios gerados.
+- `docs/`: Documentação geral do projeto (arquitetura, ADRs, etc.).
 
 ---
 

@@ -1,0 +1,60 @@
+services:
+  backend:
+    container_name: meu-dash-backend-dev
+    image: meu-dash-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    # Inicia o servidor de desenvolvimento do Flask. As migrações do DB
+    # devem ser executadas separadamente com 'make migrate-docker'.
+    command: flask run --host=0.0.0.0 --port=5000
+    ports:
+      - "${BACKEND_PORT:-5001}:5000"
+    volumes:
+      # Monta o código-fonte do backend para live-reloading.
+      - ./backend/src:/app/src
+      - ./backend/templates:/app/templates
+      - ./backend/tests:/app/tests
+      - ./backend/migrations:/app/migrations
+      # Monta o diretório de dados para persistência.
+      - ./data:/app/data
+    environment:
+      - FLASK_APP=src.app
+      - FLASK_DEBUG=True
+      - PYTHONPATH=/app
+    env_file:
+      - .env
+
+  security-scanner:
+    container_name: meu-dash-security-scanner
+    image: meu-dash-security-scanner
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.bandit
+    # Mantém o contêiner em execução para que possamos usar 'exec' nele.
+    # 'tail -f /dev/null' é um comando que nunca termina.
+    command: tail -f /dev/null
+    # Este serviço é apenas para execução de tarefas, não precisa de portas.
+    # O comando será fornecido via 'docker-compose run'.
+    volumes:
+      # Monta o código-fonte para que o Bandit possa analisá-lo.
+      - ./backend/src:/app/src
+
+  frontend:
+    container_name: meu-dash-frontend-dev
+    image: meu-dash-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      # Expõe a porta do Vite para acesso no navegador.
+      - "${FRONTEND_PORT:-5174}:5173"
+    volumes:
+      # Monta o código-fonte do frontend para live-reloading (HMR do Vite).
+      - ./frontend:/app
+      # "Restaura" a pasta node_modules de dentro da imagem. Isso evita que o
+      # volume acima a sobrescreva, garantindo que as dependências existam.
+      - /app/node_modules
+      # Mantém o contêiner em execução para que possamos usar 'exec' nele,
+      # assim como fazemos com o 'security-scanner'.
+    command: tail -f /dev/null

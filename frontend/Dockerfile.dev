@@ -1,0 +1,23 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copia os arquivos de manifesto de dependência. Usar um wildcard no package.json
+# e agrupar com o yarn.lock em um único passo torna o cache do Docker mais robusto.
+COPY package*.json yarn.lock* ./
+# Aumenta o timeout da rede e instala dependências.
+RUN yarn install --frozen-lockfile --network-timeout 100000
+
+# Copia o restante do código-fonte.
+COPY . .
+
+# Garante que o usuário 'node' seja o dono de todos os arquivos.
+RUN chown -R node:node .
+
+# Muda para o usuário não-root 'node' para maior segurança.
+USER node
+
+EXPOSE 5173
+# A flag --host é crucial para expor o servidor de desenvolvimento
+# para fora do contêiner Docker.
+CMD ["yarn", "dev", "--host"]

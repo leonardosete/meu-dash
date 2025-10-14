@@ -1,3 +1,4 @@
+bandit==1.7.10
 Flask
 Flask-Cors
 Flask-Migrate
