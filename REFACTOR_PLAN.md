@@ -117,14 +117,13 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
 
 - [x] **Estrutura do Projeto:**
   - Adicionados arquivos de configuração (`package.json`, `vite.config.ts`) para criar um projeto Vite + React + TS não-interativo.
-- [x] **Configurar Qualidade de Código:** Adicionados e configurados ESLint e Prettier no projeto frontend.
-- [x] **Implementar Testes:** Criado e configurado o ambiente de testes com Vitest e React Testing Library.
-- [ ] **Desenvolver Componentes da UI:**
-  - **Página Principal (Dashboard) (Em Andamento):** Criar o componente que chama `GET /api/v1/dashboard-summary` e renderiza os KPIs e listas.
-  - **Componente de Upload:** Criar os formulários de upload que chamam `POST /api/v1/upload`.
-  - **Página de Histórico:** Criar a tabela de relatórios que busca dados de `GET /api/v1/reports` e permite a exclusão via `POST /api/v1/report/delete/:id`.
-  - **Página de Login:** Criar o formulário de login que interage com a API de autenticação.
-  - **Gerenciamento de Estado de Autenticação:** Implementar a lógica para armazenar o token e enviá-lo nas requisições protegidas.
+- [x] **Configurar Qualidade de Código:** Adicionados e configurados ESLint e Prettier.
+- [x] **Implementar Testes:** Configurado ambiente de testes com Vitest e React Testing Library.
+- [x] **Desenvolver Componentes da UI:**
+  - [x] **Página Principal (Dashboard):** Criado componente que chama `GET /api/v1/dashboard-summary` e renderiza os KPIs e listas.
+  - [x] **Componente de Upload:** Criado formulário de upload que chama `POST /api/v1/upload`.
+  - [x] **Página de Histórico:** Criada tabela de relatórios que busca dados de `GET /api/v1/reports` e permite a exclusão.
+  - [x] **Página de Login e Autenticação:** Implementado fluxo de login, gerenciamento de estado de autenticação com Context API e rotas protegidas.
 
 ---
 

@@ -1,18 +1,19 @@
 import os
-from datetime import datetime, timezone, timedelta
-from flask import abort
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 import jwt
 from flask import (
     Flask,
-    request,
-    url_for,
-    send_from_directory,
+    abort,
     jsonify,
+    request,
+    send_from_directory,
+    url_for,
 )
-from . import db  # Importa a instância única de __init__.py
 from flask_cors import CORS
 from flask_migrate import Migrate
+from . import db  # Importa a instância única de __init__.py
+
 
 app = Flask(__name__, template_folder="../templates")
 
@@ -29,17 +30,14 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = (
     "uma-chave-secreta-forte-para-flash"  # NOVO: Chave secreta necessária para usar flash
 )
-app.config["ADMIN_TOKEN"] = os.getenv("ADMIN_TOKEN")
+
+# Adiciona a configuração do diretório de migrações.
+# Isso garante que o Flask-Migrate encontre o diretório 'migrations' no nível raiz do projeto (/app/migrations).
+app.config["MIGRATE_DIR"] = os.path.join(os.path.dirname(__file__), "..", "migrations")
 
 # Inicializa a instância do DB com a aplicação Flask
 db.init_app(app)
-# Configuração do Flask-Migrate para gerenciamento de migrações do banco de dados
-# O caminho para o diretório de migrações é especificado explicitamente para garantir
-# que os comandos 'flask db' funcionem de forma consistente tanto localmente
-# quanto dentro do contêiner Docker, sem a necessidade da flag --directory.
-migrate = Migrate(
-    app, db, directory=os.path.join(os.path.dirname(__file__), "..", "migrations")
-)
+migrate = Migrate(app, db)
 
 # --- CONFIGURAÇÃO DE CORS ---
 # Configura o CORS para permitir requisições da nossa futura aplicação frontend
@@ -364,27 +362,31 @@ def delete_report_api(report_id):
         )
 
 
-@app.route("/api/v1/auth/login", methods=["POST"])
+@app.route("/admin/login", methods=["POST"])
 def login_api():
     """Endpoint da API para autenticação e geração de token JWT."""
     auth_data = request.get_json()
-    if not auth_data or not auth_data.get("token"):
-        return jsonify({"error": "Token de administrador não fornecido."}), 400
+    if not auth_data or not auth_data.get("username") or not auth_data.get("password"):
+        return jsonify({"error": "Usuário e senha são obrigatórios."}), 400
 
-    token_fornecido = auth_data.get("token")
-    admin_token_config = app.config.get("ADMIN_TOKEN")
+    username = auth_data.get("username")
+    password = auth_data.get("password")
 
-    if admin_token_config and token_fornecido == admin_token_config:
+    # Carrega as credenciais do administrador a partir das variáveis de ambiente
+    admin_user = os.getenv("ADMIN_USER")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+
+    if username == admin_user and password == admin_password:
         # Gera o token JWT
         payload = {
             "exp": datetime.now(timezone.utc) + timedelta(hours=1),
             "iat": datetime.now(timezone.utc),
             "sub": "admin",
         }
-        jwt_token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
-        return jsonify({"token": jwt_token})
+        access_token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
+        return jsonify({"access_token": access_token})
     else:
-        return jsonify({"error": "Token de administrador inválido."}), 401
+        return jsonify({"error": "Credenciais inválidas."}), 401
 
 
 # --- INICIALIZAÇÃO DA APLICAÇÃO ---

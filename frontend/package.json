@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.25.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
@@ -30,6 +31,7 @@
     "typescript": "^5.5.4",
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/dom": "^10.4.0",
-    "@testing-library/react": "^16.0.0"
+    "@testing-library/react": "^16.0.0",
+    "prettier": "^3.3.3"
   }
 }

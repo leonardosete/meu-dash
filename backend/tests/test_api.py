@@ -105,11 +105,14 @@ def test_delete_report_with_valid_token(client):
     é de fato removido do banco de dados.
     """
     # ARRANGE: Cria um token JWT válido
+    # As credenciais devem corresponder ao que está no ambiente de teste (ex: .env)
     with client.application.app_context():
-        client.application.config["ADMIN_TOKEN"] = "test-token"
-        login_response = client.post("/api/v1/auth/login", json={"token": "test-token"})
+        login_response = client.post(
+            "/admin/login",
+            json={"username": "admin", "password": "password123"},
+        )
         assert login_response.status_code == 200
-        jwt_token = login_response.get_json()["token"]
+        jwt_token = login_response.get_json()["access_token"]
 
     # ARRANGE: Cria um relatório para ser excluído no escopo do teste
     with client.application.app_context():

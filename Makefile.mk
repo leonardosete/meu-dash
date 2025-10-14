@@ -7,7 +7,7 @@ PYTHON := $(shell if [ -d ".venv" ]; then echo ".venv/bin/python"; else echo "py
 DOCKER_IMAGE_NAME := meu-dash
 DOCKER_IMAGE_TAG := latest
 
-.PHONY: help install setup setup-frontend run test test-backend-docker format lint check clean distclean docker-build docker-run docker-prune validate validate-all-docker validate-clean-docker up down migrate-docker lint-backend-docker format-backend-docker check-backend-docker lint-frontend-docker format-frontend-docker test-frontend-docker start-frontend-docker
+.PHONY: help install setup setup-frontend run test test-backend-docker format lint check clean distclean docker-build docker-run docker-prune validate validate-all-docker validate-clean-docker up down migrate-docker lint-backend-docker format-backend-docker check-backend-docker lint-frontend-docker format-frontend-docker test-frontend-docker start-frontend-docker format-all-docker
 
 help:
 	@echo "Comandos disponíveis:"
@@ -29,6 +29,7 @@ help:
 	@echo "  make test-backend-docker   - Executa os testes do backend (pytest) no Docker."
 	@echo "  make check-backend-docker  - Roda format, lint e security scan do backend no Docker."
 	@echo "  make test-frontend-docker  - Executa os testes do frontend (vitest) no Docker."
+	@echo "  make format-all-docker   - Formata o código do backend e do frontend no Docker."
 	@echo "  make lint-frontend-docker  - Roda o linter (eslint) do frontend no Docker."
 	@echo "  make format         - Formata o código com 'ruff format'."
 	@echo "  make lint           - Executa o linter 'ruff check --fix' para corrigir erros."
@@ -85,15 +86,15 @@ test:
 migrate-docker:
 	@echo ">>> Gerenciando migrações do banco de dados dentro do contêiner Docker..."
 	@# Garante que o diretório de migrações exista, inicializando se necessário.
-	@docker-compose exec -T backend sh -c "if [ ! -d 'migrations' ]; then echo '>>> Inicializando diretório de migrações...'; flask db init; fi"
+	@docker-compose exec -T backend sh -c "if [ ! -d 'backend/migrations' ]; then echo '>>> Inicializando diretório de migrações...'; flask db init --directory backend/migrations; fi"
 	@# Verifica se há scripts de migração. Se não houver, cria a migração inicial.
-	@docker-compose exec -T backend sh -c "if [ -z \"\$$(ls -A migrations/versions 2>/dev/null)\" ]; then \
+	@docker-compose exec -T backend sh -c "if [ -z \"\$$(ls -A backend/migrations/versions 2>/dev/null)\" ]; then \
 		echo '>>> Criando migração inicial...'; \
-		flask db migrate -m 'Initial migration'; \
+		flask db migrate -m 'Initial migration' --directory backend/migrations; \
 	fi"
 	@# Aplica as migrações pendentes ao banco de dados.
 	@echo ">>> Aplicando migrações ao banco de dados (flask db upgrade)..."
-	@docker-compose exec -T backend flask db upgrade
+	@docker-compose exec -T backend flask db upgrade --directory backend/migrations
 
 # Aplica as migrações do banco de dados.
 # Garante que o ambiente de migrações esteja configurado e que a migração inicial seja criada, se necessário.
@@ -159,6 +160,11 @@ test-frontend-docker:
 start-frontend-docker:
 	@echo ">>> [DOCKER] Iniciando servidor de desenvolvimento do frontend (Vite)..."
 	@docker-compose exec -d frontend npm run dev
+
+format-all-docker:
+	@echo ">>> [DOCKER] Formatando todo o código (Backend + Frontend)..."
+	@$(MAKE) format-backend-docker
+	@$(MAKE) format-frontend-docker
 
 validate-clean-docker:
 	@echo ">>> [DOCKER] Executando validação completa a partir de um build limpo (sem cache)..."
