@@ -1,5 +1,4 @@
 import os
-import shutil  # Para deletar diretórios recursivamente
 from datetime import datetime, timezone
 from flask import abort
 from flask import (
@@ -145,14 +144,19 @@ def index():
     """
     trend_history = []
     last_action_plan = None
+    kpi_summary = None  # NOVO: Dicionário para os KPIs do dashboard
 
     # Lógica para o plano de ação continua a mesma: sempre o mais recente.
     last_report = Report.query.order_by(Report.timestamp.desc()).first()
     if last_report:
         run_folder_path = os.path.dirname(last_report.report_path)
         run_folder_name = os.path.basename(run_folder_path)
-        action_plan_path = os.path.join(run_folder_path, "atuar.html")
-        if os.path.exists(action_plan_path):
+        # CORREÇÃO: Verifica a existência e o conteúdo do CSV, não do HTML.
+        action_plan_csv_path = os.path.join(run_folder_path, "atuar.csv")
+        if (
+            os.path.exists(action_plan_csv_path)
+            and os.path.getsize(action_plan_csv_path) > 100
+        ):  # Um tamanho arbitrário para garantir que não está vazio
             last_action_plan = {
                 "url": url_for(
                     "serve_report",
@@ -161,6 +165,21 @@ def index():
                 ),
                 "date": last_report.timestamp,  # Passa o objeto datetime diretamente
             }
+        # NOVO: Extrai KPIs do último relatório para o Dashboard Gerencial
+        if last_report.json_summary_path and os.path.exists(
+            last_report.json_summary_path
+        ):
+            kpi_data = services.calculate_kpi_summary(last_report.json_summary_path)
+            if kpi_data:
+                # Adiciona a URL do relatório aos dados do KPI
+                kpi_data["report_url"] = url_for(
+                    "serve_report",
+                    run_folder=os.path.basename(
+                        os.path.dirname(last_report.report_path)
+                    ),
+                    filename=os.path.basename(last_report.report_path),
+                )
+                kpi_summary = kpi_data
 
     # NOVA LÓGICA: Busca o histórico de tendências diretamente do banco de dados.
     trend_analyses = (
@@ -182,9 +201,10 @@ def index():
             continue  # Ignora entradas com caminhos inválidos
 
     return render_template(
-        "upload.html",
+        "index.html",
         trend_history=trend_history,
         last_action_plan=last_action_plan,
+        kpi_summary=kpi_summary,  # Passa os KPIs para o template
     )
 
 
@@ -204,16 +224,16 @@ def upload_file():
         werkzeug.wrappers.Response: Uma resposta de redirecionamento para a página
         do relatório gerado ou de volta para a página inicial em caso de erro.
     """
-    file_atual = request.files.get("file_atual")
+    file_recente = request.files.get("file_recente")
 
-    if not file_atual or file_atual.filename == "":
+    if not file_recente or file_recente.filename == "":
         flash("Nenhum arquivo selecionado.", "error")
         return redirect(url_for("index"))
 
     try:
         # Delega toda a lógica de negócio para a camada de serviço
         result = services.process_upload_and_generate_reports(
-            file_atual=file_atual,
+            file_recente=file_recente,
             upload_folder=app.config["UPLOAD_FOLDER"],
             reports_folder=app.config["REPORTS_FOLDER"],
             db=db,
@@ -221,11 +241,29 @@ def upload_file():
             TrendAnalysis=TrendAnalysis,  # Passa o novo modelo
             base_dir=BASE_DIR,
         )
-        if result and result.get("warning"):
-            # NOVO: Verifica primeiro se há um aviso.
-            flash(result["warning"], "warning")
-            return redirect(url_for("index"))
-        elif result:
+
+        # Se a requisição for AJAX (feita pelo nosso script), retorna JSON
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            if result and result.get("warning"):
+                return jsonify(success=False, error=result["warning"]), 400
+
+            report_url = url_for(
+                "serve_report",
+                run_folder=result["run_folder"],
+                filename=result["report_filename"],
+            )
+            new_kpi_summary = (
+                services.calculate_kpi_summary(result["json_summary_path"])
+                if result.get("json_summary_path")
+                else None
+            )
+
+            return jsonify(
+                success=True, report_url=report_url, kpi_summary=new_kpi_summary
+            )
+
+        # Comportamento padrão (fallback para clientes sem JS): redireciona.
+        if result and not result.get("warning"):
             return redirect(
                 url_for(
                     "serve_report",
@@ -233,11 +271,23 @@ def upload_file():
                     filename=result["report_filename"],
                 )
             )
-        else:
-            flash("Ocorreu um erro durante o processamento do arquivo.", "error")
-            return redirect(url_for("index"))
+
+        flash(
+            result.get("warning")
+            or "Ocorreu um erro durante o processamento do arquivo.",
+            "error",
+        )
+        return redirect(url_for("index"))
+
     except Exception as e:
-        flash(f"Erro fatal no processo de upload: {e}", "error")
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return (
+                jsonify(
+                    success=False, error=f"Erro fatal no processo de upload: {str(e)}"
+                ),
+                500,
+            )
+        flash(f"Erro fatal no processo de upload: {str(e)}", "error")
         return redirect(url_for("index"))
 
 
@@ -413,25 +463,23 @@ def delete_report(report_id):
         return redirect(url_for("admin_login_page"))
 
     report = Report.query.get_or_404(report_id)
+    report_filename = report.original_filename  # Salva o nome para a mensagem flash
 
-    try:
-        # Pega o diretório do relatório (ex: '.../data/reports/run_20251005_103000')
-        report_dir = os.path.dirname(report.report_path)
+    # Delega a lógica de exclusão para a camada de serviço
+    success = services.delete_report_and_artifacts(
+        report_id=report_id, db=db, Report=Report
+    )
 
-        # Deleta a pasta inteira do 'run', garantindo que todos os arquivos associados sejam removidos
-        if os.path.isdir(report_dir):
-            shutil.rmtree(report_dir)
-            print(f"🗑️ Diretório '{report_dir}' excluído com sucesso.")
-
-        # Deleta o registro do banco de dados
-        db.session.delete(report)
-        db.session.commit()
-
-        print(f"✅ Relatório '{report.original_filename}' excluído do banco de dados.")
-
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Erro ao excluir o relatório {report_id}: {e}")
+    if success:
+        flash(
+            f"Relatório '{report_filename}' e seus arquivos foram excluídos com sucesso.",
+            "success",
+        )
+    else:
+        flash(
+            f"Erro ao tentar excluir o relatório '{report_filename}'. Consulte os logs.",
+            "error",
+        )
 
     return redirect(url_for("relatorios"))
 
@@ -456,7 +504,7 @@ def admin_login():
     if admin_token_config and token_fornecido == admin_token_config:
         session["is_admin"] = True
         flash("Login de administrador realizado com sucesso!", "success")
-        return redirect(url_for("relatorios"))
+        return redirect(url_for("index"))
     else:
         flash("Token de administrador inválido.", "error")
         return redirect(url_for("admin_login_page"))

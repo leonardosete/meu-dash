@@ -1,5 +1,6 @@
 import os
 import pytest
+import json
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
@@ -19,7 +20,7 @@ def mock_dependencies():
         "db": mock_db,
         "Report": mock_Report,
         "TrendAnalysis": mock_TrendAnalysis,  # Adiciona ao dicionário
-        "file_atual": mock_file,
+        "file_recente": mock_file,
     }
 
 
@@ -69,16 +70,13 @@ def test_process_upload_and_generate_reports(
     upload_folder.mkdir()
     reports_folder.mkdir()
 
-    # A service chama analisar_arquivo_csv duas vezes (light e full)
-    mock_analisar_csv.side_effect = [
-        {"json_path": "fake/path/light_summary.json"},
-        {
-            "summary": MagicMock(),
-            "df_atuacao": MagicMock(),
-            "num_logs_invalidos": 0,
-            "json_path": "fake/path/full_summary.json",
-        },
-    ]
+    # A service chama analisar_arquivo_csv uma vez (análise completa)
+    mock_analisar_csv.return_value = {
+        "summary": MagicMock(),
+        "df_atuacao": MagicMock(),
+        "num_logs_invalidos": 0,
+        "json_path": "fake/path/full_summary.json",
+    }
 
     # O gerador de páginas principal retorna o caminho do dashboard como uma STRING
     mock_dashboard_path = "fake/path/resumo_geral.html"
@@ -228,12 +226,12 @@ def test_process_upload_for_continuous_trend_analysis(
 
     mock_gerar_tendencia.assert_called_with(
         json_anterior=report_A.json_summary_path,
-        json_atual=mock_analisar_csv.return_value["json_path"],
+        json_recente=mock_analisar_csv.return_value["json_path"],
         csv_anterior_name=report_A.original_filename,
-        csv_atual_name=mock_dependencies["file_atual"].filename,
+        csv_recente_name=mock_dependencies["file_recente"].filename,
         output_path=ANY,
         date_range_anterior=report_A.date_range,
-        date_range_atual="02/01/2025 a 02/01/2025",
+        date_range_recente="02/01/2025 a 02/01/2025",
     )
     # Verifica se o Report B e a Trend B vs A foram salvos
     assert mock_db.session.add.call_count == 2
@@ -273,12 +271,12 @@ def test_process_upload_for_continuous_trend_analysis(
     # Verifica se a comparação usou o JSON do relatório B
     mock_gerar_tendencia.assert_called_with(
         json_anterior=report_B.json_summary_path,
-        json_atual=mock_analisar_csv.return_value["json_path"],
+        json_recente=mock_analisar_csv.return_value["json_path"],
         csv_anterior_name=report_B.original_filename,
-        csv_atual_name=mock_dependencies["file_atual"].filename,
+        csv_recente_name=mock_dependencies["file_recente"].filename,
         output_path=ANY,
         date_range_anterior=report_B.date_range,
-        date_range_atual="03/01/2025 a 03/01/2025",
+        date_range_recente="03/01/2025 a 03/01/2025",
     )
     assert mock_db.session.add.call_count == 2
     assert trend_C_vs_B.current_report_id == 3
@@ -358,3 +356,123 @@ def test_enforce_report_limit_deletes_oldest(
 
     # 5. Verifica se o commit foi feito no final
     mock_db.session.commit.assert_called_once()
+
+
+def test_calculate_kpi_summary_success(tmp_path):
+    """
+    GIVEN um arquivo JSON de resumo válido,
+    WHEN a função calculate_kpi_summary é chamada,
+    THEN ela deve retornar um dicionário com os KPIs calculados corretamente.
+    """
+    # Arrange
+    # Importa as constantes reais para garantir que o teste use os mesmos valores da aplicação
+    from src.constants import (
+        ACAO_FALHA_PERSISTENTE,
+        ACAO_INSTABILIDADE_CRONICA,
+        ACAO_SEMPRE_OK,
+    )
+
+    # Simula os diferentes tipos de casos que a função espera
+    summary_data = [
+        # Usa as constantes reais para garantir a consistência do teste
+        {"acao_sugerida": ACAO_FALHA_PERSISTENTE, "alert_count": 10},
+        {"acao_sugerida": ACAO_INSTABILIDADE_CRONICA, "alert_count": 5},
+        {"acao_sugerida": ACAO_SEMPRE_OK, "alert_count": 2},
+    ]
+    json_path = tmp_path / "summary.json"
+    with open(json_path, "w") as f:
+        json.dump(summary_data, f)
+
+    # Act
+    result = services.calculate_kpi_summary(str(json_path))
+
+    # Assert
+    assert result is not None
+    assert result["total_casos"] == 3
+    assert result["casos_atuacao"] == 1
+    assert result["casos_instabilidade"] == 1
+    assert result["casos_sucesso"] == 2  # (total_casos - casos_atuacao)
+    assert result["alertas_atuacao"] == 10
+    assert result["alertas_instabilidade"] == 5
+    assert result["alertas_sucesso"] == 7  # (alertas_instabilidade + alertas_sucesso)
+    assert result["taxa_sucesso_automacao"] == "66.7%"
+
+
+@pytest.mark.parametrize(
+    "file_content, file_exists",
+    [
+        ("[]", True),  # Arquivo JSON vazio
+        ('{"key": "value"}', False),  # Arquivo não existe
+        ("{malformed", True),  # JSON inválido
+    ],
+)
+def test_calculate_kpi_summary_failures(tmp_path, file_content, file_exists):
+    """Testa se a função retorna None em cenários de falha."""
+    json_path = tmp_path / "summary.json"
+    if file_exists:
+        json_path.write_text(file_content)
+
+    assert services.calculate_kpi_summary(str(json_path)) is None
+
+
+@patch("src.services.shutil.rmtree")
+@patch("src.services.os.path.isdir", return_value=True)
+def test_delete_report_and_artifacts_success(
+    mock_isdir, mock_rmtree, mock_dependencies
+):
+    """
+    GIVEN um report_id válido,
+    WHEN delete_report_and_artifacts é chamado,
+    THEN o diretório do relatório e o registro no DB devem ser excluídos.
+    """
+    # Arrange
+    mock_db = mock_dependencies["db"]
+    MockReport = mock_dependencies["Report"]
+
+    mock_report_instance = MagicMock()
+    mock_report_instance.report_path = "/fake/dir/report.html"
+    MockReport.query.get.return_value = mock_report_instance
+
+    # Act
+    result = services.delete_report_and_artifacts(1, mock_db, MockReport)
+
+    # Assert
+    assert result is True
+    MockReport.query.get.assert_called_once_with(1)
+    mock_isdir.assert_called_once_with("/fake/dir")
+    mock_rmtree.assert_called_once_with("/fake/dir")
+    mock_db.session.delete.assert_called_once_with(mock_report_instance)
+    mock_db.session.commit.assert_called_once()
+    mock_db.session.rollback.assert_not_called()
+
+
+def test_delete_report_and_artifacts_not_found(mock_dependencies):
+    """Testa se a função retorna False se o relatório não for encontrado."""
+    mock_db = mock_dependencies["db"]
+    MockReport = mock_dependencies["Report"]
+    MockReport.query.get.return_value = None
+
+    result = services.delete_report_and_artifacts(999, mock_db, MockReport)
+
+    assert result is False
+    mock_db.session.delete.assert_not_called()
+    mock_db.session.commit.assert_not_called()
+
+
+@patch("src.services.shutil.rmtree", side_effect=Exception("Permission denied"))
+@patch("src.services.os.path.isdir", return_value=True)
+def test_delete_report_and_artifacts_exception(
+    mock_isdir, mock_rmtree, mock_dependencies
+):
+    """Testa se a função faz rollback em caso de exceção."""
+    mock_db = mock_dependencies["db"]
+    MockReport = mock_dependencies["Report"]
+    mock_report_instance = MagicMock()
+    MockReport.query.get.return_value = mock_report_instance
+
+    result = services.delete_report_and_artifacts(1, mock_db, MockReport)
+
+    assert result is False
+    mock_db.session.delete.assert_not_called()
+    mock_db.session.commit.assert_not_called()
+    mock_db.session.rollback.assert_called_once()

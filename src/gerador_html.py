@@ -601,10 +601,9 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
                 count, min_squad_val, max_squad_val
             )
             sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", squad.replace(" ", "_"))
-            plan_path = os.path.join(
-                plan_dir_base_name, f"plano-de-acao-{sanitized_name}.html"
-            )
-            body_content += f'<div class="bar-item"><div class="bar-label"><a href="{plan_path}" title="{escape(squad)}">{escape(squad)}</a></div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
+            # CORREÇÃO: O caminho correto para esta seção é para os relatórios de squad, não para os planos de ação.
+            squad_report_path = f"squads/squad-{sanitized_name}.html"
+            body_content += f'<div class="bar-item"><div class="bar-label"><a href="{squad_report_path}" title="Ver relatório para {escape(squad)}">{escape(squad)}</a></div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
         body_content += "</div>"
     else:
         body_content += "<p>Nenhuma squad com casos que precisam de atuação. ✅</p>"

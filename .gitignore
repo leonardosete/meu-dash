@@ -234,3 +234,6 @@ Makefile
 # Flask DB
 data/
 migrations/
+
+# Certificate
+CERT

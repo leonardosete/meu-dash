@@ -10,6 +10,7 @@ from .constants import (
     ACAO_FALHA_PERSISTENTE,
     ACAO_FLAGS_ATUACAO,
     ACAO_FLAGS_INSTABILIDADE,
+    ACAO_INSTABILIDADE_CRONICA,
     LOG_INVALIDOS_FILENAME,  # noqa: F401
     ACAO_FLAGS_OK,
     ACAO_INCONSISTENTE,
@@ -60,9 +61,9 @@ def gerar_ecossistema_de_relatorios(
     df_atuacao = analysis_results["df_atuacao"]
     summary = analysis_results["summary"]
     details_dir = os.path.join(output_dir, "detalhes")
-    plan_dir = os.path.join(output_dir, "planos_de_acao")
+    squad_reports_dir = os.path.join(output_dir, "squads")  # RENOMEADO
     summary_filename = os.path.basename(summary_html_path)
-    plan_dir_base_name = os.path.basename(plan_dir)
+    squad_reports_base_name = os.path.basename(squad_reports_dir)
 
     # Gera páginas de detalhe para os principais problemas
     gerar_paginas_detalhe_problema(
@@ -71,7 +72,7 @@ def gerar_ecossistema_de_relatorios(
         details_dir,
         summary_filename,
         "aberto_",
-        plan_dir_base_name,
+        squad_reports_base_name,
         timestamp_str,
     )
     gerar_paginas_detalhe_problema(
@@ -80,7 +81,7 @@ def gerar_ecossistema_de_relatorios(
         details_dir,
         summary_filename,
         "remediado_",
-        plan_dir_base_name,
+        squad_reports_base_name,
         timestamp_str,
     )
     gerar_paginas_detalhe_problema(
@@ -89,7 +90,7 @@ def gerar_ecossistema_de_relatorios(
         details_dir,
         summary_filename,
         "geral_",
-        plan_dir_base_name,
+        squad_reports_base_name,
         timestamp_str,
     )
     gerar_paginas_detalhe_problema(
@@ -98,7 +99,7 @@ def gerar_ecossistema_de_relatorios(
         details_dir,
         summary_filename,
         "instabilidade_",
-        plan_dir_base_name,
+        squad_reports_base_name,
         timestamp_str,
     )
     gerar_paginas_detalhe_metrica(
@@ -106,15 +107,15 @@ def gerar_ecossistema_de_relatorios(
         dashboard_context["top_metrics"].index,
         details_dir,
         summary_filename,
-        plan_dir_base_name,
+        squad_reports_base_name,
         timestamp_str,
     )
 
     # Gera páginas de planos de ação e visualizadores de CSV
-    gerar_planos_por_squad(df_atuacao, plan_dir, timestamp_str)
+    gerar_relatorios_por_squad(df_atuacao, squad_reports_dir, timestamp_str)
     gerar_pagina_squads(
         dashboard_context["all_squads"],
-        plan_dir,
+        squad_reports_dir,
         output_dir,
         summary_filename,
         timestamp_str,
@@ -134,6 +135,12 @@ def gerar_ecossistema_de_relatorios(
     gerar_pagina_atuar(
         output_dir,
         os.path.join(output_dir, "atuar.csv"),
+        os.path.join(base_template_dir, "editor_template.html"),
+    )
+    # NOVO: Gera os arquivos de atuação filtrados por squad
+    gerar_paginas_atuar_por_squad(
+        df_atuacao,
+        output_dir,
         os.path.join(base_template_dir, "editor_template.html"),
     )
 
@@ -162,7 +169,7 @@ def carregar_template_html(filepath: str) -> str:
         raise IOError(f"Erro inesperado ao ler o arquivo de template '{filepath}': {e}")
 
 
-def gerar_resumo_executivo(context: dict, output_path: str, timestamp_str: str):
+def gerar_resumo_executivo(context: dict, output_path: str, timestamp_str: str):  # type: ignore
     """Gera o dashboard principal em HTML com base em um contexto de dados pré-construído."""
     logger.info("Gerando Resumo Executivo estilo Dashboard...")
 
@@ -203,13 +210,13 @@ def gerar_resumo_executivo(context: dict, output_path: str, timestamp_str: str):
         )
 
 
-def gerar_planos_por_squad(
+def gerar_relatorios_por_squad(  # type: ignore
     df_atuacao: pd.DataFrame, output_dir: str, timestamp_str: str
 ):
-    """Gera arquivos de plano de ação HTML para cada squad com casos que precisam de atuação."""
-    logger.info("Gerando planos de ação por squad...")
+    """Gera arquivos de relatório detalhado para cada squad com casos que precisam de atuação."""
+    logger.info("Gerando relatórios detalhados por squad...")
     if df_atuacao.empty:
-        logger.info("Nenhum caso precisa de atuação. Nenhum plano de ação gerado.")
+        logger.info("Nenhum caso precisa de atuação. Nenhum relatório de squad gerado.")
         return
 
     os.makedirs(output_dir, exist_ok=True)
@@ -231,13 +238,17 @@ def gerar_planos_por_squad(
         if squad_df.empty:
             continue
 
+        # CORREÇÃO: Restaurado o nome e caminho originais para os relatórios de squad.
+        # Esta função gera os relatórios detalhados (squad-*.html), não os planos de ação.
         sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", squad_name.replace(" ", "_"))
-        output_path = os.path.join(output_dir, f"plano-de-acao-{sanitized_name}.html")
-        title = f"Plano de Ação: {escape(squad_name)}"
+        # Garante que o diretório de squads exista.
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, f"squad-{sanitized_name}.html")
+        title = f"Relatório da Squad: {escape(squad_name)}"
         total_alertas = squad_df["alert_count"].sum()
 
-        body_content = '<p><a href="../todas_as_squads.html">&larr; Voltar para Planos Squads</a></p>'
-        body_content += '<h2>Visão Geral da Squad</h2><div class="grid-container">'
+        body_content = '<p><a href="../todas_as_squads.html">&larr; Voltar para Lista de Squads</a></p>'
+        body_content += f'<h2>Visão Geral da Squad - {escape(squad_name)}</h2><div class="grid-container">'
         body_content += f'<div class="card kpi-card"><p class="kpi-value" style="color: var(--warning-color);">{len(squad_df)}</p><p class="kpi-label">Total de Casos</p></div>'
         body_content += f'<div class="card kpi-card"><p class="kpi-value">{total_alertas}</p><p class="kpi-label">Total de Alertas Envolvidos</p></div></div>'
         top_problemas_da_squad = (
@@ -354,12 +365,12 @@ def gerar_planos_por_squad(
         )
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(html_content)
-        logger.info(f"Plano de ação para a squad '{squad_name}' gerado: {output_path}")
+        logger.info(f"Relatório para a squad '{squad_name}' gerado: {output_path}")
 
 
-def gerar_pagina_squads(
+def gerar_pagina_squads(  # type: ignore
     all_squads: pd.Series,
-    plan_dir: str,
+    squad_reports_dir: str,
     output_dir: str,
     summary_filename: str,
     timestamp_str: str,
@@ -374,19 +385,19 @@ def gerar_pagina_squads(
     if not squads_com_casos.empty:
         body_content += '<div class="bar-chart-container">'
         min_val, max_val = squads_com_casos.min(), squads_com_casos.max()
-        plan_base_dir = os.path.basename(plan_dir)
+        squad_reports_base_dir = os.path.basename(squad_reports_dir)
         for squad, count in squads_com_casos.items():
             bar_width = (count / max_val) * 100 if max_val > 0 else 0
             background_color, text_color = gerador_html.gerar_cores_para_barra(
                 count, min_val, max_val
             )
             sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", squad.replace(" ", "_"))
-            plan_path = os.path.join(
-                plan_base_dir, f"plano-de-acao-{sanitized_name}.html"
+            report_path = os.path.join(
+                squad_reports_base_dir, f"squad-{sanitized_name}.html"
             )
             body_content += f"""
             <div class="bar-item">
-                <div class="bar-label"><a href="{plan_path}" title="Ver plano de ação para {escape(squad)}">{escape(squad)}</a></div>
+                <div class="bar-label"><a href="{report_path}" title="Ver relatório para {escape(squad)}">{escape(squad)}</a></div>
                 <div class="bar-wrapper">
                     <div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div>
                 </div>
@@ -409,13 +420,13 @@ def gerar_pagina_squads(
     logger.info(f"Página de squads gerada: {output_path}")
 
 
-def gerar_paginas_detalhe_problema(
+def gerar_paginas_detalhe_problema(  # type: ignore
     df_source: pd.DataFrame,
     problem_list: pd.Index,
     output_dir: str,
     summary_filename: str,
     file_prefix: str,
-    plan_dir_name: str,
+    squad_reports_dir_name: str,
     timestamp_str: str,
 ):
     """Gera páginas de detalhe para uma lista de problemas específicos."""
@@ -467,10 +478,10 @@ def gerar_paginas_detalhe_problema(
                 sanitized_squad_name = re.sub(
                     r"[^a-zA-Z0-9_-]", "", squad_name.replace(" ", "_")
                 )
-                plan_path = (
-                    f"../{plan_dir_name}/plano-de-acao-{sanitized_squad_name}.html"
+                report_path = (
+                    f"../{squad_reports_dir_name}/squad-{sanitized_squad_name}.html"
                 )
-                squad_info = f'<a href="{plan_path}">{escape(squad_name)}</a>'
+                squad_info = f'<a href="{report_path}">{escape(squad_name)}</a>'
             else:
                 squad_info = escape(squad_name)
             body_content += f"<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{row['alert_count']}</td><td>{squad_info}</td></tr>"
@@ -485,12 +496,12 @@ def gerar_paginas_detalhe_problema(
     )
 
 
-def gerar_paginas_detalhe_metrica(
+def gerar_paginas_detalhe_metrica(  # type: ignore
     df_atuacao_source: pd.DataFrame,
     metric_list: pd.Index,
     output_dir: str,
     summary_filename: str,
-    plan_dir_name: str,
+    squad_reports_dir_name: str,
     timestamp_str: str,
 ):
     """Gera páginas de detalhe para categorias de métricas com casos em aberto."""
@@ -533,8 +544,10 @@ def gerar_paginas_detalhe_metrica(
             sanitized_squad_name = re.sub(
                 r"[^a-zA-Z0-9_-]", "", squad_name.replace(" ", "_")
             )
-            plan_path = f"../{plan_dir_name}/plano-de-acao-{sanitized_squad_name}.html"
-            squad_info = f'<a href="{plan_path}">{escape(squad_name)}</a>'
+            report_path = (
+                f"../{squad_reports_dir_name}/squad-{sanitized_squad_name}.html"
+            )
+            squad_info = f'<a href="{report_path}">{escape(squad_name)}</a>'
             problema_info = escape(row[COL_SHORT_DESCRIPTION])
             body_content += f"<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{problema_info}</td><td>{squad_info}</td></tr>"
         body_content += "</tbody></table>"
@@ -546,7 +559,7 @@ def gerar_paginas_detalhe_metrica(
     logger.info(f"{len(metric_list)} páginas de detalhe de métricas geradas.")
 
 
-def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):
+def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):  # type: ignore
     """Gera uma página HTML para visualização dos casos resolvidos com sucesso."""
     logger.info(
         f"Gerando página de visualização para '{os.path.basename(ok_csv_path)}'..."
@@ -574,7 +587,7 @@ def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):
     logger.info(f"Página de visualização de sucesso gerada: {output_path}")
 
 
-def gerar_pagina_instabilidade(
+def gerar_pagina_instabilidade(  # type: ignore
     output_dir: str, instability_csv_path: str, template_path: str
 ):
     """Gera uma página HTML para visualização dos casos de instabilidade crônica."""
@@ -606,7 +619,7 @@ def gerar_pagina_instabilidade(
     logger.info(f"Página de visualização de instabilidade gerada: {output_path}")
 
 
-def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_path: str):
+def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_path: str):  # type: ignore
     """Gera uma página HTML para visualização dos logs com status inválido."""
     logger.info(
         f"Gerando página de visualização para '{os.path.basename(log_csv_path)}'..."
@@ -636,7 +649,7 @@ def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_pat
     logger.info(f"Página de visualização de logs inválidos gerada: {output_path}")
 
 
-def gerar_pagina_atuar(output_dir: str, actuation_csv_path: str, template_path: str):
+def gerar_pagina_atuar(output_dir: str, actuation_csv_path: str, template_path: str):  # type: ignore
     """Gera uma página HTML para edição do arquivo de atuação."""
     logger.info(
         f"Gerando página de edição para '{os.path.basename(actuation_csv_path)}'..."
@@ -645,6 +658,13 @@ def gerar_pagina_atuar(output_dir: str, actuation_csv_path: str, template_path: 
     try:
         with open(actuation_csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()
+        # NOVO: Verifica se o CSV tem mais do que apenas o cabeçalho.
+        # Se não tiver, não gera o atuar.html, pois não há ações.
+        if len(csv_content.splitlines()) <= 1:
+            logger.info(
+                "Arquivo 'atuar.csv' está vazio (apenas cabeçalho). Pulando a geração de 'atuar.html'."
+            )
+            return
     except FileNotFoundError:
         csv_content = ""
         logger.warning(
@@ -660,8 +680,100 @@ def gerar_pagina_atuar(output_dir: str, actuation_csv_path: str, template_path: 
             f"const csvDataPayload = `{placeholder}`",
         )
         final_html = template_com_placeholder.replace(placeholder, csv_payload)
+        # Adiciona o script de navegação contextual para tratar o parâmetro 'back'
+        script_navegacao = """
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const backButton = document.querySelector('a[href="resumo_geral.html"]');
+                if (backButton) {
+                    const backPage = new URLSearchParams(window.location.search).get('back');
+                    if (backPage) {
+                        backButton.href = backPage;
+                        backButton.textContent = '← Voltar para a Análise';
+                    }
+                }
+            });
+        </script>
+        """
+        final_html = final_html.replace("</body>", f"{script_navegacao}</body>")
         with open(output_path, "w", encoding="utf-8") as f_out:
             f_out.write(final_html)
     except FileNotFoundError:
         raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
     logger.info(f"Página de edição gerada: {output_path}")
+
+
+def gerar_paginas_atuar_por_squad(
+    df_atuacao: pd.DataFrame, output_dir: str, template_path: str
+):
+    """Gera arquivos de atuação (CSV e HTML) filtrados para cada squad."""
+    if df_atuacao.empty:
+        return
+
+    logger.info("Gerando páginas de atuação filtradas por squad...")
+    template_content = carregar_template_html(template_path)
+
+    # NOVO: Mapa de emojis para prefixar a ação sugerida no CSV.
+    full_emoji_map = {
+        ACAO_INTERMITENTE: "⚠️",
+        ACAO_FALHA_PERSISTENTE: "❌",
+        ACAO_STATUS_AUSENTE: "❓",
+        ACAO_INCONSISTENTE: "🔍",
+        ACAO_SEMPRE_OK: "✅",
+        ACAO_ESTABILIZADA: "⚠️✅",
+        ACAO_INSTABILIDADE_CRONICA: "🔁",
+    }
+
+    for squad_name, squad_df in df_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True):
+        if squad_df.empty:
+            continue
+
+        sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", squad_name.replace(" ", "_"))
+        # CORREÇÃO: Define o diretório e o nome do arquivo corretamente.
+        planos_dir = os.path.join(output_dir, "planos_de_acao")
+        os.makedirs(planos_dir, exist_ok=True)
+        csv_filename = f"plano-de-acao-{sanitized_name}.csv"
+        html_filename = f"plano-de-acao-{sanitized_name}.html"
+        csv_path = os.path.join(planos_dir, csv_filename)
+        html_path = os.path.join(planos_dir, html_filename)
+
+        df_to_save = squad_df.copy()
+        # CORREÇÃO: Adiciona o emoji na coluna 'acao_sugerida' antes de salvar.
+        df_to_save["acao_sugerida"] = df_to_save["acao_sugerida"].apply(
+            lambda x: f"{full_emoji_map.get(x, '')} {x}".strip()
+        )
+
+        # 1. Gera o CSV filtrado
+        df_to_save.to_csv(csv_path, index=False, sep=";", encoding="utf-8-sig")
+
+        # 2. Gera o HTML correspondente
+        with open(csv_path, "r", encoding="utf-8") as f:
+            csv_content = f.read().lstrip()
+
+        final_html = gerador_html.renderizar_pagina_csv_viewer(
+            template_content, csv_content, f"Plano de Ação: {squad_name}", csv_filename
+        )
+        # CORREÇÃO: Usa o caminho relativo correto para o link de "Voltar".
+        final_html = final_html.replace(
+            'href="resumo_geral.html"', 'href="../resumo_geral.html"'
+        )
+        # Adiciona o script de navegação contextual para tratar o parâmetro 'back'
+        script_navegacao = """
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const backButton = document.querySelector('a[href="../resumo_geral.html"]');
+                if (backButton) {
+                    const backPage = new URLSearchParams(window.location.search).get('back');
+                    if (backPage) {
+                        backButton.href = backPage; // O 'back' já vem com '../'
+                        backButton.textContent = '← Voltar para a Análise';
+                    }
+                }
+            });
+        </script>
+        """
+        final_html = final_html.replace("</body>", f"{script_navegacao}</body>")
+        with open(html_path, "w", encoding="utf-8") as f_out:
+            f_out.write(final_html)
+
+    logger.info("Páginas de atuação por squad geradas com sucesso.")

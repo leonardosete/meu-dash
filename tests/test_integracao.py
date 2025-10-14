@@ -1,6 +1,6 @@
 import os
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone
 
 import pytest
@@ -15,6 +15,9 @@ FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 def client():
     """Configura o cliente de teste do Flask."""
     flask_app.app.config["TESTING"] = True
+    flask_app.app.config["SERVER_NAME"] = (
+        "localhost"  # Essencial para url_for funcionar nos testes
+    )
     with flask_app.app.test_client() as client:
         yield client
 
@@ -62,7 +65,7 @@ def test_comparacao_direta_gera_relatorio_tendencia(tmp_path, file_order):
     """
     # Arrange: Prepara os caminhos de entrada e o serviço
     input_csv_anterior = os.path.join(FIXTURE_DIR, "csv-dummy-1.csv")
-    input_csv_atual = os.path.join(FIXTURE_DIR, "csv-dummy-2.csv")
+    input_csv_recente = os.path.join(FIXTURE_DIR, "csv-dummy-2.csv")
 
     # Simula os objetos de arquivo que o Flask forneceria
     class MockFile:
@@ -77,9 +80,9 @@ def test_comparacao_direta_gera_relatorio_tendencia(tmp_path, file_order):
 
     # Parametriza a ordem dos arquivos para testar a lógica de ordenação
     if file_order == "normal":
-        files = [MockFile(input_csv_anterior), MockFile(input_csv_atual)]
+        files = [MockFile(input_csv_anterior), MockFile(input_csv_recente)]
     else:  # inverted
-        files = [MockFile(input_csv_atual), MockFile(input_csv_anterior)]
+        files = [MockFile(input_csv_recente), MockFile(input_csv_anterior)]
 
     # Act: Executa o serviço de comparação direta
     result = services.process_direct_comparison(
@@ -88,7 +91,7 @@ def test_comparacao_direta_gera_relatorio_tendencia(tmp_path, file_order):
 
     # Assert: Verifica se o resultado aponta para o relatório de tendência
     assert result is not None
-    assert result["report_filename"] == "resumo_tendencia.html"
+    assert result["report_filename"] == "comparativo_periodos.html"
     assert os.path.exists(
         os.path.join(tmp_path, result["run_folder"], result["report_filename"])
     ), "O relatório de tendência da comparação direta não foi gerado."
@@ -124,8 +127,8 @@ def test_upload_route_success(mock_service, client):
 
     # Cria um arquivo CSV em memória para o upload
     data = {
-        # The key 'file_atual' must match the 'name' attribute of the file input in the HTML form.
-        "file_atual": (BytesIO(b"header1;header2\nvalue1;value2"), "test.csv")
+        # The key 'file_recente' must match the 'name' attribute of the file input in the HTML form.
+        "file_recente": (BytesIO(b"header1;header2\nvalue1;value2"), "test.csv")
     }
 
     # Act
@@ -153,7 +156,7 @@ def test_compare_route_success(mock_service, client):
     # Configura o retorno do serviço de comparação mockado
     mock_service.return_value = {
         "run_folder": "run_compare_456",
-        "report_filename": "resumo_tendencia.html",
+        "report_filename": "comparativo_periodos.html",
     }
 
     # Cria dois arquivos CSV em memória para o upload
@@ -175,7 +178,7 @@ def test_compare_route_success(mock_service, client):
     assert response.status_code == 302, "A rota /compare não redirecionou."
 
     # 3. Verifica se o redirecionamento aponta para a URL correta
-    assert "/reports/run_compare_456/resumo_tendencia.html" in response.location
+    assert "/reports/run_compare_456/comparativo_periodos.html" in response.location
 
 
 def test_localtime_template_filter():
@@ -194,3 +197,55 @@ def test_localtime_template_filter():
 
     # Assert
     assert result == "09/10/2025 às 15:30"
+
+
+def test_kpi_dashboard_on_index_page(client):
+    """
+    GIVEN um mock que simula a leitura de um arquivo JSON de resumo,
+    WHEN a página inicial ('/') é acessada,
+    THEN o dashboard de KPIs deve ser renderizado com os dados corretos.
+    """
+    # Envolve o teste no contexto da aplicação para garantir que o DB esteja acessível
+    with client.application.app_context():
+        # Mocka a chamada para a função de serviço e as queries ao DB feitas pela rota
+        with patch(
+            "src.app.services.calculate_kpi_summary"
+        ) as mock_calculate_kpi, patch(
+            "src.app.Report.query"  # Continua mockando a query
+        ) as mock_report_query, patch(
+            "src.app.TrendAnalysis.query"
+        ) as mock_trend_query:
+            # Arrange
+            # 1. Simula o retorno da função de cálculo de KPI.
+            # Isso isola o teste da lógica de leitura de arquivos.
+            mock_calculate_kpi.return_value = {
+                "casos_atuacao": 1,
+                "casos_instabilidade": 1,
+                "taxa_sucesso_automacao": "66.7%",
+                "taxa_sucesso_valor": 66.7,  # Adiciona a chave que faltava
+                "report_url": "/fake/url/to/report.html",  # Adiciona a URL para consistência
+            }
+
+            # 2. Simula que existe um relatório no banco de dados.
+            # Isso é necessário para que a rota `index` chame a função de KPI.
+            mock_report = MagicMock()
+            mock_report.report_path = "/fake/path/report.html"  # Apenas para existir
+            mock_report_query.order_by.return_value.first.return_value = mock_report
+
+            # 3. Simula a query de tendência para retornar uma lista vazia
+            mock_trend_query.order_by.return_value.limit.return_value.all.return_value = (
+                []
+            )
+
+            # Act
+            response = client.get("/")
+            response_data = response.get_data(as_text=True)
+
+            # Assert
+            assert response.status_code == 200
+            # As asserções foram recenteizadas para corresponder à nova estrutura HTML dos cards de KPI
+            assert '<p class="kpi-value text-danger">1</p>' in response_data
+            assert '<p class="kpi-value text-warning">1</p>' in response_data
+            # CORREÇÃO: Com a lógica de cores atualizada, 66.7% de sucesso cai na faixa de 'warning'.
+            # O teste é ajustado para refletir a cor correta.
+            assert '<p class="kpi-value text-warning">66.7%</p>' in response_data

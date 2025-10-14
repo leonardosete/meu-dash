@@ -57,7 +57,7 @@ def sort_files_by_date(filepaths: List[str]) -> Optional[Tuple[str, str]]:
         filepaths (List[str]): Uma lista de caminhos para os arquivos CSV.
 
     Returns:
-        Optional[Tuple[str, str]]: Uma tupla contendo (caminho_arquivo_atual, caminho_arquivo_anterior).
+        Optional[Tuple[str, str]]: Uma tupla contendo (caminho_arquivo_recente, caminho_arquivo_anterior).
                                    Retorna None se não for possível processar pelo menos dois arquivos.
     """
     if len(filepaths) < 2:
@@ -78,4 +78,4 @@ def sort_files_by_date(filepaths: List[str]) -> Optional[Tuple[str, str]]:
 
     file_dates.sort(key=lambda x: x[0], reverse=True)
 
-    return (file_dates[0][1], file_dates[1][1])  # (atual, anterior)
+    return (file_dates[0][1], file_dates[1][1])  # (recente, anterior)

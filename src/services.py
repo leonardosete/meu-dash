@@ -2,6 +2,7 @@
 Módulo de Serviço para encapsular a lógica de negócio principal da aplicação.
 """
 
+import json
 import shutil
 import os
 from datetime import datetime
@@ -12,7 +13,11 @@ from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import gerar_relatorio_tendencia
 from .get_date_range import get_date_range_from_file
 from . import context_builder, gerador_paginas
-from .constants import MAX_REPORTS_HISTORY
+from .constants import (
+    MAX_REPORTS_HISTORY,
+    ACAO_FLAGS_ATUACAO,
+    ACAO_FLAGS_INSTABILIDADE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +63,112 @@ def _enforce_report_limit(db, Report):
         db.session.rollback()
 
 
+def calculate_kpi_summary(report_path: str) -> dict | None:
+    """Calcula os KPIs gerenciais a partir de um arquivo de resumo JSON.
+
+    Args:
+        report_path (str): O caminho para o arquivo JSON de resumo.
+
+    Returns:
+        dict | None: Um dicionário com os KPIs ou None se ocorrer um erro.
+    """
+    try:
+        with open(report_path, "r") as f:
+            summary_data = json.load(f)
+
+        if not summary_data:
+            return None
+
+        total_casos = len(summary_data)
+        casos_atuacao = sum(
+            1
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_ATUACAO
+        )
+        casos_instabilidade = sum(
+            1
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_INSTABILIDADE
+        )
+        alertas_instabilidade = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_INSTABILIDADE
+        )
+        alertas_sucesso = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") not in ACAO_FLAGS_ATUACAO
+        )
+        alertas_atuacao = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") in ACAO_FLAGS_ATUACAO
+        )
+        taxa_sucesso = (
+            (1 - (casos_atuacao / total_casos)) * 100 if total_casos > 0 else 100
+        )
+        casos_sucesso = total_casos - casos_atuacao
+
+        return {
+            "casos_atuacao": casos_atuacao,
+            "alertas_atuacao": alertas_atuacao,
+            "casos_instabilidade": casos_instabilidade,
+            "alertas_instabilidade": alertas_instabilidade,
+            "alertas_sucesso": alertas_sucesso,
+            "taxa_sucesso_automacao": f"{taxa_sucesso:.1f}%",
+            "taxa_sucesso_valor": taxa_sucesso,
+            "casos_sucesso": casos_sucesso,
+            "total_casos": total_casos,
+        }
+    except (json.JSONDecodeError, FileNotFoundError, Exception) as e:
+        logger.error(f"Erro ao ler ou processar o JSON de resumo: {e}")
+        return None
+
+
+def delete_report_and_artifacts(report_id: int, db, Report) -> bool:
+    """
+    Exclui um relatório e todos os seus artefatos associados (arquivos e registro no DB).
+
+    Args:
+        report_id (int): O ID do relatório a ser excluído.
+        db (SQLAlchemy): A instância do banco de dados.
+        Report (Model): A classe do modelo Report.
+
+    Returns:
+        bool: True se a exclusão for bem-sucedida, False caso contrário.
+    """
+    report = Report.query.get(report_id)
+    if not report:
+        logger.warning(
+            f"Tentativa de excluir relatório inexistente com ID: {report_id}"
+        )
+        return False
+
+    try:
+        # Pega o diretório do relatório (ex: '.../data/reports/run_20251005_103000')
+        report_dir = os.path.dirname(report.report_path)
+
+        # Deleta a pasta inteira do 'run', garantindo que todos os arquivos associados sejam removidos
+        if os.path.isdir(report_dir):
+            shutil.rmtree(report_dir)
+            logger.info(f"Diretório '{report_dir}' excluído com sucesso.")
+
+        # Deleta o registro do banco de dados (e TrendAnalysis em cascata)
+        db.session.delete(report)
+        db.session.commit()
+        logger.info(
+            f"Relatório '{report.original_filename}' (ID: {report_id}) excluído do banco de dados."
+        )
+        return True
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao excluir o relatório {report_id}: {e}", exc_info=True)
+        return False
+
+
 def process_upload_and_generate_reports(
-    file_atual,
+    file_recente,
     upload_folder: str,
     reports_folder: str,
     db,
@@ -82,7 +191,7 @@ def process_upload_and_generate_reports(
     8. Aplicar a política de retenção para limpar relatórios antigos.
 
     Args:
-        file_atual (werkzeug.datastructures.FileStorage): O objeto do arquivo enviado
+        file_recente (werkzeug.datastructures.FileStorage): O objeto do arquivo enviado
             pelo Flask.
         upload_folder (str): O caminho absoluto para a pasta de uploads.
         reports_folder (str): O caminho absoluto para a pasta onde os relatórios
@@ -98,17 +207,22 @@ def process_upload_and_generate_reports(
         construir a URL de redirecionamento em caso de sucesso. Retorna `None` se
         ocorrer uma falha no processo.
     """
-    # 1. Salvar arquivo e preparar ambiente
-    filename_atual = secure_filename(file_atual.filename)
-    filepath_atual = os.path.join(
-        upload_folder, f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_atual}"
+    # 1. Salvar arquivo, preparar ambiente e executar a análise completa UMA VEZ
+    filename_recente = secure_filename(file_recente.filename)
+    filepath_recente = os.path.join(
+        upload_folder, f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_recente}"
     )
-    file_atual.save(filepath_atual)
-    date_range_atual = get_date_range_from_file(filepath_atual)
+    file_recente.save(filepath_recente)
+    date_range_recente = get_date_range_from_file(filepath_recente)
 
     run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     output_dir = os.path.join(reports_folder, run_folder_name)
     os.makedirs(output_dir, exist_ok=True)
+
+    logger.info(f"Executando análise completa para o arquivo: {filename_recente}")
+    analysis_results = analisar_arquivo_csv(
+        input_file=filepath_recente, output_dir=output_dir, light_analysis=False
+    )
 
     # 2. Análise de Tendência (se aplicável)
     # LÓGICA REVISADA: Busca o relatório correto para comparação.
@@ -119,7 +233,7 @@ def process_upload_and_generate_reports(
     previous_report_for_trend = None
 
     if last_trend_analysis_obj:
-        # Se já existe uma tendência, o próximo ponto de comparação é o relatório 'atual' da última tendência.
+        # Se já existe uma tendência, o próximo ponto de comparação é o relatório 'recente' da última tendência.
         previous_report_for_trend = last_trend_analysis_obj.current_report
         logger.info(
             f"Última análise de tendência encontrada. Usando o relatório '{previous_report_for_trend.original_filename}' como base para a próxima tendência."
@@ -147,31 +261,31 @@ def process_upload_and_generate_reports(
             if previous_report_for_trend.date_range
             else None
         )
-        date_range_atual_obj = (
-            datetime.strptime(date_range_atual.split(" a ")[0], "%d/%m/%Y")
-            if date_range_atual
+        date_range_recente_obj = (
+            datetime.strptime(date_range_recente.split(" a ")[0], "%d/%m/%Y")
+            if date_range_recente
             else None
         )
 
         if (
             date_range_anterior_obj
-            and date_range_atual_obj
-            and date_range_atual_obj > date_range_anterior_obj
+            and date_range_recente_obj
+            and date_range_recente_obj > date_range_anterior_obj
         ):
             logger.info("Período do upload é mais recente. Gerando tendência...")
-            temp_analysis_results = analisar_arquivo_csv(
-                filepath_atual, output_dir, light_analysis=True
-            )
-            output_trend_path = os.path.join(output_dir, "resumo_tendencia.html")
+            output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
 
+            # REFATORADO: Usa o resultado da análise completa já executada
             gerar_relatorio_tendencia(
                 json_anterior=previous_report_for_trend.json_summary_path,
-                json_atual=temp_analysis_results["json_path"],
+                json_recente=analysis_results[
+                    "json_path"
+                ],  # Alterado para usar o resultado da análise completa
                 csv_anterior_name=previous_report_for_trend.original_filename,
-                csv_atual_name=filename_atual,
+                csv_recente_name=filename_recente,
                 output_path=output_trend_path,
                 date_range_anterior=previous_report_for_trend.date_range,
-                date_range_atual=date_range_atual,
+                date_range_recente=date_range_recente,
             )
             trend_report_path_relative = os.path.basename(output_trend_path)
             logger.info(f"Relatório de tendência gerado em: {output_trend_path}")
@@ -195,12 +309,7 @@ def process_upload_and_generate_reports(
             "Nenhum relatório anterior encontrado para comparação de tendência."
         )
 
-    # 3. Análise Principal (Completa)
-    analysis_results = analisar_arquivo_csv(
-        input_file=filepath_atual, output_dir=output_dir, light_analysis=False
-    )
-
-    # 4. Construção do Contexto
+    # 3. Construção do Contexto (Análise principal já foi feita)
     dashboard_context = context_builder.build_dashboard_context(
         summary_df=analysis_results["summary"],
         df_atuacao=analysis_results["df_atuacao"],
@@ -211,7 +320,7 @@ def process_upload_and_generate_reports(
         trend_report_path=trend_report_path_relative,
     )
 
-    # 5. Geração de todas as páginas HTML
+    # 4. Geração de todas as páginas HTML
     summary_html_path = gerador_paginas.gerar_ecossistema_de_relatorios(
         dashboard_context=dashboard_context,
         analysis_results=analysis_results,
@@ -219,12 +328,12 @@ def process_upload_and_generate_reports(
         base_dir=base_dir,
     )
 
-    # 6. Salvar registro no banco de dados
+    # 5. Salvar registro no banco de dados
     new_report = Report(
-        original_filename=filename_atual,
+        original_filename=filename_recente,
         report_path=summary_html_path,
         json_summary_path=analysis_results["json_path"],
-        date_range=date_range_atual,
+        date_range=date_range_recente,
     )
     db.session.add(new_report)
 
@@ -236,12 +345,14 @@ def process_upload_and_generate_reports(
 
     db.session.commit()
 
-    # 7. Aplicar política de retenção de histórico
+    # 6. Aplicar política de retenção de histórico
     _enforce_report_limit(db, Report)
 
+    # 7. Retornar resultado
     return {
         "run_folder": run_folder_name,
         "report_filename": os.path.basename(summary_html_path),
+        "json_summary_path": analysis_results["json_path"],
     }
 
 
@@ -288,9 +399,9 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
                 "Não foi possível determinar a ordem cronológica dos arquivos."
             )
 
-        filepath_atual, filepath_anterior = sorted_paths
-        filename_atual = os.path.basename(filepath_atual).replace(
-            f"temp_{os.path.basename(filepath_atual).split('_')[1]}_", ""
+        filepath_recente, filepath_anterior = sorted_paths
+        filename_recente = os.path.basename(filepath_recente).replace(
+            f"temp_{os.path.basename(filepath_recente).split('_')[1]}_", ""
         )
         filename_anterior = os.path.basename(filepath_anterior).replace(
             f"temp_{os.path.basename(filepath_anterior).split('_')[1]}_", ""
@@ -299,13 +410,13 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
         run_folder_name = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}_compare"
         output_dir = os.path.join(reports_folder, run_folder_name)
         output_dir_anterior = os.path.join(output_dir, "anterior")
-        output_dir_atual = os.path.join(output_dir, "atual")
+        output_dir_recente = os.path.join(output_dir, "recente")
 
         logger.info(
-            f"Executando análise completa para o arquivo ATUAL: {filename_atual}"
+            f"Executando análise completa para o arquivo ATUAL: {filename_recente}"
         )
-        results_atual = analisar_arquivo_csv(
-            filepath_atual, output_dir_atual, light_analysis=False
+        results_recente = analisar_arquivo_csv(
+            filepath_recente, output_dir_recente, light_analysis=False
         )
         logger.info(
             f"Executando análise completa para o arquivo ANTERIOR: {filename_anterior}"
@@ -314,20 +425,20 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
             filepath_anterior, output_dir_anterior, light_analysis=False
         )
 
-        output_trend_path = os.path.join(output_dir, "resumo_tendencia.html")
+        output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
         gerar_relatorio_tendencia(
             json_anterior=results_anterior["json_path"],
-            json_atual=results_atual["json_path"],
+            json_recente=results_recente["json_path"],
             csv_anterior_name=filename_anterior,
-            csv_atual_name=filename_atual,
+            csv_recente_name=filename_recente,
             output_path=output_trend_path,
             date_range_anterior=get_date_range_from_file(filepath_anterior),
-            date_range_atual=get_date_range_from_file(filepath_atual),
+            date_range_recente=get_date_range_from_file(filepath_recente),
             is_direct_comparison=True,
         )
         return {
             "run_folder": run_folder_name,
-            "report_filename": "resumo_tendencia.html",
+            "report_filename": "comparativo_periodos.html",
         }
 
     finally:

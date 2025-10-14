@@ -2,7 +2,7 @@
 
 ## Versões Suportadas
 
-Atualmente, apenas a última versão do projeto recebe atualizações de segurança.
+Atualmente, apenas a última versão do projeto recebe recenteizações de segurança.
 
 | Versão | Suportada          |
 | ------ | ------------------ |
@@ -39,7 +39,7 @@ A segurança do projeto é levada a sério. Se você descobrir uma vulnerabilida
 
 - **Confirmação**: Você receberá uma confirmação do recebimento em até 48 horas
 - **Análise**: A vulnerabilidade será analisada e validada
-- **Atualização**: Você receberá atualizações sobre o progresso da correção
+- **Atualização**: Você receberá recenteizações sobre o progresso da correção
 - **Divulgação**: Após a correção, a vulnerabilidade será divulgada publicamente com os devidos créditos
 
 ### Política de Divulgação

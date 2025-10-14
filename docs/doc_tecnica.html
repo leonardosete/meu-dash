@@ -13,7 +13,7 @@
             --border-color: #404466;
             --accent-color: #4e73df;
             --success-color: #1cc88a;
-            --warning-color: #f6c23e;
+            --warning-color: #d2c83b;
             --danger-color: #e74a3b;
         }
         body {
@@ -23,6 +23,17 @@
             background-color: var(--bg-color);
             margin: 0;
             padding: 0;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--accent-color);
+            font-size: 1.1em;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
         }
         .container {
             max-width: 900px;
@@ -35,7 +46,7 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
-        h1 { font-size: 2.5em; margin-bottom: 20px; }
+        h1 { font-size: 1.8em; margin-bottom: 20px; }
         h2 { font-size: 1.8em; margin-top: 50px; }
         h3 { font-size: 1.4em; margin-top: 40px; border-bottom-style: dashed; }
         h4 { font-size: 1.1em; margin-top: 30px; border-bottom: none; color: var(--accent-color); }
@@ -145,19 +156,41 @@
 </head>
 <body>
     <div class="container">
+        <a href="../" class="back-link">&larr; Voltar para a Página Inicial</a>
         <h1>📄 Documentação Técnica - meu-dash</h1>
         <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados, lógica de análise e guia de desenvolvimento do projeto <code>meu-dash</code>.</p>
 
         <section id="arquitetura">
             <h2>1. Arquitetura e Componentes</h2>
             <div class="card">
-                <p>A aplicação segue uma arquitetura de <strong>3 camadas</strong>, projetada para garantir a separação de responsabilidades e facilitar a manutenção:</p>
+                <p>A aplicação segue uma arquitetura de <strong>3 camadas</strong>, executando sobre um framework web <strong>Flask</strong>, projetada para garantir a separação de responsabilidades e facilitar a manutenção:</p>
                 <ul>
                     <li><strong>Camada de Apresentação (Flask Web):</strong> Responsável por renderizar a interface do usuário, receber requisições HTTP e servir os relatórios.</li>
                     <li><strong>Camada de Serviço:</strong> Orquestra a lógica de negócio, atuando como uma ponte entre a camada web e os motores de análise.</li>
                     <li><strong>Camada de Análise e Dados:</strong> Contém os motores que processam os dados, aplicam a lógica de negócio e geram os resultados.</li>
                 </ul>
-                <p>Para uma descrição mais detalhada, consulte o arquivo <a href="../ARCHITECTURE.md"><code>ARCHITECTURE.md</code></a> na raiz do projeto.</p>
+                <p>O sistema utiliza um banco de dados <strong>SQLite</strong> para persistir metadados sobre os relatórios gerados, permitindo a criação de um histórico e a funcionalidade de análise de tendência.</p>
+            </div>
+
+            <h4>Diagrama de Componentes</h4>
+            <div class="card">
+                <p>O diagrama abaixo representa a arquitetura de componentes (baseado no modelo C4 - Nível 2), ilustrando as principais responsabilidades e interações dentro do sistema.</p>
+                <div class="mermaid">
+graph TB
+    subgraph "Sistema meu-dash"
+        subgraph "Camada de Apresentação"; A["app.py<br><b>(Flask Controller)</b><br>Recebe uploads, gerencia rotas HTTP."]; end
+        subgraph "Camada de Serviço"; B["services.py<br><b>(Orquestrador)</b><br>Coordena a lógica de negócio."]; end
+        subgraph "Camada de Análise"; C["analisar_alertas.py<br><b>(Motor de Análise)</b><br>Calcula scores e agrupa casos."]; D["analise_tendencia.py<br><b>(Motor de Tendência)</b><br>Compara relatórios."]; end
+        subgraph "Camada de Geração de Relatórios"; E["gerador_paginas.py<br><b>(Gerador de HTML)</b><br>Renderiza os templates."]; F["context_builder.py<br><b>(Builder de Contexto)</b><br>Prepara dados para a view."]; end
+        subgraph "Camada de Dados"; G["SQLite DB<br><b>(Banco de Dados)</b><br>Armazena metadados dos relatórios."]; end
+    end
+    A --"Chama process_upload()"--> B
+    B --"Executa análise"--> C
+    B --"Executa análise de tendência"--> D
+    B --"Prepara dados para renderizar"--> F
+    F --"Fornece contexto para"--> E
+    B --"Salva e consulta metadados"--> G
+                </div>
             </div>
 
             <h4>Componentes Principais</h4>
@@ -169,8 +202,8 @@
                     <li><code>app.py</code>: Ponto de entrada da aplicação Flask. Define as rotas (<code>/</code>, <code>/upload</code>), gerencia as requisições, delega a lógica para a camada de serviço e fornece filtros de template (ex: conversão de timezone).</li>
                     <li><code>services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados (usando os modelos <code>Report</code> e <code>TrendAnalysis</code> para garantir a continuidade da análise de tendência) e coordena a chamada aos motores de análise e geradores de página.</li>
                     <li><code>analisar_alertas.py</code>: Motor de análise principal. Processa um arquivo <code>.csv</code>, agrupa alertas em casos e calcula o score de prioridade para cada um.</li>
-                    <li><code>analise_tendencia.py</code>: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência.</li>
-                    <li><code>gerador_paginas.py</code>: Responsável por usar os dados analisados para gerar o conjunto completo de páginas HTML do relatório.</li>
+                    <li><code>analise_tendencia.py</code>: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência, incluindo o "Diagnóstico Rápido" com links contextuais para os planos de ação.</li>
+                    <li><code>gerador_paginas.py</code>: Responsável por usar os dados analisados para gerar o conjunto completo de páginas HTML, incluindo o dashboard principal, relatórios de detalhe e os planos de ação pré-filtrados por squad (<code>plano-de-acao-&lt;squad&gt;.html</code>).</li>
                 </ul>
 
                 <h5 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Módulos de Suporte e Configuração</h5>
@@ -189,33 +222,38 @@
         <section id="fluxo">
             <h2>2. Fluxo de Dados Detalhado</h2>
             <p>O fluxo abaixo detalha as etapas e os componentes envolvidos desde o upload do arquivo até a visualização do relatório.</p>
-            <div class="card">
-                <div class="flow-diagram">
-                    <div class="flow-step">
-                        <span class="icon">📤</span>
-                        <h4>1. Upload</h4>
-                        <p>Usuário envia o <code>.csv</code> via <code>POST /upload</code>.</p>
-                    </div>
-                    <div class="flow-step">
-                        <span class="icon">⚙️</span>
-                        <h4>2. Orquestração</h4>
-                        <p><code>services.py</code> recebe o arquivo, consulta o histórico no DB e coordena as análises.</p>
-                    </div>
-                    <div class="flow-step">
-                        <span class="icon">🔬</span>
-                        <h4>3. Motores de Análise</h4>
-                        <p><code>analisar_alertas.py</code> processa os dados brutos e gera o sumário de problemas, enquanto <code>analise_tendencia.py</code> compara dois sumários para criar o relatório de análise de tendência.</p></p>
-                    </div>
-                    <div class="flow-step">
-                        <span class="icon">📄</span>
-                        <h4>4. Geração de Relatórios</h4>
-                        <p><code>gerador_paginas.py</code> cria os artefatos HTML a partir dos dados analisados.</p>
-                    </div>
-                    <div class="flow-step">
-                        <span class="icon">💾➡️</span>
-                        <h4>5. Finalização</h4>
-                        <p><code>services.py</code> salva os metadados no DB e <code>app.py</code> redireciona o usuário para o resultado.</p>
-                    </div>
+            <div class="card" style="padding: 30px;">
+                <div class="mermaid">
+sequenceDiagram
+    actor User as Usuário
+    participant App as Flask App (app.py)
+    participant Service as Camada de Serviço (services.py)
+    participant Analysis as Módulos de Análise
+    participant DB as Banco de Dados (SQLite)
+
+    User->>+App: POST /upload com arquivo.csv
+    App->>+Service: Chama `process_upload_and_generate_reports()`
+    Service->>Service: Salva o arquivo em `data/uploads`
+    Service->>DB: Consulta o último relatório (para tendência)
+    DB-->>Service: Retorna metadados do relatório anterior
+    
+    alt Análise de Tendência Aplicável
+        Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise leve do arquivo recente)
+        Analysis-->>-Service: Retorna JSON temporário
+        Service->>+Analysis: Chama `gerar_relatorio_tendencia()` com JSON anterior e recente
+        Analysis-->>-Service: Gera `comparativo_periodos.html`
+    end
+
+    Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise completa)
+    Analysis-->>-Service: Retorna dataframes e sumários
+    Service->>Service: Chama `context_builder` e `gerador_paginas`
+    Service->>Service: Gera todo o ecossistema de relatórios HTML
+    
+    Service->>+DB: Salva metadados do novo relatório
+    DB-->>-Service: Confirmação
+    
+    Service-->>-App: Retorna o caminho para o relatório principal
+    App->>-User: Redireciona para a página do relatório
                 </div>
             </div>
         </section>
@@ -225,7 +263,7 @@
             
             <h3>Desenvolvimento Local</h3>
             <div class="card">
-                <p>O projeto utiliza um <code>Makefile</code> para automatizar as tarefas comuns. Para configurar e executar a aplicação pela primeira vez, use um único comando. Para mais detalhes, consulte o <a href="../CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
+                <p>O projeto utiliza um <code>Makefile</code> para automatizar as tarefas comuns. Para configurar e executar a aplicação pela primeira vez, use um único comando. Para mais detalhes, consulte a seção "Guia de Contribuição" abaixo.</p>
                 <pre><code># 1. Crie um ambiente virtual e ative-o
 git clone &lt;URL_DO_REPOSITORIO&gt;
 cd meu-dash
@@ -245,9 +283,9 @@ make setup-and-run</code></pre>
 docker build -t meu-dash-web .
 
 # Execução do container
-docker run -p 8000:8000 -v ./data:/app/data meu-dash-web</code></pre>
+docker run -p 8000:8000 -v ./data:/app/data -e ADMIN_TOKEN="seu-token" meu-dash-web</code></pre>
                 <h4><code>kubernetes.yaml</code></h4>
-                <p>Define os recursos para implantação em Kubernetes, incluindo <strong>StatefulSet</strong> e <strong>PersistentVolumeClaim</strong>. O manifesto está configurado para injetar o <code>ADMIN_TOKEN</code> como uma variável de ambiente a partir de um <strong>Kubernetes Secret</strong>. Para detalhes sobre como criar e gerenciar este segredo, consulte o <a href="../CONTRIBUTING.md">guia de contribuição</a>.</p>
+                <p>Define os recursos para implantação em Kubernetes, incluindo <strong>StatefulSet</strong> e <strong>PersistentVolumeClaim</strong>. O manifesto está configurado para injetar o <code>ADMIN_TOKEN</code> como uma variável de ambiente a partir de um <strong>Kubernetes Secret</strong>. Para detalhes sobre como criar e gerenciar este segredo, consulte a seção "Guia de Contribuição" abaixo.</p>
             </div>
         </section>
 
@@ -285,10 +323,72 @@ docker run -p 8000:8000 -v ./data:/app/data meu-dash-web</code></pre>
             </div>
         </section>
 
+        <section id="contribuicao">
+            <h2>5. Guia de Contribuição</h2>
+            <p>Este guia fornece todas as informações necessárias para configurar o ambiente, rodar os testes e contribuir com o projeto.</p>
+
+            <h3>Configuração do Ambiente</h3>
+            <div class="card">
+                <p>O projeto utiliza um <code>Makefile</code> para automatizar todo o processo de configuração. Para preparar seu ambiente, siga os passos:</p>
+                <pre><code># 1. Clone o repositório
+git clone &lt;URL_DO_REPOSITORIO&gt;
+cd meu-dash
+
+# 2. Execute o setup completo e inicie a aplicação
+make setup-and-run</code></pre>
+                <p>Após a configuração inicial, você pode parar e iniciar o servidor de desenvolvimento usando apenas <code>make run</code>.</p>
+            </div>
+
+            <h3>Configurando Funcionalidades de Administrador</h3>
+            <div class="card">
+                <h4>Para Desenvolvimento Local</h4>
+                <p>Para testar funcionalidades protegidas, defina a variável de ambiente <code>ADMIN_TOKEN</code> antes de iniciar a aplicação:</p>
+                <pre><code># Você pode usar qualquer valor para o seu token secreto
+export ADMIN_TOKEN="seu-token-secreto-aqui"
+make run</code></pre>
+
+                <h4>Para Produção (Kubernetes)</h4>
+                <p>Em produção, o token deve ser gerenciado através de <strong>Kubernetes Secrets</strong>. O manifesto <code>kubernetes.yaml</code> já está configurado para procurar um Secret com o nome <code>admin-token-secret</code>. Para criá-lo, use:</p>
+                <pre><code># Substitua pelo valor real
+kubectl create secret generic admin-token-secret \
+  --from-literal=ADMIN_TOKEN='seu-token-super-secreto-de-producao'</code></pre>
+            </div>
+
+            <h3>Padrões de Código e Qualidade</h3>
+            <div class="card">
+                <p>Para manter o código limpo e consistente, utilizamos a ferramenta <strong>Ruff</strong>. O <code>Makefile</code> fornece comandos para simplificar o uso:</p>
+                <ul>
+                    <li><strong>Para formatar seu código:</strong> <code>make format</code></li>
+                    <li><strong>Para corrigir erros de linting:</strong> <code>make lint</code></li>
+                    <li><strong>Para rodar a verificação completa:</strong> <code>make check</code></li>
+                </ul>
+            </div>
+
+            <h3>Executando os Testes</h3>
+            <div class="card">
+                <p>Para garantir que suas alterações não quebraram nenhuma funcionalidade, execute a suíte de testes com <code>pytest</code> através do Makefile:</p>
+                <pre><code>make test</code></pre>
+                <p>Certifique-se de que todos os testes passam antes de abrir um Pull Request.</p>
+            </div>
+
+            <h3>Processo de Pull Request (PR)</h3>
+            <div class="card">
+                <ol>
+                    <li>Crie uma nova branch a partir da <code>main</code> (ex: <code>git checkout -b feature/minha-feature</code>).</li>
+                    <li>Faça suas alterações.</li>
+                    <li>Garanta a qualidade do código rodando <code>make check</code> e <code>make test</code>.</li>
+                    <li>Faça o commit com uma mensagem clara e concisa.</li>
+                    <li>Abra o Pull Request para a branch <code>main</code>, descrevendo suas alterações.</li>
+                </ol>
+            </div>
+        </section>
+
     </div>
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: true });
+        // CORREÇÃO: Simplifica a inicialização para usar o tema escuro padrão,
+        // removendo a configuração complexa que estava causando o erro de sintaxe.
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
     </script>
 </body>
 </html>
