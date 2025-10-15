@@ -120,10 +120,11 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
 - [x] **Configurar Qualidade de Código:** Adicionados e configurados ESLint e Prettier.
 - [x] **Implementar Testes:** Configurado ambiente de testes com Vitest e React Testing Library.
 - [x] **Desenvolver Componentes da UI:**
-  - [x] **Página Principal (Dashboard):** Criado componente que chama `GET /api/v1/dashboard-summary` e renderiza os KPIs e listas.
-  - [x] **Componente de Upload:** Criado formulário de upload que chama `POST /api/v1/upload`.
-  - [x] **Página de Histórico:** Criada tabela de relatórios que busca dados de `GET /api/v1/reports` e permite a exclusão.
-  - [x] **Página de Login e Autenticação:** Implementado fluxo de login, gerenciamento de estado de autenticação com Context API e rotas protegidas.
+  - [x] **Página Principal (Dashboard):** Criado componente que chama `GET /api/v1/dashboard-summary` e renderiza os KPIs.
+  - [x] **Componente de Upload (Análise Padrão):** Conectado o formulário de upload padrão que chama `POST /api/v1/upload`.
+  - [x] **Página de Histórico:** Criada tabela de relatórios que busca dados de `GET /api/v1/reports` e permite a exclusão (com autenticação).
+  - [x] **Página de Login e Autenticação:** Implementado fluxo de login completo com JWT, gerenciamento de estado de autenticação e rotas protegidas.
+  - [ ] **Componente de Upload (Análise Comparativa):** Conectar o formulário de upload comparativo ao endpoint `POST /api/v1/compare`.
 
 ---
 

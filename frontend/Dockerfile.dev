@@ -18,6 +18,5 @@ RUN chown -R node:node .
 USER node
 
 EXPOSE 5173
-# A flag --host é crucial para expor o servidor de desenvolvimento
-# para fora do contêiner Docker.
-CMD ["yarn", "dev", "--host"]
+# O script 'dev' no package.json já inclui a flag '--host'.
+CMD ["yarn", "dev"]

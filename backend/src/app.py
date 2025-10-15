@@ -18,10 +18,11 @@ from . import db  # Importa a instância única de __init__.py
 app = Flask(__name__, template_folder="../templates")
 
 # --- CONFIGURAÇÃO DE CAMINHOS E BANCO DE DADOS ---
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "..", "data", "uploads")
-REPORTS_FOLDER = os.path.join(BASE_DIR, "..", "data", "reports")
-DB_PATH = os.path.join(BASE_DIR, "..", "data", "meu_dash.db")
+# Aponta para o diretório de dados montado via Docker Compose
+DATA_DIR = "/app/data"
+UPLOAD_FOLDER = os.path.join(DATA_DIR, "uploads")
+REPORTS_FOLDER = os.path.join(DATA_DIR, "reports")
+DB_PATH = os.path.join(DATA_DIR, "meu_dash.db")
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["REPORTS_FOLDER"] = REPORTS_FOLDER
@@ -31,13 +32,12 @@ app.config["SECRET_KEY"] = (
     "uma-chave-secreta-forte-para-flash"  # NOVO: Chave secreta necessária para usar flash
 )
 
-# Adiciona a configuração do diretório de migrações.
-# Isso garante que o Flask-Migrate encontre o diretório 'migrations' no nível raiz do projeto (/app/migrations).
-app.config["MIGRATE_DIR"] = os.path.join(os.path.dirname(__file__), "..", "migrations")
+# Aponta para o diretório de migrações dentro da estrutura do backend
+MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "..", "migrations")
 
 # Inicializa a instância do DB com a aplicação Flask
 db.init_app(app)
-migrate = Migrate(app, db)
+migrate = Migrate(app, db, directory=MIGRATIONS_DIR)
 
 # --- CONFIGURAÇÃO DE CORS ---
 # Configura o CORS para permitir requisições da nossa futura aplicação frontend
@@ -45,7 +45,18 @@ migrate = Migrate(app, db)
 CORS(
     app,
     resources={
-        r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}
+        r"/api/*": {
+            "origins": [
+                "http://localhost:5173", "http://127.0.0.1:5173",
+                "http://localhost:5174", "http://127.0.0.1:5174"
+            ]
+        },
+        r"/admin/*": {  # Adiciona a regra para as rotas de admin
+            "origins": [
+                "http://localhost:5173", "http://127.0.0.1:5173",
+                "http://localhost:5174", "http://127.0.0.1:5174"
+            ]
+        }
     },
     supports_credentials=True,
 )
@@ -53,6 +64,14 @@ CORS(
 
 # Importações que dependem da inicialização do 'app' e 'db'
 from . import services, models  # noqa: E402
+
+# --- INICIALIZAÇÃO E AUTOCORREÇÃO DO BANCO DE DADOS ---
+# Garante que o banco de dados e todas as tabelas sejam criados na inicialização.
+# A chamada é idempotente: `checkfirst=True` verifica se a tabela já existe
+# antes de tentar criá-la, evitando crashes em reinicializações.
+with app.app_context():
+    db.metadata.create_all(db.engine, checkfirst=True)
+
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
@@ -147,7 +166,8 @@ def upload_file_api():
             db=db,
             Report=models.Report,
             TrendAnalysis=models.TrendAnalysis,
-            base_dir=BASE_DIR,
+            # Passa o caminho raiz do backend para que o serviço encontre os templates
+            base_dir=os.path.dirname(__file__),
         )
 
         if result and result.get("warning"):
@@ -273,8 +293,9 @@ def serve_report(run_folder, filename):
 
 @app.route("/docs/<path:filename>")
 def serve_docs(filename):
-    docs_dir = os.path.abspath(os.path.join(app.root_path, "..", "docs"))
-    return secure_send_from_directory(docs_dir, filename)
+    # O diretório 'docs' está montado em /app/docs no contêiner.
+    docs_directory = "/app/docs"
+    return secure_send_from_directory(docs_directory, filename)
 
 
 @app.route("/api/v1/reports")

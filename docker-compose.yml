@@ -5,23 +5,22 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    # Inicia o servidor de desenvolvimento do Flask. As migrações do DB
-    # devem ser executadas separadamente com 'make migrate-docker'.
-    command: flask run --host=0.0.0.0 --port=5000
+    # Usa Gunicorn, um servidor WSGI de produção, que é multithread e mais robusto
+    # que o servidor de desenvolvimento do Flask. Isso resolve problemas de concorrência
+    # que podem causar a tela em branco no frontend. O '--reload' habilita o live-reloading.
+    command: gunicorn --workers 4 --bind 0.0.0.0:5000 --reload "src.app:app" --chdir /app/backend
     ports:
       - "${BACKEND_PORT:-5001}:5000"
     volumes:
-      # Monta o código-fonte do backend para live-reloading.
-      - ./backend/src:/app/src
-      - ./backend/templates:/app/templates
-      - ./backend/tests:/app/tests
-      - ./backend/migrations:/app/migrations
+      # Monta o código-fonte e os templates para live-reloading.
+      - ./backend:/app/backend # Monta o diretório do backend
       # Monta o diretório de dados para persistência.
       - ./data:/app/data
+      # Monta o diretório de documentação para que possa ser servido.
+      - ./docs:/app/docs
     environment:
       - FLASK_APP=src.app
       - FLASK_DEBUG=True
-      - PYTHONPATH=/app
     env_file:
       - .env
 
@@ -50,15 +49,17 @@ services:
     # evitando problemas de permissão de escrita em volumes montados.
     # A variável de ambiente UID é lida do arquivo .env ou do sistema.
     user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /app
     ports:
       # Expõe a porta do Vite para acesso no navegador.
       - "${FRONTEND_PORT:-5174}:5173"
     volumes:
-      # Monta o código-fonte do frontend para live-reloading (HMR do Vite).
+      # Monta o diretório local do frontend para dentro do contêiner,
+      # permitindo o live-reloading de todos os arquivos (src, public, index.html).
       - ./frontend:/app
-      # "Restaura" a pasta node_modules de dentro da imagem. Isso evita que o
-      # volume acima a sobrescreva, garantindo que as dependências existam.
+      # "Máscara" a pasta node_modules local, forçando o uso da pasta
+      # que foi instalada durante o build da imagem. Isso evita conflitos e melhora a performance.
       - /app/node_modules
-      # Mantém o contêiner em execução para que possamos usar 'exec' nele,
-      # assim como fazemos com o 'security-scanner'.
-    command: tail -f /dev/null
+    # Inicia o servidor de desenvolvimento do Vite. O script 'dev' no package.json
+    # já contém a flag '--host', portanto não a repetimos aqui.
+    command: npm run dev

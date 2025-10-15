@@ -1,25 +1,25 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import './App.css';
-import Layout from './components/Layout';
-import ProtectedRoute from './components/ProtectedRoute';
-import { AuthProvider } from './context/AuthContext';
-import DashboardPage from './pages/DashboardPage';
-import HistoryPage from './pages/HistoryPage';
-import LoginPage from './pages/LoginPage';
+import Dashboard from './components/Dashboard';
+import HistoryPage from './components/HistoryPage';
+import LoginPage from './components/LoginPage';
+import Layout from './components/Layout'; // Importa o novo layout
+import LogoutHandler from './components/LogoutHandler';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
-          </Routes>
-        </Layout>
-      </Router>
-    </AuthProvider>
+    <Router>
+      <div className="bg-gray-900 text-gray-100 min-h-screen">
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="history" element={<HistoryPage />} />
+            <Route path="admin/login" element={<LoginPage />} />
+            <Route path="admin/logout" element={<LogoutHandler />} />
+          </Route>
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

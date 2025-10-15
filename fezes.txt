@@ -1,0 +1,210 @@
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.raise (/app/node_modules/@babel/parser/lib/index.js:6630:19)
+meu-dash-frontend-dev  |       at Object.unterminated (/app/node_modules/@babel/parser/lib/index.js:5701:20)
+meu-dash-frontend-dev  |       at readStringContents (/app/node_modules/@babel/parser/lib/index.js:5396:14)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.readTemplateToken (/app/node_modules/@babel/parser/lib/index.js:6550:9)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.readTemplateContinuation (/app/node_modules/@babel/parser/lib/index.js:6540:10)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseTemplate (/app/node_modules/@babel/parser/lib/index.js:11805:12)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprAtom (/app/node_modules/@babel/parser/lib/index.js:11355:21)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprAtom (/app/node_modules/@babel/parser/lib/index.js:4797:20)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprSubscripts (/app/node_modules/@babel/parser/lib/index.js:11085:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseUpdate (/app/node_modules/@babel/parser/lib/index.js:11070:21)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnary (/app/node_modules/@babel/parser/lib/index.js:11050:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnary (/app/node_modules/@babel/parser/lib/index.js:9857:18)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/app/node_modules/@babel/parser/lib/index.js:10903:61)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprOps (/app/node_modules/@babel/parser/lib/index.js:10908:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeConditional (/app/node_modules/@babel/parser/lib/index.js:10885:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:10835:21)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:9806:20)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExpressionBase (/app/node_modules/@babel/parser/lib/index.js:10788:23)
+meu-dash-frontend-dev  |       at /app/node_modules/@babel/parser/lib/index.js:10784:39
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.allowInAnd (/app/node_modules/@babel/parser/lib/index.js:12436:12)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExpression (/app/node_modules/@babel/parser/lib/index.js:10784:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseExpressionContainer (/app/node_modules/@babel/parser/lib/index.js:4665:31)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseAttributeValue (/app/node_modules/@babel/parser/lib/index.js:4637:21)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseAttribute (/app/node_modules/@babel/parser/lib/index.js:4686:38)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/app/node_modules/@babel/parser/lib/index.js:4700:28)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/app/node_modules/@babel/parser/lib/index.js:10067:18)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseOpeningElementAt (/app/node_modules/@babel/parser/lib/index.js:4695:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseElementAt (/app/node_modules/@babel/parser/lib/index.js:4719:33)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseElementAt (/app/node_modules/@babel/parser/lib/index.js:4731:32)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseElementAt (/app/node_modules/@babel/parser/lib/index.js:4731:32)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.jsxParseElement (/app/node_modules/@babel/parser/lib/index.js:4782:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprAtom (/app/node_modules/@babel/parser/lib/index.js:4792:19)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprSubscripts (/app/node_modules/@babel/parser/lib/index.js:11085:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseUpdate (/app/node_modules/@babel/parser/lib/index.js:11070:21)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnary (/app/node_modules/@babel/parser/lib/index.js:11050:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnary (/app/node_modules/@babel/parser/lib/index.js:9857:18)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/app/node_modules/@babel/parser/lib/index.js:10903:61)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprOps (/app/node_modules/@babel/parser/lib/index.js:10908:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeConditional (/app/node_modules/@babel/parser/lib/index.js:10885:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:10835:21)
+meu-dash-frontend-dev  |       at /app/node_modules/@babel/parser/lib/index.js:9795:39
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.tryParse (/app/node_modules/@babel/parser/lib/index.js:6938:20)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:9795:18)
+meu-dash-frontend-dev  |       at /app/node_modules/@babel/parser/lib/index.js:10804:39
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.allowInAnd (/app/node_modules/@babel/parser/lib/index.js:12436:12)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssignAllowIn (/app/node_modules/@babel/parser/lib/index.js:10804:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/app/node_modules/@babel/parser/lib/index.js:12503:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseParenAndDistinguishExpression (/app/node_modules/@babel/parser/lib/index.js:11683:28)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprAtom (/app/node_modules/@babel/parser/lib/index.js:11335:23)
+meu-dash-frontend-dev  | 6:36:54 AM [vite] hmr update /src/components/KpiCard.tsx
+meu-dash-frontend-dev  | 6:36:54 AM [vite] hmr update /src/components/Dashboard.tsx
+meu-dash-frontend-dev  | 6:36:54 AM [vite] hmr update /src/components/KpiCard.tsx
+meu-dash-frontend-dev  | 6:37:50 AM [vite] hmr update /src/components/Dashboard.tsx
+meu-dash-frontend-dev  | 6:37:50 AM [vite] Internal server error: /app/src/components/Dashboard.tsx: Unexpected token, expected "," (105:33)
+meu-dash-frontend-dev  | 
+meu-dash-frontend-dev  |   103 |
+meu-dash-frontend-dev  |   104 | export default Dashboard;
+meu-dash-frontend-dev  | > 105 |             subValue={kpi_summary.alertas_atuacao}
+meu-dash-frontend-dev  |       |                                  ^
+meu-dash-frontend-dev  |   106 |             subLabel="Alertas"
+meu-dash-frontend-dev  |   107 |             colorClass={kpi_summary.casos_atuacao > 0 ? 'text-danger' : 'text-success'}
+meu-dash-frontend-dev  |   108 |             borderClass={kpi_summary.casos_atuacao > 0 ? 'card-neon-red' : 'card-neon-green'}
+meu-dash-frontend-dev  |   Plugin: vite:react-babel
+meu-dash-frontend-dev  |   File: /app/src/components/Dashboard.tsx:105:33
+meu-dash-frontend-dev  |   103|  
+meu-dash-frontend-dev  |   104|  export default Dashboard;
+meu-dash-frontend-dev  |   105|              subValue={kpi_summary.alertas_atuacao}
+meu-dash-frontend-dev  |      |                                   ^
+meu-dash-frontend-dev  |   106|              subLabel="Alertas"
+meu-dash-frontend-dev  |   107|              colorClass={kpi_summary.casos_atuacao > 0 ? 'text-danger' : 'text-success'}
+meu-dash-frontend-dev  |       at constructor (/app/node_modules/@babel/parser/lib/index.js:367:19)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.raise (/app/node_modules/@babel/parser/lib/index.js:6630:19)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.unexpected (/app/node_modules/@babel/parser/lib/index.js:6650:16)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.expect (/app/node_modules/@babel/parser/lib/index.js:6930:12)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseObjectLike (/app/node_modules/@babel/parser/lib/index.js:11830:14)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprAtom (/app/node_modules/@babel/parser/lib/index.js:11343:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprAtom (/app/node_modules/@babel/parser/lib/index.js:4797:20)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprSubscripts (/app/node_modules/@babel/parser/lib/index.js:11085:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseUpdate (/app/node_modules/@babel/parser/lib/index.js:11070:21)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnary (/app/node_modules/@babel/parser/lib/index.js:11050:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnary (/app/node_modules/@babel/parser/lib/index.js:9857:18)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/app/node_modules/@babel/parser/lib/index.js:10903:61)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprOps (/app/node_modules/@babel/parser/lib/index.js:10908:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeConditional (/app/node_modules/@babel/parser/lib/index.js:10885:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:10835:21)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:9806:20)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:10864:25)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:9806:20)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExpressionBase (/app/node_modules/@babel/parser/lib/index.js:10788:23)
+meu-dash-frontend-dev  |       at /app/node_modules/@babel/parser/lib/index.js:10784:39
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.allowInAnd (/app/node_modules/@babel/parser/lib/index.js:12431:16)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExpression (/app/node_modules/@babel/parser/lib/index.js:10784:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseStatementContent (/app/node_modules/@babel/parser/lib/index.js:12904:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseStatementContent (/app/node_modules/@babel/parser/lib/index.js:9532:18)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseStatementLike (/app/node_modules/@babel/parser/lib/index.js:12776:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseModuleItem (/app/node_modules/@babel/parser/lib/index.js:12753:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/app/node_modules/@babel/parser/lib/index.js:13325:36)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseBlockBody (/app/node_modules/@babel/parser/lib/index.js:13318:10)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseProgram (/app/node_modules/@babel/parser/lib/index.js:12634:10)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseTopLevel (/app/node_modules/@babel/parser/lib/index.js:12624:25)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parse (/app/node_modules/@babel/parser/lib/index.js:14501:10)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parse (/app/node_modules/@babel/parser/lib/index.js:10149:18)
+meu-dash-frontend-dev  |       at parse (/app/node_modules/@babel/parser/lib/index.js:14535:38)
+meu-dash-frontend-dev  |       at parser (/app/node_modules/@babel/core/lib/parser/index.js:41:34)
+meu-dash-frontend-dev  |       at parser.next (<anonymous>)
+meu-dash-frontend-dev  |       at normalizeFile (/app/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+meu-dash-frontend-dev  |       at normalizeFile.next (<anonymous>)
+meu-dash-frontend-dev  |       at run (/app/node_modules/@babel/core/lib/transformation/index.js:22:50)
+meu-dash-frontend-dev  |       at run.next (<anonymous>)
+meu-dash-frontend-dev  |       at transform (/app/node_modules/@babel/core/lib/transform.js:22:33)
+meu-dash-frontend-dev  |       at transform.next (<anonymous>)
+meu-dash-frontend-dev  |       at step (/app/node_modules/gensync/index.js:261:32)
+meu-dash-frontend-dev  |       at /app/node_modules/gensync/index.js:273:13
+meu-dash-frontend-dev  |       at async.call.result.err.err (/app/node_modules/gensync/index.js:223:11)
+meu-dash-frontend-dev  |       at /app/node_modules/gensync/index.js:189:28
+meu-dash-frontend-dev  |       at /app/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+meu-dash-frontend-dev  |       at /app/node_modules/gensync/index.js:113:33
+meu-dash-frontend-dev  |       at step (/app/node_modules/gensync/index.js:287:14)
+meu-dash-frontend-dev  |       at /app/node_modules/gensync/index.js:273:13
+meu-dash-frontend-dev  |       at async.call.result.err.err (/app/node_modules/gensync/index.js:223:11)
+meu-dash-frontend-dev  | 6:37:50 AM [vite] hmr update /src/components/KpiCard.tsx
+meu-dash-frontend-dev  | 6:37:52 AM [vite] Pre-transform error: /app/src/components/Dashboard.tsx: Unexpected token, expected "," (105:33)
+meu-dash-frontend-dev  | 
+meu-dash-frontend-dev  |   103 |
+meu-dash-frontend-dev  |   104 | export default Dashboard;
+meu-dash-frontend-dev  | > 105 |             subValue={kpi_summary.alertas_atuacao}
+meu-dash-frontend-dev  |       |                                  ^
+meu-dash-frontend-dev  |   106 |             subLabel="Alertas"
+meu-dash-frontend-dev  |   107 |             colorClass={kpi_summary.casos_atuacao > 0 ? 'text-danger' : 'text-success'}
+meu-dash-frontend-dev  |   108 |             borderClass={kpi_summary.casos_atuacao > 0 ? 'card-neon-red' : 'card-neon-green'}
+meu-dash-frontend-dev  | 6:37:52 AM [vite] Internal server error: /app/src/components/Dashboard.tsx: Unexpected token, expected "," (105:33)
+meu-dash-frontend-dev  | 
+meu-dash-backend-dev   | [2025-10-15 06:19:24 +0000] [1] [INFO] Starting gunicorn 23.0.0
+meu-dash-backend-dev   | [2025-10-15 06:19:24 +0000] [1] [INFO] Listening at: http://0.0.0.0:5000 (1)
+meu-dash-backend-dev   | [2025-10-15 06:19:24 +0000] [1] [INFO] Using worker: sync
+meu-dash-backend-dev   | [2025-10-15 06:19:24 +0000] [7] [INFO] Booting worker with pid: 7
+meu-dash-backend-dev   | [2025-10-15 06:19:24 +0000] [8] [INFO] Booting worker with pid: 8
+meu-dash-backend-dev   | [2025-10-15 06:19:24 +0000] [9] [INFO] Booting worker with pid: 9
+meu-dash-backend-dev   | [2025-10-15 06:19:24 +0000] [10] [INFO] Booting worker with pid: 10
+meu-dash-backend-dev   | Arquivo '/app/data/reports/run_20251015_062000/remediados_frequentes.csv' não encontrado. Gerando página vazia.
+meu-dash-backend-dev   | Arquivo '/app/data/reports/run_20251015_062335/remediados_frequentes.csv' não encontrado. Gerando página vazia.
+meu-dash-backend-dev   | Arquivo '/app/data/reports/run_20251015_064032/remediados_frequentes.csv' não encontrado. Gerando página vazia.
+meu-dash-frontend-dev  |   103 |
+meu-dash-frontend-dev  |   104 | export default Dashboard;
+meu-dash-frontend-dev  | > 105 |             subValue={kpi_summary.alertas_atuacao}
+meu-dash-frontend-dev  |       |                                  ^
+meu-dash-frontend-dev  |   106 |             subLabel="Alertas"
+meu-dash-frontend-dev  |   107 |             colorClass={kpi_summary.casos_atuacao > 0 ? 'text-danger' : 'text-success'}
+meu-dash-frontend-dev  |   108 |             borderClass={kpi_summary.casos_atuacao > 0 ? 'card-neon-red' : 'card-neon-green'}
+meu-dash-frontend-dev  |   Plugin: vite:react-babel
+meu-dash-frontend-dev  |   File: /app/src/components/Dashboard.tsx:105:33
+meu-dash-frontend-dev  |   103|  
+meu-dash-frontend-dev  |   104|  export default Dashboard;
+meu-dash-frontend-dev  |   105|              subValue={kpi_summary.alertas_atuacao}
+meu-dash-frontend-dev  |      |                                   ^
+meu-dash-frontend-dev  |   106|              subLabel="Alertas"
+meu-dash-frontend-dev  |   107|              colorClass={kpi_summary.casos_atuacao > 0 ? 'text-danger' : 'text-success'}
+meu-dash-frontend-dev  |       at constructor (/app/node_modules/@babel/parser/lib/index.js:367:19)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.raise (/app/node_modules/@babel/parser/lib/index.js:6630:19)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.unexpected (/app/node_modules/@babel/parser/lib/index.js:6650:16)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.expect (/app/node_modules/@babel/parser/lib/index.js:6930:12)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseObjectLike (/app/node_modules/@babel/parser/lib/index.js:11830:14)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprAtom (/app/node_modules/@babel/parser/lib/index.js:11343:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprAtom (/app/node_modules/@babel/parser/lib/index.js:4797:20)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprSubscripts (/app/node_modules/@babel/parser/lib/index.js:11085:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseUpdate (/app/node_modules/@babel/parser/lib/index.js:11070:21)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnary (/app/node_modules/@babel/parser/lib/index.js:11050:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnary (/app/node_modules/@babel/parser/lib/index.js:9857:18)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/app/node_modules/@babel/parser/lib/index.js:10903:61)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExprOps (/app/node_modules/@babel/parser/lib/index.js:10908:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeConditional (/app/node_modules/@babel/parser/lib/index.js:10885:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:10835:21)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:9806:20)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:10864:25)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseMaybeAssign (/app/node_modules/@babel/parser/lib/index.js:9806:20)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExpressionBase (/app/node_modules/@babel/parser/lib/index.js:10788:23)
+meu-dash-frontend-dev  |       at /app/node_modules/@babel/parser/lib/index.js:10784:39
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.allowInAnd (/app/node_modules/@babel/parser/lib/index.js:12431:16)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseExpression (/app/node_modules/@babel/parser/lib/index.js:10784:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseStatementContent (/app/node_modules/@babel/parser/lib/index.js:12904:23)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseStatementContent (/app/node_modules/@babel/parser/lib/index.js:9532:18)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseStatementLike (/app/node_modules/@babel/parser/lib/index.js:12776:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseModuleItem (/app/node_modules/@babel/parser/lib/index.js:12753:17)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/app/node_modules/@babel/parser/lib/index.js:13325:36)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseBlockBody (/app/node_modules/@babel/parser/lib/index.js:13318:10)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseProgram (/app/node_modules/@babel/parser/lib/index.js:12634:10)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parseTopLevel (/app/node_modules/@babel/parser/lib/index.js:12624:25)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parse (/app/node_modules/@babel/parser/lib/index.js:14501:10)
+meu-dash-frontend-dev  |       at TypeScriptParserMixin.parse (/app/node_modules/@babel/parser/lib/index.js:10149:18)
+meu-dash-frontend-dev  |       at parse (/app/node_modules/@babel/parser/lib/index.js:14535:38)
+meu-dash-frontend-dev  |       at parser (/app/node_modules/@babel/core/lib/parser/index.js:41:34)
+meu-dash-frontend-dev  |       at parser.next (<anonymous>)
+meu-dash-frontend-dev  |       at normalizeFile (/app/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+meu-dash-frontend-dev  |       at normalizeFile.next (<anonymous>)
+meu-dash-frontend-dev  |       at run (/app/node_modules/@babel/core/lib/transformation/index.js:22:50)
+meu-dash-frontend-dev  |       at run.next (<anonymous>)
+meu-dash-frontend-dev  |       at transform (/app/node_modules/@babel/core/lib/transform.js:22:33)
+meu-dash-frontend-dev  |       at transform.next (<anonymous>)
+meu-dash-frontend-dev  |       at step (/app/node_modules/gensync/index.js:261:32)
+meu-dash-frontend-dev  |       at /app/node_modules/gensync/index.js:273:13
+meu-dash-frontend-dev  |       at async.call.result.err.err (/app/node_modules/gensync/index.js:223:11)
+meu-dash-frontend-dev  |       at /app/node_modules/gensync/index.js:189:28
+meu-dash-frontend-dev  |       at /app/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+meu-dash-frontend-dev  |       at /app/node_modules/gensync/index.js:113:33
+meu-dash-frontend-dev  |       at step (/app/node_modules/gensync/index.js:287:14)
+meu-dash-frontend-dev  |       at /app/node_modules/gensync/index.js:273:13
+meu-dash-frontend-dev  |       at async.call.result.err.err (/app/node_modules/gensync/index.js:223:11)
+meu-dash-frontend-dev  | 6:39:04 AM [vite] hmr update /src/components/Dashboard.tsx
+meu-dash-frontend-dev  | 6:40:47 AM [vite] hmr update /src/components/Sidebar.tsx
+meu-dash-frontend-dev  | 6:40:47 AM [vite] hmr update /src/components/Sidebar.tsx
