@@ -651,7 +651,7 @@ def gerar_relatorio_tendencia(
 
     body = f"""
     <div class="report-header">
-        <a href="{frontend_url}" class="home-button">Página Inicial</a>
+        {back_link}
     </div>
     <style>
         .highlight {{ padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid; }}

@@ -80,7 +80,7 @@ O trabalho será dividido em fases para mitigar riscos e permitir entregas incre
 
 ### Fase 1: Transformar o Backend em uma API Pura
 
-**Status: Concluída**
+## Status: Concluída
 
 - [x] **Implementar CORS:** Configurar o Flask para aceitar requisições do domínio do frontend em desenvolvimento.
 - [x] **Refatorar Rota `GET /`:**

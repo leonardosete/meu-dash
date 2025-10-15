@@ -325,6 +325,9 @@ def process_upload_and_generate_reports(
     output_dir = os.path.join(reports_folder, run_folder_name)
     os.makedirs(output_dir, exist_ok=True)
 
+    # Lê a URL do frontend UMA VEZ para garantir consistência em todos os relatórios gerados.
+    frontend_url = os.getenv("FRONTEND_BASE_URL", "/")
+
     logger.info(f"Executando análise completa para o arquivo: {filename_recente}")
     analysis_results = analisar_arquivo_csv(
         input_file=filepath_recente, output_dir=output_dir, light_analysis=False
@@ -392,6 +395,7 @@ def process_upload_and_generate_reports(
                 output_path=output_trend_path,
                 date_range_anterior=previous_report_for_trend.date_range,
                 date_range_recente=date_range_recente,
+                frontend_url=frontend_url,  # Passa a URL para o relatório de tendência
             )
             trend_report_path_relative = os.path.basename(output_trend_path)
             logger.info(f"Relatório de tendência gerado em: {output_trend_path}")
@@ -432,8 +436,7 @@ def process_upload_and_generate_reports(
         analysis_results=analysis_results,
         output_dir=output_dir,
         base_dir=base_dir,
-        # Passa a URL do frontend também para o gerador de páginas
-        frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
+        frontend_url=frontend_url,
     )
 
     # 5. Salvar registro no banco de dados
@@ -486,6 +489,9 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
             arquivos (por exemplo, se as datas não puderem ser extraídas de seus
             conteúdos).
     """
+    # Lê a URL do frontend UMA VEZ para garantir consistência.
+    frontend_url = os.getenv("FRONTEND_BASE_URL", "/")
+
     saved_filepaths = []
     try:
         for f in files:
@@ -543,8 +549,7 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
             date_range_anterior=get_date_range_from_file(filepath_anterior),
             date_range_recente=get_date_range_from_file(filepath_recente),
             is_direct_comparison=True,
-            # Passa a URL do frontend para o gerador de relatório
-            frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
+            frontend_url=frontend_url,
         )
         return {
             "run_folder": run_folder_name,
