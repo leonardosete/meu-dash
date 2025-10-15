@@ -102,46 +102,89 @@ body {
 .doc-gerencial-card svg { color: var(--accent-color); }
 .doc-tecnica-card svg { color: #38bdf8; }
 
+
+/* --- ESTILOS DO DASHBOARD DE KPI (ATUALIZADOS) --- */
 .kpi-dashboard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
+  /* Força exatamente 3 colunas, como na imagem de referência */
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 0; /* Remove o gap para controlar as bordas/divisórias manualmente */
+  width: 100%;
+  padding: 0 20px; /* Adiciona um padding interno para não colar nas bordas do card */
 }
 
 .kpi-card {
-  padding: 20px;
+  position: relative; /* Contexto para o posicionamento da divisória */
+  padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 5px;
+  gap: 5px; /* Espaço entre o valor principal e o rótulo */
 }
+
+/* Adiciona a divisória vertical entre os cards de KPI */
+.kpi-card:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%; /* Ajuste para centralizar a linha verticalmente */
+  bottom: 20%;
+  width: 1px;
+  background-color: var(--border-color);
+}
+
 .kpi-value {
   font-size: 3.5em;
   font-weight: 600;
   margin: 0;
   text-align: center;
+  line-height: 1.1;
 }
+
 .kpi-label {
   font-size: 1em;
   font-weight: 500;
   margin: 0;
   opacity: 0.9;
 }
+
+/* Contêiner para o sub-valor e sub-rótulo */
+.kpi-sub-group {
+    /* Adiciona o espaço vertical a partir do rótulo principal */
+    margin-top: 15px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
 .kpi-sub-value {
   font-size: 1.5em;
   font-weight: 600;
-  margin: 15px 0 0 0;
+  margin: 0;
+  line-height: 1.1;
 }
+
+/* Estilo para o texto '42 de 60 Casos', que não tem cor de status */
+.kpi-sub-group .kpi-sub-value:not([class*="text-"]) {
+    font-size: 1.1em;
+    font-weight: 500;
+    opacity: 0.8;
+    color: var(--text-color);
+}
+
 .kpi-sub-label {
   font-size: 0.8em;
   margin: 0;
   opacity: 0.7;
 }
 
-.card-neon-green { border-left: 4px solid var(--success-color); }
-.card-neon-warning { border-left: 4px solid var(--warning-color); }
-.card-neon-red { border-left: 4px solid var(--danger-color); }
+/* As classes de borda laterais não são mais necessárias no kpi-card, 
+   mas são mantidas caso sejam usadas em outro lugar */
+.card-neon-green { border-left-color: var(--success-color); }
+.card-neon-warning { border-left-color: var(--warning-color); }
+.card-neon-red { border-left-color: var(--danger-color); }
 
 .text-success { color: var(--success-color); }
 .text-warning { color: var(--warning-color); }
@@ -273,4 +316,70 @@ button:disabled {
   margin-bottom: 20px;
   text-align: left;
   font-size: 0.9em;
+}
+/* --- ESTILOS PARA AS "ORELHAS" DE LINKS E TOOLTIPS --- */
+
+/* Contêiner para as "orelhas" de link no card de KPI */
+.kpi-ear-links {
+  position: absolute;
+  top: 50%; /* Move o topo do elemento para o meio do card pai */
+  right: 0;
+  transform: translateY(-50%); /* Puxa o elemento para cima pela metade de sua própria altura para centralizá-lo perfeitamente */
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Espaço entre as orelhas */
+  z-index: 5; /* Garante que fique sobre outros elementos */
+}
+
+/* Estilo individual de cada "orelha" */
+.kpi-ear-links .report-link-ear {
+  position: relative; /* Define o contexto de posicionamento para o tooltip */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  text-decoration: none;
+  border-bottom-left-radius: 16px;
+  transition: filter 0.2s ease;
+}
+
+.kpi-ear-links .report-link-ear:hover {
+  filter: brightness(1.2); /* Efeito de brilho ao passar o mouse */
+}
+
+.kpi-ear-links .report-link-ear svg {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+/* Estilo para a dica de ferramenta (tooltip) */
+.has-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%) scaleX(0); /* Animação horizontal */
+  transform-origin: left;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  background-color: #24273A;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-left: 12px;
+  z-index: 10;
+  font-size: 0.85em;
+  line-height: 1.4;
+  max-width: 250px;
+  text-align: center;
+  white-space: normal;
+  border: 1px solid var(--border-color);
+}
+
+.has-tooltip:hover::after {
+  transform: translateY(-50%) scaleX(1); /* Estado final da animação */
+  opacity: 1;
 }

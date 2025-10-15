@@ -8,6 +8,9 @@ export interface KpiSummary {
   casos_sucesso: number;
   total_casos: number;
   report_url?: string;
+  // --- NOVAS PROPRIEDADES ADICIONADAS ---
+  action_plan_url?: string;      // URL para o "Plano de Ação"
+  trend_analysis_url?: string; // URL para a "Análise de Tendência"
 }
 
 export interface TrendHistoryItem {

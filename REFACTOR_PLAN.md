@@ -131,7 +131,7 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
 ### Fase 3: Finalização e Limpeza
 
 - [ ] **Atualizar `Dockerfile`:**
-  - [ ] **Corrigir Link de Retorno nos Relatórios:** Investigar e corrigir por que a `FRONTEND_BASE_URL` não está sendo aplicada corretamente nos links "Página Inicial" dos relatórios HTML gerados, que atualmente apontam para a raiz do backend em vez da home do frontend.
+  - [x] **Corrigir Link de Retorno nos Relatórios:** Investigar e corrigir por que a `FRONTEND_BASE_URL` não está sendo aplicada corretamente nos links "Página Inicial" dos relatórios HTML gerados, que atualmente apontam para a raiz do backend em vez da home do frontend.
   - Criar um `Dockerfile` multi-estágio.
   - O primeiro estágio faz o *build* do frontend (gera os arquivos estáticos).
   - O segundo estágio copia os arquivos estáticos do frontend e a aplicação Flask.

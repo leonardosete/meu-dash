@@ -117,21 +117,34 @@ def get_dashboard_summary():
     )
 
     # Enriquece os dados com URLs geradas pelo Flask
-    if summary_data["kpi_summary"]:
+    if summary_data.get("kpi_summary"):
         last_report_info = summary_data["last_report_info"]
-        summary_data["kpi_summary"]["report_url"] = url_for(
-            "serve_report",
-            run_folder=last_report_info["run_folder"],
-            filename=last_report_info["filename"],
-        )
+        if last_report_info:
+            summary_data["kpi_summary"]["report_url"] = url_for(
+                "serve_report",
+                run_folder=last_report_info["run_folder"],
+                filename=last_report_info["filename"],
+                _external=True,  # Gera uma URL absoluta (ex: http://127.0.0.1:5001/...)
+            )
 
-    if summary_data["last_action_plan"]:
-        last_report_info = summary_data["last_report_info"]
-        summary_data["last_action_plan"]["url"] = url_for(
-            "serve_report",
-            run_folder=last_report_info["run_folder"],
-            filename="atuar.html",
-        )
+        # Adiciona a URL do plano de ação ao kpi_summary, se existir
+        if summary_data.get("last_action_plan"):
+            summary_data["kpi_summary"]["action_plan_url"] = url_for(
+                "serve_report",
+                run_folder=last_report_info["run_folder"],
+                filename="atuar.html",
+                _external=True,
+            )
+
+        # Adiciona a URL da última análise de tendência ao kpi_summary, se existir
+        if summary_data.get("trend_history"):
+            latest_trend = summary_data["trend_history"][0]
+            summary_data["kpi_summary"]["trend_analysis_url"] = url_for(
+                "serve_report",
+                run_folder=latest_trend["run_folder"],
+                filename=latest_trend["filename"],
+                _external=True,
+            )
 
     for trend in summary_data["trend_history"]:
         trend["url"] = url_for(
