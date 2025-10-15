@@ -79,7 +79,7 @@ const HistoryPage: React.FC = () => {
                 <td>{report.original_filename}</td>
                 <td>{report.date_range || 'N/A'}</td>
                 <td className="actions-cell">
-                  <a href={`${api.API_BASE_URL}${report.url}`} target="_blank" rel="noopener noreferrer" className="action-button view">Visualizar</a>
+                  <a href={`${api.API_BASE_URL}${report.url}`} className="action-button view">Visualizar</a>
                   <button onClick={() => handleDelete(report.id)} className="action-button delete" disabled={!isAuthenticated}>Excluir</button>
                 </td>
               </tr>

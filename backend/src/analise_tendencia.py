@@ -55,7 +55,11 @@ def load_summary_from_json(filepath: str):
 
 
 def generate_executive_summary_html(
-    kpis, persistent_summary, new_cases_summary, is_direct_comparison: bool
+    kpis,
+    persistent_summary,
+    new_cases_summary,
+    is_direct_comparison: bool,
+    frontend_url: str = "/",
 ):
     """Gera um resumo executivo com os principais insights e pontos de ação."""
     verdict_text = ""
@@ -598,6 +602,7 @@ def gerar_relatorio_tendencia(
     date_range_anterior: str = None,
     date_range_recente: str = None,
     is_direct_comparison: bool = False,
+    frontend_url: str = "/",
 ):
     """Função principal para gerar o relatório de tendência."""
     df_p1 = load_summary_from_json(json_anterior)
@@ -623,7 +628,7 @@ def gerar_relatorio_tendencia(
     title = "📊 Análise de Tendência de Alertas"
 
     if is_direct_comparison:
-        back_link = '<a href="/" class="home-button">Página Inicial</a>'
+        back_link = f'<a href="{frontend_url}" class="home-button">Página Inicial</a>'
     else:
         back_link = '<a href="resumo_geral.html" class="back-to-dashboard">&larr; Voltar para o Dashboard</a>'
 
@@ -665,6 +670,7 @@ def gerar_relatorio_tendencia(
         trend_data["persistent_squads_summary"],
         trend_data["new_cases"],
         is_direct_comparison,
+        frontend_url,  # Passa a URL do frontend para o resumo executivo
     )
     body += f"<div class='card'>{generate_kpis_html(kpis)}</div>"
 

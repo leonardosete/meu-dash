@@ -73,5 +73,21 @@ export const deleteReport = async (reportId: number): Promise<void> => {
   await apiClient.delete(`/api/v1/reports/${reportId}`);
 };
 
-// TODO: Implementar a função para análise comparativa
-// export const uploadComparativeAnalysis = async (files: File[]): Promise<any> => { ... }
+/**
+ * Envia dois arquivos para a análise comparativa direta.
+ * @param files Uma lista de arquivos contendo exatamente dois arquivos.
+ */
+export const uploadComparativeAnalysis = async (files: FileList): Promise<{ report_url: string }> => {
+  const formData = new FormData();
+  // O backend espera uma lista de arquivos sob a chave 'files'
+  for (let i = 0; i < files.length; i++) {
+    formData.append('files', files[i]);
+  }
+
+  const response = await apiClient.post('/api/v1/compare', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};

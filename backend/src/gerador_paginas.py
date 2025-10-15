@@ -36,7 +36,11 @@ logger = logging.getLogger(__name__)
 
 
 def gerar_ecossistema_de_relatorios(
-    dashboard_context: dict, analysis_results: dict, output_dir: str, base_dir: str
+    dashboard_context: dict,
+    analysis_results: dict,
+    output_dir: str,
+    base_dir: str,
+    frontend_url: str = "/",
 ) -> str:
     """
     Orquestra a geração de todas as páginas HTML do relatório.
@@ -46,6 +50,7 @@ def gerar_ecossistema_de_relatorios(
         analysis_results: Dicionário com os DataFrames da análise.
         output_dir: Diretório onde os relatórios serão salvos.
         base_dir: Diretório base da aplicação para encontrar templates.
+        frontend_url: URL base do frontend para links de retorno.
 
     Returns:
         O caminho para o arquivo de resumo principal (resumo_geral.html).
@@ -55,7 +60,9 @@ def gerar_ecossistema_de_relatorios(
     summary_html_path = os.path.join(output_dir, "resumo_geral.html")
 
     # Gera o dashboard principal
-    gerar_resumo_executivo(dashboard_context, summary_html_path, timestamp_str)
+    gerar_resumo_executivo(
+        dashboard_context, summary_html_path, timestamp_str, frontend_url
+    )
 
     # Prepara dados e caminhos para as páginas de detalhe
     df_atuacao = analysis_results["df_atuacao"]
@@ -169,14 +176,16 @@ def carregar_template_html(filepath: str) -> str:
         raise IOError(f"Erro inesperado ao ler o arquivo de template '{filepath}': {e}")
 
 
-def gerar_resumo_executivo(context: dict, output_path: str, timestamp_str: str):  # type: ignore
+def gerar_resumo_executivo(
+    context: dict, output_path: str, timestamp_str: str, frontend_url: str = "/"
+):  # type: ignore
     """Gera o dashboard principal em HTML com base em um contexto de dados pré-construído."""
     logger.info("Gerando Resumo Executivo estilo Dashboard...")
 
     title = "Dashboard - Análise de Alertas"
 
     # Renderiza o corpo do HTML usando o contexto fornecido
-    body_content = gerador_html.renderizar_resumo_executivo(context)
+    body_content = gerador_html.renderizar_resumo_executivo(context, frontend_url)
 
     # Carrega o template principal
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

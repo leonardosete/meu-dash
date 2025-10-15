@@ -124,13 +124,14 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
   - [x] **Componente de Upload (Análise Padrão):** Conectado o formulário de upload padrão que chama `POST /api/v1/upload`.
   - [x] **Página de Histórico:** Criada tabela de relatórios que busca dados de `GET /api/v1/reports` e permite a exclusão (com autenticação).
   - [x] **Página de Login e Autenticação:** Implementado fluxo de login completo com JWT, gerenciamento de estado de autenticação e rotas protegidas.
-  - [ ] **Componente de Upload (Análise Comparativa):** Conectar o formulário de upload comparativo ao endpoint `POST /api/v1/compare`.
+  - [x] **Componente de Upload (Análise Comparativa):** Conectar o formulário de upload comparativo ao endpoint `POST /api/v1/compare`.
 
 ---
 
 ### Fase 3: Finalização e Limpeza
 
 - [ ] **Atualizar `Dockerfile`:**
+  - [ ] **Corrigir Link de Retorno nos Relatórios:** Investigar e corrigir por que a `FRONTEND_BASE_URL` não está sendo aplicada corretamente nos links "Página Inicial" dos relatórios HTML gerados, que atualmente apontam para a raiz do backend em vez da home do frontend.
   - Criar um `Dockerfile` multi-estágio.
   - O primeiro estágio faz o *build* do frontend (gera os arquivos estáticos).
   - O segundo estágio copia os arquivos estáticos do frontend e a aplicação Flask.

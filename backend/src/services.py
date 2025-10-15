@@ -424,6 +424,8 @@ def process_upload_and_generate_reports(
         plan_dir=os.path.join(output_dir, "planos_de_acao"),
         details_dir=os.path.join(output_dir, "detalhes"),
         trend_report_path=trend_report_path_relative,
+        # Passa a URL do frontend para ser usada nos templates dos relatórios
+        frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
     )
 
     # 4. Geração de todas as páginas HTML
@@ -432,6 +434,8 @@ def process_upload_and_generate_reports(
         analysis_results=analysis_results,
         output_dir=output_dir,
         base_dir=base_dir,
+        # Passa a URL do frontend também para o gerador de páginas
+        frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
     )
 
     # 5. Salvar registro no banco de dados
@@ -541,6 +545,8 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
             date_range_anterior=get_date_range_from_file(filepath_anterior),
             date_range_recente=get_date_range_from_file(filepath_recente),
             is_direct_comparison=True,
+            # Passa a URL do frontend para o gerador de relatório
+            frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
         )
         return {
             "run_folder": run_folder_name,

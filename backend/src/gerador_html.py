@@ -157,7 +157,9 @@ def renderizar_visualizador_json(json_data_str: str) -> str:
 # =============================================================================
 
 
-def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
+def renderizar_resumo_executivo(
+    context: Dict[str, Any], frontend_url: str = "/"
+) -> str:
     """Gera o corpo HTML do dashboard principal com base no contexto de dados."""
 
     # Desempacota o dicionário de contexto para variáveis locais
@@ -236,7 +238,7 @@ def renderizar_resumo_executivo(context: Dict[str, Any]) -> str:
     # REVISÃO: Envolve o botão e a data em um contêiner de cabeçalho para melhor controle de layout e espaçamento.
     body_content += """
     <div class="report-header">
-        <a href="/" class="home-button">Página Inicial</a>
+        <a href="{frontend_url}" class="home-button">Página Inicial</a>
     </div>
     <h1>Dashboard - Análise de Alertas</h1>
     """
