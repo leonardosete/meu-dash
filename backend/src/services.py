@@ -424,8 +424,6 @@ def process_upload_and_generate_reports(
         plan_dir=os.path.join(output_dir, "planos_de_acao"),
         details_dir=os.path.join(output_dir, "detalhes"),
         trend_report_path=trend_report_path_relative,
-        # Passa a URL do frontend para ser usada nos templates dos relatórios
-        frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
     )
 
     # 4. Geração de todas as páginas HTML
