@@ -136,7 +136,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="/" class="back-link">&larr; Voltar para a Página Inicial</a>
+        <a href="/" id="home-link" class="back-link">&larr; Voltar para a Página Inicial</a>
         <h1>Dashboard de Análise de Alertas: Do Relatório à Ação</h1>
         <p>Este documento é um sumário executivo para a liderança de infraestrutura, explicando o propósito e o valor desta ferramenta como um motor de priorização para otimizar a estabilidade operacional.</p>
 
@@ -285,5 +285,14 @@
         </section>
 
     </div>
+    <script>
+        // Define dinamicamente o link de retorno com base na variável de ambiente
+        // injetada pelo backend, garantindo portabilidade entre ambientes.
+        document.addEventListener('DOMContentLoaded', function() {
+            const homeLink = document.getElementById('home-link');
+            // O backend substituirá '{{ FRONTEND_BASE_URL }}' pelo valor real.
+            homeLink.href = '{{ FRONTEND_BASE_URL }}' || '/';
+        });
+    </script>
 </body>
 </html>

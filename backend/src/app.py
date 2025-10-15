@@ -294,8 +294,13 @@ def serve_report(run_folder, filename):
 @app.route("/docs/<path:filename>")
 def serve_docs(filename):
     # O diretório 'docs' está montado em /app/docs no contêiner.
-    docs_directory = "/app/docs"
-    return secure_send_from_directory(docs_directory, filename)
+    docs_directory = "/app/docs"  # Caminho dentro do contêiner
+    # Renderiza o HTML para injetar a variável de ambiente, tornando o link dinâmico.
+    from flask import render_template_string
+    
+    with open(os.path.join(docs_directory, filename), 'r') as f:
+        content = f.read()
+    return render_template_string(content, FRONTEND_BASE_URL=os.getenv("FRONTEND_BASE_URL", "/"))
 
 
 @app.route("/api/v1/reports")

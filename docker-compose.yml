@@ -14,8 +14,8 @@ services:
     volumes:
       # Monta o código-fonte e os templates para live-reloading.
       - ./backend:/app/backend # Monta o diretório do backend
-      # Monta o diretório de dados para persistência.
-      - ./data:/app/data
+      # Usa um volume nomeado para os dados, evitando problemas de permissão do host.
+      - data-volume:/app/data
       # Monta o diretório de documentação para que possa ser servido.
       - ./docs:/app/docs
     environment:
@@ -65,3 +65,7 @@ services:
     # Inicia o servidor de desenvolvimento do Vite. O script 'dev' no package.json
     # já contém a flag '--host', portanto não a repetimos aqui.
     command: npm run dev
+
+# Declara o volume nomeado para persistência dos dados do banco e relatórios.
+volumes:
+  data-volume:

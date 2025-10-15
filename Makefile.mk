@@ -195,13 +195,15 @@ clean:
 
 distclean: clean
 	@echo ">>> [DEEP CLEAN] Removendo ambiente virtual, banco de dados, migrações e relatórios..."
+	# A forma correta de remover volumes gerenciados pelo Docker (como node_modules) é com 'down --volumes'.
+	# Isso resolve o problema de permissão sem precisar de 'sudo'.
+	@echo ">>> Parando contêineres e removendo volumes gerenciados pelo Docker (incluindo node_modules)..."
+	@docker-compose down --volumes --remove-orphans
+	# Remove o diretório de dados local, caso exista de execuções antigas.
+	@echo ">>> Limpando diretório de dados local legado..."
+	@rm -rf data
 	@rm -rf .venv
-	@rm -rf frontend/node_modules frontend/dist
 	@rm -rf backend/migrations
-	@rm -f data/meu_dash.db
-	@echo ">>> Limpando diretórios de dados (uploads e reports)..."
-	@rm -rf data/uploads/*
-	@rm -rf data/reports/*
 	@echo ">>> Limpeza completa concluída."
 
 docker-build:

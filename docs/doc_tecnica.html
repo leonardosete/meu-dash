@@ -156,7 +156,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="../" class="back-link">&larr; Voltar para a Página Inicial</a>
+        <a href="/" id="home-link" class="back-link">&larr; Voltar para a Página Inicial</a>
         <h1>📄 Documentação Técnica - meu-dash</h1>
         <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados, lógica de análise e guia de desenvolvimento do projeto <code>meu-dash</code>.</p>
 
@@ -348,6 +348,13 @@ make test-frontend-docker</code></pre>
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         // Inicializa o Mermaid para renderizar os diagramas.
         mermaid.initialize({ startOnLoad: true });
+
+        // Define dinamicamente o link de retorno com base na variável de ambiente
+        // injetada pelo backend, garantindo portabilidade entre ambientes.
+        document.addEventListener('DOMContentLoaded', function() {
+            const homeLink = document.getElementById('home-link');
+            homeLink.href = '{{ FRONTEND_BASE_URL }}' || '/';
+        });
     </script>
 </body>
 </html>
