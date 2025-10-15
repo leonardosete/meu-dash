@@ -10,14 +10,18 @@ O método recomendado para o desenvolvimento é usar **Docker Compose**, que gar
 
 2. **Inicie o Ambiente Completo:**
    Este comando constrói e inicia os contêineres para o backend e o frontend.
+
    ```bash
    make up
    ```
+
 3. **Prepare o Banco de Dados (Primeira Vez ou Após Limpeza):**
-   Após iniciar os contêineres, execute este comando para criar e aplicar as migrações do banco de dados.
+   Após iniciar os contêineres, execute este comando para criar e aplicar as migrações do banco de dados. **Este passo é crucial.**
+
    ```bash
    make migrate-docker
    ```
+
    Este passo é crucial para que a API funcione corretamente.
 
 Após a execução, a API estará disponível em `http://127.0.0.1:5001` e o frontend em `http://127.0.0.1:5174` (ou as portas definidas no seu arquivo `.env`).

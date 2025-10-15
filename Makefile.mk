@@ -8,39 +8,43 @@ DOCKER_IMAGE_NAME := meu-dash
 DOCKER_IMAGE_TAG := latest
 
 .PHONY: help install setup setup-frontend run test test-backend-docker format lint check clean distclean docker-build docker-run docker-prune validate validate-all-docker validate-clean-docker up down migrate-docker lint-backend-docker format-backend-docker check-backend-docker lint-frontend-docker format-frontend-docker test-frontend-docker start-frontend-docker format-all-docker
-
 help:
 	@echo "Comandos disponíveis:"
-	@echo "  make install        - Instala as dependências do requirements.txt."
-	@echo "  make setup          - (Legado) Cria o ambiente virtual e instala as dependências do backend."
-	@echo "  make migrate-docker - (Recomendado) Aplica as migrações do DB dentro do contêiner Docker."
-	@echo "  make setup-frontend - Cria a estrutura inicial do projeto frontend com Vite e React."
-	@echo "  make setup-and-run  - (Legado) Configura o ambiente do zero e inicia a aplicação."
-	@echo "  make run            - (Legado) Inicia a aplicação Flask em modo de desenvolvimento."
-	@echo "  make start-frontend-docker - Inicia o servidor de desenvolvimento do frontend no Docker."
-	@echo "  make fresh-run      - Limpa o DB, aplica migrações e inicia a aplicação (para testes)."
+	@echo ""
+	@echo "--- 🐳 Ambiente de Desenvolvimento (Docker - RECOMENDADO) ---"
 	@echo "  make up             - (Recomendado) Inicia todo o ambiente de desenvolvimento com Docker Compose."
 	@echo "  make down           - Para todo o ambiente Docker Compose."
-	@echo "  make migrate        - Aplica as migrações do banco de dados."
+	@echo "  make migrate-docker - (Importante) Aplica as migrações do DB dentro do contêiner Docker."
+	@echo "  make start-frontend-docker - Inicia o servidor de desenvolvimento do frontend no Docker."
 	@echo ""
-	@echo "  --- Validação e Testes (Docker) ---"
+	@echo "--- ✅ Validação e Testes (Docker) ---"
 	@echo "  make validate-all-docker - (RECOMENDADO) Roda TODAS as validações (backend + frontend) no Docker."
 	@echo "  make validate-clean-docker - Roda TODAS as validações a partir de um build limpo, sem cache."
 	@echo "  make test-backend-docker   - Executa os testes do backend (pytest) no Docker."
 	@echo "  make check-backend-docker  - Roda format, lint e security scan do backend no Docker."
 	@echo "  make test-frontend-docker  - Executa os testes do frontend (vitest) no Docker."
 	@echo "  make format-all-docker   - Formata o código do backend e do frontend no Docker."
+	@echo "  make format-backend-docker - Formata o código do backend com ruff no Docker."
 	@echo "  make lint-frontend-docker  - Roda o linter (eslint) do frontend no Docker."
+	@echo "  make format-frontend-docker- Formata o código do frontend com Prettier no Docker."
+	@echo ""
+	@echo "--- 🧹 Limpeza ---"
+	@echo "  make clean          - Remove arquivos temporários e caches."
+	@echo "  make distclean      - Remove TODOS os arquivos gerados (venv, db, relatórios, node_modules)."
+	@echo "  make docker-prune   - Remove imagens Docker não utilizadas (dangling images)."
+	@echo ""
+	@echo "--- 📜 Comandos Legados / Locais (NÃO RECOMENDADOS) ---"
+	@echo "  make install        - (Legado) Instala as dependências do requirements.txt localmente."
+	@echo "  make setup          - (Legado) Cria o ambiente virtual e instala as dependências do backend."
+	@echo "  make setup-and-run  - (Legado) Configura o ambiente local do zero e inicia a aplicação."
+	@echo "  make run            - (Legado) Inicia a aplicação Flask localmente."
+	@echo "  make fresh-run      - (Legado) Limpa o DB, aplica migrações e inicia a aplicação localmente."
+	@echo "  make migrate        - (Legado) Aplica as migrações do banco de dados localmente."
 	@echo "  make format         - Formata o código com 'ruff format'."
 	@echo "  make lint           - Executa o linter 'ruff check --fix' para corrigir erros."
 	@echo "  make security-scan  - Roda a verificação de segurança com 'bandit'."
 	@echo "  make check          - Roda todas as verificações: formatação, linting e segurança (para CI)."
 	@echo "  make validate       - (TUDO-EM-UM) Instala dependências, formata e testa o projeto."
-	@echo "  make clean          - Remove arquivos temporários e caches."
-	@echo "  make distclean      - Remove TODOS os arquivos gerados (venv, db, relatórios)."
-	@echo ""
-	@echo "  --- Comandos Legados / Locais ---"
-	@echo "  make docker-prune   - Remove imagens Docker não utilizadas (dangling images)."
 	@echo "  make docker-build   - Constrói a imagem Docker da aplicação."
 	@echo "  make docker-run     - Executa a aplicação a partir da imagem Docker."
 
@@ -222,7 +226,7 @@ docker-run:
 up:
 	@echo ">>> Iniciando ambiente de desenvolvimento com Docker Compose..."
 	@docker-compose up --build -d
-	@$(MAKE) start-frontend-docker
+	@echo ">>> Frontend dev server precisa ser iniciado manualmente se necessário com 'make start-frontend-docker'"
 
 down:
 	@echo ">>> Parando ambiente de desenvolvimento Docker Compose..."

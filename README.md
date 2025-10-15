@@ -28,6 +28,12 @@ O método recomendado para o desenvolvimento local é usar **Docker Compose**, q
    make up
    ```
 
+3. **Prepare o Banco de Dados (Primeira Vez):**
+   Após os contêineres subirem, execute este comando para criar as tabelas no banco de dados.
+   ```bash
+   make migrate-docker
+   ```
+
 3. **Acesse os serviços:**
    - **API do Backend:** `http://127.0.0.1:5001` (ou a porta definida em `BACKEND_PORT` no seu `.env`)
    - **Aplicação Frontend:** `http://127.0.0.1:5174` (ou a porta definida em `FRONTEND_PORT` no seu `.env`)

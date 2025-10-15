@@ -346,9 +346,8 @@ make test-frontend-docker</code></pre>
     </div>
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        // CORREÇÃO: Simplifica a inicialização para usar o tema escuro padrão,
-        // removendo a configuração complexa que estava causando o erro de sintaxe.
-        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+        // Inicializa o Mermaid para renderizar os diagramas.
+        mermaid.initialize({ startOnLoad: true });
     </script>
 </body>
 </html>
