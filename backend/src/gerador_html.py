@@ -236,7 +236,7 @@ def renderizar_resumo_executivo(
 
     # NOVO: Substitui o botão "Voltar" por um ícone "Home" moderno e consistente.
     # REVISÃO: Envolve o botão e a data em um contêiner de cabeçalho para melhor controle de layout e espaçamento.
-    body_content += """
+    body_content += f"""
     <div class="report-header">
         <a href="{frontend_url}" class="home-button">Página Inicial</a>
     </div>
