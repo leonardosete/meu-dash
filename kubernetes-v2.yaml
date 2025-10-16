@@ -71,37 +71,60 @@ spec:
       - name: temp-storage
         emptyDir: {}
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1001
-        fsGroup: 2001
+        # O Nginx precisa rodar como root para iniciar, mas os processos filhos rodam como www-data.
+        # O Gunicorn rodará como um usuário não-privilegiado.
+        runAsUser: 1001 # Usuário padrão para os contêineres
+        fsGroup: 1001 # Garante que o pod possa escrever nos volumes
       containers:
-      - name: meu-dash-web
-        # AINDA RECOMENDO: Trocar a tag :latest por uma versão específica (ex: v1.0.1)
+      # Contêiner do Nginx: serve o frontend e faz proxy para o backend
+      - name: nginx
         image: sevenleo/meu-dash-web:latest 
         ports:
         - name: http
-          containerPort: 5000
-        # ADICIONADO: Define a variável de ambiente ADMIN_TOKEN a partir de um Secret
-        env:
-        - name: ADMIN_TOKEN
-          valueFrom:
-            secretKeyRef:
-              # O nome do Secret que você criou no cluster
-              name: admin-token-secret
-              # A chave dentro do Secret que contém o token
-              key: ADMIN_TOKEN
+          containerPort: 80
+        # O Nginx não precisa de variáveis de ambiente, mas precisa da configuração
+        # que está na imagem e dos arquivos estáticos.
+        volumeMounts:
+        - name: meu-dash-data
+          mountPath: /app/data # Monta os dados para que relatórios possam ser acessados se necessário
+        # As sondas de saúde agora apontam para o Nginx, que é a porta de entrada do Pod.
         readinessProbe:
           httpGet:
-            path: /health 
+            path: / # Uma requisição para a raiz do frontend é suficiente
             port: http
           initialDelaySeconds: 10
           periodSeconds: 5
         livenessProbe:
           httpGet:
-            path: /health
+            path: /
             port: http
           initialDelaySeconds: 15
           periodSeconds: 20
+
+      # Contêiner da API (Gunicorn/Flask): roda a lógica de negócio
+      - name: meu-dash-api
+        image: sevenleo/meu-dash-web:latest 
+        # Este contêiner não expõe portas para fora do Pod.
+        # Ele é acessado pelo Nginx via localhost.
+        command: ["gunicorn", "--workers", "4", "--bind", "127.0.0.1:5000", "src.app:app", "--chdir", "/app"]
+        env:
+        - name: ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: admin-credentials
+              key: ADMIN_USER
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: admin-credentials
+              key: ADMIN_PASSWORD
+        # A sonda de saúde para a API verifica o endpoint /health diretamente no Gunicorn
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10
         resources:
           requests:
             cpu: "256m"
@@ -112,15 +135,6 @@ spec:
         volumeMounts:
         - name: meu-dash-data
           mountPath: /app/data
-        # ADICIONADO: Montagem do volume temporário no diretório /tmp.
-        - name: temp-storage 
-          mountPath: /tmp
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-              - "ALL"
   volumeClaimTemplates:
   - metadata:
       name: meu-dash-data
