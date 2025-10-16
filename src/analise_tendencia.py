@@ -96,7 +96,9 @@ def generate_executive_summary_html(
         verdict_text = "➖ <strong>Estabilidade Neutra:</strong> O número total de casos permaneceu o mesmo, com uma troca equilibrada entre problemas resolvidos e novos."
         verdict_class = "highlight-info"
     else:  # Fallback para qualquer caso não previsto
-        verdict_text = "➖ <strong>Análise Concluída:</strong> O estado da operação foi avaliado."
+        verdict_text = (
+            "➖ <strong>Análise Concluída:</strong> O estado da operação foi avaliado."
+        )
         verdict_class = "highlight-info"
 
     # 2. Principal Ponto de Ação (Foco no maior problema)
