@@ -693,6 +693,18 @@ def gerar_relatorio_tendencia(
         .highlight-warning {{ background-color: rgba(246, 194, 62, 0.1); border-left-color: var(--warning-color); }}
         .highlight-info {{ background-color: rgba(23, 162, 184, 0.1); border-left-color: var(--info-color); }}
         .highlight-neutral {{ background-color: rgba(108, 117, 125, 0.1); border-left-color: var(--text-secondary-color); }}
+        /* CORREÇÃO: Reintroduz o CSS para as linhas expansíveis da tabela. */
+        .expandable-row .chevron {{ transition: transform 0.2s ease-in-out; }}
+        .expandable-row.open .chevron {{ transform: rotate(90deg); }}
+        .details-row {{ display: none; }}
+        .details-row.open {{ display: table-row; }}
+        .details-row-content {{
+            background-color: rgba(0,0,0,0.15);
+            padding: 20px;
+        }}
+        .expandable-row:hover {{
+            background-color: #3c4062;
+        }}
     </style>
     <h1>Análise Comparativa de Períodos</h1>
     <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Foco nos Casos onde a remediação (self-healing) falhou ou não existe. </p>
