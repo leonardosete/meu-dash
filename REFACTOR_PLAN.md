@@ -131,12 +131,12 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
 ### Fase 3: Finalização e Limpeza
 
 - [ ] **Atualizar `Dockerfile`:**
-  - [x] **Corrigir Link de Retorno nos Relatórios:** Investigar e corrigir por que a `FRONTEND_BASE_URL` não está sendo aplicada corretamente nos links "Página Inicial" dos relatórios HTML gerados, que atualmente apontam para a raiz do backend em vez da home do frontend.
+  - [x] **Corrigir Link de Retorno nos Relatórios:** A `FRONTEND_BASE_URL` agora é injetada corretamente em todos os fluxos de geração de relatório (Padrão e Comparativo), garantindo que os links de retorno apontem para a SPA.
   - Criar um `Dockerfile` multi-estágio.
   - O primeiro estágio faz o *build* do frontend (gera os arquivos estáticos).
   - O segundo estágio copia os arquivos estáticos do frontend e a aplicação Flask.
   - Configurar um servidor web (como o Gunicorn para o Flask e talvez o Nginx para servir os estáticos) para o ambiente de produção.
-- [ ] **Atualizar Pipeline de CI/CD (`.github/workflows/ci.yml`):**
+- [ ] **Atualizar Pipeline de CI/CD (`.github/workflows/ci.yml`):** **(Pendente)**
   - Adicionar etapas para instalar dependências, rodar testes e fazer o build do projeto frontend.
   - Adicionar etapas para as verificações de linting, formatação e segurança do frontend.
   - Modificar a etapa de build do Docker para usar o novo `Dockerfile`.
@@ -144,7 +144,20 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
   - Remover os testes antigos que se tornaram obsoletos.
   - Remover o diretório `templates/` do backend (exceto os templates usados para gerar os artefatos de relatório, se houver).
   - Remover dependências do Flask que não são mais necessárias (ex: `Jinja2` se não for mais usado).
-- [ ] **Atualizar Documentação:**
+- [ ] **Atualizar Documentação:** **(Pendente)**
   - Atualizar o `GEMINI.md` e `README.md` para refletir a nova arquitetura de API + SPA.
   - **Revisar e reescrever a documentação técnica (`docs/doc_tecnica.html`)** para alinhar com a nova arquitetura.
   - Marcar este plano (`REFACTOR_PLAN.md`) como concluído.
+
+---
+
+### Trabalhos Não Planejados Executados (Outubro 2025)
+
+Durante a Fase 3, os seguintes trabalhos não previstos no plano original foram executados para garantir a estabilidade e a qualidade do projeto:
+
+- **Depuração Extensiva do Ambiente Docker:** Resolução de múltiplos problemas complexos relacionados a CORS, volumes, configuração do servidor Vite e concorrência do servidor Flask (substituído por Gunicorn).
+- **Refatorações de Qualidade de Código (SonarQube):**
+  - Eliminação de strings duplicadas (`python:S1192`).
+  - Redução de complexidade cognitiva de funções (`python:S3776`).
+  - Remoção de parâmetros não utilizados e adição de validação em merges do Pandas.
+- **Correções de Bugs na UI/UX:** Resolução de múltiplos bugs visuais e de interatividade nos relatórios HTML gerados (títulos, abas, elementos expansíveis).
