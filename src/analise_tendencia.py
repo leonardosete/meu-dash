@@ -92,8 +92,11 @@ def generate_executive_summary_html(
     elif kpis["total_p1"] == kpis["total_p2"] and kpis["resolved"] == 0:
         verdict_text = "⚠️ <strong>Estagnação por Inércia:</strong> O número de casos não mudou porque os problemas antigos não foram resolvidos. A ação de causa raiz é necessária."
         verdict_class = "highlight-warning"
-    else:
+    elif kpis["total_p1"] == kpis["total_p2"]:
         verdict_text = "➖ <strong>Estabilidade Neutra:</strong> O número total de casos permaneceu o mesmo, com uma troca equilibrada entre problemas resolvidos e novos."
+        verdict_class = "highlight-info"
+    else:  # Fallback para qualquer caso não previsto
+        verdict_text = "➖ <strong>Análise Concluída:</strong> O estado da operação foi avaliado."
         verdict_class = "highlight-info"
 
     # 2. Principal Ponto de Ação (Foco no maior problema)
