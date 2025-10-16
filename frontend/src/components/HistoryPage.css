@@ -1,0 +1,63 @@
+/* HistoryPage.css */
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.history-table th,
+.history-table td {
+  padding: 12px 15px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.history-table thead {
+  border-bottom: 2px solid var(--border-color);
+}
+
+.history-table th {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.report-row {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.report-row:last-child {
+  border-bottom: none;
+}
+
+.action-buttons-container {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.action-button {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button.view {
+  background-color: rgba(59, 139, 236, 0.15);
+  color: var(--accent-color);
+}
+
+.action-button.delete {
+  background-color: rgba(231, 74, 59, 0.1);
+  color: var(--danger-color);
+}

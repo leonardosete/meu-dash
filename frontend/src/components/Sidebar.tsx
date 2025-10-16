@@ -60,17 +60,17 @@ const Sidebar = () => {
         color="var(--accent-color)" 
       />
       <SideCard 
-        to="/docs/doc_tecnica.html" 
+        to="/apidocs" 
         isExternal={true}
         icon={<Code />} 
-        title="Guia do Desenvolvedor" 
-        description="Arquitetura e Contribuição." 
+        title="Documentação da API" 
+        description="Navegue e teste os endpoints (Swagger)." 
         color="#38bdf8"
       />
       <SideCard 
         to="/history" 
         icon={<History />} 
-        title="Histórico de Análises" 
+        title="Histórico de Análises Padrão" 
         description="Visualize e gerencie todos os relatórios." 
         color="var(--text-color)"
       />

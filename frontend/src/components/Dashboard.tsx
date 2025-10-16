@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getDashboardSummary } from '../services/api';
 import { DashboardSummary } from '../types';
 import KpiCard from './KpiCard';
+import HistoryPage from './HistoryPage'; // Importa o componente completo
 import UploadForms from './UploadForms';
 import KpiEarLinks from './KpiEarLinks'; // <-- 1. Importe o novo componente
 

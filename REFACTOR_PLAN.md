@@ -131,8 +131,9 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
 ### Fase 3: Finalização e Limpeza
 
 - [ ] **Ajustes Visuais e de UX:** **(Novo)**
-  - [ ] Refinar a página de histórico de relatórios para melhorar a clareza e usabilidade (ex: layout dos botões, separadores visuais).
-- [ ] **Revisão e Reforço da Autenticação:** **(Novo)**
+- [x] **Ajustes Visuais e de UX:** **(Concluído)**
+  - [x] Refinar a página de histórico de relatórios para melhorar a clareza e usabilidade (ex: layout dos botões, separadores visuais).
+- [ ] **Revisão e Reforço da Autenticação:** **(Pendente)**
   - [ ] Analisar o fluxo de autenticação atual (JWT) e implementar melhorias de segurança e usabilidade.
   - [ ] Garantir que o botão de exclusão de relatórios seja visível apenas para usuários administradores autenticados.
 - [ ] **Atualizar `Dockerfile`:**
