@@ -32,7 +32,7 @@ def build_dashboard_context(
 
     Args:
         summary_df: DataFrame com o resumo geral da análise.
-        df_atuacao: DataFrame com os casos que necessitam de atuação.
+        df_atuacao: DataFrame com os Casos que necessitam de atuação.
         num_logs_invalidos: Número de logs com status de remediação inválido.
         output_dir: Diretório de saída dos relatórios.
         plan_dir: Diretório dos planos de ação.

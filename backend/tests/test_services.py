@@ -373,7 +373,7 @@ def test_calculate_kpi_summary_success(tmp_path):
         ACAO_SEMPRE_OK,
     )
 
-    # Simula os diferentes tipos de casos que a função espera
+    # Simula os diferentes tipos de Casos que a função espera
     summary_data = [
         # Usa as constantes reais para garantir a consistência do teste
         {"acao_sugerida": ACAO_FALHA_PERSISTENTE, "alert_count": 10},

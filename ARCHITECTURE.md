@@ -44,7 +44,7 @@ graph TD
         end
 
         subgraph "Camada de Análise"
-            C["analisar_alertas.py<br><b>(Motor de Análise)</b><br>Calcula scores e agrupa casos."]
+            C["analisar_alertas.py<br><b>(Motor de Análise)</b><br>Calcula scores e agrupa Casos."]
             D["analise_tendencia.py<br><b>(Motor de Tendência)</b><br>Compara relatórios."]
         end
 

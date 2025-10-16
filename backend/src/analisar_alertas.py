@@ -165,7 +165,9 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
             .apply(list)
             .reset_index(name="status_chronology")
         )
-        summary = pd.merge(summary, chronology, on=GROUP_COLS, how="left")
+        summary = pd.merge(
+            summary, chronology, on=GROUP_COLS, how="left", validate="one_to_one"
+        )
     else:
         summary["status_chronology"] = [[] for _ in range(len(summary))]
 

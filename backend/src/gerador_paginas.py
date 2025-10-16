@@ -31,6 +31,26 @@ from .constants import (
 logger = logging.getLogger(__name__)
 
 # =============================================================================
+# CONSTANTES DE NOMENCLATURA (python:S1192)
+# =============================================================================
+CSV_VIEWER_TEMPLATE = "csv_viewer_template.html"
+EDITOR_TEMPLATE = "editor_template.html"
+MAIN_TEMPLATE = "template.html"
+
+REPORTS_DIR_SQUADS = "squads"
+REPORTS_DIR_DETAILS = "detalhes"
+REPORTS_DIR_PLANS = "planos_de_acao"
+
+FILENAME_SUMMARY = "resumo_geral.html"
+FILENAME_ALL_SQUADS = "todas_as_squads.html"
+FILENAME_SUCCESS = "sucesso_automacao.html"
+FILENAME_INSTABILITY = "instabilidade_cronica.html"
+FILENAME_ACTION_PLAN = "atuar.html"
+FILENAME_INVALID_LOGS_HTML = "qualidade_dados_remediacao.html"
+FILENAME_JSON_VIEWER = "visualizador_json.html"
+FILENAME_JSON_SUMMARY = "resumo_problemas.json"
+
+# =============================================================================
 # FUNÇÕES DE GERAÇÃO DE PÁGINAS HTML
 # =============================================================================
 
@@ -57,7 +77,7 @@ def gerar_ecossistema_de_relatorios(
     """
     logger.info("Iniciando a geração do ecossistema completo de relatórios HTML...")
     timestamp_str = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
-    summary_html_path = os.path.join(output_dir, "resumo_geral.html")
+    summary_html_path = os.path.join(output_dir, FILENAME_SUMMARY)
 
     # Gera o dashboard principal
     gerar_resumo_executivo(
@@ -67,8 +87,8 @@ def gerar_ecossistema_de_relatorios(
     # Prepara dados e caminhos para as páginas de detalhe
     df_atuacao = analysis_results["df_atuacao"]
     summary = analysis_results["summary"]
-    details_dir = os.path.join(output_dir, "detalhes")
-    squad_reports_dir = os.path.join(output_dir, "squads")  # RENOMEADO
+    details_dir = os.path.join(output_dir, REPORTS_DIR_DETAILS)
+    squad_reports_dir = os.path.join(output_dir, REPORTS_DIR_SQUADS)
     summary_filename = os.path.basename(summary_html_path)
     squad_reports_base_name = os.path.basename(squad_reports_dir)
 
@@ -132,30 +152,30 @@ def gerar_ecossistema_de_relatorios(
     gerar_pagina_sucesso(
         output_dir,
         os.path.join(output_dir, "remediados.csv"),
-        os.path.join(base_template_dir, "sucesso_template.html"),
+        os.path.join(base_template_dir, CSV_VIEWER_TEMPLATE),
     )
     gerar_pagina_instabilidade(
         output_dir,
         os.path.join(output_dir, "remediados_frequentes.csv"),
-        os.path.join(base_template_dir, "sucesso_template.html"),
+        os.path.join(base_template_dir, CSV_VIEWER_TEMPLATE),
     )
     gerar_pagina_atuar(
         output_dir,
         os.path.join(output_dir, "atuar.csv"),
-        os.path.join(base_template_dir, "editor_template.html"),
+        os.path.join(base_template_dir, EDITOR_TEMPLATE),
     )
     # NOVO: Gera os arquivos de atuação filtrados por squad
     gerar_paginas_atuar_por_squad(
         df_atuacao,
         output_dir,
-        os.path.join(base_template_dir, "editor_template.html"),
+        os.path.join(base_template_dir, EDITOR_TEMPLATE),
     )
 
     if analysis_results["num_logs_invalidos"] > 0:
         gerar_pagina_logs_invalidos(
             output_dir,
             os.path.join(output_dir, LOG_INVALIDOS_FILENAME),
-            os.path.join(base_template_dir, "sucesso_template.html"),
+            os.path.join(base_template_dir, CSV_VIEWER_TEMPLATE),
         )
 
     logger.info("Geração do ecossistema de relatórios HTML concluída.")
@@ -189,7 +209,7 @@ def gerar_resumo_executivo(
 
     # Carrega o template principal
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", "template.html")
+    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
     HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
 
     # Renderiza a página final e a salva
@@ -204,12 +224,12 @@ def gerar_resumo_executivo(
     output_dir = os.path.dirname(output_path)
     try:
         with open(
-            os.path.join(output_dir, "resumo_problemas.json"), "r", encoding="utf-8"
+            os.path.join(output_dir, FILENAME_JSON_SUMMARY), "r", encoding="utf-8"
         ) as f:
             json_content = f.read()
         html_visualizador = gerador_html.renderizar_visualizador_json(json_content)
         with open(
-            os.path.join(output_dir, "visualizador_json.html"), "w", encoding="utf-8"
+            os.path.join(output_dir, FILENAME_JSON_VIEWER), "w", encoding="utf-8"
         ) as f:
             f.write(html_visualizador)
         logger.info("Visualizador de JSON gerado: visualizador_json.html")
@@ -222,7 +242,7 @@ def gerar_resumo_executivo(
 def gerar_relatorios_por_squad(  # type: ignore
     df_atuacao: pd.DataFrame, output_dir: str, timestamp_str: str
 ):
-    """Gera arquivos de relatório detalhado para cada squad com casos que precisam de atuação."""
+    """Gera arquivos de relatório detalhado para cada squad com Casos que precisam de atuação."""
     logger.info("Gerando relatórios detalhados por squad...")
     if df_atuacao.empty:
         logger.info("Nenhum caso precisa de atuação. Nenhum relatório de squad gerado.")
@@ -240,7 +260,7 @@ def gerar_relatorios_por_squad(  # type: ignore
     VALID_STATUSES_CHRONOLOGY = {STATUS_OK, STATUS_NOT_OK, NO_STATUS}
 
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", "template.html")
+    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
     HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
 
     for squad_name, squad_df in df_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True):
@@ -315,7 +335,7 @@ def gerar_relatorios_por_squad(  # type: ignore
                 <button type="button" class="collapsible collapsible-problem">
                     <span class="emoji">{emoji}</span>
                     {escape(problem_desc)}
-                    <span class="instance-count">{num_instances} {"casos" if num_instances > 1 else "caso"} / {total_alertas_problema} alertas</span>
+                    <span class="instance-count">{num_instances} {"Casos" if num_instances > 1 else "caso"} / {total_alertas_problema} alertas</span>
                 </button>
                 <div class="content">
                     <table>
@@ -352,7 +372,7 @@ def gerar_relatorios_por_squad(  # type: ignore
                     formatted_chronology = []
                     for status in row["status_chronology"]:
                         if status in VALID_STATUSES_CHRONOLOGY:
-                            formatted_chronology.append(
+                            formatted_chronology.append(  # noqa: E501
                                 f"{status_emoji_map.get(status, '⚪')} {escape(status)}"
                             )
                         else:
@@ -384,9 +404,9 @@ def gerar_pagina_squads(  # type: ignore
     summary_filename: str,
     timestamp_str: str,
 ):
-    """Gera uma página HTML com o gráfico de barras para todas as squads com casos em aberto."""
+    """Gera uma página HTML com o gráfico de barras para todas as squads com Casos em aberto."""
     logger.info("Gerando página com a lista completa de squads...")
-    output_path = os.path.join(output_dir, "todas_as_squads.html")
+    output_path = os.path.join(output_dir, FILENAME_ALL_SQUADS)
     title = "Lista Completa de Squads por Casos"
     body_content = f'<p><a href="{summary_filename}">&larr; Voltar para o Dashboard</a></p><div class="card">'
     squads_com_casos = all_squads[all_squads > 0]
@@ -413,12 +433,12 @@ def gerar_pagina_squads(  # type: ignore
             </div>"""
         body_content += "</div>"
     else:
-        body_content += "<p>Nenhuma squad com casos a serem listados. ✅</p>"
+        body_content += "<p>Nenhuma squad com Casos a serem listados. ✅</p>"
     body_content += "</div>"
     footer_text = f"Relatório gerado em {timestamp_str}"
 
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", "template.html")
+    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
     HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
 
     html_content = gerador_html.renderizar_pagina_html(
@@ -453,7 +473,7 @@ def gerar_paginas_detalhe_problema(  # type: ignore
     }
 
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", "template.html")
+    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
     HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
     footer_text = f"Relatório gerado em {timestamp_str}"
 
@@ -513,7 +533,7 @@ def gerar_paginas_detalhe_metrica(  # type: ignore
     squad_reports_dir_name: str,
     timestamp_str: str,
 ):
-    """Gera páginas de detalhe para categorias de métricas com casos em aberto."""
+    """Gera páginas de detalhe para categorias de métricas com Casos em aberto."""
     if metric_list.empty:
         return
     os.makedirs(output_dir, exist_ok=True)
@@ -525,7 +545,7 @@ def gerar_paginas_detalhe_metrica(  # type: ignore
     }
 
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", "template.html")
+    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
     HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
     footer_text = f"Relatório gerado em {timestamp_str}"
 
@@ -569,11 +589,11 @@ def gerar_paginas_detalhe_metrica(  # type: ignore
 
 
 def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):  # type: ignore
-    """Gera uma página HTML para visualização dos casos resolvidos com sucesso."""
+    """Gera uma página HTML para visualização dos Casos resolvidos com sucesso."""
     logger.info(
         f"Gerando página de visualização para '{os.path.basename(ok_csv_path)}'..."
     )
-    output_path = os.path.join(output_dir, "sucesso_automacao.html")
+    output_path = os.path.join(output_dir, FILENAME_SUCCESS)
     try:
         with open(ok_csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()
@@ -599,11 +619,11 @@ def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):
 def gerar_pagina_instabilidade(  # type: ignore
     output_dir: str, instability_csv_path: str, template_path: str
 ):
-    """Gera uma página HTML para visualização dos casos de instabilidade crônica."""
+    """Gera uma página HTML para visualização dos Casos de instabilidade crônica."""
     logger.info(
         f"Gerando página de visualização para '{os.path.basename(instability_csv_path)}'..."
     )
-    output_path = os.path.join(output_dir, "instabilidade_cronica.html")
+    output_path = os.path.join(output_dir, FILENAME_INSTABILITY)
     try:
         with open(instability_csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()
@@ -633,7 +653,7 @@ def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_pat
     logger.info(
         f"Gerando página de visualização para '{os.path.basename(log_csv_path)}'..."
     )
-    output_path = os.path.join(output_dir, "qualidade_dados_remediacao.html")
+    output_path = os.path.join(output_dir, FILENAME_INVALID_LOGS_HTML)
     try:
         with open(log_csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()
@@ -648,8 +668,8 @@ def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_pat
         final_html = gerador_html.renderizar_pagina_csv_viewer(
             template_content,
             csv_content,
-            "Qualidade de Dados",
-            os.path.basename(log_csv_path),
+            "Checar Dados",  # Título correto da página
+            "rem-status-invalido.csv",  # Nome de arquivo correto
         )
         with open(output_path, "w", encoding="utf-8") as f_out:
             f_out.write(final_html)
@@ -663,7 +683,7 @@ def gerar_pagina_atuar(output_dir: str, actuation_csv_path: str, template_path: 
     logger.info(
         f"Gerando página de edição para '{os.path.basename(actuation_csv_path)}'..."
     )
-    output_path = os.path.join(output_dir, "atuar.html")
+    output_path = os.path.join(output_dir, FILENAME_ACTION_PLAN)
     try:
         with open(actuation_csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()
@@ -739,7 +759,7 @@ def gerar_paginas_atuar_por_squad(
 
         sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "", squad_name.replace(" ", "_"))
         # CORREÇÃO: Define o diretório e o nome do arquivo corretamente.
-        planos_dir = os.path.join(output_dir, "planos_de_acao")
+        planos_dir = os.path.join(output_dir, REPORTS_DIR_PLANS)
         os.makedirs(planos_dir, exist_ok=True)
         csv_filename = f"plano-de-acao-{sanitized_name}.csv"
         html_filename = f"plano-de-acao-{sanitized_name}.html"

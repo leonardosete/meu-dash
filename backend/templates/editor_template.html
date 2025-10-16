@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor de Casos para Atuação</title>
+    <title>Foco de Atuação</title>
     <link href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css" rel="stylesheet">
     <style>
         :root {
@@ -141,7 +141,7 @@
                      if (results.data.length === 0) {
                         statusMessage.textContent = 'Nenhum caso para atuação. Pronto para adicionar novas linhas.';
                     } else {
-                        statusMessage.textContent = 'Pronto para edição. Total de ' + results.data.length + ' casos carregados.';
+                        statusMessage.textContent = 'Pronto para edição. Total de ' + results.data.length + ' Casos carregados.';
                     }
 
                     const headers = results.meta.fields.length > 0 ? results.meta.fields : ['Coluna 1', 'Coluna 2'];

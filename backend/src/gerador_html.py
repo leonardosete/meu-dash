@@ -61,7 +61,8 @@ def renderizar_pagina_csv_viewer(
     final_html = final_html.replace(placeholder, csv_payload)
 
     # MELHORIA: Usa placeholders dedicados para os títulos, tornando o código mais robusto.
-    final_html = final_html.replace("__PAGE_TITLE__", page_title)
+    # Garante a substituição tanto no <title> quanto no <h1>
+    final_html = final_html.replace("__PAGE_TITLE__", escape(page_title))
     final_html = final_html.replace("__CSV_FILENAME__", csv_filename)
 
     return final_html
@@ -150,6 +151,140 @@ def renderizar_visualizador_json(json_data_str: str) -> str:
 </body>
 </html>
 """
+
+
+def _render_conceitos_section() -> str:
+    """Renderiza a seção 'Conceitos' do dashboard."""
+    return f"""
+    <div style="margin-bottom: 25px;">
+        <button type="button" class="collapsible collapsible-main-header">{CHEVRON_SVG}Conceitos</button>
+        <div class="content" style="display: none; padding: 0; border: none; background: none;">
+            <div class="card" style="margin-top: 10px; padding: 20px;">
+
+                <button type="button" class="collapsible active">{CHEVRON_SVG}<strong>Casos vs. Alertas</strong></button>
+                <div class="content" style="display: block; padding-left: 28px;">
+                    <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--accent-color); color: var(--text-secondary-color);">
+                        <br><br>
+                        Um <strong>Alerta</strong> é uma notificação individual — pense nele como o "ruído" que você recebe.
+                        <br><br>
+                        Um <strong>Caso</strong> é a causa raiz de um problema. Ele agrupa todos os alertas do mesmo tipo em um único recurso.
+                        <br><br>
+                        <strong>Exemplo:</strong> Um servidor com pouco espaço em disco pode gerar 100 <strong>Alertas</strong> de "disco cheio". No entanto, como todos esses alertas são sobre o mesmo problema, eles são agrupados em apenas <strong>1 Caso</strong>. Se esse servidor também apresentar um problema de CPU, isso será um <strong>2º Caso</strong>, porque exige uma ação diferente.
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>Como a Prioridade dos Casos é Definida?</strong></button>
+                <div class="content" style="display: none; padding-left: 28px;">
+                     <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--danger-color); color: var(--text-secondary-color);">
+                        A pontuação de prioridade não é um valor arbitrário. Ela é calculada pela fórmula: <br>
+                        <code>Score = (Pilar 1: Risco) * (Pilar 2: Ineficiência) * (Pilar 3: Impacto)</code>
+                        <br><br>
+                        <h4 style="color: var(--text-color); margin-top: 15px; margin-bottom: 5px;">Pilar 1: Score de Risco</h4>
+                        Mede a gravidade base do problema. É a soma dos pesos da Severidade e Prioridade do alerta, valores extraídos diretamente das colunas <strong>severity</strong> e <strong>sn_priority_group</strong> do arquivo de dados.
+                        <table class="sub-table">
+                            <thead><tr><th>Severidade</th><th>Peso</th><th>Prioridade</th><th>Peso</th></tr></thead>
+                            <tbody>
+                                <tr><td>Crítico</td><td style="color: var(--danger-color); font-weight: 500;">10</td><td>Urgente</td><td style="color: var(--danger-color); font-weight: 500;">10</td></tr>
+                                <tr><td>Alto / Major</td><td style="color: var(--warning-color); font-weight: 500;">8</td><td>Alto(a)</td><td style="color: var(--warning-color); font-weight: 500;">8</td></tr>
+                                <tr><td>Médio / Minor</td><td style="color: var(--accent-color); font-weight: 500;">5</td><td>Moderado(a)</td><td style="color: var(--accent-color); font-weight: 500;">5</td></tr>
+                                <tr><td>Aviso / Baixo</td><td>2-3</td><td>Baixo(a)</td><td>2</td></tr>
+                            </tbody>
+                        </table>
+                        <h4 style="color: var(--text-color); margin-top: 15px; margin-bottom: 5px;">Pilar 2: Multiplicador de Ineficiência</h4>
+                        Penaliza Casos onde a automação falhou. Quanto pior a falha, maior o multiplicador.
+                        <table class="sub-table"><thead><tr><th>Resultado da Automação</th><th>Multiplicador</th></tr></thead><tbody><tr><td>Falha Persistente (nunca funcionou)</td><td style="color: var(--danger-color);">x 1.5</td></tr><tr><td>Intermitente (falha às vezes)</td><td style="color: var(--warning-color);">x 1.2</td></tr><tr><td>Status Ausente / Inconsistente</td><td style="color: var(--warning-color);">x 1.1</td></tr><tr><td>Funcionou no final (Estabilizada / Sempre OK)</td><td>x 1.0</td></tr></tbody></table>
+                        <h4 style="color: var(--text-color); margin-top: 15px; margin-bottom: 5px;">Pilar 3: Multiplicador de Impacto</h4>
+                        <div style="padding-bottom: 10px; color: var(--text-secondary-color);">
+                        Penaliza o "ruído" operacional gerado pelo volume de alertas de um mesmo caso. O cálculo utiliza a fórmula matemática <code>1 + ln(N)</code>, onde <code>ln</code> é o <strong>logaritmo natural</strong> e <code>N</code> é o número de alertas. Essa abordagem garante que o impacto do ruído seja significativo no início, mas cresça de forma controlada para volumes muito altos.
+                        </div>  
+                        <table class="sub-table"><thead><tr><th>Nº de Alertas no Caso</th><th>Multiplicador Aprox.</th></tr></thead><tbody><tr><td>1 alerta</td><td>x 1.0</td></tr><tr><td>10 alertas</td><td style="color: var(--accent-color); font-weight: 500;">x 3.3</td></tr><tr><td>50 alertas</td><td style="color: var(--warning-color); font-weight: 500;">x 4.9</td></tr><tr><td>100 alertas</td><td style="color: var(--danger-color); font-weight: 500;">x 5.6</td></tr></tbody></table>
+                        <h4 style="color: var(--text-color); margin-top: 20px; margin-bottom: 5px; border-top: 1px solid var(--border-color); padding-top: 15px;">Exemplo Prático Completo</h4>
+                        Um alerta de <strong>CPU Saturated</strong> com <strong>Severidade Crítica (<span style="color: var(--danger-color); font-weight: 500;">10</span>)</strong> e <strong>Prioridade Urgente (<span style="color: var(--danger-color); font-weight: 500;">10</span>)</strong>, cuja remediação teve <strong>Falha Persistente</strong> e que gerou <strong>50 alertas</strong>.
+                        <ul>
+                            <li><strong>Score de Risco:</strong> 10 + 10 = <strong style="color: var(--danger-color);">20</strong></li>
+                            <li><strong>Multiplicador de Ineficiência:</strong> <strong style="color: var(--danger-color);">1.5</strong></li>
+                            <li><strong>Multiplicador de Impacto:</strong> 1 + log(50) ≈ <strong style="color: var(--warning-color);">4.9</strong></li>
+                        </ul>
+                        <strong>Score Final = 20 * 1.5 * 4.9 = <span style="font-size: 1.1em; color: var(--danger-color); font-weight: bold;">147</span></strong>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>Como a Remediação é Contabilizada?</strong></button>
+                <div class="content" style="display: none; padding-left: 28px;">
+                    <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--accent-color); color: var(--text-secondary-color);">
+                        <p>A análise da remediação se baseia em uma etapa de preparação dos dados. Nesse passo anterior, cada alerta é verificado para identificar se existe uma "Tarefa de Correção" (<strong>REM00XXXXX</strong>) associada a ele. É a presença desse registro que confirma que uma automação foi <strong>executada</strong>.</p>
+                        <p style="margin-top: 10px;">Para definir o <strong>resultado</strong>, o processo então analisa o status dessa tarefa. O texto exato encontrado nesse campo determina o desfecho: <strong>"REM_OK"</strong> é contabilizado como <strong>sucesso</strong>, enquanto <strong>"REM_NOT_OK"</strong> é contabilizado como <strong>falha</strong>. A detecção de um desses dois "eventos" no alerta é o que classifica o status da remediação.</p>
+                        
+                        <div style="background-color: #fffbe6; border-left: 5px solid #ffe58f; padding: 15px 20px; margin-top: 15px; color: #665424;">
+                            <strong>Ponto de Atenção:</strong> Este método confirma a <em>execução</em> de uma automação, mas não garante, por si só, que a remediação foi de fato <em>efetiva</em> para solucionar a causa raiz do problema. Uma investigação futura é necessária para aprofundar essa análise. O próximo passo será um trabalho em conjunto com o time de Automação para entender o significado detalhado dos status dentro de uma tarefa REM00XXXXX e como extrair essa informação para o relatório.
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>Como Interpretar o quadro de Remediações?</strong></button>
+                <div class="content" style="display: none; padding-left: 28px;">
+                    <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--warning-color); color: var(--text-secondary-color);">
+                        Um número alto neste quadro é bom (a automação está funcionando), mas também é um sinal de alerta. Ele indica <strong>instabilidade crônica</strong>: um problema que ocorre e é remediado com muita frequência. Esses são candidatos ideais para uma análise de causa raiz mais profunda, visando a solução definitiva.
+                    </div>
+                </div>
+
+                <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>O que significa o valor "DESCONHECIDO"?</strong></button>
+                <div class="content" style="display: none; padding-left: 28px;">
+                    <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--text-secondary-color); color: var(--text-secondary-color);">
+                        Quando o valor "DESCONHECIDO" aparece em campos como Squad, Métrica ou Recurso, significa que a informação estava <strong>ausente no arquivo de dados original</strong>. Isso geralmente aponta para uma oportunidade de melhorar a qualidade e o enriquecimento dos dados na origem (o sistema de monitoramento), garantindo que todo alerta seja corretamente categorizado.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+
+
+def _render_notification_banners(num_logs_invalidos: int, trend_report_path: str) -> str:
+    """Renderiza os banners de notificação para qualidade de dados e análise de tendência."""
+    banners_html = ""
+    # Define os estilos do banner uma vez para ser usado por ambos os avisos
+    notification_banner_styles = """
+    <style>
+    .notification-banner { display: flex; align-items: center; gap: 15px; padding: 15px 20px; border-radius: 8px; margin: 25px 0; color: var(--text-color); }
+    .notification-banner.warning { background-color: rgba(231, 74, 59, 0.1); border: 1px solid var(--danger-color); }
+    .notification-banner.trend { background-color: rgba(78, 115, 223, 0.1); border: 1px solid var(--accent-color); }
+    .notification-banner .icon { font-size: 1.5em; }
+    .notification-banner .text { flex-grow: 1; }
+    .notification-banner .details-link { font-weight: bold; white-space: nowrap; }
+    .notification-banner.warning .details-link { color: var(--danger-color); }
+    .notification-banner.trend .details-link { color: var(--accent-color); }
+    </style>
+    """
+
+    # Injeta os estilos apenas se um dos banners for ser exibido
+    if num_logs_invalidos > 0 or trend_report_path:
+        banners_html += notification_banner_styles
+
+    # Gera o banner de Qualidade de Dados
+    if num_logs_invalidos > 0:
+        banners_html += f"""
+        <div class="notification-banner warning">
+            <span class="icon">📜</span>
+            <div class="text">
+                <strong>Aviso de Qualidade de Dados:</strong> Foram encontrados <strong>{num_logs_invalidos} alertas</strong> com status de remediação inválido.
+            </div>
+            <a href="qualidade_dados_remediacao.html" class="details-link">Detalhes &rarr;</a>
+        </div>
+        """
+
+    # Gera o banner de Relatório de Tendência
+    if trend_report_path:
+        banners_html += f"""
+        <div class="notification-banner trend">
+            <span class="icon">📈</span>
+            <div class="text">
+                <strong>Análise Comparativa Disponível:</strong> Compare os resultados atuais com o período anterior para identificar novas tendências, regressões e melhorias.
+            </div>
+            <a href="{os.path.basename(trend_report_path)}" class="details-link">Relatório de Tendência &rarr;</a>
+        </div>
+        """
+    return banners_html
 
 
 # =============================================================================
@@ -248,179 +383,9 @@ def renderizar_resumo_executivo(
     # Placeholder para o resumo da IA
     body_content += "<!-- AI_SUMMARY_PLACEHOLDER -->"
 
-    body_content += f"""
-                <div style="margin-bottom: 25px;">
-                    <button type="button" class="collapsible collapsible-main-header">{CHEVRON_SVG}Conceitos</button>
-                    <div class="content" style="display: none; padding: 0; border: none; background: none;">
-                        <div class="card" style="margin-top: 10px; padding: 20px;">
-
-                            <button type="button" class="collapsible active">{CHEVRON_SVG}<strong>Casos vs. Alertas</strong></button>
-                            <div class="content" style="display: block; padding-left: 28px;">
-                                <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--accent-color); color: var(--text-secondary-color);">
-                                    Para focar no que é mais importante, os gráficos distinguem entre <strong>Alertas</strong> e <strong>Casos</strong>.
-                                    <br><br>
-                                    Um <strong>Alerta</strong> é uma notificação individual — pense nele como o "ruído" que você recebe.
-                                    <br><br>
-                                    Um <strong>Caso</strong> é a causa raiz de um problema. Ele agrupa todos os alertas do mesmo tipo em um único recurso.
-                                    <br><br>
-                                    <strong>Exemplo:</strong> Um servidor com pouco espaço em disco pode gerar 100 <strong>Alertas</strong> de "disco cheio". No entanto, como todos esses alertas são sobre o mesmo problema, eles são agrupados em apenas <strong>1 Caso</strong>. Se esse servidor também apresentar um problema de CPU, isso será um <strong>2º Caso</strong>, porque exige uma ação diferente.
-                                </div>
-                            </div>
-
-                            <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>Como a Prioridade dos Casos é Definida?</strong></button>
-                            <div class="content" style="display: none; padding-left: 28px;">
-                                 <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--danger-color); color: var(--text-secondary-color);">
-                                    A pontuação de prioridade não é um valor arbitrário. Ela é calculada pela fórmula: <br>
-                                    <code>Score = (Pilar 1: Risco) * (Pilar 2: Ineficiência) * (Pilar 3: Impacto)</code>
-                                    <br><br>
-                                    <h4 style="color: var(--text-color); margin-top: 15px; margin-bottom: 5px;">Pilar 1: Score de Risco</h4>
-                                    Mede a gravidade base do problema. É a soma dos pesos da Severidade e Prioridade do alerta, valores extraídos diretamente das colunas <strong>severity</strong> e <strong>sn_priority_group</strong> do arquivo de dados.
-                                    <table class="sub-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Severidade</th>
-                                                <th>Peso</th>
-                                                <th>Prioridade</th>
-                                                <th>Peso</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>Crítico</td>
-                                                <td style="color: var(--danger-color); font-weight: 500;">10</td>
-                                                <td>Urgente</td>
-                                                <td style="color: var(--danger-color); font-weight: 500;">10</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Alto / Major</td>
-                                                <td style="color: var(--warning-color); font-weight: 500;">8</td>
-                                                <td>Alto(a)</td>
-                                                <td style="color: var(--warning-color); font-weight: 500;">8</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Médio / Minor</td>
-                                                <td style="color: var(--accent-color); font-weight: 500;">5</td>
-                                                <td>Moderado(a)</td>
-                                                <td style="color: var(--accent-color); font-weight: 500;">5</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Aviso / Baixo</td>
-                                                <td>2-3</td>
-                                                <td>Baixo(a)</td>
-                                                <td>2</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                    <h4 style="color: var(--text-color); margin-top: 15px; margin-bottom: 5px;">Pilar 2: Multiplicador de Ineficiência</h4>
-                                    Penaliza casos onde a automação falhou. Quanto pior a falha, maior o multiplicador.
-                                    <table class="sub-table"><thead><tr><th>Resultado da Automação</th><th>Multiplicador</th></tr></thead><tbody><tr><td>Falha Persistente (nunca funcionou)</td><td style="color: var(--danger-color);">x 1.5</td></tr><tr><td>Intermitente (falha às vezes)</td><td style="color: var(--warning-color);">x 1.2</td></tr><tr><td>Status Ausente / Inconsistente</td><td style="color: var(--warning-color);">x 1.1</td></tr><tr><td>Funcionou no final (Estabilizada / Sempre OK)</td><td>x 1.0</td></tr></tbody></table>
-                                    <h4 style="color: var(--text-color); margin-top: 15px; margin-bottom: 5px;">Pilar 3: Multiplicador de Impacto</h4>
-                                    <div style="padding-bottom: 10px; color: var(--text-secondary-color);">
-                                    Penaliza o "ruído" operacional gerado pelo volume de alertas de um mesmo caso. O cálculo utiliza a fórmula matemática <code>1 + ln(N)</code>, onde <code>ln</code> é o <strong>logaritmo natural</strong> e <code>N</code> é o número de alertas. Essa abordagem garante que o impacto do ruído seja significativo no início, mas cresça de forma controlada para volumes muito altos.
-                                    </div>  
-                                    <table class="sub-table"><thead><tr><th>Nº de Alertas no Caso</th><th>Multiplicador Aprox.</th></tr></thead><tbody><tr><td>1 alerta</td><td>x 1.0</td></tr><tr><td>10 alertas</td><td style="color: var(--accent-color); font-weight: 500;">x 3.3</td></tr><tr><td>50 alertas</td><td style="color: var(--warning-color); font-weight: 500;">x 4.9</td></tr><tr><td>100 alertas</td><td style="color: var(--danger-color); font-weight: 500;">x 5.6</td></tr></tbody></table>
-                                    <h4 style="color: var(--text-color); margin-top: 20px; margin-bottom: 5px; border-top: 1px solid var(--border-color); padding-top: 15px;">Exemplo Prático Completo</h4>
-                                    Um alerta de <strong>CPU Saturated</strong> com <strong>Severidade Crítica (<span style="color: var(--danger-color); font-weight: 500;">10</span>)</strong> e <strong>Prioridade Urgente (<span style="color: var(--danger-color); font-weight: 500;">10</span>)</strong>, cuja remediação teve <strong>Falha Persistente</strong> e que gerou <strong>50 alertas</strong>.
-                                    <ul>
-                                        <li><strong>Score de Risco:</strong> 10 + 10 = <strong style="color: var(--danger-color);">20</strong></li>
-                                        <li><strong>Multiplicador de Ineficiência:</strong> <strong style="color: var(--danger-color);">1.5</strong></li>
-                                        <li><strong>Multiplicador de Impacto:</strong> 1 + log(50) ≈ <strong style="color: var(--warning-color);">4.9</strong></li>
-                                    </ul>
-                                    <strong>Score Final = 20 * 1.5 * 4.9 = <span style="font-size: 1.1em; color: var(--danger-color); font-weight: bold;">147</span></strong>
-                                </div>
-                            </div>
-
-                            <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>Como a Remediação é Contabilizada?</strong></button>
-                            <div class="content" style="display: none; padding-left: 28px;">
-                                <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--accent-color); color: var(--text-secondary-color);">
-                                    <p>A análise da remediação se baseia em uma etapa de preparação dos dados. Nesse passo anterior, cada alerta é verificado para identificar se existe uma "Tarefa de Correção" (<strong>REM00XXXXX</strong>) associada a ele. É a presença desse registro que confirma que uma automação foi <strong>executada</strong>.</p>
-                                    <p style="margin-top: 10px;">Para definir o <strong>resultado</strong>, o processo então analisa o status dessa tarefa. O texto exato encontrado nesse campo determina o desfecho: <strong>"REM_OK"</strong> é contabilizado como <strong>sucesso</strong>, enquanto <strong>"REM_NOT_OK"</strong> é contabilizado como <strong>falha</strong>. A detecção de um desses dois "eventos" no alerta é o que classifica o status da remediação.</p>
-                                    
-                                    <div style="background-color: #fffbe6; border-left: 5px solid #ffe58f; padding: 15px 20px; margin-top: 15px; color: #665424;">
-                                        <strong>Ponto de Atenção:</strong> Este método confirma a <em>execução</em> de uma automação, mas não garante, por si só, que a remediação foi de fato <em>efetiva</em> para solucionar a causa raiz do problema. Uma investigação futura é necessária para aprofundar essa análise. O próximo passo será um trabalho em conjunto com o time de Automação para entender o significado detalhado dos status dentro de uma tarefa REM00XXXXX e como extrair essa informação para o relatório.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>Como Interpretar o quadro de Remediações?</strong></button>
-                            <div class="content" style="display: none; padding-left: 28px;">
-                                <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--warning-color); color: var(--text-secondary-color);">
-                                    Um número alto neste quadro é bom (a automação está funcionando), mas também é um sinal de alerta. Ele indica <strong>instabilidade crônica</strong>: um problema que ocorre e é remediado com muita frequência. Esses são candidatos ideais para uma análise de causa raiz mais profunda, visando a solução definitiva.
-                                </div>
-                            </div>
-
-                            <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>O que significa o valor "DESCONHECIDO"?</strong></button>
-                            <div class="content" style="display: none; padding-left: 28px;">
-                                <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--text-secondary-color); color: var(--text-secondary-color);">
-                                    Quando o valor "DESCONHECIDO" aparece em campos como Squad, Métrica ou Recurso, significa que a informação estava <strong>ausente no arquivo de dados original</strong>. Isso geralmente aponta para uma oportunidade de melhorar a qualidade e o enriquecimento dos dados na origem (o sistema de monitoramento), garantindo que todo alerta seja corretamente categorizado.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                """
-    # Define os estilos do banner uma vez para ser usado por ambos os avisos
-    notification_banner_styles = """
-    <style>
-    .notification-banner {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin: 25px 0;
-        color: var(--text-color);
-    }
-    .notification-banner.warning {
-        background-color: rgba(231, 74, 59, 0.1);
-        border: 1px solid var(--danger-color);
-    }
-    .notification-banner.trend {
-        background-color: rgba(78, 115, 223, 0.1);
-        border: 1px solid var(--accent-color);
-    }
-    .notification-banner .icon { font-size: 1.5em; }
-    .notification-banner .text { flex-grow: 1; }
-    .notification-banner .details-link {
-        font-weight: bold;
-        white-space: nowrap;
-    }
-    .notification-banner.warning .details-link {
-        color: var(--danger-color);
-    }
-    .notification-banner.trend .details-link {
-        color: var(--accent-color);
-    }
-    </style>
-    """
-
-    # Injeta os estilos apenas se um dos banners for ser exibido
-    if num_logs_invalidos > 0 or trend_report_path:
-        body_content += notification_banner_styles
-
-    # Gera o banner de Qualidade de Dados (lógica existente)
-    if num_logs_invalidos > 0:
-        body_content += f"""
-        <div class="notification-banner warning">
-            <span class="icon">📜</span>
-            <div class="text">
-                <strong>Aviso de Qualidade de Dados:</strong> Foram encontrados <strong>{num_logs_invalidos} alertas</strong> com status de remediação inválido.
-            </div>
-            <a href="qualidade_dados_remediacao.html" class="details-link">Detalhes &rarr;</a>
-        </div>
-        """
-
-    # Gera o banner de Relatório de Tendência (nova lógica e posição)
-    if trend_report_path:
-        body_content += f"""
-        <div class="notification-banner trend">
-            <span class="icon">📈</span>
-            <div class="text">
-                <strong>Análise Comparativa Disponível:</strong> Compare os resultados atuais com o período anterior para identificar novas tendências, regressões e melhorias.
-            </div>
-            <a href="{os.path.basename(trend_report_path)}" class="details-link">Relatório de Tendência &rarr;</a>
-        </div>
-        """
+    # Renderiza as seções modulares
+    body_content += _render_conceitos_section()
+    body_content += _render_notification_banners(num_logs_invalidos, trend_report_path)
 
     body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}VISÃO GERAL</button>'
     body_content += '<div class="content" style="display: block; padding-top: 20px;">'
@@ -465,7 +430,7 @@ def renderizar_resumo_executivo(
     """
 
     if grupos_instabilidade > 0:
-        instabilidade_view_icon_html = f'<a href="instabilidade_cronica.html" class="download-link" title="Visualizar detalhes dos casos de instabilidade">{VIEW_ICON_SVG}</a>'
+        instabilidade_view_icon_html = f'<a href="instabilidade_cronica.html" class="download-link" title="Visualizar detalhes dos Casos de instabilidade">{VIEW_ICON_SVG}</a>'
     else:
         disabled_svg = VIEW_ICON_SVG.replace(
             'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
@@ -501,7 +466,7 @@ def renderizar_resumo_executivo(
     tooltip_gauge = f"Percentual e contagem de Casos resolvidos automaticamente: {casos_sucesso} de {total_grupos} problemas tiveram a remediação executada com sucesso."
     sucesso_page_name = "sucesso_automacao.html"
     if casos_sucesso > 0:
-        sucesso_view_icon_html = f'<a href="{sucesso_page_name}" class="download-link" title="Visualizar detalhes dos casos resolvidos">{VIEW_ICON_SVG}</a>'
+        sucesso_view_icon_html = f'<a href="{sucesso_page_name}" class="download-link" title="Visualizar detalhes dos Casos resolvidos">{VIEW_ICON_SVG}</a>'
     else:
         disabled_svg = VIEW_ICON_SVG.replace(
             'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
@@ -518,7 +483,7 @@ def renderizar_resumo_executivo(
     """
 
     tooltip_volume_casos = (
-        "Distribuição do total de casos únicos analisados no período."
+        "Distribuição do total de Casos únicos analisados no período."
     )
     body_content += f"""
     <div class="card">
@@ -548,7 +513,7 @@ def renderizar_resumo_executivo(
     </div>
     """
 
-    tooltip_top5 = "As 5 squads com maior carga de criticidade, classificadas pela soma da prioridade de todos os seus casos em aberto."
+    tooltip_top5 = "As 5 squads com maior carga de criticidade, classificadas pela soma da prioridade de todos os seus Casos em aberto."
 
     body_content += f"""
     <div class="card" style="padding-bottom: 15px;">
@@ -567,7 +532,7 @@ def renderizar_resumo_executivo(
                 row["score_acumulado"], min_score, max_score * 1.1
             )
             squad_name = escape(row["assignment_group"])
-            plural_casos = "casos" if row["total_casos"] > 1 else "caso"
+            plural_casos = "Casos" if row["total_casos"] > 1 else "caso"
             total_casos_txt = f"({row['total_casos']} {plural_casos})"
             sanitized_squad_name = re.sub(
                 r"[^a-zA-Z0-9_-]", "", squad_name.replace(" ", "_")
@@ -608,7 +573,7 @@ def renderizar_resumo_executivo(
             body_content += f'<div class="bar-item"><div class="bar-label"><a href="{squad_report_path}" title="Ver relatório para {escape(squad)}">{escape(squad)}</a></div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
         body_content += "</div>"
     else:
-        body_content += "<p>Nenhuma squad com casos que precisam de atuação. ✅</p>"
+        body_content += "<p>Nenhuma squad com Casos que precisam de atuação. ✅</p>"
     squads_com_casos_count = len(all_squads[all_squads > 0])
     if squads_com_casos_count > len(top_squads):
         body_content += f'<div class="footer-link"><a href="todas_as_squads.html">Ver todas as squads ({squads_com_casos_count}) &rarr;</a></div>'
@@ -658,7 +623,7 @@ def renderizar_resumo_executivo(
             body_content += f'<div class="bar-item"><div class="bar-label">{label_html}</div><div class="bar-wrapper"><div class="bar" style="width: {bar_width}%; background-color: {background_color}; color: {text_color};">{count}</div></div></div>'
         body_content += "</div>"
     else:
-        body_content += "<p>Nenhuma categoria com casos em aberto. ✅</p>"
+        body_content += "<p>Nenhuma categoria com Casos em aberto. ✅</p>"
     body_content += "</div></div>"
 
     body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}TENDÊNCIAS E OPORTUNIDADES</button>'

@@ -204,7 +204,7 @@ graph TB
                 <ul>
                     <li><code>app.py</code>: Ponto de entrada da API Flask. Define os endpoints da API (ex: <code>/api/v1/dashboard-summary</code>), gerencia as requisições HTTP e delega toda a lógica para a camada de serviço.</li>
                     <li><code>services.py</code>: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados (usando os modelos <code>Report</code> e <code>TrendAnalysis</code> para garantir a continuidade da análise de tendência) e coordena a chamada aos motores de análise e geradores de página.</li>
-                    <li><code>analisar_alertas.py</code>: Motor de análise principal. Processa um arquivo <code>.csv</code>, agrupa alertas em casos e calcula o score de prioridade para cada um.</li>
+                    <li><code>analisar_alertas.py</code>: Motor de análise principal. Processa um arquivo <code>.csv</code>, agrupa alertas em Casos e calcula o score de prioridade para cada um.</li>
                     <li><code>analise_tendencia.py</code>: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência, incluindo o "Diagnóstico Rápido" com links contextuais para os planos de ação.</li>
                     <li><code>gerador_paginas.py</code>: Responsável por usar os dados analisados para gerar os **artefatos** de relatório (arquivos HTML estáticos).</li>
                 </ul>
@@ -290,7 +290,7 @@ make migrate-docker</code></pre>
                 <p>Mede a gravidade inerente do problema (Severidade + Prioridade).</p>
 
                 <h4>Pilar 2: Multiplicador de Ineficiência (Falha da Automação)</h4>
-                <p>Penaliza casos onde a automação de remediação falhou.</p>
+                <p>Penaliza Casos onde a automação de remediação falhou.</p>
 
                 <h4>Pilar 3: Multiplicador de Impacto (Volume de Alertas)</h4>
             </div>

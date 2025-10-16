@@ -14,7 +14,7 @@ Este documento descreve o plano de ação para redesenhar a interface principal 
 - [x] **Definir o Problema e as Métricas de Sucesso (KPIs):**
   - **Problema do Gestor:** "Preciso de uma visão geral e rápida dos KPIs mais importantes sem ter que navegar por múltiplos relatórios."
   - **Problema do Analista:** "A distinção entre 'Análise Padrão' e 'Análise Comparativa' poderia ser mais clara para evitar erros no fluxo."
-  - **KPIs de Sucesso:** Definir como mediremos o sucesso do redesign. Ex: "Reduzir o tempo para um gestor encontrar o número de casos críticos em 50%" ou "Aumentar a taxa de sucesso no primeiro clique para a funcionalidade correta (padrão vs. direta) em 30%".
+  - **KPIs de Sucesso:** Definir como mediremos o sucesso do redesign. Ex: "Reduzir o tempo para um gestor encontrar o número de Casos críticos em 50%" ou "Aumentar a taxa de sucesso no primeiro clique para a funcionalidade correta (padrão vs. direta) em 30%".
 
 ### Prioridade 2: Wireframing e Design da Interface
 
@@ -39,7 +39,7 @@ Este documento descreve o plano de ação para redesenhar a interface principal 
   - [x] Separar KPIs e formulários em cards distintos para melhor organização visual.
   - [x] Fixar a altura do card de formulários para evitar redimensionamento ao trocar de aba.
   - [x] Mover o botão "Acessar Análise" para a barra lateral, com destaque visual (pulso e gradiente).
-  - [x] Enriquecer os cards de KPI com sub-valores (contagem de alertas e casos) para maior densidade de informação.
+  - [x] Enriquecer os cards de KPI com sub-valores (contagem de alertas e Casos) para maior densidade de informação.
   - [x] Simplificar a aba "Análise Comparativa" para um único campo de upload de múltiplos arquivos, melhorando a consistência.
   - [x] Realizar ajustes finos de alinhamento e estilo nos componentes da interface para um acabamento mais profissional.
 

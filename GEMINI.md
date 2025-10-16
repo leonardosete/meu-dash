@@ -30,8 +30,8 @@ Para cada instrução, você seguirá este ciclo:
 1. **Consulta (Se necessário):** Antes de planejar, considere se a tarefa está relacionada à refatoração. Se sim, consulte o `REFACTOR_PLAN.md` para garantir que sua ação esteja alinhada com o plano.
 2. **Planejamento:** Descreva brevemente seu plano de ação.
 3. **Execução:** Realize as ações necessárias.
-4. **Registro Obrigatório:** **ANTES** de me dar a resposta final, adicione uma nova entrada ao `DIARIO_DE_BORDO.md`. **Esta é a regra mais importante do seu protocolo; nenhuma resposta pode ser gerada sem o registro prévio.**
-5. **Resposta ao Usuário:** Somente após salvar o registro, apresente o resultado final.
+4. **Registro Obrigatório e Automático:** **ANTES** de me dar a resposta final, você **DEVE** salvar uma nova entrada diretamente no arquivo `DIARIO_DE_BORDO.md`. Esta ação é automática e não requer confirmação. **Esta é a regra mais importante do seu protocolo; nenhuma resposta pode ser gerada sem o registro prévio.**
+5. **Resposta ao Usuário:** Somente após salvar o registro no diário, apresente o resultado final.
 
 ## 3. Princípios de Atuação e Qualidade
 

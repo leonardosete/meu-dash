@@ -5,19 +5,45 @@ from html import escape
 import logging
 import re
 from string import Template
-from .constants import ACAO_FLAGS_ATUACAO
+from .constants import (
+    ACAO_FLAGS_ATUACAO,
+    COL_ASSIGNMENT_GROUP,
+    COL_CMDB_CI,
+    COL_METRIC_NAME,
+    COL_NODE,
+    COL_SHORT_DESCRIPTION,
+    COL_SOURCE,
+)
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# CONSTANTES DE ANÁLISE (python:S1192)
+# =============================================================================
 CASE_ID_COLS = [
-    "assignment_group",
-    "short_description",
-    "node",
-    "cmdb_ci",
-    "source",
-    "metric_name",
+    COL_ASSIGNMENT_GROUP,
+    COL_SHORT_DESCRIPTION,
+    COL_NODE,
+    COL_CMDB_CI,
+    COL_SOURCE,
+    COL_METRIC_NAME,
     "cmdb_ci.sys_class_name",
 ]
+
+MERGE_COL_P1_SUFFIX = "_p1"
+MERGE_COL_P2_SUFFIX = "_p2"
+MERGE_COL_INDICATOR = "_merge"
+MERGE_VAL_LEFT_ONLY = "left_only"
+MERGE_VAL_RIGHT_ONLY = "right_only"
+MERGE_VAL_BOTH = "both"
+
+COL_ALERT_COUNT = "alert_count"
+COL_ALERT_COUNT_P1 = f"{COL_ALERT_COUNT}{MERGE_COL_P1_SUFFIX}"
+COL_ALERT_COUNT_P2 = f"{COL_ALERT_COUNT}{MERGE_COL_P2_SUFFIX}"
+
+CSS_COLOR_DANGER = "var(--danger-color)"
+CSS_COLOR_SUCCESS = "var(--success-color)"
+CSS_COLOR_WARNING = "var(--warning-color)"
 
 
 def sanitize_for_id(text):
@@ -54,92 +80,108 @@ def load_summary_from_json(filepath: str):
         return None
 
 
-def generate_executive_summary_html(
-    kpis,
-    persistent_summary,
-    new_cases_summary,
-    is_direct_comparison: bool,
-    frontend_url: str = "/",
-):
-    """Gera um resumo executivo com os principais insights e pontos de ação."""
-    verdict_text = ""
-    verdict_class = "highlight-neutral"
-
-    # 1. O Veredito Geral - A ordem das condições é importante
+def _determine_verdict(kpis):
+    """Determina o veredito geral e a classe CSS com base nos KPIs."""
     if kpis["total_p1"] == 0 and kpis["total_p2"] > 0:
-        verdict_text = "⚠️ <strong>Primeira Regressão:</strong> A operação, que estava estável, registrou o surgimento de novos problemas. É um ponto de atenção crítico para evitar a degradação do serviço."
-        verdict_class = "highlight-warning"
-    elif kpis["total_p2"] == 0 and kpis["total_p1"] > 0:
-        verdict_text = "🏆 <strong>Excelência Operacional Atingida:</strong> Todos os casos do período anterior foram resolvidos e nenhum problema novo surgiu. A operação atingiu um estado de estabilidade ideal."
-        verdict_class = "highlight-success"
-    elif kpis["total_p2"] > kpis["total_p1"]:
-        verdict_text = "❌ <strong>Regressão:</strong> O número total de casos que exigem ação aumentou. A piora é uma combinação de problemas persistentes não resolvidos e o surgimento de novos. É crucial atacar ambas as frentes para reverter a tendência."
-        verdict_class = "highlight-danger"
-    elif kpis["resolved"] > 0 and (kpis["new"] / kpis["resolved"]) > 0.75:
+        return (
+            "⚠️ <strong>Primeira Regressão:</strong> A operação, que estava estável, registrou o surgimento de novos problemas. É um ponto de atenção crítico para evitar a degradação do serviço.",
+            "highlight-warning",
+        )
+    if kpis["total_p2"] == 0 and kpis["total_p1"] > 0:
+        return (
+            "🏆 <strong>Excelência Operacional Atingida:</strong> Todos os Casos do período anterior foram resolvidos e nenhum problema novo surgiu. A operação atingiu um estado de estabilidade ideal.",
+            "highlight-success",
+        )
+    if kpis["total_p2"] > kpis["total_p1"]:
+        return (
+            "❌ <strong>Regressão:</strong> O número total de Casos que exigem ação aumentou. A piora é uma combinação de problemas persistentes não resolvidos e o surgimento de novos. É crucial atacar ambas as frentes para reverter a tendência.",
+            "highlight-danger",
+        )
+    if kpis["resolved"] > 0 and (kpis["new"] / kpis["resolved"]) > 0.75:
         ponto_positivo_texto = (
-            "<strong>Todos os casos</strong> do período anterior foram resolvidos."
+            "<strong>Todos os Casos</strong> do período anterior foram resolvidos."
             if kpis["improvement_rate"] == 100
-            else "Alta eficácia na resolução de casos do período anterior."
+            else "Alta eficácia na resolução de Casos do período anterior."
         )
         verdict_text = (
-            """⚠️ <strong>Alta Eficácia | Baixa Estabilidade:</strong><br>
-        <span style="display: block; margin-top: 10px; font-size: 0.95em;">A análise mostra dois pontos distintos:<ul><li style="color: var(--success-color);"><strong>Ponto Positivo:</strong> """
-            + ponto_positivo_texto
-            + """</li><li style="color: var(--danger-color);"><strong>Ponto de Atenção:</strong> A operação continua instável, gerando <strong>"""
-            + str(kpis["new"])
-            + """ novos casos</strong> que precisam de atuaçao - tratar causa raiz ou criar remediação.</li></ul></span>"""
+            '⚠️ <strong>Alta Eficácia | Baixa Estabilidade:</strong><br>'
+            f'<span style="display: block; margin-top: 10px; font-size: 0.95em;">A análise mostra dois pontos distintos:<ul><li style="color: {CSS_COLOR_SUCCESS};"><strong>Ponto Positivo:</strong> '
+            f'{ponto_positivo_texto}</li><li style="color: {CSS_COLOR_DANGER};"><strong>Ponto de Atenção:</strong> A operação continua instável, gerando <strong>'
+            f'{str(kpis["new"])} novos Casos</strong> que precisam de atuaçao - tratar causa raiz ou criar remediação.</li></ul></span>'
         )
-        verdict_class = "highlight-warning"
-    elif kpis["total_p2"] < kpis["total_p1"]:
-        verdict_text = "✅ <strong>Evolução Positiva:</strong> O número total de casos diminuiu e a quantidade de novos problemas foi controlada. A operação está se tornando mais estável e eficiente."
-        verdict_class = "highlight-success"
-    elif kpis["total_p1"] == kpis["total_p2"] and kpis["resolved"] == 0:
-        verdict_text = "⚠️ <strong>Estagnação por Inércia:</strong> O número de casos não mudou porque os problemas antigos não foram resolvidos. A ação de causa raiz é necessária."
-        verdict_class = "highlight-warning"
-    else:
-        verdict_text = "➖ <strong>Estabilidade Neutra:</strong> O número total de casos permaneceu o mesmo, com uma troca equilibrada entre problemas resolvidos e novos."
-        verdict_class = "highlight-info"
+        return verdict_text, "highlight-warning"
+    if kpis["total_p2"] < kpis["total_p1"]:
+        return (
+            "✅ <strong>Evolução Positiva:</strong> O número total de Casos diminuiu e a quantidade de novos problemas foi controlada. A operação está se tornando mais estável e eficiente.",
+            "highlight-success",
+        )
+    if kpis["total_p1"] == kpis["total_p2"] and kpis["resolved"] == 0:
+        return (
+            "⚠️ <strong>Estagnação por Inércia:</strong> O número de Casos não mudou porque os problemas antigos não foram resolvidos. A ação de causa raiz é necessária.",
+            "highlight-warning",
+        )
 
-    # 2. Principal Ponto de Ação (Foco no maior problema)
+    return (
+        "➖ <strong>Estabilidade Neutra:</strong> O número total de Casos permaneceu o mesmo, com uma troca equilibrada entre problemas resolvidos e novos.",
+        "highlight-info",
+    )
+
+
+def _determine_action_points(
+    kpis, new_cases_summary, persistent_summary, is_direct_comparison
+):
+    """Determina os pontos de ação, vitórias e links com base nos dados."""
     action_point = ""
     if not new_cases_summary.empty:
-        top_new_squad = new_cases_summary.groupby("assignment_group").size().idxmax()
+        top_new_squad = new_cases_summary.groupby(COL_ASSIGNMENT_GROUP).size().idxmax()
         sanitized_squad_name = re.sub(
             r"[^a-zA-Z0-9_-]", "", top_new_squad.replace(" ", "_")
         )
-        squad_highlight_html = (
-            f'<span style="color: var(--danger-color);">{escape(top_new_squad)}</span>'
-        )
+        squad_highlight_html = f'<span style="color: {CSS_COLOR_DANGER};">{escape(top_new_squad)}</span>'
         if is_direct_comparison:
-            action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> '{squad_highlight_html}'</strong> registrou o maior número de casos sem remediação recentemente. Focar a investigação nesta equipe."
+            action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> '{squad_highlight_html}'</strong> registrou o maior número de Casos sem remediação recentemente. Focar a investigação nesta equipe."
         else:
-            # CORREÇÃO: Aponta para o novo caminho e nome do arquivo de plano de ação.
             action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
-            action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> \'{squad_highlight_html}\'</strong> registrou o maior número de casos sem remediação recentemente. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
+            action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> \'{squad_highlight_html}\'</strong> registrou o maior número de Casos sem remediação recentemente. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
     elif not persistent_summary.empty:
         top_persistent_squad = persistent_summary.index[0]
         sanitized_squad_name = re.sub(
             r"[^a-zA-Z0-9_-]", "", top_persistent_squad.replace(" ", "_")
         )
-        squad_highlight_html = f'<span style="color: var(--warning-color);">{escape(top_persistent_squad)}</span>'
+        squad_highlight_html = f'<span style="color: {CSS_COLOR_WARNING};">{escape(top_persistent_squad)}</span>'
         if is_direct_comparison:
             action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> '{squad_highlight_html}'</strong> concentra o maior número de problemas persistentes. Ação de causa raiz é necessária."
         else:
-            # CORREÇÃO: Aponta para o novo caminho e nome do arquivo de plano de ação.
             action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
             action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> \'{squad_highlight_html}\'</strong> concentra o maior número de problemas persistentes. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
 
-    # 3. Principal Vitória (Reconhecimento)
     recognition_point = ""
     if kpis["resolved"] > 0:
-        recognition_point = f"<li>✅ <strong>Principal Vitória:</strong> <strong>{kpis['resolved']} casos</strong> foram resolvidos desde o período anterior, demonstrando evolução com as remediações."
+        recognition_point = f"<li>✅ <strong>Principal Vitória:</strong> <strong>{kpis['resolved']} Casos</strong> foram resolvidos desde o período anterior, demonstrando evolução com as remediações."
 
-    # 4. Link para o Plano de Ação Geral
     general_action_plan_link = ""
     if not is_direct_comparison:
-        # CORREÇÃO: Adiciona o parâmetro 'back' para a navegação contextual.
         action_url = "atuar.html?back=comparativo_periodos.html"
-        general_action_plan_link = f'<li>📋 <strong>Plano de Ação Geral:</strong> <a href="{action_url}" style="font-weight: 600;">Ver todos os casos que necessitam de ação.</a>'
+        general_action_plan_link = f'<li>📋 <strong>Plano de Ação Geral:</strong> <a href="{action_url}" style="font-weight: 600;">Ver todos os Casos que necessitam de ação.</a>'
+
+    return action_point, recognition_point, general_action_plan_link
+
+
+def generate_executive_summary_html(
+    kpis,
+    persistent_summary,
+    new_cases_summary,
+    is_direct_comparison: bool,
+):
+    """Gera um resumo executivo com os principais insights e pontos de ação."""
+    verdict_text, verdict_class = _determine_verdict(kpis)
+    (
+        action_point,
+        recognition_point,
+        general_action_plan_link,
+    ) = _determine_action_points(
+        kpis, new_cases_summary, persistent_summary, is_direct_comparison
+    )
 
     summary_html = f"""
     <div class="card highlight {verdict_class}" style="margin-bottom: 30px;">
@@ -169,29 +211,30 @@ def calculate_kpis_and_merged_df(df_p1_atuacao, df_p2_atuacao):
         df_p2_atuacao,
         on=valid_case_id_cols,
         how="outer",
-        suffixes=("_p1", "_p2"),
-        indicator=True,
+        suffixes=(MERGE_COL_P1_SUFFIX, MERGE_COL_P2_SUFFIX),
+        validate="one_to_one",
+        indicator=MERGE_COL_INDICATOR,
     )
 
     total_p1 = len(df_p1_atuacao)
     total_p2 = len(df_p2_atuacao)
-    resolved = merged_df["_merge"].eq("left_only").sum()
-    new = merged_df["_merge"].eq("right_only").sum()
-    persistent = merged_df["_merge"].eq("both").sum()
+    resolved = merged_df[MERGE_COL_INDICATOR].eq(MERGE_VAL_LEFT_ONLY).sum()
+    new = merged_df[MERGE_COL_INDICATOR].eq(MERGE_VAL_RIGHT_ONLY).sum()
+    persistent = merged_df[MERGE_COL_INDICATOR].eq(MERGE_VAL_BOTH).sum()
 
-    alerts_total_p1 = df_p1_atuacao["alert_count"].sum()
-    alerts_total_p2 = df_p2_atuacao["alert_count"].sum()
+    alerts_total_p1 = df_p1_atuacao[COL_ALERT_COUNT].sum()
+    alerts_total_p2 = df_p2_atuacao[COL_ALERT_COUNT].sum()
     alerts_resolved = merged_df.loc[
-        merged_df["_merge"] == "left_only", "alert_count_p1"
+        merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_LEFT_ONLY, COL_ALERT_COUNT_P1
     ].sum()
     alerts_new = merged_df.loc[
-        merged_df["_merge"] == "right_only", "alert_count_p2"
+        merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_RIGHT_ONLY, COL_ALERT_COUNT_P2
     ].sum()
     alerts_persistent = merged_df.loc[
-        merged_df["_merge"] == "both", "alert_count_p2"
+        merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_BOTH, COL_ALERT_COUNT_P2
     ].sum()
     alerts_persistent_p1 = merged_df.loc[
-        merged_df["_merge"] == "both", "alert_count_p1"
+        merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_BOTH, COL_ALERT_COUNT_P1
     ].sum()
 
     improvement_rate = (resolved / total_p1 * 100) if total_p1 > 0 else 0
@@ -220,55 +263,61 @@ def prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao):
     """Prepara todos os DataFrames necessários para o relatório de tendência."""
 
     # Casos novos
-    new_cases_df = merged_df[merged_df["_merge"] == "right_only"].copy()
+    new_cases_df = merged_df[merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_RIGHT_ONLY].copy()
     new_problems_summary = (
-        new_cases_df.groupby("short_description", observed=True)
+        new_cases_df.groupby(COL_SHORT_DESCRIPTION, observed=True)
         .agg(
-            count_p2=("alert_count_p2", "sum"), num_cases=("short_description", "size")
+            count_p2=(COL_ALERT_COUNT_P2, "sum"),
+            num_cases=(COL_SHORT_DESCRIPTION, "size"),
         )
         .reset_index()
     )
     new_problems_summary["count_p1"] = 0
 
     # Casos resolvidos
-    resolved_cases_df = merged_df[merged_df["_merge"] == "left_only"].copy()
+    resolved_cases_df = merged_df[merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_LEFT_ONLY].copy()
     resolved_problems_summary = (
-        resolved_cases_df.groupby("short_description", observed=True)
+        resolved_cases_df.groupby(COL_SHORT_DESCRIPTION, observed=True)
         .agg(
-            count_p1=("alert_count_p1", "sum"), num_cases=("short_description", "size")
+            count_p1=(COL_ALERT_COUNT_P1, "sum"),
+            num_cases=(COL_SHORT_DESCRIPTION, "size"),
         )
         .reset_index()
     )
     resolved_problems_summary["count_p2"] = 0
 
     # Casos persistentes (com variação)
-    persistent_cases_df = merged_df[merged_df["_merge"] == "both"].copy()
+    persistent_cases_df = merged_df[merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_BOTH].copy()
     varying_problems_summary = (
-        persistent_cases_df.groupby("short_description", observed=True)
+        persistent_cases_df.groupby(COL_SHORT_DESCRIPTION, observed=True)
         .agg(
-            count_p1=("alert_count_p1", "sum"),
-            count_p2=("alert_count_p2", "sum"),
-            num_cases=("short_description", "size"),
+            count_p1=(COL_ALERT_COUNT_P1, "sum"),
+            count_p2=(COL_ALERT_COUNT_P2, "sum"),
+            num_cases=(COL_SHORT_DESCRIPTION, "size"),
         )
         .reset_index()
     )
 
-    # Análise de squads com casos persistentes
+    # Análise de squads com Casos persistentes
     persistent_squads_summary = analyze_persistent_cases(merged_df)
 
     # Tendências de alertas por squad
     squad_trends_p1 = (
-        df_p1_atuacao.groupby("assignment_group", observed=True)
-        .agg(count_p1=("alert_count", "sum"))
+        df_p1_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True)
+        .agg(count_p1=(COL_ALERT_COUNT, "sum"))
         .reset_index()
     )
     squad_trends_p2 = (
-        df_p2_atuacao.groupby("assignment_group", observed=True)
-        .agg(count_p2=("alert_count", "sum"), num_cases=("assignment_group", "size"))
+        df_p2_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True)
+        .agg(count_p2=(COL_ALERT_COUNT, "sum"), num_cases=(COL_ASSIGNMENT_GROUP, "size"))
         .reset_index()
     )
     squad_trends_merged = pd.merge(
-        squad_trends_p1, squad_trends_p2, on="assignment_group", how="outer"
+        squad_trends_p1,
+        squad_trends_p2,
+        on=COL_ASSIGNMENT_GROUP,
+        how="outer",
+        validate="one_to_one",
     ).fillna(0)
     squad_trends_merged["num_cases"] = squad_trends_merged["num_cases"].astype(int)
 
@@ -285,17 +334,17 @@ def prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao):
 
 
 def analyze_persistent_cases(merged_df):
-    """Analisa apenas os casos persistentes (existiam em ambos os períodos)."""
-    persistent_df = merged_df[merged_df["_merge"] == "both"].copy()
+    """Analisa apenas os Casos persistentes (existiam em ambos os períodos)."""
+    persistent_df = merged_df[merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_BOTH].copy()
     if persistent_df.empty:
         return pd.DataFrame()
 
     summary = (
-        persistent_df.groupby("assignment_group")
+        persistent_df.groupby(COL_ASSIGNMENT_GROUP)
         .agg(
-            num_cases=("assignment_group", "size"),
-            alerts_p1=("alert_count_p1", "sum"),
-            alerts_p2=("alert_count_p2", "sum"),
+            num_cases=(COL_ASSIGNMENT_GROUP, "size"),
+            alerts_p1=(COL_ALERT_COUNT_P1, "sum"),
+            alerts_p2=(COL_ALERT_COUNT_P2, "sum"),
         )
         .fillna(0)
         .astype(int)
@@ -311,29 +360,25 @@ def generate_kpis_html(kpis):
 
     if kpis["total_p2"] > kpis["total_p1"]:
         saldo_icon = (
-            "<span style='font-size: 0.7em; color: var(--danger-color);'>▲</span>"
+            f"<span style='font-size: 0.7em; color: {CSS_COLOR_DANGER};'>▲</span>"
         )
     elif kpis["total_p2"] < kpis["total_p1"]:
         saldo_icon = (
-            "<span style='font-size: 0.7em; color: var(--success-color);'>▼</span>"
+            f"<span style='font-size: 0.7em; color: {CSS_COLOR_SUCCESS};'>▼</span>"
         )
 
-    # Calcula a variação de alertas nos casos persistentes para exibição no funil
+    # Calcula a variação de alertas nos Casos persistentes para exibição no funil
     persistent_alerts_variation = (
         kpis["alerts_persistent"] - kpis["alerts_persistent_p1"]
     )
     variation_text = ""
     if persistent_alerts_variation != 0:
         sign = "+" if persistent_alerts_variation > 0 else ""
-        color = (
-            "var(--danger-color)"
-            if persistent_alerts_variation > 0
-            else "var(--success-color)"
-        )
+        color = CSS_COLOR_DANGER if persistent_alerts_variation > 0 else CSS_COLOR_SUCCESS
         variation_text = f' <span style="font-weight: 600; color: {color};">({sign}{persistent_alerts_variation})</span>'
 
     kpi_html = "<h2>Balanço Operacional: O Fluxo de Casos</h2>"
-    kpi_html += "<div class='definition-box'><strong>Definição:</strong> Um 'Caso' é um problema único que precisa de ação. O fluxo abaixo mostra a evolução do número de casos e do volume total de alertas entre os dois períodos.</div>"
+    kpi_html += "<div class='definition-box'><strong>Caso =></strong> Problema único que precisa de ação. O fluxo mostra a evolução do número total de Casos e alertas entre dois períodos.</div>"
 
     kpi_html += f"""
     <div class="kpi-flow-container">
@@ -363,7 +408,7 @@ def generate_kpis_html(kpis):
         </div></div>
         <div class="kpi-flow-connector">=</div>
         <div class="kpi-flow-item"><div class="kpi-card-enhanced">
-            <p class="kpi-value" style="color: {"var(--danger-color)" if kpis["total_p2"] > kpis["total_p1"] else "var(--success-color)"};">{saldo_icon} {kpis["total_p2"]}</p>
+            <p class="kpi-value" style="color: {CSS_COLOR_DANGER if kpis["total_p2"] > kpis["total_p1"] else CSS_COLOR_SUCCESS};">{saldo_icon} {kpis["total_p2"]}</p>
             <p class="kpi-label">Saldo Recente de Casos</p>
             <p class="kpi-subtitle" title="Resultado final: a soma dos Casos Persistentes com os Novos Casos. Representa o total de problemas que exigem ação neste período.">{kpis["alerts_total_p2"]} alertas</p>
         </div></div>
@@ -374,7 +419,7 @@ def generate_kpis_html(kpis):
     if kpis["total_p1"] == 0 and kpis["total_p2"] > 0:
         insight_text = f"A operação estava estável e registrou <strong>{kpis['new']} novo(s) problema(s)</strong>. O foco deve ser em entender a causa dessa regressão."
     elif kpis["total_p2"] == 0:
-        insight_text = "A operação atingiu um estado de <strong>zero casos</strong> que necessitam de ação. Um marco de excelência em estabilidade."
+        insight_text = "A operação atingiu um estado de <strong>zero Casos</strong> que necessitam de ação. Um marco de excelência em estabilidade."
     elif kpis["resolved"] > kpis["new"]:
         insight_text = f"A equipe conseguiu resolver mais problemas do que os que surgiram (<strong>{kpis['resolved']} resolvidos</strong> vs. <strong>{kpis['new']} novos</strong>), resultando em uma melhora líquida na saúde operacional."
     else:
@@ -390,13 +435,13 @@ def generate_kpis_html(kpis):
     resolved_count = kpis["resolved"]
     total_previous = kpis["total_p1"]
 
-    imp_gauge_color = "var(--success-color)"
+    imp_gauge_color = CSS_COLOR_SUCCESS
     imp_card_bg = "background-color: rgba(28, 200, 138, 0.1);"
     if improvement_percent < 75 and improvement_percent >= 50:
-        imp_gauge_color = "var(--warning-color)"
+        imp_gauge_color = CSS_COLOR_WARNING
         imp_card_bg = "background-color: rgba(246, 194, 62, 0.1);"
     elif improvement_percent < 50:
-        imp_gauge_color = "var(--danger-color)"
+        imp_gauge_color = CSS_COLOR_DANGER
         imp_card_bg = "background-color: rgba(231, 74, 59, 0.1);"
 
     # --- Card 2: Taxa de Novos Problemas (Período Recente) ---
@@ -404,13 +449,13 @@ def generate_kpis_html(kpis):
     new_count = kpis["new"]
     total_current = kpis["total_p2"]
 
-    reg_gauge_color = "var(--danger-color)"
+    reg_gauge_color = CSS_COLOR_DANGER
     reg_card_bg = "background-color: rgba(231, 74, 59, 0.1);"
     if regression_percent <= 25 and regression_percent > 10:
-        reg_gauge_color = "var(--warning-color)"
+        reg_gauge_color = CSS_COLOR_WARNING
         reg_card_bg = "background-color: rgba(246, 194, 62, 0.1);"
     elif regression_percent <= 10:
-        reg_gauge_color = "var(--success-color)"
+        reg_gauge_color = CSS_COLOR_SUCCESS
         reg_card_bg = "background-color: rgba(28, 200, 138, 0.1);"
 
     kpi_html += f"""
@@ -423,7 +468,7 @@ def generate_kpis_html(kpis):
             </div>
             <div class="kpi-split-layout__text">
                 <h2>Taxa de Resolução (Período Anterior)</h2>
-                <p>Dos <strong>{total_previous} casos</strong> que precisavam de ação, <strong>{resolved_count} foram resolvidos</strong>.</p>
+                <p>Dos <strong>{total_previous} Casos</strong> que precisavam de ação, <strong>{resolved_count} foram resolvidos</strong>.</p>
                 <small>Este KPI mede a eficácia na eliminação de problemas que já existiam.</small>
             </div>
         </div>
@@ -435,7 +480,7 @@ def generate_kpis_html(kpis):
             </div>
             <div class="kpi-split-layout__text">
                 <h2>Taxa de Novos Problemas (Período Recente)</h2>
-                <p>Dos <strong>{total_current} casos</strong> atuais, <strong>{new_count} são novos</strong>, representando uma taxa de regressão.</p>
+                <p>Dos <strong>{total_current} Casos</strong> atuais, <strong>{new_count} são novos</strong>, representando uma taxa de regressão.</p>
                 <small>Este KPI mede a capacidade da operação de prevenir novos problemas.</small>
             </div>
         </div>
@@ -451,11 +496,11 @@ def _generate_change_bar_html(change, max_abs_change):
 
     if change > 0:
         bar_class = "negative"
-        change_color = "var(--danger-color)"
+        change_color = CSS_COLOR_DANGER
         change_sign = "+"
     elif change < 0:
         bar_class = "positive"
-        change_color = "var(--success-color)"
+        change_color = CSS_COLOR_SUCCESS
     else:
         bar_class = "neutral"
 
@@ -469,7 +514,7 @@ def _generate_change_bar_html(change, max_abs_change):
 
 
 def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, label_p2):
-    """Gera a tabela HTML para os casos persistentes por squad."""
+    """Gera a tabela HTML para os Casos persistentes por squad."""
     if summary_df.empty:
         return "<p>Nenhum caso persistente foi identificado. Ótimo trabalho!</p>"
 
@@ -498,10 +543,10 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
         table_body += f"<td><span style='display: flex; align-items: center; gap: 8px;'>{chevron_svg} {escape(str(name))}</span></td>"
         table_body += f"<td>{bar_html}</td><td class='center'>{p2_count}</td><td class='center'>{p1_count}</td><td class='center' style='font-weight: bold;'>{num_cases}</td></tr>"
 
-        squad_cases_df = detailed_df[detailed_df["assignment_group"] == name]
+        squad_cases_df = detailed_df[detailed_df[COL_ASSIGNMENT_GROUP] == name]
         details_content = "<h4>Detalhes dos Casos Persistentes</h4><table class='sub-table'><thead><tr><th>Problema</th><th>Recurso Afetado</th><th>Alertas (Recente)</th><th>Alertas (Anterior)</th></tr></thead><tbody>"
         for _, case_row in squad_cases_df.iterrows():
-            details_content += f"<tr><td>{escape(case_row['short_description'])}</td><td>{escape(case_row['cmdb_ci'])}</td><td>{int(case_row['alert_count_p2'])}</td><td>{int(case_row['alert_count_p1'])}</td></tr>"
+            details_content += f"<tr><td>{escape(case_row[COL_SHORT_DESCRIPTION])}</td><td>{escape(case_row[COL_CMDB_CI])}</td><td>{int(case_row[COL_ALERT_COUNT_P2])}</td><td>{int(case_row[COL_ALERT_COUNT_P1])}</td></tr>"
         details_content += "</tbody></table>"
 
         table_body += f"<tr id='{details_id}' class='details-row'><td colspan='5'><div class='details-row-content'>{details_content}</div></td></tr>"
@@ -509,13 +554,7 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
 
     total_change_sign = "+" if total_change > 0 else ""
     total_change_color = (
-        "var(--danger-color)"
-        if total_change > 0
-        else (
-            "var(--success-color)"
-            if total_change < 0
-            else "var(--text-secondary-color)"
-        )
+        CSS_COLOR_DANGER if total_change > 0 else (CSS_COLOR_SUCCESS if total_change < 0 else "var(--text-secondary-color)")
     )
 
     table_footer = "<tfoot><tr><td>Total</td>"
@@ -574,13 +613,7 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
 
     total_change_sign = "+" if total_change > 0 else ""
     total_change_color = (
-        "var(--danger-color)"
-        if total_change > 0
-        else (
-            "var(--success-color)"
-            if total_change < 0
-            else "var(--text-secondary-color)"
-        )
+        CSS_COLOR_DANGER if total_change > 0 else (CSS_COLOR_SUCCESS if total_change < 0 else "var(--text-secondary-color)")
     )
 
     table_footer = "<tfoot><tr><td>Total</td>"
@@ -614,7 +647,7 @@ def gerar_relatorio_tendencia(
         )
         return None
 
-    # Filtra os dados para análise de atuação (casos que precisam de ação)
+    # Filtra os dados para análise de atuação (Casos que precisam de ação)
     df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
     df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
 
@@ -662,7 +695,7 @@ def gerar_relatorio_tendencia(
         .highlight-neutral {{ background-color: rgba(108, 117, 125, 0.1); border-left-color: var(--text-secondary-color); }}
     </style>
     <h1>Análise Comparativa de Períodos</h1>
-    <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Foco nos casos onde a remediação (self-healing) falhou ou não existe. </p>
+    <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Foco nos Casos onde a remediação (self-healing) falhou ou não existe. </p>
     """
     body += f"<div class='definition-box' style='margin-top: 30px;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Recente:</strong> {periodo_recente_text}</div>"
     body += generate_executive_summary_html(
@@ -670,7 +703,6 @@ def gerar_relatorio_tendencia(
         trend_data["persistent_squads_summary"],
         trend_data["new_cases"],
         is_direct_comparison,
-        frontend_url,  # Passa a URL do frontend para o resumo executivo
     )
     body += f"<div class='card'>{generate_kpis_html(kpis)}</div>"
 
@@ -681,7 +713,7 @@ def gerar_relatorio_tendencia(
     body += '<div id="tab-persistentes" class="tab-content active"><div class="definition-box">Casos que já precisavam de ação no período anterior e continuam precisando. <strong>Clique em uma linha da tabela para ver os detalhes.</strong></div>'
     body += (
         generate_persistent_cases_table_html(
-            trend_data["persistent_squads_summary"],
+            trend_data["persistent_squads_summary"],  # noqa: E501
             trend_data["persistent_cases"],
             "Anterior",
             "Recente",
@@ -691,7 +723,7 @@ def gerar_relatorio_tendencia(
     body += '<div id="tab-novos-problemas" class="tab-content"><div class="definition-box">Problemas que não precisavam de ação no período anterior, mas que surgiram no período recente já necessitando de uma.</div>'
     body += (
         generate_trend_table_html(
-            trend_data["new_problems_summary"].set_index("short_description"),
+            trend_data["new_problems_summary"].set_index(COL_SHORT_DESCRIPTION),
             "Anterior",
             "Recente",
         )
@@ -700,10 +732,10 @@ def gerar_relatorio_tendencia(
 
     body += f'<button type="button" class="collapsible"><span>📈 Tendências Gerais por Categoria</span>{chevron_svg_collapsible}</button><div class="collapsible-content"><div class="tab-container"><div class="tab-links">'
     body += '<button class="tab-link active" data-target="tab-variacao-squad">📈 Variação de Alertas por Squad</button><button class="tab-link" data-target="tab-variacao-problema">📊 Variação por Tipo de Problema</button></div>'
-    body += '<div id="tab-variacao-squad" class="tab-content active"><div class="definition-box">Visão geral da variação no volume de alertas por squad, considerando todos os casos que necessitam de ação.</div>'
+    body += '<div id="tab-variacao-squad" class="tab-content active"><div class="definition-box">Visão geral da variação no volume de alertas por squad, considerando todos os Casos que necessitam de ação.</div>'
     body += (
         generate_trend_table_html(
-            trend_data["squad_trends"].set_index("assignment_group"),
+            trend_data["squad_trends"].set_index(COL_ASSIGNMENT_GROUP),
             "Anterior",
             "Recente",
         )
@@ -712,7 +744,7 @@ def gerar_relatorio_tendencia(
     body += '<div id="tab-variacao-problema" class="tab-content"><div class="definition-box">Variação no volume de alertas para os tipos de problema que persistiram entre os dois períodos.</div>'
     body += (
         generate_trend_table_html(
-            trend_data["varying_problems_summary"].set_index("short_description"),
+            trend_data["varying_problems_summary"].set_index(COL_SHORT_DESCRIPTION),
             "Anterior",
             "Recente",
         )
@@ -724,7 +756,7 @@ def gerar_relatorio_tendencia(
     body += '<div id="tab-resolvidos" class="tab-content active"><div class="definition-box">Casos que necessitavam de ação no período anterior e que foram resolvidos, não precisando mais de atuação.</div>'
     body += (
         generate_trend_table_html(
-            trend_data["resolved_problems_summary"].set_index("short_description"),
+            trend_data["resolved_problems_summary"].set_index(COL_SHORT_DESCRIPTION),
             "Anterior",
             "Recente",
         )
