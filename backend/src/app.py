@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 import jwt
+from flasgger import Swagger
 from flask import (
     Flask,
     abort,
@@ -38,6 +39,36 @@ MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "..", "migrations")
 # Inicializa a instância do DB com a aplicação Flask
 db.init_app(app)
 migrate = Migrate(app, db, directory=MIGRATIONS_DIR)
+
+# Inicializa o Flasgger para documentação da API
+swagger_template = {
+    "swagger": "2.0",
+    "info": {
+        "title": "Meu-Dash API",
+        "description": "API para análise de alertas e tendências.",
+        "version": "1.0.0",
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Token de autorização JWT. Exemplo: \"Bearer {token}\"",
+        }
+    },
+    "definitions": {
+        "Error": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "description": "Mensagem de erro descritiva."
+                }
+            }
+        }
+    }
+}
+swagger = Swagger(app, template=swagger_template)
 
 # --- CONFIGURAÇÃO DE CORS ---
 # Configura o CORS para permitir requisições da nossa futura aplicação frontend
@@ -99,12 +130,28 @@ def health_check():
 
 @app.route("/api/v1/dashboard-summary")
 def get_dashboard_summary():
-    """
-    Endpoint da API que retorna um resumo dos dados para o dashboard principal.
-
-    Delega a busca dos dados para a camada de serviço e, em seguida, formata
-    a resposta como JSON, enriquecendo-a com as URLs necessárias para o frontend.
-
+    """Obtém um resumo dos KPIs e do histórico de análises.
+    Este endpoint retorna os principais indicadores de performance (KPIs) da última análise
+    e uma lista do histórico de relatórios de tendência gerados.
+    ---
+    tags:
+      - Dashboard
+    responses:
+      200:
+        description: Resumo do dashboard retornado com sucesso.
+        schema:
+          type: object
+          properties:
+            kpi_summary:
+              type: object
+              description: Objeto com os KPIs da última análise.
+            trend_history:
+              type: array
+              description: Lista de análises de tendência anteriores.
+              items:
+                type: object
+      500:
+        description: Erro interno ao processar a solicitação.
     Returns:
         Response: Uma resposta JSON contendo os dados do dashboard.
     """
@@ -156,14 +203,42 @@ def get_dashboard_summary():
 
 @app.route("/api/v1/upload", methods=["POST"])
 def upload_file_api():
-    """
-    Endpoint da API para upload e processamento de um novo arquivo de análise.
-
-    Recebe um arquivo, delega o processamento para a camada de serviço e
-    retorna uma resposta JSON indicando sucesso ou falha.
-
-    Returns:
-        Response: Uma resposta JSON com o resultado do processamento.
+    """Processa um novo arquivo para análise (Análise Padrão).
+    Este endpoint recebe um arquivo .csv, dispara o processo de análise completo,
+    gera os relatórios e retorna um JSON com o resultado.
+    ---
+    tags:
+      - Upload
+    consumes:
+      - multipart/form-data
+    parameters:
+      - in: formData
+        name: file_recente
+        type: file
+        required: true
+        description: O arquivo .csv a ser analisado.
+    responses:
+      200:
+        description: Arquivo processado com sucesso.
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            report_url:
+              type: string
+              description: URL para o relatório principal gerado.
+            kpi_summary:
+              type: object
+              description: Resumo dos KPIs da nova análise.
+      400:
+        description: Erro na requisição, como arquivo ausente ou inválido.
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Erro interno no servidor durante o processamento.
+        schema:
+          $ref: '#/definitions/Error'
     """
     file_recente = request.files.get("file_recente")
 
@@ -205,14 +280,41 @@ def upload_file_api():
 
 @app.route("/api/v1/compare", methods=["POST"])
 def compare_files_api():
-    """
-    Endpoint da API para comparação direta entre dois arquivos.
-
-    Recebe dois arquivos, delega a comparação para a camada de serviço e
-    retorna uma resposta JSON com a URL do relatório de tendência gerado.
-
-    Returns:
-        Response: Uma resposta JSON com o resultado da comparação.
+    """Compara dois arquivos de dados para análise de tendência direta.
+    Este endpoint recebe dois arquivos .csv, dispara o processo de comparação
+    e retorna um JSON com a URL para o relatório de tendência gerado.
+    ---
+    tags:
+      - Upload
+    consumes:
+      - multipart/form-data
+    parameters:
+      - in: formData
+        name: files
+        type: file
+        required: true
+        description: Os dois arquivos .csv a serem comparados.
+        # Adicional para suportar múltiplos arquivos no Swagger UI
+        collectionFormat: multi
+    responses:
+      200:
+        description: Arquivos comparados com sucesso.
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            report_url:
+              type: string
+              description: URL para o relatório de tendência gerado.
+      400:
+        description: Erro na requisição, como número incorreto de arquivos.
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Erro interno no servidor durante o processamento.
+        schema:
+          $ref: '#/definitions/Error'
     """
     if "files" not in request.files or len(request.files.getlist("files")) == 0:
         return jsonify({"error": "Nenhum arquivo enviado."}), 400
@@ -318,16 +420,34 @@ def serve_docs(filename):
 
 @app.route("/api/v1/reports")
 def get_reports():
+    """Lista todos os relatórios de análise de tendência gerados.
+    Este endpoint retorna uma lista com os metadados de todos os relatórios
+    de análise de tendência que foram gerados e estão armazenados.
+    ---
+    tags:
+      - Reports
+    responses:
+      200:
+        description: Lista de relatórios retornada com sucesso.
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: ID único do relatório no banco de dados.
+              run_folder:
+                type: string
+                description: Diretório onde os artefatos do relatório estão armazenados.
+              filename:
+                type: string
+                description: Nome do arquivo principal do relatório.
+              created_at:
+                type: string
+                format: date-time
+                description: Data e hora da criação do relatório.
     """
-    Endpoint da API que retorna a lista de todos os relatórios gerados.
-
-    Delega a busca dos dados para a camada de serviço e formata a resposta
-    como uma lista de objetos JSON, cada um representando um relatório.
-
-    Returns:
-        Response: Uma resposta JSON contendo a lista de relatórios.
-    """
-    # Delega a busca para a camada de serviço
     reports_data = services.get_reports_list(models.Report)
 
     # Enriquece com as URLs antes de retornar
@@ -369,14 +489,39 @@ def token_required(f):
 @app.route("/api/v1/reports/<int:report_id>", methods=["DELETE"])
 @token_required
 def delete_report_api(report_id):
-    """
-    Endpoint da API para excluir um relatório e seus artefatos.
-
-    Args:
-        report_id (int): O ID do relatório a ser excluído, capturado da URL.
-
-    Returns:
-        Response: Uma resposta JSON indicando sucesso ou falha.
+    """Exclui um relatório de análise de tendência e seus artefatos.
+    Este endpoint é protegido e requer um token de autenticação JWT.
+    ---
+    tags:
+      - Reports
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: report_id
+        type: integer
+        required: true
+        description: O ID do relatório a ser excluído.
+    responses:
+      200:
+        description: Relatório excluído com sucesso.
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+      401:
+        description: Erro de autenticação (token ausente, inválido ou expirado).
+        schema:
+          $ref: '#/definitions/Error'
+      404:
+        description: Relatório não encontrado.
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Erro interno no servidor durante a exclusão.
+        schema:
+          $ref: '#/definitions/Error'
     """
     try:
         # Delega a lógica de exclusão para a camada de serviço
@@ -403,7 +548,51 @@ def delete_report_api(report_id):
 
 @app.route("/admin/login", methods=["POST"])
 def login_api():
-    """Endpoint da API para autenticação e geração de token JWT."""
+    """Autentica um administrador e retorna um token JWT.
+    Este endpoint recebe as credenciais de administrador e, se válidas,
+    retorna um token de acesso JWT para ser usado em rotas protegidas.
+    ---
+    tags:
+      - Authentication
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - username
+            - password
+          properties:
+            username:
+              type: string
+              description: Nome de usuário do administrador.
+              example: "admin"
+            password:
+              type: string
+              description: Senha do administrador.
+              format: password
+              example: "your_secret_password"
+    responses:
+      200:
+        description: Autenticação bem-sucedida.
+        schema:
+          type: object
+          properties:
+            access_token:
+              type: string
+              description: Token JWT para autorização.
+      400:
+        description: Requisição inválida (usuário ou senha ausentes).
+        schema:
+          $ref: '#/definitions/Error'
+      401:
+        description: Credenciais inválidas.
+        schema:
+          $ref: '#/definitions/Error'
+    """
     auth_data = request.get_json()
     if not auth_data or not auth_data.get("username") or not auth_data.get("password"):
         return jsonify({"error": "Usuário e senha são obrigatórios."}), 400

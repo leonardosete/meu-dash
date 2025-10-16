@@ -130,6 +130,11 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
 
 ### Fase 3: Finalização e Limpeza
 
+- [ ] **Ajustes Visuais e de UX:** **(Novo)**
+  - [ ] Refinar a página de histórico de relatórios para melhorar a clareza e usabilidade (ex: layout dos botões, separadores visuais).
+- [ ] **Revisão e Reforço da Autenticação:** **(Novo)**
+  - [ ] Analisar o fluxo de autenticação atual (JWT) e implementar melhorias de segurança e usabilidade.
+  - [ ] Garantir que o botão de exclusão de relatórios seja visível apenas para usuários administradores autenticados.
 - [ ] **Atualizar `Dockerfile`:**
   - [x] **Corrigir Link de Retorno nos Relatórios:** A `FRONTEND_BASE_URL` agora é injetada corretamente em todos os fluxos de geração de relatório (Padrão e Comparativo), garantindo que os links de retorno apontem para a SPA.
   - Criar um `Dockerfile` multi-estágio.
@@ -141,12 +146,12 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
   - Adicionar etapas para as verificações de linting, formatação e segurança do frontend.
   - Modificar a etapa de build do Docker para usar o novo `Dockerfile`.
 - [ ] **Remover Código Morto:**
-  - Remover os testes antigos que se tornaram obsoletos.
   - Remover o diretório `templates/` do backend (exceto os templates usados para gerar os artefatos de relatório, se houver).
   - Remover dependências do Flask que não são mais necessárias (ex: `Jinja2` se não for mais usado).
 - [ ] **Atualizar Documentação:** **(Pendente)**
   - Atualizar o `GEMINI.md` e `README.md` para refletir a nova arquitetura de API + SPA.
-  - **Revisar e reescrever a documentação técnica (`docs/doc_tecnica.html`)** para alinhar com a nova arquitetura.
+  - [x] **Implementar `flasgger` para gerar documentação de API interativa (Swagger UI).**
+  - [x] Substituir a documentação estática (`docs/doc_tecnica.html`) pela documentação auto-gerada.
   - Marcar este plano (`REFACTOR_PLAN.md`) como concluído.
 
 ---

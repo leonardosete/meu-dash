@@ -10,3 +10,4 @@ PyJWT
 pytest
 ruff
 Werkzeug
+flasgger==0.9.7.1

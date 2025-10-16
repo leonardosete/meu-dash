@@ -36,7 +36,7 @@ O método recomendado para o desenvolvimento local é usar **Docker Compose**, q
 
 3. **Acesse os serviços:**
    - **API do Backend:** `http://127.0.0.1:5001` (ou a porta definida em `BACKEND_PORT` no seu `.env`)
-   - **Aplicação Frontend:** `http://127.0.0.1:5174` (ou a porta definida em `FRONTEND_PORT` no seu `.env`)
+   - **Aplicação Frontend:** `http://127.0.0.1:5174` (ou a porta definida em `FRONTEND_PORT` no seu `.env`)_
 
 Para parar todo o ambiente, use `make down`.
 

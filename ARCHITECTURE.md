@@ -1,71 +1,58 @@
 # 📐 Arquitetura do Sistema `meu-dash`
 
-Este documento descreve a arquitetura da aplicação, seus principais componentes e o fluxo de dados, desde o upload de um arquivo pelo usuário até a geração dos relatórios.
+Este documento descreve a arquitetura desacoplada da aplicação, seus principais componentes e o fluxo de dados, conforme o plano de refatoração concluído.
 
 ## Visão Geral
 
-A aplicação segue uma arquitetura de 3 camadas, executando sobre um framework web **Flask**:
+A aplicação segue uma arquitetura moderna e desacoplada, composta por um **backend de API pura** e um **frontend Single-Page Application (SPA)**. Esta abordagem melhora a escalabilidade, a flexibilidade e a experiência de desenvolvimento.
 
-1. **Camada de Apresentação (Flask Web)**: Responsável por renderizar a interface do usuário (HTML/CSS), receber requisições HTTP (como uploads de arquivos) e servir os relatórios gerados.
-    - Componente principal: `src/app.py`
-2. **Camada de Serviço**: Orquestra a lógica de negócio. Ela desacopla a camada web dos detalhes da análise de dados, recebendo os dados brutos da camada de apresentação e coordenando os módulos de análise e geração de páginas.
-    - Componente principal: `src/services.py`
-3. **Camada de Análise e Dados**: Contém os motores de análise que processam os dados dos arquivos `.csv`, aplicam a lógica de priorização e geram os dataframes e estatísticas.
-    - Componentes principais: `src/analisar_alertas.py`, `src/analise_tendencia.py`
-
-O sistema utiliza um banco de dados **SQLite** para persistir metadados sobre os relatórios gerados, permitindo a criação de um histórico e a funcionalidade de análise de tendência.
+- **Backend (API RESTful):** Uma aplicação **Flask** que expõe endpoints para manipulação de dados e acionamento de análises. Ele é responsável pela lógica de negócio, mas não renderiza nenhuma página da interface principal. Sua única responsabilidade é servir e receber dados no formato **JSON**.
+- **Frontend (SPA):** Uma aplicação **React** (construída com Vite) que roda inteiramente no navegador do usuário. Ela consome a API do backend para buscar dados, enviar arquivos e apresentar a interface de forma rica e interativa.
+- **Comunicação:** A comunicação entre frontend e backend ocorre exclusivamente via chamadas de API RESTful.
 
 ## Componentes Principais
 
-- `src/app.py`: Ponto de entrada da aplicação Flask. Define as rotas (endpoints), gerencia as requisições e respostas HTTP e interage com a camada de serviço.
-- `src/services.py`: O coração da lógica de negócio. Orquestra o salvamento de arquivos, chama os módulos de análise, gerencia o banco de dados e coordena a geração dos relatórios.
-- `src/analisar_alertas.py`: Módulo que contém a lógica para analisar um único arquivo `.csv`. Ele lê o arquivo, o transforma em um dataframe do `pandas`, agrupa alertas em "Casos", calcula o Score de Prioridade e gera os dados base para os relatórios.
-- `src/analise_tendencia.py`: Módulo responsável por comparar dois resultados de análise (um recente e um anterior) e gerar o relatório de tendência, destacando novos problemas, problemas resolvidos e a evolução geral.
-- `src/context_builder.py`: Constrói o dicionário de contexto que é passado para os templates HTML, agregando todos os dados necessários para a renderização.
-- `src/gerador_paginas.py`: Utiliza o contexto e os templates para gerar o ecossistema de arquivos HTML (dashboard principal, planos de ação, etc.).
-- `data/`: Diretório persistido que armazena os arquivos de upload, os relatórios gerados e o banco de dados SQLite.
-- `templates/`: Contém os templates Jinja2 para a renderização das páginas HTML.
+O projeto está dividido em dois diretórios principais: `backend/` e `frontend/`.
+
+#### Backend (`backend/src/`)
+
+- `app.py`: Ponto de entrada da API Flask. Define os endpoints da API (ex: `/api/v1/dashboard-summary`), gerencia as requisições HTTP e delega toda a lógica para a camada de serviço.
+- `services.py`: O cérebro da aplicação. Orquestra o fluxo de análise, interage com o banco de dados e coordena a chamada aos motores de análise e geradores de página.
+- `analisar_alertas.py`: Motor de análise principal. Processa um arquivo `.csv`, agrupa alertas em Casos e calcula o score de prioridade para cada um.
+- `analise_tendencia.py`: Motor de análise comparativa. Compara os resultados de dois períodos e gera o relatório de tendência.
+- `gerador_paginas.py`: Responsável por usar os dados analisados para gerar os **artefatos** de relatório (arquivos HTML estáticos).
+
+#### Frontend (`frontend/src/`)
+
+- `main.tsx`: Ponto de entrada da aplicação React.
+- `App.tsx`: Componente raiz que gerencia o roteamento e o layout principal.
+- `components/`: Diretório contendo os componentes reutilizáveis da UI (ex: `Dashboard.tsx`, `UploadForms.tsx`).
+- `services/api.ts`: Módulo responsável por fazer as chamadas à API do backend.
 
 ## Diagrama de Componentes
 
-O diagrama abaixo representa a arquitetura de componentes (baseado no modelo C4 - Nível 2), ilustrando as principais responsabilidades e interações dentro do sistema.
+O diagrama abaixo ilustra a nova arquitetura desacoplada, mostrando a interação entre o usuário, o frontend e o backend.
 
 ```mermaid
 graph TD
-    subgraph "Sistema meu-dash"
-        direction TB
+    User[("Usuário")] -- "Interage com" --> Frontend
 
-        subgraph "Camada de Apresentação"
-            A["app.py<br><b>(Flask Controller)</b><br>Recebe uploads, gerencia rotas HTTP."]
-        end
-
-        subgraph "Camada de Serviço"
-            B["services.py<br><b>(Orquestrador)</b><br>Coordena a lógica de negócio."]
-        end
-
-        subgraph "Camada de Análise"
-            C["analisar_alertas.py<br><b>(Motor de Análise)</b><br>Calcula scores e agrupa Casos."]
-            D["analise_tendencia.py<br><b>(Motor de Tendência)</b><br>Compara relatórios."]
-        end
-
-        subgraph "Camada de Geração de Relatórios"
-            E["gerador_paginas.py<br><b>(Gerador de HTML)</b><br>Renderiza os templates."]
-            F["context_builder.py<br><b>(Builder de Contexto)</b><br>Prepara dados para a view."]
-        end
-
-        subgraph "Camada de Dados"
-            G["SQLite DB<br><b>(Banco de Dados)</b><br>Armazena metadados dos relatórios."]
-        end
-
+    subgraph "Frontend (SPA no Navegador)"
+        Frontend["React App<br><b>(Vite)</b><br>Gerencia a UI e o estado."]
     end
 
-    %% Relacionamentos
-    A --"Chama process_upload()"--> B
-    B --"Executa análise"--> C
-    B --"Executa análise de tendência"--> D
-    B --"Prepara dados para renderizar"--> F
-    F --"Fornece contexto para"--> E
-    B --"Salva e consulta metadados"--> G
+    Frontend -- "Requisições HTTP (JSON)" --> BackendAPI
+
+    subgraph "Backend (Contêiner Docker)"
+        BackendAPI["Flask API<br><b>(Controller)</b><br>Recebe requisições e delega."]
+        Service["Camada de Serviço<br><b>(Orquestrador)</b><br>Executa a lógica de negócio."]
+        Analysis["Motores de Análise<br>Processam dados e calculam scores."]
+        DB["Banco de Dados<br><b>(SQLite)</b><br>Persiste metadados."]
+    end
+
+    BackendAPI --> Service
+    Service --> Analysis
+    Service --> DB
 ```
 
 ## Fluxo de Dados (Upload de Arquivo Único)

@@ -136,7 +136,7 @@ check-backend-docker:
 	@docker-compose exec -T backend ruff format --check .
 	@docker-compose exec -T backend ruff check .
 	@echo ">>> [DOCKER] Verificando segurança do backend com bandit..."
-	@docker-compose exec -T security-scanner bandit -r src -ll -ii
+	@docker-compose run --rm security-scanner bandit -r src -ll -ii
 
 test-backend-docker:
 	@echo ">>> [DOCKER] Executando testes do backend com pytest..."
