@@ -211,9 +211,9 @@
                     // Transforma os dados de volta para um formato que o PapaParse entende
                     const dataToExport = dataRows.map(row => {
                         let obj = {};
-                        columnHeaders.forEach((header, index) => {
+                        for (const [index, header] of columnHeaders.entries()) {
                             obj[header] = row[index];
-                        });
+                        }
                         return obj;
                     });
                 
@@ -229,7 +229,7 @@
                     link.style.visibility = 'hidden';
                     document.body.appendChild(link);
                     link.click();
-                    document.body.removeChild(link);
+                    link.remove();
                 }
             });
         });
