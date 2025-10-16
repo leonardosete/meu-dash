@@ -45,9 +45,15 @@ const Sidebar = () => {
         color="var(--accent-color)" 
       />
 
-      {isAuthenticated ? (
-        <SideCard to="/admin/logout" icon={<LogOut />} title="Modo Admin Ativo" description="Clique para sair" color="var(--danger-color)" />
-      ) : (
+      {isAuthenticated ? ( // Se autenticado, mostra um botão de logout
+        <div className="card side-card clickable" onClick={logout}>
+          <LogOut color="var(--danger-color)" />
+          <div className="side-card-text">
+            <h3>Modo Admin Ativo</h3>
+            <p>Clique para sair</p>
+          </div>
+        </div>
+      ) : ( // Se não, mostra o link para a página de login
         <SideCard to="/admin/login" icon={<Shield />} title="Acesso Administrativo" description="Login para gerenciar relatórios" color="var(--warning-color)" />
       )}
       

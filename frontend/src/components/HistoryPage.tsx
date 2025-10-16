@@ -87,7 +87,9 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ isCompactMode = false }) => {
                 <td>
                   <div className="action-buttons-container">
                     <a href={`${api.API_BASE_URL}${report.url}`} className="action-button view">Visualizar</a>
-                    <button onClick={() => handleDelete(report.id)} className="action-button delete" disabled={!isAuthenticated}>Excluir</button>
+                    {isAuthenticated && (
+                      <button onClick={() => handleDelete(report.id)} className="action-button delete">Excluir</button>
+                    )}
                   </div>
                 </td>
               </tr>

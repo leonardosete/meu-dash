@@ -130,12 +130,12 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
 
 ### Fase 3: Finalização e Limpeza
 
-- [ ] **Ajustes Visuais e de UX:** **(Novo)**
 - [x] **Ajustes Visuais e de UX:** **(Concluído)**
   - [x] Refinar a página de histórico de relatórios para melhorar a clareza e usabilidade (ex: layout dos botões, separadores visuais).
 - [ ] **Revisão e Reforço da Autenticação:** **(Pendente)**
   - [ ] Analisar o fluxo de autenticação atual (JWT) e implementar melhorias de segurança e usabilidade.
-  - [ ] Garantir que o botão de exclusão de relatórios seja visível apenas para usuários administradores autenticados.
+  - [x] Garantir que o botão de exclusão de relatórios seja visível apenas para usuários administradores autenticados.
+  - [ ] Garantir a reatividade e consistência do estado de autenticação na UI (ex: card "Modo Admin").
 - [ ] **Atualizar `Dockerfile`:**
   - [x] **Corrigir Link de Retorno nos Relatórios:** A `FRONTEND_BASE_URL` agora é injetada corretamente em todos os fluxos de geração de relatório (Padrão e Comparativo), garantindo que os links de retorno apontem para a SPA.
   - Criar um `Dockerfile` multi-estágio.
