@@ -466,8 +466,15 @@ def token_required(f):
     def decorated(*args, **kwargs):
         token = None
         if "Authorization" in request.headers:
-            # Extrai o token do cabeçalho 'Bearer <token>'
-            token = request.headers["Authorization"].split(" ")[1]
+            auth_header = request.headers["Authorization"]
+            parts = auth_header.split()
+            # Se o formato for "Bearer <token>", pega apenas o token.
+            if len(parts) == 2 and parts[0].lower() == "bearer":
+                token = parts[1]
+            # Se o formato for apenas "<token>", usa o valor diretamente.
+            # Isso melhora a experiência de uso no Swagger UI.
+            elif len(parts) == 1:
+                token = parts[0]
 
         if not token:
             return jsonify({"error": "Token de autenticação ausente."}), 401
