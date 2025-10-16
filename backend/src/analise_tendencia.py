@@ -816,6 +816,23 @@ def gerar_relatorio_tendencia(
                     });
                 });
             });
+
+            // CORREÇÃO: Reintroduz a lógica para as linhas expansíveis da tabela de Casos Persistentes.
+            document.querySelectorAll('.expandable-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    const targetId = row.dataset.target;
+                    const detailsRow = document.getElementById(targetId);
+                    if (detailsRow) {
+                        row.classList.toggle('open');
+                        detailsRow.classList.toggle('open');
+                        // Atualiza a altura do contêiner pai se estiver dentro de um 'collapsible'
+                        const parentContent = row.closest('.collapsible-content');
+                        if (parentContent && parentContent.style.maxHeight) {
+                            parentContent.style.maxHeight = parentContent.scrollHeight + "px";
+                        }
+                    }
+                });
+            });
         });
     </script>"""
 
