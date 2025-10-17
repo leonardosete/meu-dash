@@ -137,11 +137,15 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
   - [x] Garantir que o botão de exclusão de relatórios seja visível apenas para usuários administradores autenticados.
   - [ ] Garantir a reatividade e consistência do estado de autenticação na UI (ex: card "Modo Admin").
 - [ ] **Atualizar `Dockerfile`:**
-  - [x] **Corrigir Link de Retorno nos Relatórios:** A `FRONTEND_BASE_URL` agora é injetada corretamente em todos os fluxos de geração de relatório (Padrão e Comparativo), garantindo que os links de retorno apontem para a SPA.
-  - Criar um `Dockerfile` multi-estágio.
-  - O primeiro estágio faz o *build* do frontend (gera os arquivos estáticos).
-  - O segundo estágio copia os arquivos estáticos do frontend e a aplicação Flask.
-  - Configurar um servidor web (como o Gunicorn para o Flask e talvez o Nginx para servir os estáticos) para o ambiente de produção.
+  - [x] Criado um `Dockerfile` multi-estágio para produção, com build do frontend e configuração do Nginx.
+  - [x] O `Dockerfile` foi depurado e corrigido para lidar com dependências de compilação, permissões de usuário e arquitetura multi-plataforma (`buildx`).
+- [ ] **Validação e Depuração em Ambiente de Produção (Kubernetes):** **(Em Andamento)**
+  - [ ] **(FALHOU)** Testar o fluxo de upload da "Análise Padrão".
+  - [ ] **(FALHOU)** Testar o fluxo de upload da "Análise Comparativa".
+  - [ ] **(FALHOU)** Validar o acesso e a funcionalidade da documentação da API (`/apidocs`) e gerencial (`/docs/doc_gerencial.html`). Links apontam para `localhost`.
+  - [ ] **(FALHOU)** Validar o fluxo de autenticação do administrador (login e logout).
+  - [ ] Validar a funcionalidade de exclusão de relatórios (como administrador).
+  - [ ] Verificar se todos os links de retorno nos relatórios gerados apontam para a URL correta do frontend.
 - [ ] **Atualizar Pipeline de CI/CD (`.github/workflows/ci.yml`):** **(Pendente)**
   - Adicionar etapas para instalar dependências, rodar testes e fazer o build do projeto frontend.
   - Adicionar etapas para as verificações de linting, formatação e segurança do frontend.

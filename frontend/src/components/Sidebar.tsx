@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, PieChart, Code, History, LayoutDashboard, LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { API_BASE_URL } from '../services/api';
 
 interface SideCardProps {
   to: string;
@@ -25,8 +24,14 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
   );
 
   if (isExternal) {
-    // Constrói a URL completa para o backend e navega na mesma aba
-    return <a href={`${API_BASE_URL}${to}`} className="card side-card">{content}</a>;
+    // Constrói a URL externa dinamicamente usando a origem da janela atual.
+    // Isso garante que a URL base seja sempre a correta, tanto em produção
+    // (https://smart-plan.devops-master.shop) quanto em desenvolvimento (http://127.0.0.1:5174).
+    // Isso elimina a dependência de uma variável de ambiente que pode estar incorreta no build.
+    const externalUrl = new URL(to, window.location.origin).href;
+    return (
+      <a href={externalUrl} target="_blank" rel="noopener noreferrer" className="card side-card">{content}</a>
+    );
   }
 
   return <Link to={to} className="card side-card">{content}</Link>;
@@ -59,7 +64,7 @@ const Sidebar = () => {
       
       <SideCard 
         to="/docs/doc_gerencial.html" 
-        isExternal={true}
+        isExternal={true} // Mantém o comportamento de link externo para a documentação
         icon={<PieChart />} 
         title="Documentação Gerencial" 
         description="Visão de negócio e conceitos." 

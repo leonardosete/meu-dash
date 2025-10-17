@@ -232,9 +232,7 @@ docker-prune:
 	@docker image prune -f
 
 publish-prod:
-	@echo ">>> Construindo e publicando a imagem de produção: $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
-	@echo ">>> Passo 1: Construindo a imagem a partir do Dockerfile de produção..."
-	@docker build -t $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f Dockerfile .
-	@echo ">>> Passo 2: Publicando a imagem no registro..."
-	@docker push $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+	@echo ">>> Construindo e publicando a imagem de produção multi-plataforma: $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
+	@echo ">>> Construindo para linux/amd64 (cluster) e linux/arm64 (local)..."
+	@docker buildx build --platform linux/amd64,linux/arm64 -t $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f Dockerfile . --push
 	@echo ">>> Imagem publicada com sucesso!"

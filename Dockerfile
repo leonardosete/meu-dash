@@ -10,34 +10,35 @@ RUN npm install
 
 COPY frontend/ ./
 
-# A URL da API em produção será relativa (ex: /api), pois o Nginx fará o proxy.
-ENV VITE_API_BASE_URL=/
 RUN npm run build
 
 # --- Estágio 2: Aplicação Final (Nginx + Gunicorn) ---
-FROM python:3.12-alpine
+FROM python:3.14-alpine
 
 WORKDIR /app
 
 # Copia a configuração do Nginx
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Instala apenas o Nginx
-RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
-
-# Instala as dependências do Python
+# Instala Nginx, dependências de build, pacotes Python e depois limpa, tudo em uma única camada.
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apk add --no-cache nginx && \
+    apk add --no-cache --virtual .build-deps build-base python3-dev && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apk del .build-deps
 
 # Copia o código-fonte do backend
 COPY ./backend/src ./src
+
+# Copia os templates HTML necessários para a geração de relatórios.
+COPY ./backend/templates ./templates
 
 # Copia os arquivos estáticos do frontend (gerados no estágio 1)
 # para o diretório que o Nginx irá servir.
 COPY --from=frontend-builder /app/frontend/dist /var/www/html
 
-# Garante que o Nginx possa ler os arquivos do frontend
-RUN chown -R www-data:www-data /var/www/html && chmod -R 755 /var/www/html
+# Garante que o usuário 'nginx' (padrão do Alpine) possa ler os arquivos do frontend.
+RUN chown -R nginx:nginx /var/www/html && chmod -R 755 /var/www/html
 
 # O comando de inicialização será definido no manifesto do Kubernetes
 # para cada contêiner (Nginx e Gunicorn).
