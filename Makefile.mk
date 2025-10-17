@@ -3,11 +3,12 @@
 # Define o interpretador Python a ser usado. Procura por um ambiente virtual.
 PYTHON := $(shell if [ -d ".venv" ]; then echo ".venv/bin/python"; else echo "python3"; fi)
 
-# Define o nome da imagem Docker e a tag.
+# Define o nome da imagem Docker de desenvolvimento e a tag.
 DOCKER_IMAGE_NAME := meu-dash
 DOCKER_IMAGE_TAG := latest
+DOCKER_PROD_IMAGE_NAME := sevenleo/smart-plan
 
-.PHONY: help install setup setup-frontend run test test-backend-docker format lint check clean distclean docker-build docker-run docker-prune validate validate-all-docker validate-clean-docker up down migrate-docker lint-backend-docker format-backend-docker check-backend-docker lint-frontend-docker format-frontend-docker test-frontend-docker format-all-docker
+.PHONY: help install setup setup-frontend run test test-backend-docker format lint check clean distclean docker-build docker-run docker-prune validate validate-all-docker validate-clean-docker up down migrate-docker lint-backend-docker format-backend-docker check-backend-docker lint-frontend-docker format-frontend-docker test-frontend-docker format-all-docker publish-prod
 help:
 	@echo "Comandos disponíveis:"
 	@echo ""
@@ -15,6 +16,9 @@ help:
 	@echo "  make up             - (Recomendado) Inicia todo o ambiente de desenvolvimento com Docker Compose."
 	@echo "  make down           - Para todo o ambiente Docker Compose."
 	@echo "  make migrate-docker - (Importante) Aplica as migrações do DB dentro do contêiner Docker."
+	@echo ""
+	@echo "--- 🚀 Ambiente de Produção (Docker + K8s) ---"
+	@echo "  make publish-prod   - Constrói e publica a imagem de produção para o Docker Hub."
 	@echo ""
 	@echo "--- ✅ Validação e Testes (Docker) ---"
 	@echo "  make validate-all-docker - (RECOMENDADO) Roda TODAS as validações (backend + frontend) no Docker."
@@ -226,3 +230,11 @@ down:
 docker-prune:
 	@echo ">>> Removendo imagens Docker não utilizadas..."
 	@docker image prune -f
+
+publish-prod:
+	@echo ">>> Construindo e publicando a imagem de produção: $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
+	@echo ">>> Passo 1: Construindo a imagem a partir do Dockerfile de produção..."
+	@docker build -t $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f Dockerfile .
+	@echo ">>> Passo 2: Publicando a imagem no registro..."
+	@docker push $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+	@echo ">>> Imagem publicada com sucesso!"

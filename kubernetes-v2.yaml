@@ -1,111 +1,99 @@
 # --- Namespace para organizar os recursos da aplicação ---
-# apiVersion: v1
-# kind: Namespace
-# metadata:
-#   name: meu-dash-alertas
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: smart-plan
 
 ---
 # --- Headless Service: Necessário para o StatefulSet ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: meu-dash-headless
-#   namespace: meu-dash-alertas
-# spec:
-#   clusterIP: None
-#   selector:
-#     app: meu-dash-web
-#   ports:
-#   - port: 80
-#     targetPort: 5000
+apiVersion: v1
+kind: Service
+metadata:
+  name: smart-plan-headless
+  namespace: smart-plan
+spec:
+  clusterIP: None
+  selector:
+    app: smart-plan
+  ports:
+  - port: 80
+    targetPort: http
 
 ---
 # --- Service ClusterIP: Ponto de acesso interno para o Ingress ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: meu-dash-web
-#   namespace: meu-dash-alertas
-# spec:
-#   type: ClusterIP
-#   selector:
-#     app: meu-dash-web
-#   ports:
-#   - name: http
-#     port: 80
-#     targetPort: 5000
+apiVersion: v1
+kind: Service
+metadata:
+  name: smart-plan
+  namespace: smart-plan
+spec:
+  type: ClusterIP
+  selector:
+    app: smart-plan
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
 
 ---
 # --- PodDisruptionBudget (PDB): Garante a alta disponibilidade ---
-# apiVersion: policy/v1
-# kind: PodDisruptionBudget
-# metadata:
-#   name: meu-dash-pdb
-#   namespace: meu-dash-alertas
-# spec:
-#   minAvailable: 1
-#   selector:
-#     matchLabels:
-#       app: meu-dash-web
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: smart-plan-pdb
+  namespace: smart-plan
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: smart-plan
 
 ---
 # --- StatefulSet: Orquestração dos Pods da aplicação ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: meu-dash-web
-  namespace: meu-dash-alertas
+  name: smart-plan
+  namespace: smart-plan
 spec:
-  serviceName: "meu-dash-headless"
+  serviceName: "smart-plan-headless"
   replicas: 1
   selector:
     matchLabels:
-      app: meu-dash-web
+      app: smart-plan
   template:
     metadata:
       labels:
-        app: meu-dash-web
+        app: smart-plan
     spec:
-      # ADICIONADO: Declaração de um volume temporário (emptyDir).
-      volumes:
-      - name: temp-storage
-        emptyDir: {}
-      securityContext:
-        # O Nginx precisa rodar como root para iniciar, mas os processos filhos rodam como www-data.
-        # O Gunicorn rodará como um usuário não-privilegiado.
-        runAsUser: 1001 # Usuário padrão para os contêineres
-        fsGroup: 1001 # Garante que o pod possa escrever nos volumes
       containers:
       # Contêiner do Nginx: serve o frontend e faz proxy para o backend
-      - name: nginx
-        image: sevenleo/meu-dash-web:latest 
+      - name: smart-plan-nginx
+        image: sevenleo/smart-plan:latest
         ports:
         - name: http
           containerPort: 80
-        # O Nginx não precisa de variáveis de ambiente, mas precisa da configuração
-        # que está na imagem e dos arquivos estáticos.
+        # Comando para iniciar o Nginx em primeiro plano.
+        command: ["nginx", "-g", "daemon off;"]
         volumeMounts:
-        - name: meu-dash-data
-          mountPath: /app/data # Monta os dados para que relatórios possam ser acessados se necessário
+        - name: smart-plan-data
+          mountPath: /app/data
         # As sondas de saúde agora apontam para o Nginx, que é a porta de entrada do Pod.
         readinessProbe:
           httpGet:
             path: / # Uma requisição para a raiz do frontend é suficiente
             port: http
-          initialDelaySeconds: 10
-          periodSeconds: 5
         livenessProbe:
           httpGet:
             path: /
             port: http
-          initialDelaySeconds: 15
-          periodSeconds: 20
 
       # Contêiner da API (Gunicorn/Flask): roda a lógica de negócio
-      - name: meu-dash-api
-        image: sevenleo/meu-dash-web:latest 
+      - name: smart-plan-api
+        image: sevenleo/smart-plan:latest
         # Este contêiner não expõe portas para fora do Pod.
         # Ele é acessado pelo Nginx via localhost.
+        # Comando para iniciar a aplicação Python com Gunicorn.
         command: ["gunicorn", "--workers", "4", "--bind", "127.0.0.1:5000", "src.app:app", "--chdir", "/app"]
         env:
         - name: ADMIN_USER
@@ -133,11 +121,11 @@ spec:
             cpu: "256m"
             memory: "512Mi"
         volumeMounts:
-        - name: meu-dash-data
+        - name: smart-plan-data
           mountPath: /app/data
   volumeClaimTemplates:
   - metadata:
-      name: meu-dash-data
+      name: smart-plan-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
       storageClassName: "standard"
@@ -145,25 +133,29 @@ spec:
         requests:
           storage: 1Gi
 ---
-# apiVersion: networking.k8s.io/v1
-# kind: Ingress
-# metadata:
-#   name: meu-dash-web-ingress
-#   namespace: meu-dash-alertas
-# spec:
-#   ingressClassName: nginx
-#   tls:
-#   - hosts:
-#     - meu-dash-web-teste.devops-master.shop
-#     secretName: meu-dash-tls-secret
-#   rules:
-#   - host: meu-dash-web-teste.devops-master.shop
-#     http:
-#       paths:
-#       - path: /
-#         pathType: Prefix
-#         backend:
-#           service:
-#             name: meu-dash-web
-#             port:
-#               number: 80
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: smart-plan-ingress
+  namespace: smart-plan
+  annotations:
+    # Adicione aqui anotações específicas do seu Ingress Controller, se necessário
+    # Ex: kubernetes.io/ingress.class: "nginx"
+    # Ex: cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - smart-plan.devops-master.shop
+    secretName: smart-plan-tls-secret # O Cert-Manager pode criar isso automaticamente
+  rules:
+  - host: smart-plan.devops-master.shop
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: smart-plan
+            port:
+              number: 80

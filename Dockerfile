@@ -15,9 +15,12 @@ ENV VITE_API_BASE_URL=/
 RUN npm run build
 
 # --- Estágio 2: Aplicação Final (Nginx + Gunicorn) ---
-FROM python:3.14-alpine
+FROM python:3.12-alpine
 
 WORKDIR /app
+
+# Copia a configuração do Nginx
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Instala apenas o Nginx
 RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
