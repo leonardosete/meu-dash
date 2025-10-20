@@ -24,14 +24,12 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
   );
 
   if (isExternal) {
-    // Constrói a URL externa dinamicamente usando a origem da janela atual.
-    // Isso garante que a URL base seja sempre a correta, tanto em produção
-    // (https://smart-plan.devops-master.shop) quanto em desenvolvimento (http://127.0.0.1:5174).
-    // Isso elimina a dependência de uma variável de ambiente que pode estar incorreta no build.
+    // Constrói a URL externa dinamicamente usando a origem da janela atual (window.location.origin).
+    // Isso garante que a URL base seja sempre a correta, tanto em produção (https://smart-plan.devops-master.shop)
+    // quanto em desenvolvimento (http://127.0.0.1:5174), eliminando a dependência de qualquer
+    // variável de ambiente que possa estar incorreta no build.
     const externalUrl = new URL(to, window.location.origin).href;
-    return (
-      <a href={externalUrl} target="_blank" rel="noopener noreferrer" className="card side-card">{content}</a>
-    );
+    return <a href={externalUrl} className="card side-card">{content}</a>;
   }
 
   return <Link to={to} className="card side-card">{content}</Link>;
@@ -71,7 +69,7 @@ const Sidebar = () => {
         color="var(--accent-color)" 
       />
       <SideCard 
-        to="/apidocs" 
+        to="/docs/apidocs" 
         isExternal={true}
         icon={<Code />} 
         title="Documentação da API" 

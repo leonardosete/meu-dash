@@ -22,20 +22,27 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 # Instala Nginx, dependências de build, pacotes Python e depois limpa, tudo em uma única camada.
 COPY backend/requirements.txt .
-RUN apk add --no-cache nginx && \
-    apk add --no-cache --virtual .build-deps build-base python3-dev && \
+RUN apk add --no-cache nginx curl && \
+    apk add --no-cache --virtual .build-deps build-base python3-dev gcc libc-dev && \
     pip install --no-cache-dir -r requirements.txt && \
     apk del .build-deps
 
 # Copia o código-fonte do backend
 COPY ./backend/src ./src
 
-# Copia os templates HTML necessários para a geração de relatórios.
-COPY ./backend/templates ./templates
+# Copia os templates HTML necessários para a geração de relatórios para o diretório /app/templates.
+COPY ./backend/templates /app/templates
+
+# Copia a documentação estática para que possa ser servida pelo backend.
+COPY ./docs ./docs
 
 # Copia os arquivos estáticos do frontend (gerados no estágio 1)
 # para o diretório que o Nginx irá servir.
 COPY --from=frontend-builder /app/frontend/dist /var/www/html
+
+# Copia a nossa página customizada do Swagger UI para o diretório do Nginx.
+# Isso nos dá controle total e evita os bugs de renderização do Flasgger.
+COPY ./backend/static/swagger-ui.html /var/www/html/apidocs.html
 
 # Garante que o usuário 'nginx' (padrão do Alpine) possa ler os arquivos do frontend.
 RUN chown -R nginx:nginx /var/www/html && chmod -R 755 /var/www/html

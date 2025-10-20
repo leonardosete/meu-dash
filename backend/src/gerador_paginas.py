@@ -33,8 +33,6 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # CONSTANTES DE NOMENCLATURA (python:S1192)
 # =============================================================================
-CSV_VIEWER_TEMPLATE = "csv_viewer_template.html"
-EDITOR_TEMPLATE = "editor_template.html"
 MAIN_TEMPLATE = "template.html"
 
 REPORTS_DIR_SQUADS = "squads"
@@ -50,6 +48,8 @@ FILENAME_INVALID_LOGS_HTML = "qualidade_dados_remediacao.html"
 FILENAME_JSON_VIEWER = "visualizador_json.html"
 FILENAME_JSON_SUMMARY = "resumo_problemas.json"
 
+BASE_TEMPLATE_DIR = "/app/templates"
+
 # =============================================================================
 # FUNÇÕES DE GERAÇÃO DE PÁGINAS HTML
 # =============================================================================
@@ -58,8 +58,7 @@ FILENAME_JSON_SUMMARY = "resumo_problemas.json"
 def gerar_ecossistema_de_relatorios(
     dashboard_context: dict,
     analysis_results: dict,
-    output_dir: str,
-    base_dir: str,
+    output_dir: str, # noqa: E501
     frontend_url: str = "/",
 ) -> str:
     """
@@ -68,8 +67,7 @@ def gerar_ecossistema_de_relatorios(
     Args:
         dashboard_context: Dicionário com os dados para os dashboards.
         analysis_results: Dicionário com os DataFrames da análise.
-        output_dir: Diretório onde os relatórios serão salvos.
-        base_dir: Diretório base da aplicação para encontrar templates.
+        output_dir: Diretório onde os relatórios serão salvos. # noqa: E501
         frontend_url: URL base do frontend para links de retorno.
 
     Returns:
@@ -141,42 +139,22 @@ def gerar_ecossistema_de_relatorios(
     # Gera páginas de planos de ação e visualizadores de CSV
     gerar_relatorios_por_squad(df_atuacao, squad_reports_dir, timestamp_str)
     gerar_pagina_squads(
-        dashboard_context["all_squads"],
-        squad_reports_dir,
-        output_dir,
-        summary_filename,
-        timestamp_str,
+        dashboard_context["all_squads"], squad_reports_dir, output_dir, summary_filename, timestamp_str
     )
 
-    base_template_dir = os.path.join(base_dir, "..", "templates")
-    gerar_pagina_sucesso(
-        output_dir,
-        os.path.join(output_dir, "remediados.csv"),
-        os.path.join(base_template_dir, CSV_VIEWER_TEMPLATE),
-    )
-    gerar_pagina_instabilidade(
-        output_dir,
-        os.path.join(output_dir, "remediados_frequentes.csv"),
-        os.path.join(base_template_dir, CSV_VIEWER_TEMPLATE),
-    )
-    gerar_pagina_atuar(
-        output_dir,
-        os.path.join(output_dir, "atuar.csv"),
-        os.path.join(base_template_dir, EDITOR_TEMPLATE),
-    )
-    # NOVO: Gera os arquivos de atuação filtrados por squad
-    gerar_paginas_atuar_por_squad(
-        df_atuacao,
-        output_dir,
-        os.path.join(base_template_dir, EDITOR_TEMPLATE),
-    )
-
+    # REFATORAÇÃO: Centraliza a geração de relatórios de visualização de CSV.
+    reports_to_generate = [
+        ("remediados.csv", FILENAME_SUCCESS, "Sucesso da Automação"),
+        ("remediados_frequentes.csv", FILENAME_INSTABILITY, "Instabilidade Crônica"),
+    ]
     if analysis_results["num_logs_invalidos"] > 0:
-        gerar_pagina_logs_invalidos(
-            output_dir,
-            os.path.join(output_dir, LOG_INVALIDOS_FILENAME),
-            os.path.join(base_template_dir, CSV_VIEWER_TEMPLATE),
+        reports_to_generate.append(
+            (LOG_INVALIDOS_FILENAME, FILENAME_INVALID_LOGS_HTML, "Checar Dados (Logs Inválidos)")
         )
+    _gerar_relatorios_csv_viewer(reports_to_generate, output_dir, frontend_url)
+
+    # Gera os planos de ação por squad e o plano de ação geral (atuar.html).
+    gerar_paginas_atuar_por_squad(df_atuacao, output_dir, frontend_url)
 
     logger.info("Geração do ecossistema de relatórios HTML concluída.")
     return summary_html_path
@@ -208,14 +186,16 @@ def gerar_resumo_executivo(
     body_content = gerador_html.renderizar_resumo_executivo(context, frontend_url)
 
     # Carrega o template principal
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
-    HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
+    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
+    HTML_TEMPLATE = carregar_template_html(os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE))
 
     # Renderiza a página final e a salva
     footer_text = f"Relatório gerado em {timestamp_str}"
-    html_content = gerador_html.renderizar_pagina_html(
-        HTML_TEMPLATE, title, body_content, footer_text
+    html_content = gerador_html.renderizar_template_string(
+        template_string=HTML_TEMPLATE,
+        title=title,
+        body_content=body_content,
+        footer_text=footer_text,
     )
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
@@ -259,9 +239,8 @@ def gerar_relatorios_por_squad(  # type: ignore
 
     VALID_STATUSES_CHRONOLOGY = {STATUS_OK, STATUS_NOT_OK, NO_STATUS}
 
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
-    HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
+    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
+    HTML_TEMPLATE = carregar_template_html(os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE))
 
     for squad_name, squad_df in df_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True):
         if squad_df.empty:
@@ -387,10 +366,10 @@ def gerar_relatorios_por_squad(  # type: ignore
                     cronologia_info = f"<code>{' → '.join(formatted_chronology)}</code>"
                     alertas_info = f"<code>{escape(row['alert_numbers'])}</code>"
                     body_content += f'<tr id="{target_id}" class="details-row"><td colspan="5"><div class="details-row-content"><p><strong>Alertas Envolvidos ({row["alert_count"]}):</strong> {alertas_info}</p><p><strong>Cronologia:</strong> {cronologia_info}</p></div></td></tr>'
-                body_content += "</tbody></table></div>"
-            body_content += "</div>"
-        html_content = gerador_html.renderizar_pagina_html(
-            HTML_TEMPLATE, title, body_content, footer_text
+                body_content += "</tbody></table></div>" # Fim da tabela de um problema
+            body_content += "</div>" # Fim do metric-content
+        html_content = gerador_html.renderizar_template_string(
+            template_string=HTML_TEMPLATE, title=title, body_content=body_content, footer_text=footer_text
         )
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(html_content)
@@ -401,7 +380,7 @@ def gerar_pagina_squads(  # type: ignore
     all_squads: pd.Series,
     squad_reports_dir: str,
     output_dir: str,
-    summary_filename: str,
+    summary_filename: str, # noqa: E501
     timestamp_str: str,
 ):
     """Gera uma página HTML com o gráfico de barras para todas as squads com Casos em aberto."""
@@ -437,12 +416,11 @@ def gerar_pagina_squads(  # type: ignore
     body_content += "</div>"
     footer_text = f"Relatório gerado em {timestamp_str}"
 
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
-    HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
+    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
+    HTML_TEMPLATE = carregar_template_html(os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE))
 
-    html_content = gerador_html.renderizar_pagina_html(
-        HTML_TEMPLATE, title, body_content, footer_text
+    html_content = gerador_html.renderizar_template_string(
+        template_string=HTML_TEMPLATE, title=title, body_content=body_content, footer_text=footer_text
     )
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
@@ -472,9 +450,8 @@ def gerar_paginas_detalhe_problema(  # type: ignore
         "🔁": "🔁",
     }
 
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
-    HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
+    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
+    HTML_TEMPLATE = carregar_template_html(os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE))
     footer_text = f"Relatório gerado em {timestamp_str}"
 
     logger.info(f"Gerando páginas de detalhe para o contexto: '{file_prefix}'...")
@@ -514,9 +491,9 @@ def gerar_paginas_detalhe_problema(  # type: ignore
             else:
                 squad_info = escape(squad_name)
             body_content += f"<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{row['alert_count']}</td><td>{squad_info}</td></tr>"
-        body_content += "</tbody></table>"
-        html_content = gerador_html.renderizar_pagina_html(
-            HTML_TEMPLATE, title, body_content, footer_text
+        body_content += "</tbody></table>" # Fim da tabela
+        html_content = gerador_html.renderizar_template_string(
+            template_string=HTML_TEMPLATE, title=title, body_content=body_content, footer_text=footer_text
         )
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(html_content)
@@ -544,9 +521,8 @@ def gerar_paginas_detalhe_metrica(  # type: ignore
         ACAO_INCONSISTENTE: "🔍",
     }
 
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_FILE = os.path.join(SCRIPT_DIR, "..", "templates", MAIN_TEMPLATE)
-    HTML_TEMPLATE = carregar_template_html(TEMPLATE_FILE)
+    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
+    HTML_TEMPLATE = carregar_template_html(os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE))
     footer_text = f"Relatório gerado em {timestamp_str}"
 
     logger.info("Gerando páginas de detalhe para Métricas em Aberto...")
@@ -578,170 +554,92 @@ def gerar_paginas_detalhe_metrica(  # type: ignore
             )
             squad_info = f'<a href="{report_path}">{escape(squad_name)}</a>'
             problema_info = escape(row[COL_SHORT_DESCRIPTION])
-            body_content += f"<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{problema_info}</td><td>{squad_info}</td></tr>"
-        body_content += "</tbody></table>"
-        html_content = gerador_html.renderizar_pagina_html(
-            HTML_TEMPLATE, title, body_content, footer_text
+            body_content += f"<tr><td>{recurso_info}</td><td>{acao_info}</td><td>{periodo_info}</td><td>{problema_info}</td><td>{squad_info}</td></tr>" # Fim da linha
+        body_content += "</tbody></table>" # Fim da tabela
+        html_content = gerador_html.renderizar_template_string(
+            template_string=HTML_TEMPLATE, title=title, body_content=body_content, footer_text=footer_text
         )
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(html_content)
     logger.info(f"{len(metric_list)} páginas de detalhe de métricas geradas.")
 
 
-def gerar_pagina_sucesso(output_dir: str, ok_csv_path: str, template_path: str):  # type: ignore
-    """Gera uma página HTML para visualização dos Casos resolvidos com sucesso."""
-    logger.info(
-        f"Gerando página de visualização para '{os.path.basename(ok_csv_path)}'..."
-    )
-    output_path = os.path.join(output_dir, FILENAME_SUCCESS)
-    try:
-        with open(ok_csv_path, "r", encoding="utf-8") as f:
-            csv_content = f.read().lstrip()
-    except FileNotFoundError:
-        csv_content = ""
-        logger.warning(f"Arquivo '{ok_csv_path}' não encontrado. Gerando página vazia.")
-    try:
-        with open(template_path, "r", encoding="utf-8") as f_template:
-            template_content = f_template.read()
-        final_html = gerador_html.renderizar_pagina_csv_viewer(
-            template_content,
-            csv_content,
-            "Sucesso da Automação",
-            os.path.basename(ok_csv_path),
-        )
-        with open(output_path, "w", encoding="utf-8") as f_out:
-            f_out.write(final_html)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
-    logger.info(f"Página de visualização de sucesso gerada: {output_path}")
-
-
-def gerar_pagina_instabilidade(  # type: ignore
-    output_dir: str, instability_csv_path: str, template_path: str
+def gerar_pagina_visualizacao_csv(
+    output_dir: str,
+    csv_filename: str,
+    output_html_filename: str,
+    page_title: str,
+    frontend_url: str,
 ):
-    """Gera uma página HTML para visualização dos Casos de instabilidade crônica."""
-    logger.info(
-        f"Gerando página de visualização para '{os.path.basename(instability_csv_path)}'..."
-    )
-    output_path = os.path.join(output_dir, FILENAME_INSTABILITY)
+    """Gera uma página HTML genérica para visualização de um arquivo CSV."""
+    csv_path = os.path.join(output_dir, csv_filename)
+    output_html_path = os.path.join(output_dir, output_html_filename)
+    # CORREÇÃO: Usa o template genérico e correto para visualizadores de CSV.
+    viewer_template_path = os.path.join(BASE_TEMPLATE_DIR, "csv_viewer_template.html")
+
+    logger.info(f"Gerando página de visualização para '{csv_filename}'...")
+
     try:
-        with open(instability_csv_path, "r", encoding="utf-8") as f:
+        with open(csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()
     except FileNotFoundError:
         csv_content = ""
-        logger.warning(
-            f"Arquivo '{instability_csv_path}' não encontrado. Gerando página vazia."
-        )
+        logger.warning(f"Arquivo '{csv_path}' não encontrado. Gerando página vazia.")
+
     try:
-        with open(template_path, "r", encoding="utf-8") as f_template:
-            template_content = f_template.read()
-        final_html = gerador_html.renderizar_pagina_csv_viewer(
-            template_content,
-            csv_content,
-            "Instabilidade Crônica",
-            os.path.basename(instability_csv_path),
+        # Carrega o template do visualizador (que contém o placeholder para o CSV)
+        template_str = carregar_template_html(viewer_template_path)
+
+        # CORREÇÃO: Usa o renderizador Jinja2 em vez de .format() para evitar o KeyError.
+        # Isso trata o CSS e os placeholders de forma segura.
+        html_content = gerador_html.renderizar_template_string(
+            template_string=template_str,
+            page_title=page_title,
+            csv_filename=csv_filename,
+            back_link_url=frontend_url,
+            csv_data_payload=csv_content.replace("`", "\\`"),  # Escapa para o JS
         )
-        with open(output_path, "w", encoding="utf-8") as f_out:
-            f_out.write(final_html)
+        with open(output_html_path, "w", encoding="utf-8") as f_out:
+            f_out.write(html_content)
+
     except FileNotFoundError:
-        raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
-    logger.info(f"Página de visualização de instabilidade gerada: {output_path}")
+        raise FileNotFoundError(
+            f"Template '{viewer_template_path}' não encontrado."
+        )
+    logger.info(f"Página de visualização '{output_html_filename}' gerada: {output_html_path}")
 
 
-def gerar_pagina_logs_invalidos(output_dir: str, log_csv_path: str, template_path: str):  # type: ignore
-    """Gera uma página HTML para visualização dos logs com status inválido."""
-    logger.info(
-        f"Gerando página de visualização para '{os.path.basename(log_csv_path)}'..."
-    )
-    output_path = os.path.join(output_dir, FILENAME_INVALID_LOGS_HTML)
-    try:
-        with open(log_csv_path, "r", encoding="utf-8") as f:
-            csv_content = f.read().lstrip()
-    except FileNotFoundError:
-        csv_content = ""
-        logger.warning(
-            f"Arquivo '{log_csv_path}' não encontrado. Gerando página vazia."
-        )
-    try:
-        with open(template_path, "r", encoding="utf-8") as f_template:
-            template_content = f_template.read()
-        final_html = gerador_html.renderizar_pagina_csv_viewer(
-            template_content,
-            csv_content,
-            "Checar Dados",  # Título correto da página
-            "rem-status-invalido.csv",  # Nome de arquivo correto
-        )
-        with open(output_path, "w", encoding="utf-8") as f_out:
-            f_out.write(final_html)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
-    logger.info(f"Página de visualização de logs inválidos gerada: {output_path}")
+def _gerar_relatorios_csv_viewer(reports_config: list, output_dir: str, frontend_url: str):
+    """
+    Função auxiliar para gerar múltiplos relatórios de visualização de CSV.
 
-
-def gerar_pagina_atuar(output_dir: str, actuation_csv_path: str, template_path: str):  # type: ignore
-    """Gera uma página HTML para edição do arquivo de atuação."""
-    logger.info(
-        f"Gerando página de edição para '{os.path.basename(actuation_csv_path)}'..."
-    )
-    output_path = os.path.join(output_dir, FILENAME_ACTION_PLAN)
-    try:
-        with open(actuation_csv_path, "r", encoding="utf-8") as f:
-            csv_content = f.read().lstrip()
-        # NOVO: Verifica se o CSV tem mais do que apenas o cabeçalho.
-        # Se não tiver, não gera o atuar.html, pois não há ações.
-        if len(csv_content.splitlines()) <= 1:
-            logger.info(
-                "Arquivo 'atuar.csv' está vazio (apenas cabeçalho). Pulando a geração de 'atuar.html'."
-            )
-            return
-    except FileNotFoundError:
-        csv_content = ""
-        logger.warning(
-            f"Arquivo '{actuation_csv_path}' não encontrado. Gerando página de edição vazia."
+    Args:
+        reports_config (list): Uma lista de tuplas, onde cada tupla contém
+                               (csv_filename, output_html_filename, page_title).
+        output_dir (str): O diretório de saída para os relatórios.
+        frontend_url (str): A URL base do frontend para links de retorno.
+    """
+    for csv_filename, output_html_filename, page_title in reports_config:
+        gerar_pagina_visualizacao_csv(
+            output_dir=output_dir,
+            csv_filename=csv_filename,
+            output_html_filename=output_html_filename,
+            page_title=page_title,
+            frontend_url=frontend_url,
         )
-    try:
-        with open(template_path, "r", encoding="utf-8") as f_template:
-            template_content = f_template.read()
-        csv_payload = csv_content.replace("\\", "\\\\").replace("`", r"\`")
-        placeholder = "___CSV_DATA_PAYLOAD_EDITOR___"
-        template_com_placeholder = template_content.replace(
-            "const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`",
-            f"const csvDataPayload = `{placeholder}`",
-        )
-        final_html = template_com_placeholder.replace(placeholder, csv_payload)
-        # Adiciona o script de navegação contextual para tratar o parâmetro 'back'
-        script_navegacao = """
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const backButton = document.querySelector('a[href="resumo_geral.html"]');
-                if (backButton) {
-                    const backPage = new URLSearchParams(window.location.search).get('back');
-                    if (backPage) {
-                        backButton.href = backPage;
-                        backButton.textContent = '← Voltar para a Análise';
-                    }
-                }
-            });
-        </script>
-        """
-        final_html = final_html.replace("</body>", f"{script_navegacao}</body>")
-        with open(output_path, "w", encoding="utf-8") as f_out:
-            f_out.write(final_html)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Template '{template_path}' não encontrado.")
-    logger.info(f"Página de edição gerada: {output_path}")
 
 
 def gerar_paginas_atuar_por_squad(
-    df_atuacao: pd.DataFrame, output_dir: str, template_path: str
+    df_atuacao: pd.DataFrame, output_dir: str, frontend_url: str
 ):
     """Gera arquivos de atuação (CSV e HTML) filtrados para cada squad."""
     if df_atuacao.empty:
         return
 
     logger.info("Gerando páginas de atuação filtradas por squad...")
-    template_content = carregar_template_html(template_path)
+    viewer_template_path = os.path.join(BASE_TEMPLATE_DIR, "csv_viewer_template.html")
 
+    template_content = carregar_template_html(viewer_template_path)
     # NOVO: Mapa de emojis para prefixar a ação sugerida no CSV.
     full_emoji_map = {
         ACAO_INTERMITENTE: "⚠️",
@@ -779,30 +677,38 @@ def gerar_paginas_atuar_por_squad(
         with open(csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()
 
-        final_html = gerador_html.renderizar_pagina_csv_viewer(
-            template_content, csv_content, f"Plano de Ação: {squad_name}", csv_filename
+        # CORREÇÃO: Usa o renderizador Jinja2 em vez de .format() para evitar o KeyError. # noqa: E501
+        final_html = gerador_html.renderizar_template_string(
+            template_string=template_content,
+            page_title=f"Plano de Ação: {squad_name}",
+            csv_filename=csv_filename,
+            back_link_url="../resumo_geral.html",  # CORREÇÃO: Usa um caminho relativo para voltar ao dashboard do relatório.
+            # Escapa para o JS
+            csv_data_payload=csv_content.replace("`", "\\`"),
         )
-        # CORREÇÃO: Usa o caminho relativo correto para o link de "Voltar".
-        final_html = final_html.replace(
-            'href="resumo_geral.html"', 'href="../resumo_geral.html"'
-        )
-        # Adiciona o script de navegação contextual para tratar o parâmetro 'back'
-        script_navegacao = """
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const backButton = document.querySelector('a[href="../resumo_geral.html"]');
-                if (backButton) {
-                    const backPage = new URLSearchParams(window.location.search).get('back');
-                    if (backPage) {
-                        backButton.href = backPage; // O 'back' já vem com '../'
-                        backButton.textContent = '← Voltar para a Análise';
-                    }
-                }
-            });
-        </script>
-        """
-        final_html = final_html.replace("</body>", f"{script_navegacao}</body>")
+
         with open(html_path, "w", encoding="utf-8") as f_out:
             f_out.write(final_html)
 
-    logger.info("Páginas de atuação por squad geradas com sucesso.")
+    # Adicional: Gera o arquivo atuar.html geral, se houver dados.
+    geral_atuar_csv_path = os.path.join(output_dir, "atuar.csv")
+    if os.path.exists(geral_atuar_csv_path):
+        with open(geral_atuar_csv_path, "r", encoding="utf-8") as f:
+            csv_content = f.read().lstrip()
+
+        if len(csv_content.splitlines()) > 1:
+            atuar_html_path = os.path.join(output_dir, FILENAME_ACTION_PLAN)
+            # CORREÇÃO: Usa o renderizador Jinja2 em vez de .format() para evitar o KeyError. # noqa: E501
+            final_html = gerador_html.renderizar_template_string(
+                template_string=template_content,
+                page_title="Plano de Ação Geral",
+                csv_filename="atuar.csv",
+                back_link_url=frontend_url,  # CORREÇÃO: Aponta para a raiz da SPA
+                # Escapa para o JS
+                csv_data_payload=csv_content.replace("`", "\\`"),
+            )
+
+            with open(atuar_html_path, "w", encoding="utf-8") as f_out:
+                f_out.write(final_html)
+
+    logger.info("Páginas de atuação (geral e por squad) geradas com sucesso.")

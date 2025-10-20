@@ -8,7 +8,7 @@ DOCKER_IMAGE_NAME := meu-dash
 DOCKER_IMAGE_TAG := latest
 DOCKER_PROD_IMAGE_NAME := sevenleo/smart-plan
 
-.PHONY: help install setup setup-frontend run test test-backend-docker format lint check clean distclean docker-build docker-run docker-prune validate validate-all-docker validate-clean-docker up down migrate-docker lint-backend-docker format-backend-docker check-backend-docker lint-frontend-docker format-frontend-docker test-frontend-docker format-all-docker publish-prod
+.PHONY: help install setup setup-frontend run test test-backend-docker format lint check clean distclean docker-build docker-run docker-prune validate validate-all-docker validate-clean-docker up down migrate-docker lint-backend-docker format-backend-docker check-backend-docker lint-frontend-docker format-frontend-docker test-frontend-docker format-all-docker publish-prod test-e2e-docker test-e2e-prod
 help:
 	@echo "Comandos disponíveis:"
 	@echo ""
@@ -25,6 +25,8 @@ help:
 	@echo "  make validate-clean-docker - Roda TODAS as validações a partir de um build limpo, sem cache."
 	@echo "  make test-backend-docker   - Executa os testes do backend (pytest) no Docker."
 	@echo "  make check-backend-docker  - Roda format, lint e security scan do backend no Docker."
+	@echo "  make test-e2e-prod         - Executa os testes E2E contra o ambiente de PRODUÇÃO (Kubernetes)."
+	@echo "  make test-e2e-docker       - Executa os testes End-to-End com Playwright no Docker."
 	@echo "  make test-frontend-docker  - Executa os testes do frontend (vitest) no Docker."
 	@echo "  make format-all-docker   - Formata o código do backend e do frontend no Docker."
 	@echo "  make format-backend-docker - Formata o código do backend com ruff no Docker."
@@ -158,6 +160,15 @@ test-frontend-docker:
 	@echo ">>> [DOCKER] Executando testes do frontend..."
 	@docker-compose exec -T frontend npm run test
 
+test-e2e-docker:
+	@echo ">>> [DOCKER] Executando testes End-to-End com Playwright..."
+	@docker-compose exec -T frontend npx playwright test
+
+test-e2e-prod:
+	@echo ">>> [PROD] Executando testes End-to-End contra o ambiente de produção..."
+	@docker-compose exec -T -e PLAYWRIGHT_BASE_URL=https://smart-plan.devops-master.shop \
+		frontend npx playwright test
+
 format-all-docker:
 	@echo ">>> [DOCKER] Formatando todo o código (Backend + Frontend)..."
 	@$(MAKE) format-backend-docker
@@ -232,7 +243,8 @@ docker-prune:
 	@docker image prune -f
 
 publish-prod:
-	@echo ">>> Construindo e publicando a imagem de produção multi-plataforma: $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
-	@echo ">>> Construindo para linux/amd64 (cluster) e linux/arm64 (local)..."
-	@docker buildx build --platform linux/amd64,linux/arm64 -t $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f Dockerfile . --push
+	@echo ">>> Removendo imagem de produção local anterior (se existir)..."
+	@docker rmi $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG) || true
+	@echo ">>> Construindo e publicando uma nova imagem de produção para linux/amd64: $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG)..."
+	@docker buildx build --platform linux/amd64 -t $(DOCKER_PROD_IMAGE_NAME):$(DOCKER_IMAGE_TAG) -f Dockerfile . --push --no-cache
 	@echo ">>> Imagem publicada com sucesso!"

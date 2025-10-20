@@ -85,6 +85,7 @@ spec:
       # Contêiner do Nginx: serve o frontend e faz proxy para o backend
       - name: smart-plan-nginx
         image: sevenleo/smart-plan:latest
+        imagePullPolicy: Always
         ports:
         - name: http
           containerPort: 80
@@ -97,11 +98,11 @@ spec:
         # É uma boa prática definir limites mesmo para contêineres leves.
         resources:
           requests:
-            cpu: "100m"
+            cpu: "128m"
             memory: "128Mi"
             ephemeral-storage: "256Mi"
           limits:
-            cpu: "100m"
+            cpu: "128m"
             memory: "128Mi"
             ephemeral-storage: "256Mi"
         # As sondas de saúde agora apontam para o Nginx, que é a porta de entrada do Pod.
@@ -117,6 +118,7 @@ spec:
       # Contêiner da API (Gunicorn/Flask): roda a lógica de negócio
       - name: smart-plan-api
         image: sevenleo/smart-plan:latest
+        imagePullPolicy: Always
         # Este contêiner não expõe portas para fora do Pod.
         # Ele é acessado pelo Nginx via localhost.
         # Comando para iniciar a aplicação Python com Gunicorn.
@@ -132,6 +134,10 @@ spec:
             secretKeyRef:
               name: admin-credentials
               key: ADMIN_PASSWORD
+        - name: FRONTEND_BASE_URL
+          # Define a URL pública do frontend para que os relatórios gerados
+          # pelo backend tenham o link de retorno correto.
+          value: "https://smart-plan.devops-master.shop"
         # A sonda de saúde para a API verifica o endpoint /health diretamente no Gunicorn
         readinessProbe:
           httpGet:

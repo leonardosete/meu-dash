@@ -1,23 +1,27 @@
 import os
 from datetime import datetime, timedelta, timezone
 from functools import wraps
+import json
+
 import jwt
 from flasgger import Swagger
-from flask import (
-    Flask,
-    abort,
-    jsonify,
-    request,
-    send_from_directory,
-    url_for,
-)
+from flask import (Flask, abort, jsonify, render_template, request,
+                   send_from_directory, url_for)
 from flask_cors import CORS
 from flask_migrate import Migrate
+from flask.json.provider import JSONProvider
+
 from . import db  # Importa a instância única de __init__.py
 
 
-app = Flask(__name__, template_folder="../templates")
+# Define o caminho dos templates de forma explícita para o ambiente de produção (Docker/K8s),
+# onde os arquivos são copiados para /app/templates.
+app = Flask(__name__, template_folder="/app/templates")
 
+
+# --- SWAGGER UI CONFIGURATION ---
+# Flasgger is now only used to generate the /apispec_1.json definition.
+# The UI is served as a static file by Nginx to prevent rendering bugs.
 # --- CONFIGURAÇÃO DE CAMINHOS E BANCO DE DADOS ---
 # Aponta para o diretório de dados montado via Docker Compose
 DATA_DIR = "/app/data"
@@ -44,7 +48,7 @@ migrate = Migrate(app, db, directory=MIGRATIONS_DIR)
 swagger_template = {
     "swagger": "2.0",
     "info": {
-        "title": "Meu-Dash API",
+        "title": "Smart Plan API",
         "description": "API para análise de alertas e tendências.",
         "version": "1.0.0",
     },
@@ -179,7 +183,7 @@ def get_dashboard_summary():
             summary_data["kpi_summary"]["action_plan_url"] = url_for(
                 "serve_report",
                 run_folder=last_report_info["run_folder"],
-                filename="atuar.html",
+                filename="atuar.html",  # CORREÇÃO: Aponta para o plano de ação geral
                 _external=True,
             )
 
@@ -254,8 +258,6 @@ def upload_file_api():
             db=db,
             Report=models.Report,
             TrendAnalysis=models.TrendAnalysis,
-            # Passa o caminho raiz do backend para que o serviço encontre os templates
-            base_dir=os.path.dirname(__file__),
         )
 
         if result and result.get("warning"):
@@ -390,6 +392,7 @@ def secure_send_from_directory(base_directory, path):
 
 @app.route("/reports/<run_folder>/planos_de_acao/<filename>")
 def serve_planos(run_folder, filename):
+    """Serve os arquivos de plano de ação que estão em um subdiretório."""
     safe_path = os.path.join(run_folder, "planos_de_acao", filename)
     return secure_send_from_directory(app.config["REPORTS_FOLDER"], safe_path)
 
@@ -408,14 +411,10 @@ def serve_report(run_folder, filename):
 
 @app.route("/docs/<path:filename>")
 def serve_docs(filename):
-    # O diretório 'docs' está montado em /app/docs no contêiner.
-    docs_directory = "/app/docs"  # Caminho dentro do contêiner
-    # Renderiza o HTML para injetar a variável de ambiente, tornando o link dinâmico.
-    from flask import render_template_string
-    
-    with open(os.path.join(docs_directory, filename), 'r') as f:
-        content = f.read()
-    return render_template_string(content, FRONTEND_BASE_URL=os.getenv("FRONTEND_BASE_URL", "/"))
+    # O diretório 'docs' foi copiado para /app/docs durante o build do Docker.
+    docs_directory = "/app/docs"
+    # Usa a função segura para servir o arquivo, que já previne Path Traversal.
+    return secure_send_from_directory(docs_directory, filename)
 
 
 @app.route("/api/v1/reports")

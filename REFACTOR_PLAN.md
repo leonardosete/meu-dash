@@ -137,16 +137,21 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
   - [x] Garantir que o botão de exclusão de relatórios seja visível apenas para usuários administradores autenticados.
   - [ ] Garantir a reatividade e consistência do estado de autenticação na UI (ex: card "Modo Admin").
 - [ ] **Atualizar `Dockerfile`:**
-  - [x] Criado um `Dockerfile` multi-estágio para produção, com build do frontend e configuração do Nginx.
-  - [x] O `Dockerfile` foi depurado e corrigido para lidar com dependências de compilação, permissões de usuário e arquitetura multi-plataforma (`buildx`).
-- [ ] **Validação e Depuração em Ambiente de Produção (Kubernetes):** **(Em Andamento)**
-  - [ ] **(FALHOU)** Testar o fluxo de upload da "Análise Padrão".
-  - [ ] **(FALHOU)** Testar o fluxo de upload da "Análise Comparativa".
-  - [ ] **(FALHOU)** Validar o acesso e a funcionalidade da documentação da API (`/apidocs`) e gerencial (`/docs/doc_gerencial.html`). Links apontam para `localhost`.
-  - [ ] **(FALHOU)** Validar o fluxo de autenticação do administrador (login e logout).
-  - [ ] Validar a funcionalidade de exclusão de relatórios (como administrador).
-  - [ ] Verificar se todos os links de retorno nos relatórios gerados apontam para a URL correta do frontend.
+  - [x] Criado um `Dockerfile` multi-estágio para produção, com build do frontend, configuração do Nginx e cópia de todos os artefatos necessários.
+  - [x] O `Dockerfile` foi depurado e corrigido para lidar com dependências de compilação, permissões de usuário, arquitetura multi-plataforma (`buildx`) e erros de serialização de JSON.
+- [ ] **Validação Manual Completa em Produção (Kubernetes): MISSÃO ATUAL**
+  - [x] **(Concluído)** Testar o fluxo de upload da "Análise Padrão".
+  - [x] **(Concluído)** Testar o fluxo de upload da "Análise Comparativa".
+  - [ ] **(Pendente)** Validar o acesso e a funcionalidade da documentação da API (`/apidocs`).
+  - [ ] **(Pendente)** Validar o acesso e a funcionalidade da documentação gerencial (`/docs/doc_gerencial.html`).
+  - [ ] **(Pendente)** Validar o fluxo de autenticação do administrador (login e logout).
+  - [ ] **(Pendente)** Validar a funcionalidade de exclusão de relatórios (como administrador).
+  - [ ] **(Pendente)** Verificar se todos os links de retorno nos relatórios gerados apontam para a URL correta do frontend.
 - [ ] **Atualizar Pipeline de CI/CD (`.github/workflows/ci.yml`):** **(Pendente)**
+- [ ] **Refinar Lógica de Análise com `tasks_statuses`:** **(Pendente)**
+  - [ ] Modificar o motor de análise (`analisar_alertas.py`) para incorporar a nova coluna `tasks_statuses`.
+  - [ ] Ajustar o cálculo do "Score de Ineficiência" com base nos status de falha (`Closed Incomplete`, `Canceled`, etc.).
+  - [ ] Exibir os novos status nos relatórios gerados para maior visibilidade.
   - Adicionar etapas para instalar dependências, rodar testes e fazer o build do projeto frontend.
   - Adicionar etapas para as verificações de linting, formatação e segurança do frontend.
   - Modificar a etapa de build do Docker para usar o novo `Dockerfile`.
@@ -156,6 +161,7 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
 - [ ] **Atualizar Documentação:** **(Pendente)**
   - Atualizar o `GEMINI.md` e `README.md` para refletir a nova arquitetura de API + SPA.
   - [x] **Implementar `flasgger` para gerar documentação de API interativa (Swagger UI).**
+  - [ ] Revisar o texto da `doc_gerencial.html` para posicionar a ferramenta como um complemento ao Power BI, destacando seus papéis distintos sem desmerecer o BI atual.
   - [x] Substituir a documentação estática (`docs/doc_tecnica.html`) pela documentação auto-gerada.
   - Marcar este plano (`REFACTOR_PLAN.md`) como concluído.
 

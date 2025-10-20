@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import FileInput from './FileInput';
-import * as api from '../services/api';
+import { uploadStandardAnalysis, uploadComparativeAnalysis } from '../services/api';
+import { Loader2 } from 'lucide-react'; // Ícone de spinner
 
 interface UploadFormsProps {
   onUploadSuccess: () => void;
@@ -10,8 +11,7 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
   const [activeTab, setActiveTab] = useState<'padrao' | 'comparativa'>('padrao');
   const [padraoFile, setPadraoFile] = useState<FileList | null>(null);
   const [comparativaFiles, setComparativaFiles] = useState<FileList | null>(null);
-  const [isStandardLoading, setIsStandardLoading] = useState(false);
-  const [isComparativeLoading, setIsComparativeLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [standardError, setStandardError] = useState<string | null>(null);
   const [comparativeError, setComparativeError] = useState<string | null>(null);
 
@@ -21,15 +21,15 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
       alert('Por favor, selecione um arquivo.');
       return;
     }
-    setIsStandardLoading(true);
+    setIsLoading(true);
     setStandardError(null);
     try {
-      await api.uploadStandardAnalysis(padraoFile[0]);
+      await uploadStandardAnalysis(padraoFile[0]);
       onUploadSuccess(); // Recarrega o dashboard
     } catch (err: any) {
       setStandardError(err.response?.data?.error || 'Ocorreu um erro no upload.');
     } finally {
-      setIsStandardLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -39,18 +39,18 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
       setComparativeError('Por favor, selecione exatamente dois arquivos.');
       return;
     }
-    setIsComparativeLoading(true);
+    setIsLoading(true);
     setComparativeError(null);
     try {
-      const result = await api.uploadComparativeAnalysis(comparativaFiles);
+      const result = await uploadComparativeAnalysis(comparativaFiles);
       if (result.report_url) {
         // Navega para o relatório gerado na mesma aba
-        window.location.href = `${api.API_BASE_URL}${result.report_url}`;
+        window.location.href = result.report_url;
       }
     } catch (err: any) {
       setComparativeError(err.response?.data?.error || 'Ocorreu um erro na comparação.');
     } finally {
-      setIsComparativeLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -67,9 +67,13 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
           <p className="tab-description">Processe o arquivo de dados mais recente. O sistema o comparará com a última análise registrada no histórico para gerar um relatório completo e a análise de tendência contínua.</p>
           <form onSubmit={handlePadraoSubmit}>
             <label htmlFor="file_recente">Selecione o arquivo de dados mais recente:</label>
-            <FileInput id="file_recente" name="file_recente" onFileChange={setPadraoFile} />
-            <button type="submit" disabled={isStandardLoading}>
-              {isStandardLoading ? 'Analisando...' : 'Analisar e Comparar com Histórico'}
+            <FileInput id="file_recente" name="file_recente" onFileChange={setPadraoFile} isMultiple={false} />
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                'Analisar e Comparar com Histórico'
+              )}
             </button>
           </form>
         </div>
@@ -79,9 +83,13 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
           <p className="tab-description">Compare dois arquivos de dados específicos para gerar um relatório de tendência sob demanda. Ideal para análises pontuais e investigativas entre períodos não sequenciais.</p>
           <form onSubmit={handleComparativaSubmit}>
             <label htmlFor="file_comparativa">Selecione exatamente dois arquivos para comparar:</label>
-            <FileInput id="file_comparativa" name="files" isMultiple={true} onFileChange={setComparativaFiles} />
-            <button type="submit" disabled={isComparativeLoading}>
-              {isComparativeLoading ? 'Comparando...' : 'Comparar Arquivos'}
+            <FileInput id="file_comparativa" name="files" onFileChange={setComparativaFiles} isMultiple={true} />
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                'Comparar Arquivos'
+              )}
             </button>
           </form>
         </div>

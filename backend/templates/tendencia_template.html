@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
+    <title>{title}</title>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             try {
@@ -14,7 +14,6 @@
                     const backPage = urlParams.get('back');
                     if (backPage) {
                         // Verifica se o caminho de volta precisa de ajuste de diretório
-                        // Se o link original já tem '../', o novo link também precisa.
                         const isSubdirectory = backButton.getAttribute('href').startsWith('../');
                         backButton.href = (isSubdirectory && !backPage.startsWith('../')) ? '../' + backPage : backPage;
                         backButton.textContent = '← Voltar para a Análise';

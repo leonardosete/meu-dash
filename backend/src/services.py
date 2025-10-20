@@ -280,7 +280,6 @@ def process_upload_and_generate_reports(
     db,
     Report,
     TrendAnalysis,
-    base_dir: str,
 ):
     """Orquestra o fluxo completo de processamento para um único arquivo de upload.
 
@@ -305,8 +304,6 @@ def process_upload_and_generate_reports(
         db (flask_sqlalchemy.SQLAlchemy): A instância do banco de dados SQLAlchemy.
         Report (db.Model): A classe do modelo `Report` para interagir com o banco.
         TrendAnalysis (db.Model): A classe do modelo `TrendAnalysis`.
-        base_dir (str): O diretório base da aplicação, usado para resolver caminhos
-            de templates.
 
     Returns:
         dict | None: Um dicionário contendo `run_folder` e `report_filename` para
@@ -435,7 +432,6 @@ def process_upload_and_generate_reports(
         dashboard_context=dashboard_context,
         analysis_results=analysis_results,
         output_dir=output_dir,
-        base_dir=base_dir,
         frontend_url=frontend_url,
     )
 

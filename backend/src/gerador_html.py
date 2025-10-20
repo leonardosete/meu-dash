@@ -3,6 +3,7 @@ import re
 from html import escape
 from typing import Dict, Any
 
+from jinja2 import Template
 # =============================================================================
 # CONSTANTES VISUAIS
 # =============================================================================
@@ -34,11 +35,10 @@ def gerar_cores_para_barra(
     return background_color, text_color
 
 
-def renderizar_pagina_html(
-    template: str, title: str, body: str, footer_timestamp: str
-) -> str:
-    """Renderiza o template HTML principal com o conteúdo fornecido."""
-    return template.format(title=title, body=body, footer_timestamp=footer_timestamp)
+def renderizar_template_string(template_string: str, **kwargs: Any) -> str:
+    """Renderiza uma string de template usando Jinja2, de forma segura."""
+    template = Template(template_string)
+    return template.render(**kwargs)
 
 
 def renderizar_pagina_csv_viewer(
@@ -155,13 +155,13 @@ def renderizar_visualizador_json(json_data_str: str) -> str:
 
 def _render_conceitos_section() -> str:
     """Renderiza a seção 'Conceitos' do dashboard."""
-    return f"""
+    return """
     <div style="margin-bottom: 25px;">
-        <button type="button" class="collapsible collapsible-main-header">{CHEVRON_SVG}Conceitos</button>
+        <button type="button" class="collapsible collapsible-main-header">{{ CHEVRON_SVG }}Conceitos</button>
         <div class="content" style="display: none; padding: 0; border: none; background: none;">
             <div class="card" style="margin-top: 10px; padding: 20px;">
 
-                <button type="button" class="collapsible active">{CHEVRON_SVG}<strong>Casos vs. Alertas</strong></button>
+                <button type="button" class="collapsible active">{{ CHEVRON_SVG }}<strong>Casos vs. Alertas</strong></button>
                 <div class="content" style="display: block; padding-left: 28px;">
                     <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--accent-color); color: var(--text-secondary-color);">
                         <br><br>
@@ -173,7 +173,7 @@ def _render_conceitos_section() -> str:
                     </div>
                 </div>
 
-                <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>Como a Prioridade dos Casos é Definida?</strong></button>
+                <button type="button" class="collapsible" style="margin-top: 15px;">{{ CHEVRON_SVG }}<strong>Como a Prioridade dos Casos é Definida?</strong></button>
                 <div class="content" style="display: none; padding-left: 28px;">
                      <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--danger-color); color: var(--text-secondary-color);">
                         A pontuação de prioridade não é um valor arbitrário. Ela é calculada pela fórmula: <br>
@@ -209,7 +209,7 @@ def _render_conceitos_section() -> str:
                     </div>
                 </div>
 
-                <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>Como a Remediação é Contabilizada?</strong></button>
+                <button type="button" class="collapsible" style="margin-top: 15px;">{{ CHEVRON_SVG }}<strong>Como a Remediação é Contabilizada?</strong></button>
                 <div class="content" style="display: none; padding-left: 28px;">
                     <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--accent-color); color: var(--text-secondary-color);">
                         <p>A análise da remediação se baseia em uma etapa de preparação dos dados. Nesse passo anterior, cada alerta é verificado para identificar se existe uma "Tarefa de Correção" (<strong>REM00XXXXX</strong>) associada a ele. É a presença desse registro que confirma que uma automação foi <strong>executada</strong>.</p>
@@ -221,14 +221,14 @@ def _render_conceitos_section() -> str:
                     </div>
                 </div>
 
-                <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>Como Interpretar o quadro de Remediações?</strong></button>
+                <button type="button" class="collapsible" style="margin-top: 15px;">{{ CHEVRON_SVG }}<strong>Como Interpretar o quadro de Remediações?</strong></button>
                 <div class="content" style="display: none; padding-left: 28px;">
                     <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--warning-color); color: var(--text-secondary-color);">
                         Um número alto neste quadro é bom (a automação está funcionando), mas também é um sinal de alerta. Ele indica <strong>instabilidade crônica</strong>: um problema que ocorre e é remediado com muita frequência. Esses são candidatos ideais para uma análise de causa raiz mais profunda, visando a solução definitiva.
                     </div>
                 </div>
 
-                <button type="button" class="collapsible" style="margin-top: 15px;">{CHEVRON_SVG}<strong>O que significa o valor "DESCONHECIDO"?</strong></button>
+                <button type="button" class="collapsible" style="margin-top: 15px;">{{ CHEVRON_SVG }}<strong>O que significa o valor "DESCONHECIDO"?</strong></button>
                 <div class="content" style="display: none; padding-left: 28px;">
                     <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--text-secondary-color); color: var(--text-secondary-color);">
                         Quando o valor "DESCONHECIDO" aparece em campos como Squad, Métrica ou Recurso, significa que a informação estava <strong>ausente no arquivo de dados original</strong>. Isso geralmente aponta para uma oportunidade de melhorar a qualidade e o enriquecimento dos dados na origem (o sistema de monitoramento), garantindo que todo alerta seja corretamente categorizado.
@@ -269,7 +269,7 @@ def _render_notification_banners(num_logs_invalidos: int, trend_report_path: str
             <div class="text">
                 <strong>Aviso de Qualidade de Dados:</strong> Foram encontrados <strong>{num_logs_invalidos} alertas</strong> com status de remediação inválido.
             </div>
-            <a href="qualidade_dados_remediacao.html" class="details-link">Detalhes &rarr;</a>
+            <a href="qualidade_dados_remediacao.html?back=resumo_geral.html" class="details-link">Detalhes &rarr;</a>
         </div>
         """
 
@@ -281,7 +281,7 @@ def _render_notification_banners(num_logs_invalidos: int, trend_report_path: str
             <div class="text">
                 <strong>Análise Comparativa Disponível:</strong> Compare os resultados atuais com o período anterior para identificar novas tendências, regressões e melhorias.
             </div>
-            <a href="{os.path.basename(trend_report_path)}" class="details-link">Relatório de Tendência &rarr;</a>
+            <a href="{os.path.basename(trend_report_path)}?back=resumo_geral.html" class="details-link">Relatório de Tendência &rarr;</a>
         </div>
         """
     return banners_html
@@ -368,26 +368,22 @@ def renderizar_resumo_executivo(
     </style>
     """
     body_content = list_card_styles
-
-    # NOVO: Substitui o botão "Voltar" por um ícone "Home" moderno e consistente.
-    # REVISÃO: Envolve o botão e a data em um contêiner de cabeçalho para melhor controle de layout e espaçamento.
+    
+    # Adiciona o cabeçalho com o link de volta e o título principal
     body_content += f"""
     <div class="report-header">
         <a href="{frontend_url}" class="home-button">Página Inicial</a>
     </div>
-    <h1>Dashboard - Análise de Alertas</h1>
     """
-    # Adiciona o banner de período para consistência visual
-    body_content += f"<div class='definition-box' style='text-align: center;'>{date_range_text}</div>"
-
-    # Placeholder para o resumo da IA
-    body_content += "<!-- AI_SUMMARY_PLACEHOLDER -->"
-
-    # Renderiza as seções modulares
-    body_content += _render_conceitos_section()
+    
+    body_content += f"<div class='definition-box' style='text-align: center;'>{date_range_text}</div><!-- AI_SUMMARY_PLACEHOLDER -->"
+    body_content += renderizar_template_string(_render_conceitos_section(), CHEVRON_SVG=CHEVRON_SVG)
     body_content += _render_notification_banners(num_logs_invalidos, trend_report_path)
 
-    body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}VISÃO GERAL</button>'
+    # Renderiza o restante do corpo, que já usa f-strings de forma segura
+    body_content += renderizar_template_string(
+        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}VISÃO GERAL</button>', CHEVRON_SVG=CHEVRON_SVG
+    )
     body_content += '<div class="content" style="display: block; padding-top: 20px;">'
 
     body_content += '<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">'
@@ -402,7 +398,7 @@ def renderizar_resumo_executivo(
         automation_card_class = "card-neon-warning"
 
     if grupos_atuacao > 0:
-        view_icon_html = f'<a href="atuar.html" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
+        view_icon_html = f'<a href="atuar.html?back=resumo_geral.html" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
     else:
         disabled_svg = VIEW_ICON_SVG.replace(
             'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
@@ -430,7 +426,7 @@ def renderizar_resumo_executivo(
     """
 
     if grupos_instabilidade > 0:
-        instabilidade_view_icon_html = f'<a href="instabilidade_cronica.html" class="download-link" title="Visualizar detalhes dos Casos de instabilidade">{VIEW_ICON_SVG}</a>'
+        instabilidade_view_icon_html = f'<a href="instabilidade_cronica.html?back=resumo_geral.html" class="download-link" title="Visualizar detalhes dos Casos de instabilidade">{VIEW_ICON_SVG}</a>'
     else:
         disabled_svg = VIEW_ICON_SVG.replace(
             'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
@@ -466,7 +462,7 @@ def renderizar_resumo_executivo(
     tooltip_gauge = f"Percentual e contagem de Casos resolvidos automaticamente: {casos_sucesso} de {total_grupos} problemas tiveram a remediação executada com sucesso."
     sucesso_page_name = "sucesso_automacao.html"
     if casos_sucesso > 0:
-        sucesso_view_icon_html = f'<a href="{sucesso_page_name}" class="download-link" title="Visualizar detalhes dos Casos resolvidos">{VIEW_ICON_SVG}</a>'
+        sucesso_view_icon_html = f'<a href="{sucesso_page_name}?back=resumo_geral.html" class="download-link" title="Visualizar detalhes dos Casos resolvidos">{VIEW_ICON_SVG}</a>'
     else:
         disabled_svg = VIEW_ICON_SVG.replace(
             'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
@@ -555,7 +551,9 @@ def renderizar_resumo_executivo(
     body_content += "</div></div>"
     body_content += "</div></div>"
 
-    body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}TOP 5 - SEM REMEDIAÇÃO</button>'
+    body_content += renderizar_template_string(
+        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TOP 5 - SEM REMEDIAÇÃO</button>', CHEVRON_SVG=CHEVRON_SVG
+    )
     body_content += '<div class="content" style="display: none; padding-top: 20px;"><div class="grid-container" style="grid-template-columns: 1fr 1fr; align-items: stretch; gap: 20px;">'
     tooltip_squads = "Squads com maior número de Casos sem remediação."
     body_content += f'<div class="card"><h3><span class="card-title">TOP 5 SQUADS</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_squads)}</div></div></h3>'
@@ -626,7 +624,9 @@ def renderizar_resumo_executivo(
         body_content += "<p>Nenhuma categoria com Casos em aberto. ✅</p>"
     body_content += "</div></div>"
 
-    body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}TENDÊNCIAS E OPORTUNIDADES</button>'
+    body_content += renderizar_template_string(
+        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TENDÊNCIAS E OPORTUNIDADES</button>', CHEVRON_SVG=CHEVRON_SVG
+    )
     body_content += '<div class="content" style="display: none; padding-top: 20px;"><div class="grid-container" style="grid-template-columns: 1fr; gap: 20px;">'
 
     tooltip_instabilidade_chart = "Problemas que mais geram alertas recorrentes, mesmo com a remediação funcionando. Indicam instabilidade crônica."
@@ -677,7 +677,9 @@ def renderizar_resumo_executivo(
         )
     body_content += "</div></div></div>"
 
-    body_content += f'<button type="button" class="collapsible-row active">{CHEVRON_SVG}TOP 10 - ALERTAS (GERAL)</button>'
+    body_content += renderizar_template_string(
+        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TOP 10 - ALERTAS (GERAL)</button>', CHEVRON_SVG=CHEVRON_SVG
+    )
     body_content += '<div class="content" style="display: none; padding-top: 20px;">'
     tooltip_recorrentes = "Os 10 tipos de problemas que mais ocorreram (volume total de alertas), independente da automação."
     body_content += f'<div class="card"><h3><span class="card-title">TOP 10 ALERTAS</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_recorrentes)}</div></div></h3>'

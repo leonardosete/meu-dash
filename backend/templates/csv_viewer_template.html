@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>__PAGE_TITLE__</title>
+    <title>{{ page_title }}</title>
     <link href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #798ea4;
+            --bg-color: #f0f2f5;
             --card-color: #ffffff;
             --text-color: #212529;
             --text-secondary-color: #6c757d;
@@ -77,7 +77,6 @@
         .handsontable td {
             white-space: pre-wrap;
         }
-        /* Estilos para a nova caixa de somatória manual */
         .summary-display {
             margin-top: 10px;
             padding: 8px 12px;
@@ -99,21 +98,23 @@
 <body>
     <div class="container">
         <div class="header-controls">
-            <h1>__PAGE_TITLE__ - __CSV_FILENAME__</h1>
+            <h1>{{ page_title }} - {{ csv_filename }}</h1>
             <div>
-                <a href="resumo_geral.html" style="margin-right: 15px;">&larr; Dashboard</a>
+                <a id="back-button" href="{{ back_link_url }}" style="margin-right: 15px;">&larr; Voltar</a>
                 <button id="download-button" class="btn-download">Download</button>
             </div>
         </div>
         <div id="status-message" style="color: var(--text-secondary-color); margin-bottom: 15px;">Carregando dados...</div>
         <div id="table-container"></div>
-        <div id="manual-summary" class="summary-display"></div> </div>
+        <div id="manual-summary" class="summary-display"></div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
 
     <script>
-        const csvDataPayload = `__CSV_DATA_PLACEHOLDER__`;
+        const csvDataPayload = `{{ csv_data_payload }}`;
+        const csvFilenameForDownload = "{{ csv_filename }}";
     </script>
     
     <script>
@@ -121,8 +122,7 @@
         const container = document.getElementById('table-container');
         const downloadButton = document.getElementById('download-button');
         const statusMessage = document.getElementById('status-message');
-        const csvFilename = 'remediados.csv';
-        let hot; // Definir a variável hot aqui
+        let hot;
 
         Papa.parse(csvDataPayload, {
             header: true,
@@ -133,27 +133,11 @@
                     statusMessage.textContent = 'Erro ao processar os dados do CSV embutido.';
                     return;
                 }
-                statusMessage.textContent = 'Exibindo ' + results.data.length + ' registros de sucesso.';
+                statusMessage.textContent = 'Exibindo ' + results.data.length + ' registros.';
                 
-                const headers = results.meta.fields;
-
-                const columnSettings = headers.map(header => {
-                    const colConfig = {
-                        data: header
-                    };
-                    if (header === 'alert_numbers' || header === 'status_chronology') {
-                        colConfig.width = 400;
-                    }
-                    if (header === 'alert_count' || header.includes('score')) {
-                        colConfig.type = 'numeric';
-                    }
-                    return colConfig;
-                });
-                
-                hot = new Handsontable(container, { // Atribuir a instância à variável hot
+                hot = new Handsontable(container, {
                     data: results.data,
-                    colHeaders: headers,
-                    columns: columnSettings,
+                    colHeaders: results.meta.fields,
                     rowHeaders: true,
                     width: '100%',
                     height: '70vh',
@@ -168,71 +152,37 @@
                     dropdownMenu: ['filter_by_condition', 'filter_by_value', 'filter_action_bar'],
                     filters: true,
                 });
-
-                // ====================== INÍCIO DA NOVA LÓGICA MANUAL ======================
-                const summaryElement = document.getElementById('manual-summary');
-
-                hot.addHook('afterSelection', (r, c, r2, c2) => {
-                    summaryElement.classList.remove('visible');
-                    // Não calcular se for seleção de uma única célula ou múltiplas colunas
-                    if (c !== c2 || r === r2) { return; }
-
-                    const columnName = hot.getColHeader(c);
-                    // Verificar se a coluna é uma das que queremos somar
-                    if (typeof columnName !== 'string' || !(columnName === 'alert_count' || columnName.includes('score'))) {
-                        return;
-                    }
-
-                    let sum = 0;
-                    // Iterar sobre as linhas selecionadas
-                    for (let i = Math.min(r, r2); i <= Math.max(r, r2); i++) {
-                        const cellValue = hot.getDataAtCell(i, c);
-                        if (typeof cellValue === 'number') {
-                            sum += cellValue;
-                        }
-                    }
-                    
-                    summaryElement.textContent = `Soma da Seleção: ${sum.toLocaleString()}`;
-                    summaryElement.classList.add('visible');
-                });
-
-                hot.addHook('afterDeselection', () => {
-                    summaryElement.classList.remove('visible');
-                });
-                // ======================= FIM DA NOVA LÓGICA MANUAL ========================
             }
         });
 
-    downloadButton.addEventListener('click', () => {
-                if (hot) {
-                    const columnHeaders = hot.getColHeader();
-                    const dataRows = hot.getData(); // Pega apenas os dados visíveis/filtrados
-                    
-                    // Transforma os dados de volta para um formato que o PapaParse entende
-                    const dataToExport = dataRows.map(row => {
-                        let obj = {};
-                        for (const [index, header] of columnHeaders.entries()) {
-                            obj[header] = row[index];
-                        }
-                        return obj;
-                    });
-                
-                    // Converte os dados filtrados para um novo texto CSV
-                    const newCsvText = Papa.unparse(dataToExport, { header: true, delimiter: ",", quotes: true });
-                    
-                    // Cria o Blob e o link para download a partir do novo CSV
-                    const blob = new Blob([newCsvText], { type: 'text/csv;charset=utf-8-sig;' });
-                    const link = document.createElement("a");
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute("href", url);
-                    link.setAttribute("download", csvFilename);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                }
-            });
+        downloadButton.addEventListener('click', () => {
+            if (hot) {
+                const newCsvText = Papa.unparse(hot.getSourceData(), { header: true, delimiter: ",", quotes: true });
+                const blob = new Blob([newCsvText], { type: 'text/csv;charset=utf-8-sig;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", csvFilenameForDownload);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            }
         });
+
+        // Lógica de navegação contextual para o botão "Voltar".
+        // Isso é usado pelos relatórios de "Plano de Ação" para permitir
+        // voltar para a página de análise da squad de origem.
+        const backButton = document.getElementById('back-button');
+        if (backButton) {
+            const backPage = new URLSearchParams(window.location.search).get('back');
+            if (backPage) {
+                backButton.href = backPage;
+                // Ajusta o texto para ser mais genérico, funcionando para qualquer origem.
+                backButton.innerHTML = '&larr; Voltar para a página anterior';
+            }
+        }
+    });
     </script>
 </body>
 </html>
