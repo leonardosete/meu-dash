@@ -175,7 +175,7 @@
         // voltar para a página de análise da squad de origem.
         const backButton = document.getElementById('back-button');
         if (backButton) {
-            const backPage = new URLSearchParams(window.location.search).get('back');
+            const backPage = new URLSearchParams(globalThis.location.search).get('back');
             if (backPage) {
                 backButton.href = backPage;
                 // Ajusta o texto para ser mais genérico, funcionando para qualquer origem.

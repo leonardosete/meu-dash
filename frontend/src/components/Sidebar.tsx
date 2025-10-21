@@ -28,7 +28,7 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
     // Isso garante que a URL base seja sempre a correta, tanto em produção (https://smart-plan.devops-master.shop)
     // quanto em desenvolvimento (http://127.0.0.1:5174), eliminando a dependência de qualquer
     // variável de ambiente que possa estar incorreta no build.
-    const externalUrl = new URL(to, window.location.origin).href;
+    const externalUrl = new URL(to, globalThis.location.origin).href;
     return <a href={externalUrl} className="card side-card">{content}</a>;
   }
 

@@ -98,7 +98,7 @@ CORS(
 
 
 # Importações que dependem da inicialização do 'app' e 'db'
-from . import services, models  # noqa: E402
+from . import services, models  # noqa: E42
 
 # --- INICIALIZAÇÃO E AUTOCORREÇÃO DO BANCO DE DADOS ---
 # Garante que o banco de dados e todas as tabelas sejam criados na inicialização.
@@ -280,11 +280,15 @@ def upload_file_api():
         return jsonify({"error": f"Erro fatal no processo de upload: {str(e)}"}), 500
 
 
+# =================================================================
+# FUNÇÃO CORRIGIDA (Contornando o bug do Swagger)
+# =================================================================
 @app.route("/api/v1/compare", methods=["POST"])
 def compare_files_api():
     """Compara dois arquivos de dados para análise de tendência direta.
-    Este endpoint recebe dois arquivos .csv, dispara o processo de comparação
-    e retorna um JSON com a URL para o relatório de tendência gerado.
+    Este endpoint recebe dois arquivos .csv (um "antigo" e um "recente"),
+    dispara o processo de comparação e retorna um JSON com a URL para o
+    relatório de tendência gerado.
     ---
     tags:
       - Upload
@@ -292,12 +296,15 @@ def compare_files_api():
       - multipart/form-data
     parameters:
       - in: formData
-        name: files
+        name: file_antigo
         type: file
         required: true
-        description: Os dois arquivos .csv a serem comparados.
-        # Adicional para suportar múltiplos arquivos no Swagger UI
-        collectionFormat: multi
+        description: O arquivo .csv "antigo" (base) para comparação.
+      - in: formData
+        name: file_recente
+        type: file
+        required: true
+        description: O arquivo .csv "recente" para comparação.
     responses:
       200:
         description: Arquivos comparados com sucesso.
@@ -310,7 +317,7 @@ def compare_files_api():
               type: string
               description: URL para o relatório de tendência gerado.
       400:
-        description: Erro na requisição, como número incorreto de arquivos.
+        description: Erro na requisição, como arquivos ausentes.
         schema:
           $ref: '#/definitions/Error'
       500:
@@ -318,20 +325,25 @@ def compare_files_api():
         schema:
           $ref: '#/definitions/Error'
     """
-    if "files" not in request.files or len(request.files.getlist("files")) == 0:
-        return jsonify({"error": "Nenhum arquivo enviado."}), 400
+    # Busca os arquivos por chaves nomeadas (file_antigo, file_recente)
+    file_antigo = request.files.get("file_antigo")
+    file_recente = request.files.get("file_recente")
 
-    files = request.files.getlist("files")
+    # Validação se os dois arquivos foram enviados
+    if not file_antigo or file_antigo.filename == "":
+        return jsonify({"error": "O 'file_antigo' é obrigatório."}), 400
 
-    if len(files) != 2:
-        return (
-            jsonify({"error": "Por favor, selecione exatamente dois arquivos."}),
-            400,
-        )
+    if not file_recente or file_recente.filename == "":
+        return jsonify({"error": "O 'file_recente' é obrigatório."}), 400
+
+    # Agrupa os arquivos em uma lista para enviar ao serviço
+    # Sua lógica de serviço que ordena os arquivos continuará funcionando.
+    files_list = [file_antigo, file_recente]
 
     try:
+        # O service.process_direct_comparison já espera uma lista
         result = services.process_direct_comparison(
-            files=files,
+            files=files_list,
             upload_folder=app.config["UPLOAD_FOLDER"],
             reports_folder=app.config["REPORTS_FOLDER"],
         )
@@ -347,6 +359,9 @@ def compare_files_api():
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": f"Erro inesperado: {str(e)}"}), 500
+# =================================================================
+# FIM DA FUNÇÃO
+# =================================================================
 
 
 # --- FUNÇÃO DE SEGURANÇA PARA SERVIR ARQUIVOS ---
