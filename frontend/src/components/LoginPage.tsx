@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import * as api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 
@@ -9,7 +8,6 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +17,10 @@ const LoginPage: React.FC = () => {
     try {
       const response = await api.login({ username, password });
       login(response.access_token);
-      navigate('/history'); // Redireciona para a página de histórico após o login
+      // CORREÇÃO: Usa um redirecionamento completo do navegador para forçar a
+      // reinicialização da aplicação e a atualização de todos os componentes,
+      // incluindo a Sidebar, que agora lerá o novo estado de autenticação.
+      globalThis.location.href = '/history';
     } catch (err: any) {
       setError(err.response?.data?.error || 'Falha no login. Verifique suas credenciais.');
     } finally {

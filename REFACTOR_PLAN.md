@@ -142,7 +142,7 @@ O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1
 - [ ] **Validação Manual Completa em Produção (Kubernetes): MISSÃO ATUAL**
   - [x] **(Concluído)** Testar o fluxo de upload da "Análise Padrão".
   - [x] **(Concluído)** Testar o fluxo de upload da "Análise Comparativa".
-  - [ ] **(Pendente)** Validar o acesso e a funcionalidade da documentação da API (`/apidocs`).
+  - [x] **(Concluído)** Validar o acesso e a funcionalidade da documentação da API (`/apidocs`).
   - [ ] **(Pendente)** Validar o acesso e a funcionalidade da documentação gerencial (`/docs/doc_gerencial.html`).
   - [ ] **(Pendente)** Validar o fluxo de autenticação do administrador (login e logout).
   - [ ] **(Pendente)** Validar a funcionalidade de exclusão de relatórios (como administrador).

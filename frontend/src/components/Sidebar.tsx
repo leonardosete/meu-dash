@@ -37,6 +37,13 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
 
 const Sidebar = () => {
   const { isAuthenticated, logout } = useAuth();
+  
+  const handleLogout = () => {
+    logout(); // Limpa o estado de autenticação
+    // CORREÇÃO: Usa um redirecionamento completo para forçar a reinicialização
+    // da aplicação e garantir que a UI reflita o estado de "não autenticado".
+    globalThis.location.href = '/';
+  };
 
   return (
     <aside className="sidebar-column">
@@ -48,18 +55,6 @@ const Sidebar = () => {
         color="var(--accent-color)" 
       />
 
-      {isAuthenticated ? ( // Se autenticado, mostra um botão de logout
-        <div className="card side-card clickable" onClick={logout}>
-          <LogOut color="var(--danger-color)" />
-          <div className="side-card-text">
-            <h3>Modo Admin Ativo</h3>
-            <p>Clique para sair</p>
-          </div>
-        </div>
-      ) : ( // Se não, mostra o link para a página de login
-        <SideCard to="/admin/login" icon={<Shield />} title="Acesso Administrativo" description="Login para gerenciar relatórios" color="var(--warning-color)" />
-      )}
-      
       <SideCard 
         to="/docs/doc_gerencial.html" 
         isExternal={true} // Mantém o comportamento de link externo para a documentação
@@ -83,6 +78,21 @@ const Sidebar = () => {
         description="Visualize e gerencie todos os relatórios." 
         color="var(--text-color)"
       />
+
+      {/* MELHORIA DE UX: O card de login/logout é movido para o final e separado visualmente */}
+      <div className="sidebar-footer">
+        {isAuthenticated ? ( // Se autenticado, mostra um botão de logout
+          <button type="button" className="card side-card" onClick={handleLogout}>
+            <LogOut color="var(--danger-color)" />
+            <div className="side-card-text">
+              <h3>Modo Admin Ativo</h3>
+              <p>Clique para sair</p>
+            </div>
+          </button>
+        ) : ( // Se não, mostra o link para a página de login
+          <SideCard to="/admin/login" icon={<Shield />} title="Acesso Administrativo" description="Login para gerenciar relatórios" color="var(--warning-color)" />
+        )}
+      </div>
     </aside>
   );
 };
