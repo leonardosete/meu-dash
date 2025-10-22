@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checar Dados (Logs Inválidos)</title>
+    <link href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-color: #ffffff;
+            --text-color: #212529;
+            --text-secondary-color: #6c757d;
+            --border-color: #dee2e6;
+            --accent-color: #0d6efd;
+            --accent-color-light: #e6efff;
+            --success-color: #198754;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 95%;
+            margin: auto;
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            font-weight: 500;
+        }
+        a, button {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+            background-color: var(--card-color);
+            border: 1px solid var(--accent-color);
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 1em;
+        }
+        a:hover, button:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        .btn-download {
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+        .btn-download:hover {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        #table-container {
+            margin-top: 20px;
+        }
+        .handsontable .wtHolder { background-color: var(--card-color); }
+        .handsontable td, .handsontable th { color: var(--text-color); background-color: var(--card-color); border-color: var(--border-color); }
+        .handsontable th { background-color: #f8f9fa; font-weight: 600; }
+        .handsontable .currentRow, .handsontable .currentCol { background-color: var(--accent-color-light) !important; }
+        .handsontable td {
+            white-space: pre-wrap;
+        }
+        .summary-display {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #e9eef3;
+            color: #212529;
+            font-weight: bold;
+            text-align: right;
+            border-radius: 4px;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.2s ease-in-out;
+        }
+        .summary-display.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <h1>Checar Dados (Logs Inválidos) - invalid_remediation_tasks_present.csv</h1>
+            <div>
+                <a id="back-button" href="http://127.0.0.1:5174" style="margin-right: 15px;">&larr; Voltar</a>
+                <button id="download-button" class="btn-download">Download</button>
+            </div>
+        </div>
+        <div id="status-message" style="color: var(--text-secondary-color); margin-bottom: 15px;">Carregando dados...</div>
+        <div id="table-container"></div>
+        <div id="manual-summary" class="summary-display"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
+
+    <script>
+        const csvDataPayload = `﻿assignment_group,short_description,node,cmdb_ci,source,metric_name,cmdb_ci.sys_class_name,sys_created_on,remediation_tasks_present,number,severity,sn_priority_group,Duração,parent,state,sys_id,type.display_value,u_action_time,u_closed_date,acknowledged,correlation_group,event_count,incident,message_key,com_remediacao,Pilar,tasks_count,tasks_numbers,tasks_status,alert_found,processing_status,error_message,invalidated
+Team Bravo,Low disk space,api-gateway-prod-01,san-storage-,,,,04/12/2026 13:16:00,,,,,1:17:52,,,,,,,,,,,,,,,,,,,,Linha malformada ou truncada (colunas de agrupamento essenciais ausentes)
+`;
+        const csvFilenameForDownload = "invalid_remediation_tasks_present.csv";
+    </script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('table-container');
+        const downloadButton = document.getElementById('download-button');
+        const statusMessage = document.getElementById('status-message');
+        let hot;
+
+        Papa.parse(csvDataPayload, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                if (results.errors.length > 0) {
+                    statusMessage.textContent = 'Erro ao processar os dados do CSV embutido.';
+                    return;
+                }
+                statusMessage.textContent = 'Exibindo ' + results.data.length + ' registros.';
+                
+                hot = new Handsontable(container, {
+                    data: results.data,
+                    colHeaders: results.meta.fields,
+                    rowHeaders: true,
+                    width: '100%',
+                    height: '70vh',
+                    stretchH: 'last',
+                    autoRowSize: true,
+                    wordWrap: true,
+                    licenseKey: 'non-commercial-and-evaluation',
+                    readOnly: true,
+                    columnSorting: true,
+                    manualColumnResize: true,
+                    manualRowResize: true,
+                    dropdownMenu: ['filter_by_condition', 'filter_by_value', 'filter_action_bar'],
+                    filters: true,
+                });
+            }
+        });
+
+        downloadButton.addEventListener('click', () => {
+            if (hot) {
+                const newCsvText = Papa.unparse(hot.getSourceData(), { header: true, delimiter: ",", quotes: true });
+                const blob = new Blob([newCsvText], { type: 'text/csv;charset=utf-8-sig;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", csvFilenameForDownload);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            }
+        });
+
+        // Lógica de navegação contextual para o botão "Voltar".
+        // Isso é usado pelos relatórios de "Plano de Ação" para permitir
+        // voltar para a página de análise da squad de origem.
+        const backButton = document.getElementById('back-button');
+        if (backButton) {
+            const backPage = new URLSearchParams(globalThis.location.search).get('back');
+            if (backPage) {
+                backButton.href = backPage;
+                // Ajusta o texto para ser mais genérico, funcionando para qualquer origem.
+                backButton.innerHTML = '&larr; Voltar para a página anterior';
+            }
+        }
+    });
+    </script>
+</body>
+</html>

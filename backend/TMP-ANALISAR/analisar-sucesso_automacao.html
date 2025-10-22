@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sucesso da Automação</title>
+    <link href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-color: #ffffff;
+            --text-color: #212529;
+            --text-secondary-color: #6c757d;
+            --border-color: #dee2e6;
+            --accent-color: #0d6efd;
+            --accent-color-light: #e6efff;
+            --success-color: #198754;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 95%;
+            margin: auto;
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            font-weight: 500;
+        }
+        a, button {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+            background-color: var(--card-color);
+            border: 1px solid var(--accent-color);
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 1em;
+        }
+        a:hover, button:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        .btn-download {
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+        .btn-download:hover {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        #table-container {
+            margin-top: 20px;
+        }
+        .handsontable .wtHolder { background-color: var(--card-color); }
+        .handsontable td, .handsontable th { color: var(--text-color); background-color: var(--card-color); border-color: var(--border-color); }
+        .handsontable th { background-color: #f8f9fa; font-weight: 600; }
+        .handsontable .currentRow, .handsontable .currentCol { background-color: var(--accent-color-light) !important; }
+        .handsontable td {
+            white-space: pre-wrap;
+        }
+        .summary-display {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #e9eef3;
+            color: #212529;
+            font-weight: bold;
+            text-align: right;
+            border-radius: 4px;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.2s ease-in-out;
+        }
+        .summary-display.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <h1>Sucesso da Automação - remediados.csv</h1>
+            <div>
+                <a id="back-button" href="http://127.0.0.1:5174" style="margin-right: 15px;">&larr; Voltar</a>
+                <button id="download-button" class="btn-download">Download</button>
+            </div>
+        </div>
+        <div id="status-message" style="color: var(--text-secondary-color); margin-bottom: 15px;">Carregando dados...</div>
+        <div id="table-container"></div>
+        <div id="manual-summary" class="summary-display"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
+
+    <script>
+        const csvDataPayload = `﻿score_ponderado_final,acao_sugerida,assignment_group,short_description,cmdb_ci,node,metric_name,first_event,last_event,alert_count,alert_numbers,tasks_status,status_chronology
+20.317766166719345,⚠️✅ Remediação estabilizada (houve falha),Team Bravo,Failure rate increase,web-srv-101,web-srv-101.example.net,CPU_SATURATED,2026-01-28 14:08:00,2026-02-07 12:30:00,2,"Alert10544, Alert10549",Closed Incomplete,"['Closed Incomplete', 'Closed Complete']"
+10.0,✅ Remediação automática funcional,Core Services,Failure rate increase,V2-db-postgres-06.example.net,web-srv-101.example.net,CPU_SATURATED,2026-02-01 19:15:00,2026-02-01 19:15:00,1,Alert10546,Closed Complete,['Closed Complete']
+25.39720770839918,⚠️✅ Remediação estabilizada (houve falha),Team Bravo,Failure rate increase,recommendation-engine-PROCESS_GROUP-ABC,db-postgres-06.example.net,MEMORY_SATURATED,2025-12-05 04:19:00,2026-01-30 21:26:00,2,"Alert10517, Alert10545",Closed Incomplete,"['Closed Incomplete', 'Closed Complete']"
+10.0,✅ Remediação automática funcional,Team Bravo,Failure rate increase,recommendation-engine-PROCESS_GROUP-ABC,db-postgres-06.example.net,Low disk space,2026-01-26 17:26:00,2026-01-26 17:26:00,1,Alert10543,Closed Complete,['Closed Complete']
+10.0,✅ Remediação automática funcional,Core Services,CPU saturation,web-srv-101,db-postgres-06.example.net,CPU_SATURATED,2026-01-24 12:05:00,2026-01-24 12:05:00,1,Alert10542,Closed Complete,['Closed Complete']
+5.0,✅ Remediação automática funcional,Core Services,CPU saturation,V2-db-postgres-06.example.net,db-postgres-06.example.net,Low disk space,2026-01-20 04:00:00,2026-01-20 04:00:00,1,Alert10540,Closed Complete,['Closed Complete']
+22.010913347279292,⚠️✅ Remediação estabilizada (houve falha),Core Services,CPU saturation,web-srv-101,recommendation-engine (host-green-abc),Memory saturation,2025-11-05 08:10:00,2026-01-18 23:39:00,2,"Alert10502, Alert10539",Canceled,"['Canceled', 'Closed Complete']"
+8.0,✅ Remediação automática funcional,Database Ops,CPU saturation,V2-db-postgres-06.example.net,db-postgres-06.example.net,Low disk space,2026-01-14 16:25:00,2026-01-14 16:25:00,1,Alert10537,Closed Complete,['Closed Complete']
+18.0,✅ Remediação automática funcional,Team Bravo,CPU saturation,web-srv-101,db-postgres-06.example.net,CPU_SATURATED,2026-01-12 02:10:00,2026-01-12 02:10:00,1,Alert10536,Closed Complete,['Closed Complete']
+10.0,✅ Remediação automática funcional,Core Services,CPU saturation,recommendation-engine-PROCESS_GROUP-ABC,recommendation-engine (host-green-abc),FAILURE_RATE_INCREASED,2026-01-06 13:11:00,2026-01-06 13:11:00,1,Alert10533,Closed Complete,['Closed Complete']
+16.0,✅ Remediação automática funcional,Core Services,Failure rate increase,V2-db-postgres-06.example.net,recommendation-engine (host-green-abc),Low disk space,2026-01-04 13:28:00,2026-01-04 13:28:00,1,Alert10532,Closed Complete,['Closed Complete']
+10.0,✅ Remediação automática funcional,Database Ops,CPU saturation,recommendation-engine-PROCESS_GROUP-ABC,recommendation-engine (host-green-abc),Process unavailable,2025-12-29 05:30:00,2025-12-29 05:30:00,1,Alert10529,Closed Complete,['Closed Complete']
+18.0,✅ Remediação automática funcional,Team Bravo,Failure rate increase,web-srv-101,web-srv-101.example.net,MEMORY_SATURATED,2025-12-27 07:10:00,2025-12-27 07:10:00,1,Alert10528,Closed Complete,['Closed Complete']
+10.0,✅ Remediação automática funcional,Database Ops,Failure rate increase,web-srv-101,recommendation-engine (host-green-abc),CPU_SATURATED,2025-12-25 21:02:00,2025-12-25 21:02:00,1,Alert10527,Closed Complete,['Closed Complete']
+13.0,✅ Remediação automática funcional,Team Bravo,CPU saturation,V2-db-postgres-06.example.net,recommendation-engine (host-green-abc),Low disk space,2025-12-21 23:14:00,2025-12-21 23:14:00,1,Alert10525,Closed Complete,['Closed Complete']
+13.0,✅ Remediação automática funcional,Core Services,CPU saturation,web-srv-101,db-postgres-06.example.net,MEMORY_SATURATED,2025-12-19 13:59:00,2025-12-19 13:59:00,1,Alert10524,Closed Complete,['Closed Complete']
+5.0,✅ Remediação automática funcional,Database Ops,CPU saturation,web-srv-101,web-srv-101.example.net,FAILURE_RATE_INCREASED,2025-12-15 16:37:00,2025-12-15 16:37:00,1,Alert10522,Closed Complete,['Closed Complete']
+18.0,✅ Remediação automática funcional,Database Ops,Failure rate increase,V2-db-postgres-06.example.net,web-srv-101.example.net,Memory saturation,2025-12-13 11:44:00,2025-12-13 11:44:00,1,Alert10521,Closed Complete,['Closed Complete']
+18.0,✅ Remediação automática funcional,Database Ops,Failure rate increase,V2-db-postgres-06.example.net,web-srv-101.example.net,Low disk space,2025-12-09 03:18:00,2025-12-09 03:18:00,1,Alert10519,Closed Complete,['Closed Complete']
+8.0,✅ Remediação automática funcional,Database Ops,Failure rate increase,V2-db-postgres-06.example.net,recommendation-engine (host-green-abc),Memory saturation,2025-12-07 11:05:00,2025-12-07 11:05:00,1,Alert10518,Closed Complete,['Closed Complete']
+10.0,✅ Remediação automática funcional,Team Bravo,CPU saturation,web-srv-101,web-srv-101.example.net,CPU_SATURATED,2025-12-03 13:02:00,2025-12-03 13:02:00,1,Alert10516,Closed Complete,['Closed Complete']
+8.0,✅ Remediação automática funcional,Team Bravo,CPU saturation,recommendation-engine-PROCESS_GROUP-ABC,recommendation-engine (host-green-abc),MEMORY_SATURATED,2025-11-29 00:41:00,2025-11-29 00:41:00,1,Alert10514,Closed Complete,['Closed Complete']
+5.0,✅ Remediação automática funcional,Team Bravo,Failure rate increase,V2-db-postgres-06.example.net,web-srv-101.example.net,FAILURE_RATE_INCREASED,2025-11-27 12:55:00,2025-11-27 12:55:00,1,Alert10513,Closed Complete,['Closed Complete']
+13.0,✅ Remediação automática funcional,Database Ops,Failure rate increase,recommendation-engine-PROCESS_GROUP-ABC,db-postgres-06.example.net,MEMORY_SATURATED,2025-11-23 09:16:00,2025-11-23 09:16:00,1,Alert10511,Closed Complete,['Closed Complete']
+18.0,✅ Remediação automática funcional,Core Services,Failure rate increase,recommendation-engine-PROCESS_GROUP-ABC,db-postgres-06.example.net,MEMORY_SATURATED,2025-11-21 18:09:00,2025-11-21 18:09:00,1,Alert10510,Closed Complete,['Closed Complete']
+18.0,✅ Remediação automática funcional,Team Bravo,CPU saturation,recommendation-engine-PROCESS_GROUP-ABC,recommendation-engine (host-green-abc),FAILURE_RATE_INCREASED,2025-11-17 04:10:00,2025-11-17 04:10:00,1,Alert10508,Closed Complete,['Closed Complete']
+10.0,✅ Remediação automática funcional,Team Bravo,Failure rate increase,V2-db-postgres-06.example.net,recommendation-engine (host-green-abc),MEMORY_SATURATED,2025-11-15 05:46:00,2025-11-15 05:46:00,1,Alert10507,Closed Complete,['Closed Complete']
+13.0,✅ Remediação automática funcional,Core Services,CPU saturation,V2-db-postgres-06.example.net,recommendation-engine (host-green-abc),Process unavailable,2025-11-11 21:03:00,2025-11-11 21:03:00,1,Alert10505,Closed Complete,['Closed Complete']
+18.0,✅ Remediação automática funcional,Team Bravo,Failure rate increase,V2-db-postgres-06.example.net,web-srv-101.example.net,Process unavailable,2025-11-03 02:29:00,2025-11-03 02:29:00,1,Alert10501,Closed Complete,['Closed Complete']
+10.0,✅ Remediação automática funcional,Core Services,Failure rate increase,web-srv-101,web-srv-101.example.net,Memory saturation,2025-11-01 16:17:00,2025-11-01 16:17:00,1,Alert10500,Closed Complete,['Closed Complete']
+`;
+        const csvFilenameForDownload = "remediados.csv";
+    </script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('table-container');
+        const downloadButton = document.getElementById('download-button');
+        const statusMessage = document.getElementById('status-message');
+        let hot;
+
+        Papa.parse(csvDataPayload, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                if (results.errors.length > 0) {
+                    statusMessage.textContent = 'Erro ao processar os dados do CSV embutido.';
+                    return;
+                }
+                statusMessage.textContent = 'Exibindo ' + results.data.length + ' registros.';
+                
+                hot = new Handsontable(container, {
+                    data: results.data,
+                    colHeaders: results.meta.fields,
+                    rowHeaders: true,
+                    width: '100%',
+                    height: '70vh',
+                    stretchH: 'last',
+                    autoRowSize: true,
+                    wordWrap: true,
+                    licenseKey: 'non-commercial-and-evaluation',
+                    readOnly: true,
+                    columnSorting: true,
+                    manualColumnResize: true,
+                    manualRowResize: true,
+                    dropdownMenu: ['filter_by_condition', 'filter_by_value', 'filter_action_bar'],
+                    filters: true,
+                });
+            }
+        });
+
+        downloadButton.addEventListener('click', () => {
+            if (hot) {
+                const newCsvText = Papa.unparse(hot.getSourceData(), { header: true, delimiter: ",", quotes: true });
+                const blob = new Blob([newCsvText], { type: 'text/csv;charset=utf-8-sig;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", csvFilenameForDownload);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            }
+        });
+
+        // Lógica de navegação contextual para o botão "Voltar".
+        // Isso é usado pelos relatórios de "Plano de Ação" para permitir
+        // voltar para a página de análise da squad de origem.
+        const backButton = document.getElementById('back-button');
+        if (backButton) {
+            const backPage = new URLSearchParams(globalThis.location.search).get('back');
+            if (backPage) {
+                backButton.href = backPage;
+                // Ajusta o texto para ser mais genérico, funcionando para qualquer origem.
+                backButton.innerHTML = '&larr; Voltar para a página anterior';
+            }
+        }
+    });
+    </script>
+</body>
+</html>

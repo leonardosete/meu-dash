@@ -7,6 +7,7 @@ import pandas as pd
 from . import gerador_html
 from .constants import (
     ACAO_ESTABILIZADA,
+    ACAO_ESTABILIZADA,
     ACAO_FALHA_PERSISTENTE,
     ACAO_FLAGS_ATUACAO,
     ACAO_FLAGS_INSTABILIDADE,
@@ -26,6 +27,9 @@ from .constants import (
     STATUS_NOT_OK,
     STATUS_OK,
     UNKNOWN,
+)
+from .analisar_alertas import (
+    _save_csv,
 )
 
 logger = logging.getLogger(__name__)
@@ -347,7 +351,7 @@ def gerar_relatorios_por_squad(  # type: ignore
                     }
                     # NOVO: Mapa de emojis para os status de tasks
                     task_status_emoji_map = {
-                        "Closed Complete": "✅",
+                        "Closed": "✅",
                         "Closed Incomplete": "❌",
                         "Closed Skipped": "⏭️",
                         "Canceled": "🚫",
@@ -662,15 +666,14 @@ def gerar_paginas_atuar_por_squad(
         html_path = os.path.join(planos_dir, html_filename)
 
         df_to_save = squad_df.copy()
-        # CORREÇÃO: Adiciona o emoji na coluna 'acao_sugerida' antes de salvar.
-        df_to_save["acao_sugerida"] = df_to_save["acao_sugerida"].apply(
-            lambda x: f"{full_emoji_map.get(x, '')} {x}".strip()
+        # REUTILIZAÇÃO: Usa a função _save_csv para garantir a consistência
+        # na formatação e seleção de colunas.
+        _save_csv(
+            df_to_save, csv_path, "score_ponderado_final", full_emoji_map, False
         )
 
-        # 1. Gera o CSV filtrado
-        df_to_save.to_csv(csv_path, index=False, sep=";", encoding="utf-8-sig")
-
         # 2. Gera o HTML correspondente
+        # CORREÇÃO: Lê o conteúdo do CSV recém-criado para injetar no HTML.
         with open(csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()
 
@@ -689,6 +692,7 @@ def gerar_paginas_atuar_por_squad(
 
     # Adicional: Gera o arquivo atuar.html geral, se houver dados.
     geral_atuar_csv_path = os.path.join(output_dir, "atuar.csv")
+    csv_content = ""  # Garante que a variável seja reiniciada
     if os.path.exists(geral_atuar_csv_path):
         with open(geral_atuar_csv_path, "r", encoding="utf-8") as f:
             csv_content = f.read().lstrip()

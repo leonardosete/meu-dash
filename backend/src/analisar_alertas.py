@@ -15,6 +15,7 @@ from .constants import (
     ACAO_INSTABILIDADE_CRONICA,
     ACAO_INTERMITENTE,
     ACAO_SEMPRE_OK,
+    ACAO_SUCESSO_PARCIAL,
     ACAO_STATUS_AUSENTE,
     ACAO_WEIGHTS,
     COL_CREATED_ON,
@@ -101,8 +102,9 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
 
     # VALIDAÇÃO 3: Consistência Lógica (só roda nas linhas que passaram nas validações anteriores)
     mask_inconsistencia = (
-        ~df.index.isin(invalid_indices) & (df[COL_REMEDIATION_TASKS_PRESENT] == STATUS_OK)
-    ) & (~df[COL_TASKS_STATUS].isin(["Closed Complete", "Closed", "Canceled", "Closed Skipped", "Closed Incomplete", np.nan, None, ""]))
+        ~df.index.isin(invalid_indices) & (df[COL_REMEDIATION_TASKS_PRESENT] == STATUS_OK) &
+        ~df[COL_TASKS_STATUS].isin(["Closed", "Canceled", "Closed Skipped", "Closed Incomplete", np.nan, None, ""])
+    )
     if mask_inconsistencia.any():
         df_inconsistencia = df[mask_inconsistencia].copy()
         df_inconsistencia["invalidated"] = "Inconsistência: remediation_tasks_present é OK, mas task_status indica falha"
@@ -146,7 +148,7 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
 def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     """Adiciona a coluna 'acao_sugerida' com base na cronologia dos status."""
     # Define quais status de task são considerados um "sucesso"
-    SUCCESS_STATUSES = {"Closed Complete", "Closed"}
+    SUCCESS_STATUSES = {"Closed"}
 
     # Extrai informações da cronologia de tasks e do status final (o primeiro da lista, que corresponde ao alerta mais recente)
     last_status = df["status_chronology"].str[-1].fillna(NO_STATUS)
@@ -161,6 +163,7 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     conditions = [
         has_only_no_status,
         first_status == "No Task Found",
+        last_status.isin(["Closed Skipped", "Canceled"]),
         (last_status.isin(SUCCESS_STATUSES)) & (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES),
         (last_status.isin(SUCCESS_STATUSES)) & df['status_chronology'].apply(lambda x: len(set(s for s in x if pd.notna(s) and s != NO_STATUS)) > 1),
         (last_status.isin(SUCCESS_STATUSES)),
@@ -170,6 +173,7 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     choices = [
         ACAO_STATUS_AUSENTE,
         ACAO_FALHA_PERSISTENTE, # Trata "No Task Found" como falha persistente
+        ACAO_SUCESSO_PARCIAL,
         ACAO_INSTABILIDADE_CRONICA,
         ACAO_ESTABILIZADA,
         ACAO_SEMPRE_OK,
@@ -187,10 +191,8 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
     aggregations = {
         COL_CREATED_ON: ["min", "max"],
         COL_NUMBER: ["nunique", lambda x: ", ".join(sorted(x.unique()))],
-        # Garante que a agregação não falhe se houver valores nulos (NaN)
-        COL_REMEDIATION_TASKS_PRESENT: lambda x: ", ".join(
-            sorted(x.dropna().unique())
-        ),
+        # CORREÇÃO: A coluna 'statuses' agora é apenas um artefato legado. A cronologia real virá de 'tasks_status'.
+        COL_REMEDIATION_TASKS_PRESENT: lambda x: ", ".join(sorted(x.dropna().astype(str).unique())),
         "score_criticidade_final": "max", # Pega o maior score de risco do grupo
         COL_TASKS_STATUS: "first", # Pega o status da task do alerta mais recente
     }
@@ -206,7 +208,7 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
         "alert_count",
         "alert_numbers",
         "statuses",
-        "score_criticidade_agregado",
+        "score_criticidade_agregado", # Nome da coluna após a agregação
         "tasks_status",
     ]
     if not df.empty:
@@ -252,6 +254,46 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
 # GERAÇÃO DE RELATÓRIOS (CSV E JSON)
 # =============================================================================
 
+# Define o conjunto de colunas essenciais e a ordem para os relatórios finais.
+# Isso garante consistência e remove "ruído" dos relatórios.
+colunas_essenciais_relatorio = [
+    "score_ponderado_final",
+    "acao_sugerida",
+    "assignment_group",
+    "short_description",
+    "cmdb_ci",
+    "node",
+    "metric_name",
+    "first_event",
+    "last_event",
+    "alert_count",
+    "alert_numbers",
+    "tasks_status",
+    "status_chronology",
+    # Colunas específicas do plano de ação
+    "status_tratamento",
+    "responsavel",
+    "data_previsao_solucao",
+]
+
+def _save_csv(df, path, sort_by, full_emoji_map, ascending=False):
+    """Função auxiliar para salvar DataFrames em CSV com formatação padronizada."""
+    if not df.empty:
+        df_to_save = df.copy()
+        df_to_save["acao_sugerida"] = df_to_save["acao_sugerida"].apply(
+            lambda x: f"{full_emoji_map.get(x, '')} {x}".strip()
+        )
+        if "score_ponderado_final" in df_to_save.columns:
+            df_to_save["score_ponderado_final"] = df_to_save["score_ponderado_final"].round(1)
+        df_to_save = df_to_save.sort_values(by=sort_by, ascending=ascending)
+        if "atuar" in path or "plano-de-acao" in path:
+            df_to_save["status_tratamento"] = "Pendente"
+            df_to_save["responsavel"] = ""
+            df_to_save["data_previsao_solucao"] = ""
+        colunas_presentes = [col for col in colunas_essenciais_relatorio if col in df_to_save.columns]
+        df_final = df_to_save[colunas_presentes]
+        df_final.to_csv(path, index=False, encoding="utf-8-sig", sep=";")
+        logger.info(f"Relatório CSV gerado: {path}")
 
 def gerar_relatorios_csv(
     summary: pd.DataFrame,
@@ -273,39 +315,13 @@ def gerar_relatorios_csv(
         ACAO_INCONSISTENTE: "🔍",
         ACAO_SEMPRE_OK: "✅",
         ACAO_ESTABILIZADA: "⚠️✅",
+        ACAO_SUCESSO_PARCIAL: "🧐",
         ACAO_INSTABILIDADE_CRONICA: "🔁",
     }
 
-    if not alerts_atuacao.empty:
-        VALID_STATUSES_FOR_CHRONOLOGY = {STATUS_OK, STATUS_NOT_OK, NO_STATUS}
-        has_invalid_status_mask = alerts_atuacao["status_chronology"].apply(
-            lambda chronology: any(
-                s not in VALID_STATUSES_FOR_CHRONOLOGY for s in chronology
-            )
-        )
-        if has_invalid_status_mask.any():
-            alerts_atuacao.loc[has_invalid_status_mask, "acao_sugerida"] = (
-                "⚠️🔍 Analise o status da remediação 🔍⚠️ | "
-                + alerts_atuacao.loc[has_invalid_status_mask, "acao_sugerida"]
-            )
-
-    def save_csv(df, path, sort_by, ascending=False):
-        if not df.empty:
-            df_to_save = df.copy()
-            df_to_save["acao_sugerida"] = df_to_save["acao_sugerida"].apply(
-                lambda x: f"{full_emoji_map.get(x, '')} {x}".strip()
-            )
-            df_to_save = df_to_save.sort_values(by=sort_by, ascending=ascending)
-            if "atuar" in path:
-                df_to_save["status_tratamento"] = "Pendente"
-                df_to_save["responsavel"] = ""
-                df_to_save["data_previsao_solucao"] = ""
-            df_to_save.to_csv(path, index=False, encoding="utf-8-sig")
-            logger.info(f"Relatório CSV gerado: {path}")
-
-    save_csv(alerts_atuacao, output_actuation, "score_ponderado_final", False)
-    save_csv(alerts_ok, output_ok, "last_event", False)
-    save_csv(alerts_instabilidade, output_instability, "alert_count", False)
+    _save_csv(alerts_atuacao, output_actuation, "score_ponderado_final", full_emoji_map, False)
+    _save_csv(alerts_ok, output_ok, "last_event", full_emoji_map, False)
+    _save_csv(alerts_instabilidade, output_instability, "alert_count", full_emoji_map, False)
     return alerts_atuacao.sort_values(by="score_ponderado_final", ascending=False)
 
 

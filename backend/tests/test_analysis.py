@@ -139,18 +139,18 @@ def test_adicionar_acao_sugerida():
     """Testa a lógica da função adicionar_acao_sugerida."""
     data = {
         "status_chronology": [
-            ["Closed Incomplete", "Closed Complete"],  # Estabilizada (Falhou, depois sucesso)
-            ["Closed Complete", "Closed Incomplete"],  # Intermitente (último é falha)
+            ["Closed Incomplete", "Closed"],  # Estabilizada (Falhou, depois sucesso)
+            ["Closed", "Closed Incomplete"],  # Intermitente (último é falha)
             ["Closed Incomplete", "Closed Incomplete"],  # Falha Persistente
-            ["Closed Complete", "Closed Complete"],  # Sempre OK
+            ["Closed", "Closed"],  # Sempre OK
             [NO_STATUS, NO_STATUS],  # Status Ausente
             [],  # Vazio, deve ser status ausente
-            ["Closed Complete", "Closed Complete", "Closed Complete", "Closed Complete", "Closed Complete", "Closed Complete"], # Instabilidade Crônica
+            ["Closed", "Closed", "Closed", "Closed", "Closed", "Closed"], # Instabilidade Crônica
             ["No Task Found"], # Falha Persistente (No Task Found)
         ],
         "alert_count": [2, 2, 2, 2, 2, 0, 6, 1],
         # Adiciona a coluna 'tasks_status' que agora é necessária pela função
-        COL_TASKS_STATUS: ["Closed Complete", "Closed Incomplete", "Closed Incomplete", "Closed Complete", NO_STATUS, NO_STATUS, "Closed Complete", "No Task Found"]
+        COL_TASKS_STATUS: ["Closed", "Closed Incomplete", "Closed Incomplete", "Closed", NO_STATUS, NO_STATUS, "Closed", "No Task Found"]
     }
     df = pd.DataFrame(data)
     df = adicionar_acao_sugerida(df)
