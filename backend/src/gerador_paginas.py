@@ -237,8 +237,6 @@ def gerar_relatorios_por_squad(  # type: ignore
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
 
-    VALID_STATUSES_CHRONOLOGY = {STATUS_OK, STATUS_NOT_OK, NO_STATUS}
-
     # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
     HTML_TEMPLATE = carregar_template_html(os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE))
 
@@ -347,21 +345,20 @@ def gerar_relatorios_por_squad(  # type: ignore
                         "REM_NOT_OK": "❌",
                         "NO_STATUS": "❓",
                     }
-
+                    # NOVO: Mapa de emojis para os status de tasks
+                    task_status_emoji_map = {
+                        "Closed Complete": "✅",
+                        "Closed Incomplete": "❌",
+                        "Closed Skipped": "⏭️",
+                        "Canceled": "🚫",
+                        "Open": "⏳",
+                        "No Task Found": "❓",
+                    }
                     formatted_chronology = []
                     for status in row["status_chronology"]:
-                        if status in VALID_STATUSES_CHRONOLOGY:
-                            formatted_chronology.append(  # noqa: E501
-                                f"{status_emoji_map.get(status, '⚪')} {escape(status)}"
-                            )
-                        else:
-                            link_html = f"""<a href="../qualidade_dados_remediacao.html" class="tooltip-container invalid-status-link">
-                                  ⚪ {escape(status)}
-                                  <div class="tooltip-content" style="width: 280px; left: 50%; margin-left: -140px;">
-                                    Status inválido. Clique para ver o log de erros.
-                                  </div>
-                                </a>"""
-                            formatted_chronology.append(link_html)
+                        # A validação de dados agora ocorre na carga, então aqui apenas formatamos.
+                        emoji = task_status_emoji_map.get(status, "⚪")
+                        formatted_chronology.append(f"{emoji} {escape(str(status))}")
 
                     cronologia_info = f"<code>{' → '.join(formatted_chronology)}</code>"
                     alertas_info = f"<code>{escape(row['alert_numbers'])}</code>"

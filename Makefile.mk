@@ -87,10 +87,9 @@ fresh-run:
 	@$(MAKE) migrate
 	@$(MAKE) run
 
+# Redireciona o comando 'test' para a versão Docker, que é o padrão do projeto.
 test:
-	@echo ">>> Executando testes com pytest..."
-	@export PYTHONPATH=$(shell pwd)/backend && \
-	.venv/bin/pytest
+	@$(MAKE) test-backend-docker
 
 migrate-docker:
 	@echo ">>> Gerenciando migrações do banco de dados dentro do contêiner Docker..."
@@ -146,7 +145,9 @@ check-backend-docker:
 
 test-backend-docker:
 	@echo ">>> [DOCKER] Executando testes do backend com pytest..."
-	@docker-compose exec -T backend pytest
+	# Usa 'run --rm' que inicia um contêiner para o teste e o remove depois.
+	# Especifica o caminho para os testes para evitar erros de 'import file mismatch'.
+	@docker-compose run --rm backend pytest backend/tests
 
 lint-frontend-docker:
 	@echo ">>> [DOCKER] Executando linter do frontend com ESLint..."

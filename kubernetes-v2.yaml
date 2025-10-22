@@ -138,6 +138,14 @@ spec:
           # Define a URL pública do frontend para que os relatórios gerados
           # pelo backend tenham o link de retorno correto.
           value: "https://smart-plan.devops-master.shop"
+        - name: JWT_EXPIRATION_HOURS
+          # Define o tempo de expiração do token JWT em horas.
+          value: "1"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: admin-credentials
+              key: SECRET_KEY
         # A sonda de saúde para a API verifica o endpoint /health diretamente no Gunicorn
         readinessProbe:
           httpGet:

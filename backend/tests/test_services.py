@@ -90,7 +90,6 @@ def test_process_upload_and_generate_reports(
         **mock_dependencies,
         upload_folder=str(upload_folder),
         reports_folder=str(reports_folder),
-        base_dir=str(tmp_path),
     )
 
     # Assert
@@ -180,7 +179,6 @@ def test_process_upload_for_continuous_trend_analysis(
             **mock_dependencies,
             upload_folder=str(upload_folder),
             reports_folder=str(reports_folder),
-            base_dir=str(tmp_path),
         )
 
     # Assert A: Nenhuma tendência deve ser gerada
@@ -216,7 +214,6 @@ def test_process_upload_for_continuous_trend_analysis(
             **mock_dependencies,
             upload_folder=str(upload_folder),
             reports_folder=str(reports_folder),
-            base_dir=str(tmp_path),
         )
 
     # Assert B: Tendência B vs A deve ser gerada
@@ -233,6 +230,7 @@ def test_process_upload_for_continuous_trend_analysis(
         output_path=ANY,
         date_range_anterior=report_A.date_range,
         date_range_recente="02/01/2025 a 02/01/2025",
+        frontend_url=os.getenv("FRONTEND_BASE_URL"),
     )
     # Verifica se o Report B e a Trend B vs A foram salvos
     assert mock_db.session.add.call_count == 2
@@ -264,7 +262,6 @@ def test_process_upload_for_continuous_trend_analysis(
             **mock_dependencies,
             upload_folder=str(upload_folder),
             reports_folder=str(reports_folder),
-            base_dir=str(tmp_path),
         )
 
     # Assert C: Tendência C vs B deve ser gerada
@@ -278,6 +275,7 @@ def test_process_upload_for_continuous_trend_analysis(
         output_path=ANY,
         date_range_anterior=report_B.date_range,
         date_range_recente="03/01/2025 a 03/01/2025",
+        frontend_url=os.getenv("FRONTEND_BASE_URL"),
     )
     assert mock_db.session.add.call_count == 2
     assert trend_C_vs_B.current_report_id == 3

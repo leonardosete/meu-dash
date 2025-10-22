@@ -1,15 +1,2 @@
 [tool.pytest.ini_options]
 pythonpath = ["backend"]
-
-[tool.black]
-exclude = '''
-(
-  # Padrões de exclusão do Black para evitar formatação de dependências e build artifacts
-  /(
-      \.git|\.hg|\.mypy_cache|\.tox|\.venv
-      |venv|_build|buck-out|build|dist
-  )/
-  # Suas exclusões personalizadas
-  | /(BKP-v3)/
-)
-'''

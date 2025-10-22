@@ -5,6 +5,7 @@ Estes testes validam os contratos da API (formato JSON, status codes)
 e garantem que a refatoração não quebre a funcionalidade principal.
 """
 
+import os
 import io
 from unittest.mock import patch
 from src.models import Report, db
@@ -109,7 +110,7 @@ def test_delete_report_with_valid_token(client):
     with client.application.app_context():
         login_response = client.post(
             "/admin/login",
-            json={"username": "admin", "password": "password123"},
+            json={"username": "admin", "password": os.getenv("ADMIN_PASSWORD")},
         )
         assert login_response.status_code == 200
         jwt_token = login_response.get_json()["access_token"]
@@ -171,10 +172,8 @@ def test_compare_files_success(client):
         mock_service.return_value = mock_result
 
         data = {
-            "files": [
-                (io.BytesIO(b"file1"), "file1.csv"),
-                (io.BytesIO(b"file2"), "file2.csv"),
-            ]
+            "file_antigo": (io.BytesIO(b"file1"), "file1.csv"),
+            "file_recente": (io.BytesIO(b"file2"), "file2.csv"),
         }
         response = client.post(
             "/api/v1/compare", data=data, content_type="multipart/form-data"

@@ -95,14 +95,13 @@ export const deleteReport = async (reportId: number): Promise<void> => {
 
 /**
  * Envia dois arquivos para a análise comparativa direta.
- * @param files Uma lista de arquivos contendo exatamente dois arquivos.
+ * @param fileAntigo O arquivo mais antigo.
+ * @param fileRecente O arquivo mais recente.
  */
-export const uploadComparativeAnalysis = async (files: FileList): Promise<{ report_url: string }> => {
+export const uploadComparativeAnalysis = async (fileAntigo: File, fileRecente: File): Promise<{ report_url: string }> => {
   const formData = new FormData();
-  // Usa um loop 'for...of', que é mais idiomático e seguro para iterar sobre coleções.
-  for (const file of files) {
-    formData.append('files', file);
-  }
+  formData.append('file_antigo', fileAntigo);
+  formData.append('file_recente', fileRecente);
 
   const response = await apiClient.post('/api/v1/compare', formData, {
     headers: {

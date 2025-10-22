@@ -1,179 +1,84 @@
-# 📝 Plano de Refatoração: Desacoplamento Frontend/Backend
+# ✅ Plano de Ação: Finalização e Limpeza (Pós-Refatoração)
 
-Este documento descreve o plano estratégico e o checklist para a refatoração da arquitetura do projeto, migrando de um modelo monolítico com renderização no servidor (SSR) para uma arquitetura desacoplada, composta por um backend de API pura e um frontend Single-Page Application (SPA).
+**Data do Diagnóstico:** 2024-10-27
+**Arquiteto de Refatoração:** Gemini Code Assist
 
-## 1. Objetivo Principal
+## 1. Resumo do Estado Atual
 
-Transformar a aplicação em um sistema moderno, onde o **backend** atua exclusivamente como uma **API RESTful** (servindo JSON) e o **frontend** é uma aplicação independente e rica (SPA) que consome essa API.
+A refatoração principal de desacoplamento (API + SPA) foi concluída com sucesso. O projeto está agora na **Fase 3: Finalização e Limpeza**. Este documento detalha as tarefas pendentes, priorizadas por impacto e risco, para levar o projeto a um estado de prontidão para produção.
 
-## 2. Justificativa Estratégica (Por quê?)
-
-- **Escalabilidade Independente:** Permitir que as equipes (ou papéis) de frontend e backend evoluam e escalem seus respectivos domínios sem impactar um ao outro.
-- **Flexibilidade Tecnológica:** Abrir a porta para o uso de frameworks de frontend modernos (React, Vue, Svelte) para criar uma Experiência de Usuário (UX) mais rica e reativa.
-- **Contrato de API Claro:** Forçar a criação de uma API bem definida e documentada, que pode ser consumida não apenas pelo nosso frontend, mas por qualquer outro cliente no futuro (mobile, outros serviços).
-- **Melhora na Experiência do Desenvolvedor (DX):** Criar uma separação clara de responsabilidades, simplificando o desenvolvimento, os testes e a depuração em cada camada.
-
-## 3. Arquitetura Alvo
-
-- **Backend (API Pura):**
-  - O Flask (`src/app.py`) será responsável apenas por endpoints de API que recebem e retornam JSON.
-  - Nenhuma rota principal irá renderizar HTML com `render_template`.
-  - A autenticação será gerenciada via tokens (ex: JWT), tornando a API *stateless*.
-  - Os módulos de geração de relatórios (`gerador_paginas.py`, `context_builder.py`) continuarão a existir para criar os **artefatos** de relatório (arquivos `.html` e `.csv` estáticos), que serão servidos pela API.
-
-- **Frontend (SPA):**
-  - Será um projeto separado, localizado em um novo diretório `frontend/`.
-  - Construído com um framework moderno (a ser definido, ex: Vite + React).
-  - Fará chamadas HTTP para a API do backend para buscar dados e acionar processos.
-  - Gerenciará seu próprio estado e roteamento no lado do cliente.
-
-- **Comunicação:**
-  - A comunicação entre frontend e backend ocorrerá exclusivamente via chamadas de API RESTful.
-
-## 6. Qualidade de Código e Segurança
-
-A manutenção dos padrões de qualidade e segurança é um requisito não-funcional crítico desta refatoração.
-
-- **Backend:**
-  - Todo o novo código Python deve aderir aos padrões definidos no `CONTRIBUTING.md`.
-  - O pipeline de CI continuará a validar formatação (`ruff format`), linting (`ruff check`) e segurança (`bandit`) para a camada de API.
-
-- **Frontend:**
-  - O novo projeto frontend (`frontend/`) deverá ser configurado com ferramentas de qualidade equivalentes.
-  - **Linting:** ESLint será configurado para garantir a consistência e evitar erros comuns em TypeScript/React.
-  - **Formatação:** Prettier será usado para manter um padrão de formatação de código consistente.
-  - **Segurança:** O pipeline de CI incluirá um passo para verificar vulnerabilidades nas dependências do frontend (ex: `npm audit`).
-  - Todas essas verificações serão adicionadas como etapas obrigatórias no workflow de CI.
-
-## 5. Estratégia de Testes
-
-A refatoração exige uma nova abordagem de testes. A estratégia será dividida para cobrir as responsabilidades de cada camada de forma independente e integrada.
-
-- **Backend (API Pura):**
-  - **Testes de Unidade:** Foco total na camada de serviço (`services.py`). Cada função de negócio (ex: `get_dashboard_summary`, `process_new_upload`) terá testes unitários que validam sua lógica em isolamento, sem depender do Flask ou de uma requisição HTTP.
-  - **Testes de Integração:** Foco na camada de controller (`app.py`). Usaremos o cliente de teste do Flask para fazer requisições HTTP aos novos endpoints da API (`/api/v1/...`) e validar os contratos JSON (estrutura e tipos de dados) e os códigos de status HTTP. A camada de serviço será mockada para isolar a camada de API.
-
-- **Frontend (SPA):**
-  - **Testes de Unidade:** Testar componentes React individuais em isolamento usando ferramentas como `Jest` e `React Testing Library`. O objetivo é validar que, dadas certas props, o componente renderiza corretamente.
-  - **Testes de Integração de Componentes:** Testar como múltiplos componentes interagem entre si. Por exemplo, validar se o preenchimento de um formulário e o clique em um botão atualizam o estado da página corretamente.
-
-- **Testes End-to-End (E2E):**
-  - Utilizaremos uma ferramenta como `Cypress` ou `Playwright` para simular fluxos de usuário completos no navegador.
-  - **Exemplo de fluxo E2E:**
-    1. Acessar a página de login.
-    2. Fazer login como administrador.
-    3. Navegar para a página de histórico.
-    4. Clicar no botão de excluir de um relatório e confirmar a exclusão.
-    5. Validar que o relatório desapareceu da lista.
-
-## 4. Plano de Execução e Checklist
-
-O trabalho será dividido em fases para mitigar riscos e permitir entregas incrementais.
-
-### Fase 0: Preparação e Alinhamento
-
-- [x] Criar este documento de plano (`REFACTOR_PLAN.md`).
-- [x] Criar um branch de longa duração para a refatoração: `refactor/api-spa-decoupling`.
-- [ ] Configurar o ambiente de desenvolvimento local para rodar os dois servidores (Flask e o dev server do frontend) simultaneamente, utilizando um proxy para evitar problemas de CORS.
+As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior clareza.
 
 ---
 
-### Fase 1: Transformar o Backend em uma API Pura
+## 2. Tarefas Pendentes por Prioridade
 
-## Status: Concluída
+### Prioridade 1: Crítico
 
-- [x] **Implementar CORS:** Configurar o Flask para aceitar requisições do domínio do frontend em desenvolvimento.
-- [x] **Refatorar Rota `GET /`:**
-  - Mover a lógica de consulta ao banco de dados e cálculo de KPIs de `app.py` para uma nova função em `services.py`.
-  - Transformar em `GET /api/v1/dashboard-summary`.
-  - A rota deve retornar um JSON contendo os dados que hoje são passados para `index.html` (`kpi_summary`, `trend_history`, `last_action_plan`).
-- [x] **Refatorar Rota `GET /relatorios`:**
-  - Mover a lógica de consulta ao banco de dados de `app.py` para uma nova função em `services.py`.
-  - Transformar em `GET /api/v1/reports`.
-  - A rota deve retornar um JSON com a lista de metadados de todos os relatórios.
-- [x] **Refatorar Rota `POST /upload`:**
-  - Modificar para sempre retornar uma resposta JSON (sucesso com a URL do relatório ou erro), eliminando o `redirect`.
-- [x] **Refatorar Rota de Exclusão `POST /report/delete/:id`:**
-  - Garantir que a rota retorne uma resposta JSON clara de sucesso ou falha.
-- [x] **Refatorar Rota `POST /compare`:**
-  - Transformar em `POST /api/v1/compare` e garantir que retorne apenas JSON.
-- [x] **Refatorar Autenticação:**
-  - Modificar as rotas `/admin/login` e `/admin/logout` para serem stateless.
-  - O login deve retornar um token (JWT) em vez de definir uma `session`.
-  - As rotas protegidas (como `delete_report`) deverão validar este token enviado no cabeçalho `Authorization`.
-- [x] **Limpeza:** Remover as chamadas `render_template` e outras funções/rotas obsoletas em `app.py`.
-- [x] **Atualizar Testes:** Adaptar os testes existentes e criar novos testes de unidade e integração para a nova API, conforme a estratégia de testes.
-  - [x] Criar teste de integração para `GET /api/v1/dashboard-summary`.
-  - [x] Criar teste de integração para `GET /api/v1/reports`.
-  - [x] Criar teste de integração para `POST /api/v1/upload`.
-  - [x] Criar teste de integração para `DELETE /api/v1/reports/<id>` (com e sem token).
-  - [x] Criar teste de integração para `POST /api/v1/compare`.
+#### [x] 🛡️ Revisão e Reforço da Autenticação
+
+- **Justificativa:** O fluxo de autenticação JWT está funcional, mas requer uma validação de segurança e usabilidade completa antes da produção. Uma falha aqui representa um risco de segurança direto.
+- **Plano de Ação:**
+  - [x] **Validação E2E:** Realizar testes de ponta a ponta para o fluxo de login, logout e acesso a rotas protegidas (ex: exclusão de relatório) em um ambiente de produção simulado.
+  - [x] **Consistência da UI:** Garantir que a interface reaja de forma consistente ao estado de autenticação (ex: exibir/ocultar o card "Modo Admin" e o botão de exclusão).
+  - [x] **Revisão de Segurança:** Analisada e corrigida a implementação do JWT (expiração do token e `SECRET_KEY` agora são configuráveis via variáveis de ambiente).
 
 ---
 
-### Fase 2: Construir o Frontend (SPA)
+### Prioridade 2: Alto
 
-O objetivo é criar a nova interface que consumirá a API desenvolvida na Fase 1.
+#### [x] 🧠 Refinar Lógica de Análise com Novas Colunas
 
-- [x] **Estrutura do Projeto:**
-  - Adicionados arquivos de configuração (`package.json`, `vite.config.ts`) para criar um projeto Vite + React + TS não-interativo.
-- [x] **Configurar Qualidade de Código:** Adicionados e configurados ESLint e Prettier.
-- [x] **Implementar Testes:** Configurado ambiente de testes com Vitest e React Testing Library.
-- [x] **Desenvolver Componentes da UI:**
-  - [x] **Página Principal (Dashboard):** Criado componente que chama `GET /api/v1/dashboard-summary` e renderiza os KPIs.
-  - [x] **Componente de Upload (Análise Padrão):** Conectado o formulário de upload padrão que chama `POST /api/v1/upload`.
-  - [x] **Página de Histórico:** Criada tabela de relatórios que busca dados de `GET /api/v1/reports` e permite a exclusão (com autenticação).
-  - [x] **Página de Login e Autenticação:** Implementado fluxo de login completo com JWT, gerenciamento de estado de autenticação e rotas protegidas.
-  - [x] **Componente de Upload (Análise Comparativa):** Conectar o formulário de upload comparativo ao endpoint `POST /api/v1/compare`.
+- **Justificativa:** A principal funcionalidade de negócio (cálculo do score de prioridade) não está utilizando a lógica mais recente, que depende de novas colunas no CSV de entrada. Isso significa que o valor gerado pela ferramenta está incompleto.
+- **Contexto (Nova Estrutura de Colunas):**
 
----
+  ```
+  Duração;sys_created_on;assignment_group;short_description;node;cmdb_ci;number;severity;parent;cmdb_ci.sys_class_name;source;sn_priority_group;state;sys_id;type.display_value;u_action_time;u_closed_date;acknowledged;correlation_group;event_count;incident;metric_name;message_key;com_remediacao;Pilar;tasks_count;tasks_numbers;tasks_status;remediation_tasks_present;alert_found;processing_status;error_message
+  ```
 
-### Fase 3: Finalização e Limpeza
+- **Plano de Ação:**
+  - [x] **Atualizar Constantes:** Adicionar as novas colunas ao `backend/src/constants.py` e atualizar a lista `ESSENTIAL_COLS`.
+  - [x] **Adaptar Ingestão:** Modificar a função `carregar_dados` em `analisar_alertas.py` para processar o novo formato.
+  - [x] **Implementar Lógica:** Incorporar a coluna `tasks_status` no cálculo do "Score de Ineficiência" e no `score_ponderado_final`.
+  - [x] **Atualizar Testes Unitários:** Criar/modificar testes para validar a nova lógica de cálculo de forma isolada.
+  - [ ] **Validação Funcional E2E:** Realizar teste de ponta a ponta com um arquivo real para validar o cálculo do "Score Ponderado Final" na aplicação em execução.
+  - [x] **Validação Funcional E2E:** Realizar teste de ponta a ponta com um arquivo real para validar o cálculo do "Score Ponderado Final" e garantir que a documentação da funcionalidade está visível no relatório.
 
-- [x] **Ajustes Visuais e de UX:** **(Concluído)**
-  - [x] Refinar a página de histórico de relatórios para melhorar a clareza e usabilidade (ex: layout dos botões, separadores visuais).
-- [ ] **Revisão e Reforço da Autenticação:** **(Pendente)**
-  - [ ] Analisar o fluxo de autenticação atual (JWT) e implementar melhorias de segurança e usabilidade.
-  - [x] Garantir que o botão de exclusão de relatórios seja visível apenas para usuários administradores autenticados.
-  - [ ] Garantir a reatividade e consistência do estado de autenticação na UI (ex: card "Modo Admin").
-- [ ] **Atualizar `Dockerfile`:**
-  - [x] Criado um `Dockerfile` multi-estágio para produção, com build do frontend, configuração do Nginx e cópia de todos os artefatos necessários.
-  - [x] O `Dockerfile` foi depurado e corrigido para lidar com dependências de compilação, permissões de usuário, arquitetura multi-plataforma (`buildx`) e erros de serialização de JSON.
-- [ ] **Validação Manual Completa em Produção (Kubernetes): MISSÃO ATUAL**
-  - [x] **(Concluído)** Testar o fluxo de upload da "Análise Padrão".
-  - [x] **(Concluído)** Testar o fluxo de upload da "Análise Comparativa".
-  - [x] **(Concluído)** Validar o acesso e a funcionalidade da documentação da API (`/apidocs`).
-  - [ ] **(Pendente)** Validar o acesso e a funcionalidade da documentação gerencial (`/docs/doc_gerencial.html`).
-  - [ ] **(Pendente)** Validar o fluxo de autenticação do administrador (login e logout).
-  - [ ] **(Pendente)** Validar a funcionalidade de exclusão de relatórios (como administrador).
-  - [ ] **(Pendente)** Verificar se todos os links de retorno nos relatórios gerados apontam para a URL correta do frontend.
-- [ ] **Atualizar Pipeline de CI/CD (`.github/workflows/ci.yml`):** **(Pendente)**
-- [ ] **Refinar Lógica de Análise com `tasks_statuses`:** **(Pendente)**
-  - [ ] Modificar o motor de análise (`analisar_alertas.py`) para incorporar a nova coluna `tasks_statuses`.
-  - [ ] Ajustar o cálculo do "Score de Ineficiência" com base nos status de falha (`Closed Incomplete`, `Canceled`, etc.).
-  - [ ] Exibir os novos status nos relatórios gerados para maior visibilidade.
-  - Adicionar etapas para instalar dependências, rodar testes e fazer o build do projeto frontend.
-  - Adicionar etapas para as verificações de linting, formatação e segurança do frontend.
-  - Modificar a etapa de build do Docker para usar o novo `Dockerfile`.
-- [ ] **Remover Código Morto:**
-  - Remover o diretório `templates/` do backend (exceto os templates usados para gerar os artefatos de relatório, se houver).
-  - Remover dependências do Flask que não são mais necessárias (ex: `Jinja2` se não for mais usado).
-- [ ] **Atualizar Documentação:** **(Pendente)**
-  - Atualizar o `GEMINI.md` e `README.md` para refletir a nova arquitetura de API + SPA.
-  - [x] **Implementar `flasgger` para gerar documentação de API interativa (Swagger UI).**
-  - [ ] Revisar o texto da `doc_gerencial.html` para posicionar a ferramenta como um complemento ao Power BI, destacando seus papéis distintos sem desmerecer o BI atual.
-  - [x] Substituir a documentação estática (`docs/doc_tecnica.html`) pela documentação auto-gerada.
-  - Marcar este plano (`REFACTOR_PLAN.md`) como concluído.
+#### [ ] 🚀 Atualizar Pipeline de CI/CD
+
+- **Justificativa:** O pipeline atual (`.github/workflows/ci.yml`) não valida o código do frontend nem constrói a imagem Docker de produção final, criando um ponto cego de qualidade e um processo de deploy manual.
+- **Plano de Ação:**
+  - [ ] **Adicionar Etapas do Frontend:** Integrar no CI os comandos para instalar dependências (`npm install`), rodar lint (`npm run lint`) e testes (`npm run test`) do frontend.
+  - [ ] **Modificar Build do Docker:** Alterar a etapa de build para usar o `Dockerfile` multi-estágio de produção, que constrói o frontend e o backend em uma única imagem.
+  - [ ] **Publicar Imagem:** Garantir que a imagem final seja publicada no Docker Hub (ou outro registry) com as tags corretas.
 
 ---
 
-### Trabalhos Não Planejados Executados (Outubro 2025)
+### Prioridade 3: Médio
 
-Durante a Fase 3, os seguintes trabalhos não previstos no plano original foram executados para garantir a estabilidade e a qualidade do projeto:
+#### [ ] 🧹 Remover Código Morto
 
-- **Depuração Extensiva do Ambiente Docker:** Resolução de múltiplos problemas complexos relacionados a CORS, volumes, configuração do servidor Vite e concorrência do servidor Flask (substituído por Gunicorn).
-- **Refatorações de Qualidade de Código (SonarQube):**
-  - Eliminação de strings duplicadas (`python:S1192`).
-  - Redução de complexidade cognitiva de funções (`python:S3776`).
-  - Remoção de parâmetros não utilizados e adição de validação em merges do Pandas.
-- **Correções de Bugs na UI/UX:** Resolução de múltiplos bugs visuais e de interatividade nos relatórios HTML gerados (títulos, abas, elementos expansíveis).
+- **Justificativa:** A existência de código e dependências não utilizadas (como o diretório `templates/` e rotas de renderização no backend) aumenta a carga cognitiva e a complexidade acidental do projeto.
+- **Plano de Ação:**
+  - [ ] **Remover Diretório `templates/`:** Excluir o diretório `backend/templates/`, pois a API não renderiza mais HTML diretamente.
+  - [ ] **Remover Rotas Obsoletas:** Garantir que todas as chamadas `render_template` e as rotas associadas foram removidas de `app.py`.
+  - [ ] **Limpar Dependências:** Analisar o `requirements.txt` e remover pacotes que não são mais necessários (ex: `Jinja2`, se não for mais usado para gerar os artefatos de relatório).
+
+#### [ ] 📚 Atualizar Documentação
+
+- **Justificativa:** Documentação desatualizada ou inconsistente é um débito técnico que gera confusão e pode levar a erros.
+- **Plano de Ação:**
+  - [ ] **Consolidar Documentação Técnica:** Substituir a antiga `doc_tecnica.html` pela documentação da API gerada pelo Flasgger (`/apidocs`), atualizando todos os links no `README.md`.
+  - [ ] **Revisar Documentação Gerencial:** Ajustar o texto da `doc_gerencial.html` para refletir o estado atual e o valor da ferramenta.
+  - [ ] **Atualizar `README.md`:** Revisar o `README.md` para garantir que ele reflete a arquitetura final e os novos processos.
+  - [ ] **Finalizar este Plano:** Ao concluir todas as tarefas, marcar este documento como concluído e arquivá-lo.
+
+---
+
+### Prioridade 4: Baixo
+
+#### [ ] ⚙️ Consolidar Ferramentas de Qualidade
+
+- **Justificativa:** O arquivo `pyproject.toml` contém uma configuração para a ferramenta `black`, mas o projeto padronizou o uso de `Ruff` para formatação e linting. É uma pequena inconsistência que deve ser corrigida.
+- **Plano de Ação:**
+  - [ ] **Remover Configuração do Black:** Excluir a seção `[tool.black]` do arquivo `pyproject.toml` para eliminar a ambiguidade.

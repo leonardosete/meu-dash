@@ -10,7 +10,8 @@ interface UploadFormsProps {
 const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
   const [activeTab, setActiveTab] = useState<'padrao' | 'comparativa'>('padrao');
   const [padraoFile, setPadraoFile] = useState<FileList | null>(null);
-  const [comparativaFiles, setComparativaFiles] = useState<FileList | null>(null);
+  const [fileAntigo, setFileAntigo] = useState<FileList | null>(null);
+  const [fileRecente, setFileRecente] = useState<FileList | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [standardError, setStandardError] = useState<string | null>(null);
   const [comparativeError, setComparativeError] = useState<string | null>(null);
@@ -35,14 +36,19 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
 
   const handleComparativaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!comparativaFiles || comparativaFiles.length !== 2) {
-      setComparativeError('Por favor, selecione exatamente dois arquivos.');
+    if (!fileAntigo || fileAntigo.length === 0) {
+      setComparativeError('Por favor, selecione o arquivo antigo.');
+      return;
+    }
+    if (!fileRecente || fileRecente.length === 0) {
+      setComparativeError('Por favor, selecione o arquivo recente.');
       return;
     }
     setIsLoading(true);
     setComparativeError(null);
     try {
-      const result = await uploadComparativeAnalysis(comparativaFiles);
+      // Passa os arquivos separadamente para o serviço
+      const result = await uploadComparativeAnalysis(fileAntigo[0], fileRecente[0]);
       if (result.report_url) {
         // Navega para o relatório gerado na mesma aba
         window.location.href = result.report_url;
@@ -82,8 +88,12 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
           {comparativeError && <div className="error-message">{comparativeError}</div>}
           <p className="tab-description">Compare dois arquivos de dados específicos para gerar um relatório de tendência sob demanda. Ideal para análises pontuais e investigativas entre períodos não sequenciais.</p>
           <form onSubmit={handleComparativaSubmit}>
-            <label htmlFor="file_comparativa">Selecione exatamente dois arquivos para comparar:</label>
-            <FileInput id="file_comparativa" name="files" onFileChange={setComparativaFiles} isMultiple={true} />
+            <label htmlFor="file_antigo">Selecione o arquivo de dados mais antigo (base):</label>
+            <FileInput id="file_antigo" name="file_antigo" onFileChange={setFileAntigo} isMultiple={false} />
+
+            <label htmlFor="file_recente_comp" style={{ marginTop: '15px' }}>Selecione o arquivo de dados mais recente:</label>
+            <FileInput id="file_recente_comp" name="file_recente" onFileChange={setFileRecente} isMultiple={false} />
+
             <button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <Loader2 className="animate-spin" />

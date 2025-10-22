@@ -33,9 +33,9 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["REPORTS_FOLDER"] = REPORTS_FOLDER
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = (
-    "uma-chave-secreta-forte-para-flash"  # NOVO: Chave secreta necessária para usar flash
-)
+# Carrega a chave secreta a partir de uma variável de ambiente para segurança.
+# NUNCA deixe uma chave secreta fixa no código em produção.
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 # Aponta para o diretório de migrações dentro da estrutura do backend
 MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "..", "migrations")
@@ -101,11 +101,13 @@ CORS(
 from . import services, models  # noqa: E42
 
 # --- INICIALIZAÇÃO E AUTOCORREÇÃO DO BANCO DE DADOS ---
-# Garante que o banco de dados e todas as tabelas sejam criados na inicialização.
-# A chamada é idempotente: `checkfirst=True` verifica se a tabela já existe
-# antes de tentar criá-la, evitando crashes em reinicializações.
-with app.app_context():
-    db.metadata.create_all(db.engine, checkfirst=True)
+# A criação de tabelas foi movida para um comando explícito de migração
+# (ex: 'make migrate-docker') para seguir as melhores práticas.
+# Isso evita que a aplicação tente modificar o schema do banco de dados
+# toda vez que ela é iniciada, o que é problemático em ambientes com múltiplos
+# workers (Gunicorn) e pode causar 'race conditions'.
+# with app.app_context():
+#     db.metadata.create_all(db.engine, checkfirst=True)
 
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -352,6 +354,7 @@ def compare_files_api():
                 "serve_report",
                 run_folder=result["run_folder"],
                 filename=result["report_filename"],
+                _external=True,  # Garante que a URL seja absoluta (ex: http://127.0.0.1:5001/...)
             )
             return jsonify({"success": True, "report_url": report_url})
         return jsonify({"error": "Não foi possível processar a comparação."}), 500
@@ -627,8 +630,11 @@ def login_api():
 
     if username == admin_user and password == admin_password:
         # Gera o token JWT
+        # Torna o tempo de expiração configurável, com padrão de 1 hora.
+        expiration_hours = int(os.getenv("JWT_EXPIRATION_HOURS", "1"))
         payload = {
-            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "exp": datetime.now(timezone.utc)
+            + timedelta(hours=expiration_hours),
             "iat": datetime.now(timezone.utc),
             "sub": "admin",
         }

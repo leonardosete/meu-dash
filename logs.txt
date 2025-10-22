@@ -1,0 +1,157 @@
+meu-dash-backend-dev  | [2025-10-22 04:17:09 +0000] [1] [INFO] Starting gunicorn 23.0.0
+meu-dash-backend-dev  | [2025-10-22 04:17:09 +0000] [1] [INFO] Listening at: http://0.0.0.0:5000 (1)
+meu-dash-backend-dev  | [2025-10-22 04:17:09 +0000] [1] [INFO] Using worker: sync
+meu-dash-backend-dev  | [2025-10-22 04:17:09 +0000] [6] [INFO] Booting worker with pid: 6
+meu-dash-backend-dev  | [2025-10-22 04:17:09 +0000] [7] [INFO] Booting worker with pid: 7
+meu-dash-backend-dev  | [2025-10-22 04:17:10 +0000] [8] [INFO] Booting worker with pid: 8
+meu-dash-backend-dev  | [2025-10-22 04:17:10 +0000] [9] [INFO] Booting worker with pid: 9
+meu-dash-backend-dev  | [2025-10-22 04:17:11 +0000] [8] [ERROR] Exception in worker process
+meu-dash-backend-dev  | Traceback (most recent call last):
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+meu-dash-backend-dev  |     self.dialect.do_execute(
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~~~~~~~~~~^
+meu-dash-backend-dev  |         cursor, str_statement, effective_parameters, context
+meu-dash-backend-dev  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |     )
+meu-dash-backend-dev  |     ^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+meu-dash-backend-dev  |     cursor.execute(statement, parameters)
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  | sqlite3.OperationalError: table report already exists
+meu-dash-backend-dev  | 
+meu-dash-backend-dev  | The above exception was the direct cause of the following exception:
+meu-dash-backend-dev  | 
+meu-dash-backend-dev  | Traceback (most recent call last):
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
+meu-dash-backend-dev  |     worker.init_process()
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~~~~~~^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/gunicorn/workers/base.py", line 135, in init_process
+meu-dash-backend-dev  |     self.load_wsgi()
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/gunicorn/workers/base.py", line 147, in load_wsgi
+meu-dash-backend-dev  |     self.wsgi = self.app.wsgi()
+meu-dash-backend-dev  |                 ~~~~~~~~~~~~~^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/gunicorn/app/base.py", line 66, in wsgi
+meu-dash-backend-dev  |     self.callable = self.load()
+meu-dash-backend-dev  |                     ~~~~~~~~~^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+meu-dash-backend-dev  |     return self.load_wsgiapp()
+meu-dash-backend-dev  |            ~~~~~~~~~~~~~~~~~^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+meu-dash-backend-dev  |     return util.import_app(self.app_uri)
+meu-dash-backend-dev  |            ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/gunicorn/util.py", line 370, in import_app
+meu-dash-backend-dev  |     mod = importlib.import_module(module)
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/importlib/__init__.py", line 88, in import_module
+meu-dash-backend-dev  |     return _bootstrap._gcd_import(name[level:], package, level)
+meu-dash-backend-dev  |            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |   File "<frozen importlib._bootstrap>", line 1398, in _gcd_import
+meu-dash-backend-dev  |   File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+meu-dash-backend-dev  |   File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+meu-dash-backend-dev  |   File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+meu-dash-backend-dev  |   File "<frozen importlib._bootstrap_external>", line 762, in exec_module
+meu-dash-backend-dev  |   File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+meu-dash-backend-dev  |   File "/app/src/app.py", line 108, in <module>
+meu-dash-backend-dev  |     db.metadata.create_all(db.engine, checkfirst=True)
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/sql/schema.py", line 5928, in create_all
+meu-dash-backend-dev  |     bind._run_ddl_visitor(
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~~~~~~~~^
+meu-dash-backend-dev  |         ddl.SchemaGenerator, self, checkfirst=checkfirst, tables=tables
+meu-dash-backend-dev  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |     )
+meu-dash-backend-dev  |     ^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3252, in _run_ddl_visitor
+meu-dash-backend-dev  |     conn._run_ddl_visitor(visitorcallable, element, **kwargs)
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2459, in _run_ddl_visitor
+meu-dash-backend-dev  |     ).traverse_single(element)
+meu-dash-backend-dev  |       ~~~~~~~~~~~~~~~^^^^^^^^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/sql/visitors.py", line 661, in traverse_single
+meu-dash-backend-dev  |     return meth(obj, **kw)
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/sql/ddl.py", line 984, in visit_metadata
+meu-dash-backend-dev  |     self.traverse_single(
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~~~~~~~^
+meu-dash-backend-dev  |         table,
+meu-dash-backend-dev  |         ^^^^^^
+meu-dash-backend-dev  |     ...<2 lines>...
+meu-dash-backend-dev  |         _is_metadata_operation=True,
+meu-dash-backend-dev  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |     )
+meu-dash-backend-dev  |     ^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/sql/visitors.py", line 661, in traverse_single
+meu-dash-backend-dev  |     return meth(obj, **kw)
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/sql/ddl.py", line 1022, in visit_table
+meu-dash-backend-dev  |     )._invoke_with(self.connection)
+meu-dash-backend-dev  |       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/sql/ddl.py", line 321, in _invoke_with
+meu-dash-backend-dev  |     return bind.execute(self)
+meu-dash-backend-dev  |            ~~~~~~~~~~~~^^^^^^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+meu-dash-backend-dev  |     return meth(
+meu-dash-backend-dev  |         self,
+meu-dash-backend-dev  |         distilled_parameters,
+meu-dash-backend-dev  |         execution_options or NO_OPTIONS,
+meu-dash-backend-dev  |     )
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/sql/ddl.py", line 187, in _execute_on_connection
+meu-dash-backend-dev  |     return connection._execute_ddl(
+meu-dash-backend-dev  |            ~~~~~~~~~~~~~~~~~~~~~~~^
+meu-dash-backend-dev  |         self, distilled_params, execution_options
+meu-dash-backend-dev  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |     )
+meu-dash-backend-dev  |     ^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1530, in _execute_ddl
+meu-dash-backend-dev  |     ret = self._execute_context(
+meu-dash-backend-dev  |         dialect,
+meu-dash-backend-dev  |     ...<4 lines>...
+meu-dash-backend-dev  |         compiled,
+meu-dash-backend-dev  |     )
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+meu-dash-backend-dev  |     return self._exec_single_context(
+meu-dash-backend-dev  |            ~~~~~~~~~~~~~~~~~~~~~~~~~^
+meu-dash-backend-dev  |         dialect, context, statement, parameters
+meu-dash-backend-dev  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |     )
+meu-dash-backend-dev  |     ^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+meu-dash-backend-dev  |     self._handle_dbapi_exception(
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+meu-dash-backend-dev  |         e, str_statement, effective_parameters, cursor, context
+meu-dash-backend-dev  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |     )
+meu-dash-backend-dev  |     ^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+meu-dash-backend-dev  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+meu-dash-backend-dev  |     self.dialect.do_execute(
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~~~~~~~~~~^
+meu-dash-backend-dev  |         cursor, str_statement, effective_parameters, context
+meu-dash-backend-dev  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  |     )
+meu-dash-backend-dev  |     ^
+meu-dash-backend-dev  |   File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+meu-dash-backend-dev  |     cursor.execute(statement, parameters)
+meu-dash-backend-dev  |     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+meu-dash-backend-dev  | sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table report already exists
+meu-dash-backend-dev  | [SQL: 
+meu-dash-backend-dev  | CREATE TABLE report (
+meu-dash-backend-dev  | 	id INTEGER NOT NULL, 
+meu-dash-backend-dev  | 	timestamp DATETIME NOT NULL, 
+meu-dash-backend-dev  | 	original_filename VARCHAR(255) NOT NULL, 
+meu-dash-backend-dev  | 	report_path VARCHAR(512) NOT NULL, 
+meu-dash-backend-dev  | 	json_summary_path VARCHAR(512) NOT NULL, 
+meu-dash-backend-dev  | 	date_range VARCHAR(100), 
+meu-dash-backend-dev  | 	PRIMARY KEY (id), 
+meu-dash-backend-dev  | 	UNIQUE (report_path), 
+meu-dash-backend-dev  | 	UNIQUE (json_summary_path)
+meu-dash-backend-dev  | )
+meu-dash-backend-dev  | 
+meu-dash-backend-dev  | ]
+meu-dash-backend-dev  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+meu-dash-backend-dev  | [2025-10-22 04:17:11 +0000] [8] [INFO] Worker exiting (pid: 8)
+meu-dash-backend-dev  | [2025-10-22 04:17:11 +0000] [1] [ERROR] Worker (pid:8) exited with code 3
+meu-dash-backend-dev  | [2025-10-22 04:17:11 +0000] [6] [INFO] Worker exiting (pid: 6)
+meu-dash-backend-dev  | [2025-10-22 04:17:11 +0000] [7] [INFO] Worker exiting (pid: 7)
+meu-dash-backend-dev  | [2025-10-22 04:17:11 +0000] [9] [INFO] Worker exiting (pid: 9)
+meu-dash-backend-dev  | [2025-10-22 04:17:11 +0000] [1] [ERROR] Shutting down: Master
+meu-dash-backend-dev  | [2025-10-22 04:17:11 +0000] [1] [ERROR] Reason: Worker failed to boot.
