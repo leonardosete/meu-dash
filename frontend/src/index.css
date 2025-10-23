@@ -383,3 +383,38 @@ button:disabled {
   transform: translateY(-50%) scaleX(1); /* Estado final da animação */
   opacity: 1;
 }
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.9em;
+  color: var(--text-secondary-color);
+  text-align: left;
+}
+
+.forms-wrapper-disabled {
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.form-disabled-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(27, 30, 44, 0.7);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  border-radius: 16px; /* Para corresponder ao card pai */
+}
+.has-tooltip:hover::after {
+  transform: translateY(-50%) scaleX(1); /* Estado final da animação */
+  opacity: 1;
+}

@@ -5,18 +5,18 @@ import json
 
 import jwt
 from flasgger import Swagger
-from flask import (Flask, abort, jsonify, render_template, request,
+from flask import (Flask, abort, jsonify, request,
                    send_from_directory, url_for)
 from flask_cors import CORS
 from flask_migrate import Migrate
-from flask.json.provider import JSONProvider
 
 from . import db  # Importa a instância única de __init__.py
 
 
 # Define o caminho dos templates de forma explícita para o ambiente de produção (Docker/K8s),
 # onde os arquivos são copiados para /app/templates.
-app = Flask(__name__, template_folder="/app/templates")
+# CORREÇÃO: Define o caminho dos templates de forma relativa para maior portabilidade.
+app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), '..', 'templates'))
 
 
 # --- SWAGGER UI CONFIGURATION ---
@@ -131,6 +131,38 @@ def health_check():
     return jsonify({"status": "ok"}), 200
 
 
+def token_required(f):
+    """Decorador para proteger rotas que exigem autenticação via token JWT."""
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if "Authorization" in request.headers:
+            auth_header = request.headers["Authorization"]
+            parts = auth_header.split()
+            # Se o formato for "Bearer <token>", pega apenas o token.
+            if len(parts) == 2 and parts[0].lower() == "bearer":
+                token = parts[1]
+            # Se o formato for apenas "<token>", usa o valor diretamente.
+            # Isso melhora a experiência de uso no Swagger UI.
+            elif len(parts) == 1:
+                token = parts[0]
+
+        if not token:
+            return jsonify({"error": "Token de autenticação ausente."}), 401
+
+        try:
+            # Decodifica e valida o token
+            jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expirado."}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Token inválido."}), 401
+
+        return f(*args, **kwargs)
+
+    return decorated
+
 # --- ROTAS PRINCIPAIS DA APLICAÇÃO ---
 
 
@@ -208,6 +240,7 @@ def get_dashboard_summary():
 
 
 @app.route("/api/v1/upload", methods=["POST"])
+@token_required
 def upload_file_api():
     """Processa um novo arquivo para análise (Análise Padrão).
     Este endpoint recebe um arquivo .csv, dispara o processo de análise completo,
@@ -215,6 +248,8 @@ def upload_file_api():
     ---
     tags:
       - Upload
+    security:
+      - Bearer: []
     consumes:
       - multipart/form-data
     parameters:
@@ -286,6 +321,7 @@ def upload_file_api():
 # FUNÇÃO CORRIGIDA (Contornando o bug do Swagger)
 # =================================================================
 @app.route("/api/v1/compare", methods=["POST"])
+@token_required
 def compare_files_api():
     """Compara dois arquivos de dados para análise de tendência direta.
     Este endpoint recebe dois arquivos .csv (um "antigo" e um "recente"),
@@ -294,6 +330,8 @@ def compare_files_api():
     ---
     tags:
       - Upload
+    security:
+      - Bearer: []
     consumes:
       - multipart/form-data
     parameters:
@@ -474,39 +512,6 @@ def get_reports():
         )
 
     return jsonify(reports_data)
-
-
-def token_required(f):
-    """Decorador para proteger rotas que exigem autenticação via token JWT."""
-
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        if "Authorization" in request.headers:
-            auth_header = request.headers["Authorization"]
-            parts = auth_header.split()
-            # Se o formato for "Bearer <token>", pega apenas o token.
-            if len(parts) == 2 and parts[0].lower() == "bearer":
-                token = parts[1]
-            # Se o formato for apenas "<token>", usa o valor diretamente.
-            # Isso melhora a experiência de uso no Swagger UI.
-            elif len(parts) == 1:
-                token = parts[0]
-
-        if not token:
-            return jsonify({"error": "Token de autenticação ausente."}), 401
-
-        try:
-            # Decodifica e valida o token
-            jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "Token expirado."}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"error": "Token inválido."}), 401
-
-        return f(*args, **kwargs)
-
-    return decorated
 
 
 # --- NOVA ROTA PARA EXCLUSÃO ---

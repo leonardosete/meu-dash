@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import FileInput from './FileInput';
 import { uploadStandardAnalysis, uploadComparativeAnalysis } from '../services/api';
-import { Loader2 } from 'lucide-react'; // Ícone de spinner
+import { Loader2, Lock } from 'lucide-react'; // Ícone de spinner e cadeado
+import { useAuth } from '../hooks/useAuth';
 
 interface UploadFormsProps {
   onUploadSuccess: () => void;
 }
 
 const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<'padrao' | 'comparativa'>('padrao');
   const [padraoFile, setPadraoFile] = useState<FileList | null>(null);
   const [fileAntigo, setFileAntigo] = useState<FileList | null>(null);
@@ -62,7 +64,17 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
 
   return (
     <div className="card form-card">
-      <div className="tab-container">
+      <div className="tab-container" style={{ position: 'relative' }}>
+        {!isAuthenticated && (
+          <div className="form-disabled-overlay">
+            <Lock size={24} />
+            <span>Faça login para habilitar o upload de arquivos.</span>
+          </div>
+        )}
+
+        {/* Adiciona um wrapper para aplicar o efeito de desfoque quando desabilitado */}
+        <div className={!isAuthenticated ? 'forms-wrapper-disabled' : ''}>
+
         <div className="tab-links">
           <button className={`tab-link ${activeTab === 'padrao' ? 'active' : ''}`} onClick={() => setActiveTab('padrao')}>Análise Padrão</button>
           <button className={`tab-link ${activeTab === 'comparativa' ? 'active' : ''}`} onClick={() => setActiveTab('comparativa')}>Análise Comparativa</button>
@@ -72,7 +84,7 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
           {standardError && <div className="error-message">{standardError}</div>}
           <p className="tab-description">Processe o arquivo de dados mais recente. O sistema o comparará com a última análise registrada no histórico para gerar um relatório completo e a análise de tendência contínua.</p>
           <form onSubmit={handlePadraoSubmit}>
-            <label htmlFor="file_recente">Selecione o arquivo de dados mais recente:</label>
+            <label htmlFor="file_recente" className="form-label">Selecione o arquivo de dados mais recente:</label>
             <FileInput id="file_recente" name="file_recente" onFileChange={setPadraoFile} isMultiple={false} />
             <button type="submit" disabled={isLoading}>
               {isLoading ? (
@@ -88,11 +100,11 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
           {comparativeError && <div className="error-message">{comparativeError}</div>}
           <p className="tab-description">Compare dois arquivos de dados específicos para gerar um relatório de tendência sob demanda. Ideal para análises pontuais e investigativas entre períodos não sequenciais.</p>
           <form onSubmit={handleComparativaSubmit}>
-            <label htmlFor="file_antigo">Selecione o arquivo de dados mais antigo (base):</label>
+            <label htmlFor="file_antigo" className="form-label">Selecione o arquivo de dados mais antigo (base):</label>
             <FileInput id="file_antigo" name="file_antigo" onFileChange={setFileAntigo} isMultiple={false} />
 
-            <label htmlFor="file_recente_comp" style={{ marginTop: '15px' }}>Selecione o arquivo de dados mais recente:</label>
-            <FileInput id="file_recente_comp" name="file_recente" onFileChange={setFileRecente} isMultiple={false} />
+            <label htmlFor="file_recente_comp" className="form-label" style={{ marginTop: '15px' }}>Selecione o arquivo de dados mais recente:</label>
+            <FileInput id="file_recente_comp" name="file_recente_comp" onFileChange={setFileRecente} isMultiple={false} />
 
             <button type="submit" disabled={isLoading}>
               {isLoading ? (
@@ -103,6 +115,7 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
             </button>
           </form>
         </div>
+      </div>
       </div>
     </div>
   );
