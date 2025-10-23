@@ -48,7 +48,10 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
     """Carrega, valida e pré-processa os dados de um arquivo CSV."""
     logger.info(f"Carregando e preparando dados de '{filepath}'...")
     try:
-        df = pd.read_csv(filepath, encoding="utf-8-sig", sep=";", engine="python")
+        # MELHORIA: Usa sep=None para que o 'engine' do Python detecte
+        # automaticamente o separador (seja ';' ou ',').
+        # Isso torna a ingestão de dados mais robusta.
+        df = pd.read_csv(filepath, encoding="utf-8-sig", sep=None, engine="python")
     except FileNotFoundError:
         raise FileNotFoundError(
             f"O arquivo de entrada '{filepath}' não foi encontrado."
@@ -111,6 +114,21 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
         all_invalid_dfs.append(df_inconsistencia)
         invalid_indices.update(df_inconsistencia.index)
 
+    # VALIDAÇÃO 4: Datas Inválidas
+    # Identifica linhas onde a data não pôde ser convertida e se tornou NaT.
+    # A conversão é feita em uma série temporária para identificar erros sem modificar o df original.
+    datetimes_temp = pd.to_datetime(df[COL_CREATED_ON], errors="coerce", format="mixed")
+    mask_data_invalida = datetimes_temp.isna() & ~df.index.isin(invalid_indices)
+    if mask_data_invalida.any():
+        df_data_invalida = df[mask_data_invalida].copy()
+        df_data_invalida["invalidated"] = "Formato de data inválido em 'sys_created_on'"
+        all_invalid_dfs.append(df_data_invalida)
+        invalid_indices.update(df_data_invalida.index)
+
+    # Agora que a validação foi feita, a conversão final pode ser aplicada no df principal.
+    df[COL_CREATED_ON] = datetimes_temp
+
+    # REMOÇÃO CENTRALIZADA: Após todas as validações, remove as linhas inválidas ANTES de qualquer outro processamento.
     num_invalidos = len(invalid_indices)
     if all_invalid_dfs:
         df_invalidos_total = pd.concat(all_invalid_dfs, ignore_index=True)
@@ -118,22 +136,19 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
         logger.warning(
             f"Detectadas {num_invalidos} linhas com dados de remediação inválidos ou inconsistentes. Registrando em '{log_invalidos_path}'..."
         )
-        df_invalidos_total.to_csv(log_invalidos_path, index=False, encoding="utf-8-sig")
+        df_invalidos_total.to_csv(log_invalidos_path, index=False, encoding="utf-8-sig", sep=";")
         # Remove todas as linhas inválidas do dataframe principal de uma só vez
         df = df.drop(index=list(invalid_indices)).reset_index(drop=True)
 
+    # O pré-processamento final só ocorre no DataFrame limpo.
     for col in GROUP_COLS:
         df[col] = df[col].fillna(UNKNOWN).replace("", UNKNOWN)
-    df[COL_CREATED_ON] = pd.to_datetime(
-        df[COL_CREATED_ON], errors="coerce", format="mixed"
-    )
     df[COL_REMEDIATION_TASKS_PRESENT] = df[COL_REMEDIATION_TASKS_PRESENT].fillna(NO_STATUS)
     df["severity_score"] = df[COL_SEVERITY].map(SEVERITY_WEIGHTS).fillna(0)
     df["priority_group_score"] = (
         df[COL_PRIORITY_GROUP].map(PRIORITY_GROUP_WEIGHTS).fillna(0)
     )
     df["score_criticidade_final"] = df["severity_score"] + df["priority_group_score"]
-
     for col in GROUP_COLS + [
         COL_REMEDIATION_TASKS_PRESENT,
         COL_SEVERITY,
@@ -163,9 +178,10 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     conditions = [
         has_only_no_status,
         first_status == "No Task Found",
-        last_status.isin(["Closed Skipped", "Canceled"]),
-        (last_status.isin(SUCCESS_STATUSES)) & (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES),
-        (last_status.isin(SUCCESS_STATUSES)) & df['status_chronology'].apply(lambda x: len(set(s for s in x if pd.notna(s) and s != NO_STATUS)) > 1),
+        # PRIORIDADE 1: Casos crônicos, mesmo que sejam "sucesso parcial", devem ser tratados como instabilidade.
+        (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES) & last_status.isin(SUCCESS_STATUSES.union({"Closed Skipped", "Canceled"})),
+        last_status.isin(["Closed Skipped", "Canceled"]), # Casos de sucesso parcial não crônicos.
+        (last_status.isin(SUCCESS_STATUSES)) & df['status_chronology'].apply(lambda x: len({s for s in x if pd.notna(s) and s != NO_STATUS}) > 1),
         (last_status.isin(SUCCESS_STATUSES)),
         (~last_status.isin(SUCCESS_STATUSES)) & has_success,
         ~has_success,
@@ -173,8 +189,8 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     choices = [
         ACAO_STATUS_AUSENTE,
         ACAO_FALHA_PERSISTENTE, # Trata "No Task Found" como falha persistente
-        ACAO_SUCESSO_PARCIAL,
         ACAO_INSTABILIDADE_CRONICA,
+        ACAO_SUCESSO_PARCIAL,
         ACAO_ESTABILIZADA,
         ACAO_SEMPRE_OK,
         ACAO_INTERMITENTE,
@@ -196,8 +212,12 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
         "score_criticidade_final": "max", # Pega o maior score de risco do grupo
         COL_TASKS_STATUS: "first", # Pega o status da task do alerta mais recente
     }
+    # GARANTIA DE ORDEM: Ordena o DataFrame pela data de criação ANTES do groupby.
+    # Isso garante que a agregação 'first' para 'tasks_status' pegue o status do alerta mais recente.
+    df_sorted_for_agg = df.sort_values(by=COL_CREATED_ON, ascending=False)
+
     summary = (
-        df.groupby(GROUP_COLS, observed=True, dropna=False)
+        df_sorted_for_agg.groupby(GROUP_COLS, observed=True, dropna=False)
         .agg(aggregations)
         .reset_index()
     )
@@ -232,11 +252,15 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
 
     # Calcula o fator de ineficiência com base nos status das tasks
     # Se a coluna 'tasks_status' contiver um status de falha, o peso será > 1.0
-    summary["fator_ineficiencia_task"] = (
-        summary[COL_TASKS_STATUS]
-        .map(TASK_STATUS_WEIGHTS)
-        .fillna(TASK_STATUS_WEIGHTS.get("default", 1.0))
-    )
+    # CORREÇÃO: Usa o PIOR status da cronologia para o cálculo, garantindo que
+    # a ineficiência seja penalizada mesmo que o último status seja de sucesso.
+    default_weight = TASK_STATUS_WEIGHTS.get("default", 1.0)
+    def get_max_inefficiency_factor(chronology):
+        if not chronology:
+            return default_weight
+        # Encontra o peso máximo (pior caso) na cronologia
+        return max(TASK_STATUS_WEIGHTS.get(status, default_weight) for status in chronology)
+    summary["fator_ineficiencia_task"] = summary["status_chronology"].apply(get_max_inefficiency_factor)
 
     summary["fator_volume"] = 1 + np.log(summary["alert_count"].clip(1))
 
@@ -276,6 +300,18 @@ colunas_essenciais_relatorio = [
     "data_previsao_solucao",
 ]
 
+# Mapa de emojis centralizado para garantir consistência em todos os relatórios.
+FULL_EMOJI_MAP = {
+    ACAO_INTERMITENTE: "⚠️",
+    ACAO_FALHA_PERSISTENTE: "❌",
+    ACAO_STATUS_AUSENTE: "❓",
+    ACAO_INCONSISTENTE: "🔍",
+    ACAO_SEMPRE_OK: "✅",
+    ACAO_ESTABILIZADA: "⚠️✅",
+    ACAO_SUCESSO_PARCIAL: "🧐",
+    ACAO_INSTABILIDADE_CRONICA: "🔁",
+}
+
 def _save_csv(df, path, sort_by, full_emoji_map, ascending=False):
     """Função auxiliar para salvar DataFrames em CSV com formatação padronizada."""
     if not df.empty:
@@ -308,20 +344,10 @@ def gerar_relatorios_csv(
     alerts_instabilidade = summary[
         summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)
     ].copy()
-    full_emoji_map = {
-        ACAO_INTERMITENTE: "⚠️",
-        ACAO_FALHA_PERSISTENTE: "❌",
-        ACAO_STATUS_AUSENTE: "❓",
-        ACAO_INCONSISTENTE: "🔍",
-        ACAO_SEMPRE_OK: "✅",
-        ACAO_ESTABILIZADA: "⚠️✅",
-        ACAO_SUCESSO_PARCIAL: "🧐",
-        ACAO_INSTABILIDADE_CRONICA: "🔁",
-    }
 
-    _save_csv(alerts_atuacao, output_actuation, "score_ponderado_final", full_emoji_map, False)
-    _save_csv(alerts_ok, output_ok, "last_event", full_emoji_map, False)
-    _save_csv(alerts_instabilidade, output_instability, "alert_count", full_emoji_map, False)
+    _save_csv(alerts_atuacao, output_actuation, "score_ponderado_final", FULL_EMOJI_MAP, False)
+    _save_csv(alerts_ok, output_ok, "last_event", FULL_EMOJI_MAP, False)
+    _save_csv(alerts_instabilidade, output_instability, "alert_count", FULL_EMOJI_MAP, False)
     return alerts_atuacao.sort_values(by="score_ponderado_final", ascending=False)
 
 

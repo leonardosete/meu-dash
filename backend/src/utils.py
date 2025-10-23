@@ -18,7 +18,7 @@ def get_max_date_from_file(filepath: str) -> Optional[pd.Timestamp]:
     try:
         df = pd.read_csv(
             filepath,
-            sep=";",
+            sep=None,
             on_bad_lines="skip",
             engine="python",
             usecols=[NOME_DA_COLUNA_DE_DATA],
@@ -32,7 +32,7 @@ def get_max_date_from_file(filepath: str) -> Optional[pd.Timestamp]:
             return None
 
         df[NOME_DA_COLUNA_DE_DATA] = pd.to_datetime(
-            df[NOME_DA_COLUNA_DE_DATA], errors="coerce", format="mixed"
+            df[NOME_DA_COLUNA_DE_DATA], errors="coerce", dayfirst=True
         )
         df.dropna(subset=[NOME_DA_COLUNA_DE_DATA], inplace=True)
 

@@ -29,6 +29,7 @@ from .constants import (
     UNKNOWN,
 )
 from .analisar_alertas import (
+    FULL_EMOJI_MAP,
     _save_csv,
 )
 
@@ -641,16 +642,6 @@ def gerar_paginas_atuar_por_squad(
     viewer_template_path = os.path.join(BASE_TEMPLATE_DIR, "csv_viewer_template.html")
 
     template_content = carregar_template_html(viewer_template_path)
-    # NOVO: Mapa de emojis para prefixar a ação sugerida no CSV.
-    full_emoji_map = {
-        ACAO_INTERMITENTE: "⚠️",
-        ACAO_FALHA_PERSISTENTE: "❌",
-        ACAO_STATUS_AUSENTE: "❓",
-        ACAO_INCONSISTENTE: "🔍",
-        ACAO_SEMPRE_OK: "✅",
-        ACAO_ESTABILIZADA: "⚠️✅",
-        ACAO_INSTABILIDADE_CRONICA: "🔁",
-    }
 
     for squad_name, squad_df in df_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True):
         if squad_df.empty:
@@ -669,7 +660,7 @@ def gerar_paginas_atuar_por_squad(
         # REUTILIZAÇÃO: Usa a função _save_csv para garantir a consistência
         # na formatação e seleção de colunas.
         _save_csv(
-            df_to_save, csv_path, "score_ponderado_final", full_emoji_map, False
+            df_to_save, csv_path, "score_ponderado_final", FULL_EMOJI_MAP, False
         )
 
         # 2. Gera o HTML correspondente
