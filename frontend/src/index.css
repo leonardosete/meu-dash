@@ -430,6 +430,11 @@ button:disabled {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  text-decoration: none; /* Remove sublinhado do link */
+  color: var(--text-color); /* Garante que o texto seja visível */
+}
+.form-disabled-overlay .overlay-content {
+  align-items: center;
   gap: 10px;
   font-weight: 600;
   border-radius: 16px; /* Para corresponder ao card pai */
@@ -521,6 +526,15 @@ button:disabled {
   font-size: 0.9em;
 }
 
+.logout-ear-button:hover {
+  filter: brightness(1.2);
+}
+
+/* Garante que o ícone SVG dentro do botão de logout seja branco */
+.logout-ear-button svg {
+  stroke: white;
+}
+
 .login-footer a {
   color: var(--text-secondary-color);
   text-decoration: none;
@@ -581,6 +595,4 @@ button:disabled {
 
 .admin-button span {
   font-size: 0.9em;
-}
-
 }

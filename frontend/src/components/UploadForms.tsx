@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import FileInput from './FileInput';
-import { uploadStandardAnalysis, uploadComparativeAnalysis } from '../services/api';
-import { Loader2, Lock } from 'lucide-react'; // Ícone de spinner e cadeado
+import { uploadStandardAnalysis, uploadComparativeAnalysis } from '../services/api'; // Ícone de spinner e cadeado
+import { Loader2, Lock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 interface UploadFormsProps {
@@ -66,10 +67,12 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
     <div className="card form-card">
       <div className="tab-container" style={{ position: 'relative' }}>
         {!isAuthenticated && (
-          <div className="form-disabled-overlay">
-            <Lock size={24} />
-            <span>Faça login para habilitar o upload de arquivos.</span>
-          </div>
+          <Link to="/admin/login" className="form-disabled-overlay">
+            <div className="overlay-content">
+              <Lock size={24} />
+              <span>Faça login para habilitar o upload de arquivos.</span>
+            </div>
+          </Link>
         )}
 
         {/* Adiciona um wrapper para aplicar o efeito de desfoque quando desabilitado */}
