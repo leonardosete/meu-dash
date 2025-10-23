@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, PieChart, Code, History, LayoutDashboard, LogOut } from 'lucide-react';
+import { API_BASE_URL } from '../services/api'; // Importa a URL base da API
 import { useAuth } from '../hooks/useAuth';
 
 interface SideCardProps {
@@ -24,11 +25,7 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
   );
 
   if (isExternal) {
-    // Constrói a URL externa dinamicamente usando a origem da janela atual (window.location.origin).
-    // Isso garante que a URL base seja sempre a correta, tanto em produção (https://smart-plan.devops-master.shop)
-    // quanto em desenvolvimento (http://127.0.0.1:5174), eliminando a dependência de qualquer
-    // variável de ambiente que possa estar incorreta no build.
-    const externalUrl = new URL(to, globalThis.location.origin).href;
+    const externalUrl = new URL(to, API_BASE_URL).href;
     return <a href={externalUrl} className="card side-card">{content}</a>;
   }
 
@@ -64,7 +61,8 @@ const Sidebar = () => {
         color="var(--accent-color)" 
       />
       <SideCard 
-        to="/docs/apidocs" 
+        // O link aponta para a rota raiz do Flasgger no backend.
+        to="/apidocs" 
         isExternal={true}
         icon={<Code />} 
         title="Documentação da API" 

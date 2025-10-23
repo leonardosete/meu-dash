@@ -40,7 +40,7 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [x] **Atualizar Constantes:** Adicionar as novas colunas ao `backend/src/constants.py` e atualizar a lista `ESSENTIAL_COLS`.
   - [x] **Adaptar Ingestão:** Modificar a função `carregar_dados` em `analisar_alertas.py` para processar o novo formato.
   - [x] **Implementar Lógica:** Incorporar a coluna `tasks_status` no cálculo do "Score de Ineficiência" e no `score_ponderado_final`.
-  - [x] **Atualizar Testes Unitários:** Criar/modificar testes para validar a nova lógica de cálculo de forma isolada.
+  - [x] **Atualizar e Robustecer Testes Unitários:** Garantir que a nova lógica de scoring, incluindo o `fator_ineficiencia_task`, esteja completamente coberta por testes.
   - [ ] **Validação Funcional E2E (Mundo Real):** Realizar teste de ponta a ponta com um arquivo CSV real, extraído do ambiente de produção, para validar a robustez do "porteiro" de dados (`carregar_dados`) e a precisão do cálculo do "Score Ponderado Final".
   - [x] **Validação Funcional E2E:** Realizar teste de ponta a ponta com um arquivo real para validar o cálculo do "Score Ponderado Final" e garantir que a documentação da funcionalidade está visível no relatório.
 
