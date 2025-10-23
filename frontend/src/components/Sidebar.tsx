@@ -39,14 +39,6 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
 };
 
 const Sidebar = () => {
-  const { isAuthenticated, logout } = useAuth();
-  
-  const handleLogout = () => {
-    logout(); // Limpa o estado de autenticação
-    // CORREÇÃO: Usa um redirecionamento completo para forçar a reinicialização
-    // da aplicação e garantir que a UI reflita o estado de "não autenticado".
-    globalThis.location.href = '/';
-  };
 
   return (
     <aside className="sidebar-column">
@@ -85,17 +77,6 @@ const Sidebar = () => {
 
       {/* MELHORIA DE UX: O card de login/logout é movido para o final e separado visualmente */}
       <div className="sidebar-footer">
-        {isAuthenticated ? ( // Se autenticado, mostra um botão de logout
-          <button type="button" className="card side-card" onClick={handleLogout}>
-            <LogOut color="var(--danger-color)" />
-            <div className="side-card-text">
-              <h3>Modo Admin Ativo</h3>
-              <p>Clique para sair</p>
-            </div>
-          </button>
-        ) : ( // Se não, mostra o link para a página de login
-          <SideCard to="/admin/login" icon={<Shield />} title="Acesso Administrativo" description="Login para gerenciar relatórios" color="var(--warning-color)" />
-        )}
         {/* Adiciona o número da versão no rodapé da sidebar */}
         <div className="sidebar-version">
           v{import.meta.env.VITE_APP_VERSION}

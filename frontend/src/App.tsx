@@ -11,12 +11,14 @@ function App() {
     <Router>
       <div className="bg-gray-900 text-gray-100 min-h-screen">
         <Routes>
+          {/* Rotas que usam o layout principal com a barra lateral */}
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="history" element={<HistoryPage />} />
-            <Route path="admin/login" element={<LoginPage />} />
-            <Route path="admin/logout" element={<LogoutHandler />} />
           </Route>
+          {/* Rotas de autenticação que são páginas independentes */}
+          <Route path="admin/login" element={<LoginPage />} />
+          <Route path="admin/logout" element={<LogoutHandler />} />
         </Routes>
       </div>
     </Router>
