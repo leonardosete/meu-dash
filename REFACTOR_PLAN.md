@@ -44,7 +44,15 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [ ] **Validação Funcional E2E (Mundo Real):** Realizar teste de ponta a ponta com um arquivo CSV real, extraído do ambiente de produção, para validar a robustez do "porteiro" de dados (`carregar_dados`) e a precisão do cálculo do "Score Ponderado Final".
   - [x] **Validação Funcional E2E:** Realizar teste de ponta a ponta com um arquivo real para validar o cálculo do "Score Ponderado Final" e garantir que a documentação da funcionalidade está visível no relatório.
 
-#### [ ] 🚀 Atualizar Pipeline de CI/CD
+#### [ ] � Aprofundar Análise de Eficácia da Remediação
+
+- **Justificativa:** A análise atual confirma a *execução* da automação (baseado na existência e status da task), mas não a sua *eficácia* real em resolver a causa raiz. O relatório `resumo_geral.html` destaca essa limitação como um "Ponto de Atenção".
+- **Plano de Ação:**
+  - [ ] **Workshop com Time de Automação:** Realizar uma sessão para mapear o significado detalhado dos status de fechamento das tarefas de remediação (REM00XXXXX).
+  - [ ] **Extrair Novos Dados:** Identificar se é possível extrair informações mais granulares sobre o sucesso da remediação a partir dos sistemas de origem.
+  - [ ] **Refinar Score de Ineficiência:** Atualizar a lógica de cálculo do score para incorporar os novos insights, tornando a priorização ainda mais precisa e alinhada com a realidade operacional.
+
+#### [ ] �🚀 Atualizar Pipeline de CI/CD
 
 - **Justificativa:** O pipeline atual (`.github/workflows/ci.yml`) não valida o código do frontend nem constrói a imagem Docker de produção final, criando um ponto cego de qualidade e um processo de deploy manual.
 - **Plano de Ação:**

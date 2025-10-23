@@ -156,7 +156,6 @@
 </head>
 <body>
     <div class="container">
-        <a href="../" class="back-link">&larr; Voltar para a Página Inicial</a>
         <h1>📄 Documentação Técnica - meu-dash</h1>
         <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados, lógica de análise e guia de desenvolvimento do projeto <code>meu-dash</code>.</p>
 
@@ -384,27 +383,5 @@ kubectl create secret generic admin-token-secret \
         </section>
 
     </div>
-    <script>
-        // Script para corrigir o link "Voltar" e inicializar o Mermaid
-        document.addEventListener('DOMContentLoaded', () => {
-            const backLink = document.querySelector('.back-link');
-            if (backLink) {
-                const currentHostname = window.location.hostname;
-                let targetUrl = '';
-
-                // Ambiente de desenvolvimento local
-                if (currentHostname === '127.0.0.1' || currentHostname === 'localhost') {
-                    targetUrl = 'http://127.0.0.1:5174/';
-                // Ambiente de produção (GitHub Pages)
-                } else if (currentHostname === 'leonardosete.github.io') {
-                    targetUrl = 'https://leonardosete.github.io/meu-dash/';
-                }
-                
-                if (targetUrl) {
-                    backLink.href = targetUrl;
-                }
-            }
-        });
-    </script>
 </body>
 </html>

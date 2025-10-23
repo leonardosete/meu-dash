@@ -40,10 +40,6 @@ COPY ./docs ./docs
 # para o diretório que o Nginx irá servir.
 COPY --from=frontend-builder /app/frontend/dist /var/www/html
 
-# Copia a nossa página customizada do Swagger UI para o diretório do Nginx.
-# Isso nos dá controle total e evita os bugs de renderização do Flasgger.
-COPY ./backend/static/swagger-ui.html /var/www/html/apidocs.html
-
 # Garante que o usuário 'nginx' (padrão do Alpine) possa ler os arquivos do frontend.
 RUN chown -R nginx:nginx /var/www/html && chmod -R 755 /var/www/html
 

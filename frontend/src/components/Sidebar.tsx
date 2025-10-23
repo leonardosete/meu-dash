@@ -26,7 +26,13 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
 
   if (isExternal) {
     const externalUrl = new URL(to, API_BASE_URL).href;
-    return <a href={externalUrl} className="card side-card">{content}</a>;
+    // Adiciona target="_blank" para abrir em uma nova aba
+    // rel="noopener noreferrer" é uma boa prática de segurança para links externos
+    return (
+      <a href={externalUrl} className="card side-card" target="_blank" rel="noopener noreferrer">
+        {content}
+      </a>
+    );
   }
 
   return <Link to={to} className="card side-card">{content}</Link>;
@@ -54,7 +60,7 @@ const Sidebar = () => {
 
       <SideCard 
         to="/docs/doc_gerencial.html" 
-        isExternal={true} // Mantém o comportamento de link externo para a documentação
+        isExternal={true}
         icon={<PieChart />} 
         title="Documentação Gerencial" 
         description="Visão de negócio e conceitos." 
