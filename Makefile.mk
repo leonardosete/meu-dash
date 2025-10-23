@@ -12,6 +12,7 @@ DOCKER_PROD_IMAGE_NAME := sevenleo/smart-plan
 help:
 	@echo "Comandos disponíveis:"
 	@echo ""
+	@echo "--- 🚀 Setup Inicial (Docker) ---"
 	@echo "--- 🐳 Ambiente de Desenvolvimento (Docker - RECOMENDADO) ---"
 	@echo "  make up             - (Recomendado) Inicia todo o ambiente de desenvolvimento com Docker Compose."
 	@echo "  make down           - Para todo o ambiente Docker Compose."
@@ -234,6 +235,12 @@ up:
 	@echo ">>> Iniciando ambiente de desenvolvimento com Docker Compose..."
 	@docker-compose up --build -d
 	@echo ">>> Ambiente iniciado. Backend e Frontend estão em execução."
+
+setup-docker-fresh:
+	@echo ">>> [DESTRUTIVO] Resetando completamente o ambiente Docker..."
+	@$(MAKE) distclean
+	@$(MAKE) up
+	@$(MAKE) migrate-docker
 
 down:
 	@echo ">>> Parando ambiente de desenvolvimento Docker Compose..."

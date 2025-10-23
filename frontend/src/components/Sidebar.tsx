@@ -96,6 +96,10 @@ const Sidebar = () => {
         ) : ( // Se não, mostra o link para a página de login
           <SideCard to="/admin/login" icon={<Shield />} title="Acesso Administrativo" description="Login para gerenciar relatórios" color="var(--warning-color)" />
         )}
+        {/* Adiciona o número da versão no rodapé da sidebar */}
+        <div className="sidebar-version">
+          v{import.meta.env.VITE_APP_VERSION}
+        </div>
       </div>
     </aside>
   );

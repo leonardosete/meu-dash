@@ -15,6 +15,14 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 
 ### Prioridade 1: Crítico
 
+#### [ ] 🔐 Proteger Todos os Endpoints da API com Autenticação
+
+- **Justificativa:** Atualmente, apenas endpoints administrativos (como exclusão) são protegidos. Para um ambiente de produção, todos os endpoints que manipulam dados ou disparam ações (como uploads e comparações) devem ser protegidos para evitar uso não autorizado.
+- **Plano de Ação:**
+  - [ ] **Aplicar Decorador:** Adicionar o decorador `@token_required` a todos os endpoints da API em `app.py` (ex: `/api/v1/upload`, `/api/v1/compare`, etc.).
+  - [ ] **Ajustar Frontend:** Modificar as chamadas de API no frontend (`frontend/src/services/api.ts`) para incluir o token JWT no cabeçalho `Authorization` em todas as requisições.
+  - [ ] **Refinar UI:** Garantir que a UI impeça ações (como upload) se o usuário não estiver autenticado, exibindo uma mensagem apropriada.
+
 #### [x] 🛡️ Revisão e Reforço da Autenticação
 
 - **Justificativa:** O fluxo de autenticação JWT está funcional, mas requer uma validação de segurança e usabilidade completa antes da produção. Uma falha aqui representa um risco de segurança direto.

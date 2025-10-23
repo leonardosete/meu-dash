@@ -6,9 +6,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile.dev
     # Usa Gunicorn, um servidor WSGI de produção, que é multithread e mais robusto
+    # Usa Gunicorn, um servidor WSGI de produção, que é multithread e mais robusto.
+    # O comando foi ajustado para ser encapsulado em 'sh -c', garantindo que o PYTHONPATH
+    # (definido no 'environment' abaixo) seja processado de forma confiável antes da execução do Gunicorn.
     # que o servidor de desenvolvimento do Flask. Isso resolve problemas de concorrência
     # que podem causar a tela em branco no frontend. O '--reload' habilita o live-reloading.
-    command: gunicorn --workers 4 --bind 0.0.0.0:5000 --reload "src.app:app" --chdir /app/backend
+    command: sh -c "gunicorn --workers 4 --bind 0.0.0.0:5000 --reload 'src.app:app' --chdir /app/backend"
     ports:
       - "${BACKEND_PORT:-5001}:5000"
     volumes:
