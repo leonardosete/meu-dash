@@ -7,6 +7,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { DashboardProvider } from './contexts/DashboardContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Componente intermediário que aguarda a inicialização do estado de autenticação
 const AppRoutes: React.FC = () => {
@@ -37,11 +38,13 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <DashboardProvider>
-          <div className="app-container">
-            <AppRoutes />
-          </div>
-        </DashboardProvider>
+        <ThemeProvider>
+          <DashboardProvider>
+            <div className="app-container">
+              <AppRoutes />
+            </div>
+          </DashboardProvider>
+        </ThemeProvider>
       </AuthProvider>
     </Router>
   );

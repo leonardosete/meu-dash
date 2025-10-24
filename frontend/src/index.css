@@ -17,6 +17,15 @@
   --danger-color: #e74a3b;
 }
 
+body.light-mode {
+  --bg-color: #f0f2f5;
+  --card-color: #ffffff;
+  --text-color: #4a4a4a;
+  --primary-text-color: #212529;
+  --border-color: #dee2e6;
+}
+
+
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -427,6 +436,11 @@ button.side-card {
   border-color: var(--accent-color);
 }
 
+body.light-mode .file-input-wrapper:hover,
+body.light-mode .file-input-wrapper.drag-active {
+  background-color: #e9ecef;
+}
+
 .file-input {
   display: none;
 }
@@ -502,6 +516,10 @@ button:disabled {
   transition: background-color 0.3s;
 }
 
+body.light-mode .form-disabled-overlay {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
 .form-disabled-overlay .overlay-content {
   display: flex;
   align-items: center;
@@ -525,6 +543,10 @@ button:disabled {
 .form-disabled-overlay .overlay-content:hover {
   background-color: #24273A;
   border-color: var(--accent-color);
+}
+
+body.light-mode .form-disabled-overlay .overlay-content:hover {
+  background-color: #e9ecef;
 }
 
 .inline-login-form-container {
@@ -811,6 +833,11 @@ button:disabled {
   min-width: 0; /* Reset min-width for grid items */
 }
 
+body.light-mode .preview-card {
+  background-color: rgba(59, 139, 236, 0.1);
+  border-color: var(--accent-color);
+}
+
 .preview-card-header {
   display: flex;
   justify-content: center;
@@ -846,6 +873,7 @@ button:disabled {
   overflow: hidden;
   position: relative;
   background-color: #fff; /* Cor de fundo enquanto o iframe carrega */
+  transition: border-color 0.3s ease;
 }
 
 .iframe-wrapper iframe {
@@ -914,4 +942,31 @@ button:disabled {
 .quick-diagnosis-wrapper .highlight a {
   color: var(--accent-color);
   font-weight: 600;
+}
+
+/* --- THEME TOGGLE BUTTON --- */
+.theme-toggle-button {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.theme-toggle-button:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  transform: scale(1.1) rotate(15deg);
+}
+
+.theme-toggle-button svg {
+  width: 20px;
+  height: 20px;
 }

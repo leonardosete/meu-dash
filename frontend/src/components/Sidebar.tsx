@@ -4,6 +4,7 @@ import { Shield, PieChart, Code, History, LayoutDashboard, LogOut, FilePlus2 } f
 import { API_BASE_URL } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboard } from '../contexts/DashboardContext';
+import ThemeToggle from './ThemeToggle';
 
 interface SideCardProps {
   to?: string;
@@ -123,6 +124,7 @@ const Sidebar: React.FC = () => {
             color="var(--danger-color)"
           />
         )}
+        <ThemeToggle />
         <div className="sidebar-version">
           v{import.meta.env.VITE_APP_VERSION}
         </div>
