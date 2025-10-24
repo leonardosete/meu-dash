@@ -112,7 +112,7 @@ def _determine_verdict(kpis):
         return verdict_text, "highlight-warning"
     if kpis["total_p2"] < kpis["total_p1"]:
         return (
-            "✅ <strong>Evolução Positiva:</strong> O número total de Casos diminuiu e a quantidade de novos problemas foi controlada. A operação está se tornando mais estável e eficiente.",
+            "✅ <strong>Evolução Positiva:</strong> O número total de Casos reduziu e a quantidade de novos problemas foi controlada. A operação está se tornando mais estável e eficiente.",
             "highlight-success",
         )
     if kpis["total_p1"] == kpis["total_p2"] and kpis["resolved"] == 0:
@@ -402,7 +402,7 @@ def generate_kpis_html(kpis):
             <div class="kpi-flow-item" style="flex:auto;"><div class="kpi-card-enhanced">
                 <p class="kpi-value" style="color: var(--persistent-color);">{kpis["persistent"]}</p>
                 <p class="kpi-label">Casos Persistentes</p>
-                <p class="kpi-subtitle" title="Problemas que já existiam e continuam sem remediação. O número de alertas reflete o volume do período recente, e a variação em parênteses mostra se o impacto desses problemas aumentou ou diminuiu.">{kpis["alerts_persistent"]} alertas{variation_text}</p>
+                <p class="kpi-subtitle" title="Problemas que já existiam e continuam sem remediação. O número de alertas reflete o volume do período recente, e a variação em parênteses mostra se o impacto desses problemas aumentou ou reduziu.">{kpis["alerts_persistent"]} alertas{variation_text}</p>
             </div></div>
         </div>
         <div class="kpi-flow-connector icon-plus"></div>
