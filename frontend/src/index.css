@@ -743,7 +743,9 @@ button:disabled {
 .form-section-container {
   position: relative;
   display: flex;
+  flex-direction: column;
   min-height: 0;
+  flex-grow: 1;
 }
 
 .report-previews-container {
@@ -798,9 +800,10 @@ button:disabled {
 
 .preview-card-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 15px;
+  position: relative;
 }
 
 .preview-card-header h3 {
@@ -813,6 +816,10 @@ button:disabled {
   color: var(--text-secondary-color);
   transition: color 0.2s;
   line-height: 0;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .preview-external-link:hover {
