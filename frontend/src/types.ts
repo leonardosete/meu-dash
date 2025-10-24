@@ -25,12 +25,14 @@ export interface DashboardSummary {
   kpi_summary: KpiSummary | null;
   trend_history: TrendHistoryItem[];
   latest_report_urls: ReportUrls | null;
+  quick_diagnosis_html?: string | null;
 }
 
 export interface UploadSuccessResponse {
   success: boolean;
   report_urls: ReportUrls;
   kpi_summary: KpiSummary | null;
+  quick_diagnosis_html: string | null;
 }
 
 export interface Report {

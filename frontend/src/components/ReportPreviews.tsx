@@ -4,13 +4,20 @@ import { ExternalLink } from 'lucide-react';
 
 interface ReportPreviewsProps {
   urls: ReportUrls;
+  quickDiagnosis: string | null;
 }
 
-const ReportPreviews: React.FC<ReportPreviewsProps> = ({ urls }) => {
+const ReportPreviews: React.FC<ReportPreviewsProps> = ({ urls, quickDiagnosis }) => {
+  const hasAllThree = urls.summary && urls.action_plan && urls.trend;
+
   return (
     <div className="report-previews-container">
       <div className="previews-header">
-        <h2>Relatórios Gerados</h2>
+        {hasAllThree && quickDiagnosis ? (
+          <div className="quick-diagnosis-wrapper" dangerouslySetInnerHTML={{ __html: quickDiagnosis }} />
+        ) : (
+          <h2>Relatórios Gerados</h2>
+        )}
       </div>
       <div className="previews-grid">
         {urls.summary && (

@@ -40,7 +40,7 @@ function App() {
       <AuthProvider>
         <DashboardProvider>
           <SidebarProvider>
-            <div className="bg-gray-900 text-gray-100 min-h-screen">
+            <div className="app-container">
               <AppRoutes />
             </div>
           </SidebarProvider>

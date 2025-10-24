@@ -11,7 +11,7 @@ const Dashboard = () => {
   const [summaryData, setSummaryData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { reportUrls, setReportUrls } = useDashboard();
+  const { reportUrls, setReportUrls, quickDiagnosis, setQuickDiagnosis } = useDashboard();
 
   const fetchData = useCallback(async () => {
     try {
@@ -22,6 +22,10 @@ const Dashboard = () => {
       if (data.latest_report_urls) {
         setReportUrls(data.latest_report_urls);
       }
+      // Se a API retornar o diagnóstico, o exibe.
+      if (data.quick_diagnosis_html) {
+        setQuickDiagnosis(data.quick_diagnosis_html);
+      }
       setError(null);
     } catch (err) {
       setError('Falha ao carregar os dados do dashboard. O backend está no ar?');
@@ -29,7 +33,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [setReportUrls]);
+  }, [setReportUrls, setQuickDiagnosis]);
 
   useEffect(() => {
     fetchData();
@@ -41,6 +45,7 @@ const Dashboard = () => {
     // Após um novo upload, atualiza tanto os KPIs quanto as URLs das prévias.
     setSummaryData(prev => ({ ...prev!, kpi_summary: data.kpi_summary }));
     setReportUrls(data.report_urls);
+    setQuickDiagnosis(data.quick_diagnosis_html);
   };
 
   const renderKpiContent = () => {
@@ -101,7 +106,7 @@ const Dashboard = () => {
       <div className="form-section-container">
         {reportUrls ? (
           <div key="previews" className="page-fade-in">
-            <ReportPreviews urls={reportUrls} />
+            <ReportPreviews urls={reportUrls} quickDiagnosis={quickDiagnosis} />
           </div>
         ) : (
           <div key="forms" className="page-fade-in">

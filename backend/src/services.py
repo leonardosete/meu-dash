@@ -10,7 +10,13 @@ import logging
 from werkzeug.utils import secure_filename
 
 from .analisar_alertas import analisar_arquivo_csv
-from .analise_tendencia import gerar_relatorio_tendencia
+from .analise_tendencia import (
+    gerar_relatorio_tendencia,
+    load_summary_from_json,
+    calculate_kpis_and_merged_df,
+    prepare_trend_dataframes,
+    generate_executive_summary_html,
+)
 from .get_date_range import get_date_range_from_file
 from . import context_builder, gerador_paginas
 from .constants import (
@@ -144,6 +150,7 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
     """
     kpi_summary = None
     latest_report_files = None
+    quick_diagnosis_html = None
 
     last_report = Report.query.order_by(Report.timestamp.desc()).first()
     if last_report:
@@ -190,10 +197,38 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
             )
             continue
 
+    # Se houver um relatório de tendência, tenta recriar o diagnóstico rápido
+    if latest_report_files and latest_report_files.get("trend"):
+        latest_trend_analysis = TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).first()
+        if latest_trend_analysis:
+            prev_report = latest_trend_analysis.previous_report
+            curr_report = latest_trend_analysis.current_report
+            if (prev_report and curr_report and
+                os.path.exists(prev_report.json_summary_path) and
+                os.path.exists(curr_report.json_summary_path)):
+                
+                df_p1 = load_summary_from_json(prev_report.json_summary_path)
+                df_p2 = load_summary_from_json(curr_report.json_summary_path)
+
+                if df_p1 is not None and df_p2 is not None:
+                    df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
+                    df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
+
+                    kpis, merged_df = calculate_kpis_and_merged_df(df_p1_atuacao, df_p2_atuacao)
+                    trend_data = prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao)
+
+                    quick_diagnosis_html = generate_executive_summary_html(
+                        kpis,
+                        trend_data["persistent_squads_summary"],
+                        trend_data["new_cases"],
+                        is_direct_comparison=False,
+                    )
+
     return {
         "kpi_summary": kpi_summary,
         "trend_history": trend_history,
         "latest_report_files": latest_report_files,
+        "quick_diagnosis_html": quick_diagnosis_html,
     }
 
 
@@ -354,6 +389,7 @@ def process_upload_and_generate_reports(
 
     trend_report_path_relative = None
     new_trend_analysis = None
+    quick_diagnosis_html = None
 
     if previous_report_for_trend and os.path.exists(
         previous_report_for_trend.json_summary_path
@@ -380,7 +416,7 @@ def process_upload_and_generate_reports(
             output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
 
             # REFATORADO: Usa o resultado da análise completa já executada
-            gerar_relatorio_tendencia(
+            _kpis, diagnosis_html = gerar_relatorio_tendencia(
                 json_anterior=previous_report_for_trend.json_summary_path,
                 json_recente=analysis_results[
                     "json_path"
@@ -392,6 +428,7 @@ def process_upload_and_generate_reports(
                 date_range_recente=date_range_recente,
                 frontend_url=frontend_url,  # Passa a URL para o relatório de tendência
             )
+            quick_diagnosis_html = diagnosis_html
             trend_report_path_relative = os.path.basename(output_trend_path)
             logger.info(f"Relatório de tendência gerado em: {output_trend_path}")
 
@@ -463,6 +500,7 @@ def process_upload_and_generate_reports(
         "action_plan_filename": action_plan_filename,
         "trend_report_filename": trend_report_path_relative,
         "json_summary_path": analysis_results["json_path"],
+        "quick_diagnosis_html": quick_diagnosis_html,
     }
 
 

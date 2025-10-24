@@ -645,7 +645,7 @@ def gerar_relatorio_tendencia(
         logger.error(
             "Não foi possível continuar a análise de tendência devido a erro no carregamento dos resumos JSON."
         )
-        return None
+        return None, None
 
     # Filtra os dados para análise de atuação (Casos que precisam de ação)
     df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
@@ -710,12 +710,15 @@ def gerar_relatorio_tendencia(
     <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Foco nos Casos onde a remediação (self-healing) falhou ou não existe. </p>
     """
     body += f"<div class='definition-box' style='margin-top: 30px;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Recente:</strong> {periodo_recente_text}</div>"
-    body += generate_executive_summary_html(
+    
+    executive_summary_html = generate_executive_summary_html(
         kpis,
         trend_data["persistent_squads_summary"],
         trend_data["new_cases"],
         is_direct_comparison,
     )
+    body += executive_summary_html
+    
     body += f"<div class='card'>{generate_kpis_html(kpis)}</div>"
 
     chevron_svg_collapsible = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>'
@@ -861,14 +864,14 @@ def gerar_relatorio_tendencia(
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(final_report)
         logger.info(f"Relatório de tendência gerado em: {output_path}")
-        return kpis
+        return kpis, executive_summary_html
 
     except Exception as e:
         logger.error(
             f"Ocorreu um erro inesperado ao gerar o relatório de tendência: {e}",
             exc_info=True,
         )
-        return None
+        return None, None
 
 
 def main_cli():

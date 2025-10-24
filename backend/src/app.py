@@ -325,8 +325,15 @@ def upload_file_api():
             if result.get("json_summary_path")
             else None
         )
+        
+        quick_diagnosis_html = result.get("quick_diagnosis_html")
 
-        return jsonify(success=True, report_urls=report_urls, kpi_summary=new_kpi_summary)
+        return jsonify(
+            success=True, 
+            report_urls=report_urls, 
+            kpi_summary=new_kpi_summary,
+            quick_diagnosis_html=quick_diagnosis_html
+        )
 
     except Exception as e:
         return jsonify({"error": f"Erro fatal no processo de upload: {str(e)}"}), 500
