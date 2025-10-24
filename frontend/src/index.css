@@ -44,17 +44,18 @@ body {
 
 .layout-wrapper {
   display: flex;
-  align-items: stretch; /* Faz as colunas terem a mesma altura */
-  justify-content: center;
+  align-items: stretch;
   gap: 30px;
-  width: 100%; /* Garante que o layout ocupe todo o espaço disponível */
+  width: 100%;
+  transition: gap 0.3s ease-in-out;
 }
 
 .content-wrapper {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  min-width: 0; /* Previne overflow em layouts flex */
+  min-width: 0;
+  transition: all 0.3s ease-in-out;
 }
 
 .sidebar-column {
@@ -68,6 +69,8 @@ body {
   padding: 20px;
   border-radius: 16px;
   border: 1px solid var(--border-color);
+  transition: max-width 0.3s ease-in-out, padding 0.3s ease-in-out;
+  position: relative;
 }
 
 .main-content {
@@ -137,6 +140,105 @@ button.side-card {
 
 .doc-gerencial-card svg { color: var(--accent-color); }
 .doc-tecnica-card svg { color: #38bdf8; }
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  margin-bottom: 10px;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1.2em;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.2s ease, transform 0.3s ease;
+  transform: translateX(0);
+}
+
+.sidebar-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary-color);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease-in-out, background-color 0.2s;
+  width: auto;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.sidebar-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.side-card-text {
+  transition: opacity 0.2s ease, max-width 0.3s ease, margin-left 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  max-width: 200px;
+}
+
+/* Collapsed State Styles */
+.layout-wrapper.sidebar-collapsed {
+  gap: 15px;
+}
+
+.layout-wrapper.sidebar-collapsed .sidebar-column {
+  max-width: 88px;
+  align-items: center;
+}
+
+.layout-wrapper.sidebar-collapsed .sidebar-header {
+  width: 100%;
+  justify-content: center;
+}
+
+.layout-wrapper.sidebar-collapsed .sidebar-title {
+  opacity: 0;
+  transform: translateX(-20px);
+  pointer-events: none;
+}
+
+.layout-wrapper.sidebar-collapsed .sidebar-toggle-btn {
+  transform: rotate(180deg);
+}
+
+.layout-wrapper.sidebar-collapsed .side-card {
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+}
+
+.layout-wrapper.sidebar-collapsed .side-card-text {
+  opacity: 0;
+  max-width: 0;
+  margin-left: -15px;
+}
+
+.layout-wrapper.sidebar-collapsed .sidebar-footer {
+  align-items: center;
+}
+
+.layout-wrapper.sidebar-collapsed .sidebar-version {
+  opacity: 0;
+  pointer-events: none;
+}
 
 
 /* --- ESTILOS DO DASHBOARD DE KPI (ATUALIZADOS) --- */

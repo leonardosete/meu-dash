@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Shield, PieChart, Code, History, LayoutDashboard, LogOut, FilePlus2 } from 'lucide-react';
+import { Shield, PieChart, Code, History, LayoutDashboard, LogOut, FilePlus2, ChevronsLeft } from 'lucide-react';
 import { API_BASE_URL } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboard } from '../contexts/DashboardContext';
+import { useSidebar } from '../contexts/SidebarContext';
 
 interface SideCardProps {
   to?: string;
@@ -46,11 +47,12 @@ const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, descripti
   return <Link to={to || '#'} className="card side-card">{content}</Link>;
 };
 
-const Sidebar = () => {
+const Sidebar: React.FC = () => {
   const location = useLocation();
   const { isAuthenticated, logout } = useAuth();
   const { reportUrls, setReportUrls } = useDashboard();
   const navigate = useNavigate();
+  const { isCollapsed, toggleSidebar } = useSidebar();
 
   const handleLogout = () => {
     logout();
@@ -59,49 +61,58 @@ const Sidebar = () => {
 
   return (
     <aside className="sidebar-column">
-      {location.pathname !== '/' && (
-        <SideCard 
-          to="/" 
-          icon={<LayoutDashboard />} 
-          title="Dashboard Principal" 
-          description="Visão geral dos KPIs e uploads." 
-          color="var(--success-color)" 
-        />
-      )}
-      
-      {reportUrls && (
-        <SideCard
-          onClick={() => setReportUrls(null)}
-          icon={<FilePlus2 />}
-          title="Nova Análise"
-          description="Voltar para a tela de upload."
-          color="var(--success-color)"
-        />
-      )}
+      <div className="sidebar-header">
+        <h2 className="sidebar-title">Menu</h2>
+        <button onClick={toggleSidebar} className="sidebar-toggle-btn" title={isCollapsed ? "Expandir menu" : "Recolher menu"}>
+          <ChevronsLeft size={24} />
+        </button>
+      </div>
 
-      <SideCard 
-        to="/docs/doc_gerencial.html" 
-        isExternal={true}
-        icon={<PieChart />} 
-        title="Documentação Gerencial" 
-        description="Visão de negócio e conceitos." 
-        color="var(--accent-color)" 
-      />
-      <SideCard 
-        to="/apidocs" 
-        isExternal={true}
-        icon={<Code />} 
-        title="Documentação da API" 
-        description="Navegue e teste os endpoints (Swagger)." 
-        color="#38bdf8"
-      />
-      <SideCard 
-        to="/history" 
-        icon={<History />} 
-        title="Histórico de Análises Padrão" 
-        description="Visualize e gerencie todos os relatórios." 
-        color="var(--text-color)"
-      />
+      <div className="sidebar-cards-container">
+        {location.pathname !== '/' && (
+          <SideCard 
+            to="/" 
+            icon={<LayoutDashboard />} 
+            title="Dashboard Principal" 
+            description="Visão geral dos KPIs e uploads." 
+            color="var(--success-color)" 
+          />
+        )}
+        
+        {reportUrls && (
+          <SideCard
+            onClick={() => setReportUrls(null)}
+            icon={<FilePlus2 />}
+            title="Nova Análise"
+            description="Voltar para a tela de upload."
+            color="var(--success-color)"
+          />
+        )}
+
+        <SideCard 
+          to="/docs/doc_gerencial.html" 
+          isExternal={true}
+          icon={<PieChart />} 
+          title="Documentação Gerencial" 
+          description="Visão de negócio e conceitos." 
+          color="var(--accent-color)" 
+        />
+        <SideCard 
+          to="/apidocs" 
+          isExternal={true}
+          icon={<Code />} 
+          title="Documentação da API" 
+          description="Navegue e teste os endpoints (Swagger)." 
+          color="#38bdf8"
+        />
+        <SideCard 
+          to="/history" 
+          icon={<History />} 
+          title="Histórico de Análises Padrão" 
+          description="Visualize e gerencie todos os relatórios." 
+          color="var(--text-color)"
+        />
+      </div>
 
       <div className="sidebar-footer">
         {isAuthenticated && (
