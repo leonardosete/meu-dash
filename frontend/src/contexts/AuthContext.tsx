@@ -22,6 +22,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [token, setToken] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    setToken(null);
+  }, []);
+
   useEffect(() => {
     // Na primeira montagem, verifica o localStorage para definir o estado de autenticação.
     try {
@@ -34,16 +39,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Marca a inicialização como concluída, liberando a renderização da UI.
       setIsInitializing(false);
     }
-  }, []);
+
+    // Adiciona um listener para o evento de erro de autenticação disparado pelo interceptor da API
+    const handleAuthError = () => {
+      logout();
+    };
+    window.addEventListener('auth-error', handleAuthError);
+
+    // Limpa o listener quando o componente é desmontado
+    return () => {
+      window.removeEventListener('auth-error', handleAuthError);
+    };
+  }, [logout]);
 
   const login = useCallback((newToken: string) => {
     localStorage.setItem(TOKEN_KEY, newToken);
     setToken(newToken);
-  }, []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    setToken(null);
   }, []);
 
   const isAuthenticated = !!token;

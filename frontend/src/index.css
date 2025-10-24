@@ -662,6 +662,7 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 30px;
+  justify-content: center;
 }
 
 .preview-card {
@@ -671,13 +672,30 @@ button:disabled {
   padding: 20px;
   display: flex;
   flex-direction: column;
+  text-align: left;
 }
 
-.preview-card h3 {
-  margin-top: 0;
+.preview-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
+}
+
+.preview-card-header h3 {
+  margin: 0;
   font-size: 1.1em;
   font-weight: 600;
+}
+
+.preview-external-link {
+  color: var(--text-secondary-color);
+  transition: color 0.2s;
+  line-height: 0;
+}
+
+.preview-external-link:hover {
+  color: var(--accent-color);
 }
 
 .iframe-wrapper {
@@ -699,10 +717,4 @@ button:disabled {
   border: 0;
   transform: scale(0.24);
   transform-origin: 0 0;
-}
-
-.preview-link {
-  margin-top: 20px;
-  font-size: 0.9em;
-  font-weight: 500;
 }

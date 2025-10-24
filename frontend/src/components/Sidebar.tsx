@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Shield, PieChart, Code, History, LayoutDashboard, LogOut, FilePlus2 } from 'lucide-react';
 import { API_BASE_URL } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
@@ -48,8 +48,14 @@ const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, descripti
 
 const Sidebar = () => {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const { reportUrls, setReportUrls } = useDashboard();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <aside className="sidebar-column">
@@ -100,7 +106,7 @@ const Sidebar = () => {
       <div className="sidebar-footer">
         {isAuthenticated && (
           <SideCard
-            to="/admin/logout"
+            onClick={handleLogout}
             icon={<LogOut />}
             title="Sair do Modo Admin"
             description="Desconectar da sessão administrativa."

@@ -2,9 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import HistoryPage from './components/HistoryPage';
-import LoginPage from './components/LoginPage';
 import Layout from './components/Layout';
-import LogoutHandler from './components/LogoutHandler';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { Loader2 } from 'lucide-react';
@@ -31,8 +29,6 @@ const AppRoutes: React.FC = () => {
         <Route index element={<Dashboard />} />
         <Route path="history" element={<HistoryPage />} />
       </Route>
-      <Route path="admin/login" element={<LoginPage />} />
-      <Route path="admin/logout" element={<LogoutHandler />} />
     </Routes>
   );
 };

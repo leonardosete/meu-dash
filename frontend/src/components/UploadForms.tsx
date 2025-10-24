@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import FileInput from './FileInput';
 import { uploadStandardAnalysis, uploadComparativeAnalysis } from '../services/api';
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2, LogIn } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { UploadSuccessResponse } from '../types';
-import { Link } from 'react-router-dom';
+import InlineLoginForm from './InlineLoginForm';
 
 interface UploadFormsProps {
   onUploadSuccess: (data: UploadSuccessResponse) => void;
@@ -19,6 +19,7 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [standardError, setStandardError] = useState<string | null>(null);
   const [comparativeError, setComparativeError] = useState<string | null>(null);
+  const [showLoginForm, setShowLoginForm] = useState(false);
 
   const handlePadraoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,21 +63,19 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
     }
   };
 
-  const renderOverlayContent = () => {
-    return (
-      <div className="overlay-content">
-        <Lock size={24} />
-        <Link to="/admin/login" className="login-link-in-overlay">Faça login para habilitar o upload de arquivos.</Link>
-      </div>
-    );
-  };
-
   return (
     <div className="form-section">
       <div className="tab-container" style={{ position: 'relative' }}>
         {!isAuthenticated && (
           <div className="form-disabled-overlay">
-            {renderOverlayContent()}
+            {showLoginForm ? (
+              <InlineLoginForm />
+            ) : (
+              <div className="overlay-content" onClick={() => setShowLoginForm(true)}>
+                <LogIn size={20} />
+                <span>Faça login para habilitar a análise</span>
+              </div>
+            )}
           </div>
         )}
         <div className={!isAuthenticated ? 'forms-wrapper-disabled' : ''}>

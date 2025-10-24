@@ -34,8 +34,9 @@ apiClient.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Remove o token inválido do armazenamento local.
       localStorage.removeItem('meu_dash_auth_token');
-      // Recarrega a aplicação para redefinir o estado de autenticação, usando 'globalThis' para portabilidade.
-      globalThis.location.reload();
+      // Dispara um evento customizado para que a UI possa reagir ao logout.
+      // Isso é menos disruptivo do que um reload forçado.
+      window.dispatchEvent(new Event('auth-error'));
     }
     // Propaga o erro para que possa ser tratado pelo código que fez a chamada.
     throw error;
