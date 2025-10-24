@@ -48,7 +48,7 @@ migrate = Migrate(app, db, directory=MIGRATIONS_DIR)
 swagger_template = {
     "swagger": "2.0",
     "info": {
-        "title": "Smart Plan API",
+        "title": "OpsEngine API",
         "description": "API para análise de alertas e tendências.",
         "version": "1.0.0",
     },

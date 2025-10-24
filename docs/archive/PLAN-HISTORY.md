@@ -17,7 +17,7 @@ Este documento descreve o plano de ação para implementar a funcionalidade de h
 ### Prioridade 3: Camada de Apresentação
 
 - [x] **Otimizar Rota Principal:** Em `src/app.py`, na rota `/`, consultar a tabela `TrendAnalysis` para buscar os últimos 60 registros.
-- [x] **Atualizar Template `upload.html`:** Modificar o card de "Análise de Tendência" para exibir a lista de históricos.
+- [x] **Atualizar Template `upload.html`:** Modificar o card de "Análise Comparativa" para exibir a lista de históricos.
 
 ### Prioridade 4: Testes e Validação
 

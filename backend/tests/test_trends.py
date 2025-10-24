@@ -1,5 +1,5 @@
 """
-Testes para a lógica de Análise de Tendência.
+Testes para a lógica de Análise Comparativa.
 """
 
 from datetime import datetime, timezone

@@ -88,13 +88,19 @@ const Sidebar: React.FC = () => {
             color="var(--success-color)"
           />
         )}
-
+        <SideCard 
+          to="/history" 
+          icon={<History />} 
+          title="Histórico de Análises" 
+          description="Visualize e gerencie todos os relatórios." 
+          color="var(--text-color)" 
+        />
         <SideCard 
           to="/docs/doc_gerencial.html" 
           isExternal={true}
           icon={<PieChart />} 
           title="Documentação Gerencial" 
-          description="Visão de negócio e conceitos." 
+          description="Conhecendo a ferrementa." 
           color="var(--accent-color)" 
         />
         <SideCard 
@@ -104,13 +110,6 @@ const Sidebar: React.FC = () => {
           title="Documentação da API" 
           description="Navegue e teste os endpoints (Swagger)." 
           color="#38bdf8"
-        />
-        <SideCard 
-          to="/history" 
-          icon={<History />} 
-          title="Histórico de Análises Padrão" 
-          description="Visualize e gerencie todos os relatórios." 
-          color="var(--text-color)"
         />
       </div>
 

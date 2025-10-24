@@ -110,7 +110,7 @@ The following is a prioritized list of recommendations to improve the codebase.
 ### Priority 4: Refactor "God Functions"
 
 * **Status:** ✅ **Concluído**
-* **Resumo da Implementação:** A refatoração das "God Functions" foi concluída. A função `analisar_arquivo_csv` foi decomposta, separando a análise de dados da orquestração. A lógica de negócio foi centralizada no módulo `services.py`, limpando completamente as rotas do Flask em `app.py`. Embora funções de orquestração como `process_upload_and_generate_reports` e `gerar_relatorio_tendencia` permaneçam extensas, elas agora possuem responsabilidades mais claras e coesas, finalizando o objetivo principal desta prioridade.
+* **Resumo da Implementação:** A refatoração das "God Functions" foi concluída. A função `analisar_arquivo_csv` foi decomposta, separando a análise de dados da orquestração. A lógica de negócio foi centralizada no módulo `services.py`, limpando completamente as rotas do Flask em `app.py`. Embora funções de orquestração como `process_upload_and_generate_reports` e `gerar_analise_comparativa` permaneçam extensas, elas agora possuem responsabilidades mais claras e coesas, finalizando o objetivo principal desta prioridade.
 
 ## 5. Development Workflow
 

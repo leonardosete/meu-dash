@@ -1,6 +1,6 @@
-# 📈 Plano de Implementação: Análise de Tendência Contínua
+# 📈 Plano de Implementação: Análise Comparativa
 
-Este documento descreve o plano de ação para refatorar a lógica de análise de tendência, garantindo que cada novo upload seja comparado com o relatório mais recente que participou de uma análise de tendência anterior.
+Este documento descreve o plano de ação para refatorar a lógica comparativa, garantindo que cada novo upload seja comparado com o relatório mais recente que participou de uma análise de comparativa anterior.
 
 ## Roadmap da Funcionalidade
 

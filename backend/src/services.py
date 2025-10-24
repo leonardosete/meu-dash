@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 
 from .analisar_alertas import analisar_arquivo_csv
 from .analise_tendencia import (
-    gerar_relatorio_tendencia,
+    gerar_analise_comparativa,
     load_summary_from_json,
     calculate_kpis_and_merged_df,
     prepare_trend_dataframes,
@@ -390,7 +390,7 @@ def process_upload_and_generate_reports(
         input_file=filepath_recente, output_dir=output_dir, light_analysis=False
     )
 
-    # 2. Análise de Tendência (se aplicável)
+    # 2. Análise Comparativa (se aplicável)
     # LÓGICA REVISADA: Busca o relatório correto para comparação.
     # Prioriza o último relatório que foi 'current' em uma análise de tendência.
     last_trend_analysis_obj = TrendAnalysis.query.order_by(
@@ -446,7 +446,7 @@ def process_upload_and_generate_reports(
             base_url = f"http://127.0.0.1:{backend_port}"
 
             # REFATORADO: Usa o resultado da análise completa já executada
-            _kpis, diagnosis_html = gerar_relatorio_tendencia(
+            _kpis, diagnosis_html = gerar_analise_comparativa(
                 json_anterior=previous_report_for_trend.json_summary_path,
                 json_recente=analysis_results[
                     "json_path"
@@ -613,7 +613,7 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
         backend_port = os.getenv("BACKEND_PORT", "5001")
         base_url = f"http://127.0.0.1:{backend_port}"
 
-        gerar_relatorio_tendencia(
+        gerar_analise_comparativa(
             json_anterior=results_anterior["json_path"],
             json_recente=results_recente["json_path"],
             csv_anterior_name=filename_anterior,

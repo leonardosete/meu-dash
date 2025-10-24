@@ -27,7 +27,7 @@ test.describe('Navegação Principal e Links Externos', () => {
   });
 
   test('deve navegar para a página de histórico', async ({ page }) => {
-    await page.getByRole('link', { name: 'Histórico de Análises Padrão' }).click();
+    await page.getByRole('link', { name: 'Histórico de Análises' }).click();
     await expect(page).toHaveURL('/history');
     await expect(page.getByRole('heading', { name: 'Histórico de Análises' })).toBeVisible();
   });

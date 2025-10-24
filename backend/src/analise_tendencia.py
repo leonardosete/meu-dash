@@ -631,7 +631,7 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
     return f"<table>{table_header}{table_body}{table_footer}</table>"
 
 
-def gerar_relatorio_tendencia(
+def gerar_analise_comparativa(
     json_anterior: str,
     json_recente: str,
     csv_anterior_name: str,
@@ -665,7 +665,7 @@ def gerar_relatorio_tendencia(
     trend_data = prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao)
 
     # 3. Monta o relatório HTML
-    title = "📊 Análise de Tendência de Alertas"
+    title = "📊 Análise Comparativa de Alertas"
 
     if is_direct_comparison:
         back_link = f'<a href="{frontend_url}" class="home-button">Página Inicial</a>'
@@ -714,7 +714,7 @@ def gerar_relatorio_tendencia(
         }}
     </style>
     <h1>Análise Comparativa de Períodos</h1>
-    <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Foco nos Casos onde a remediação (self-healing) falhou ou não existe. </p>
+    <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Foco nos Casos onde a remediação falhou ou não existe. </p>
     """
     body += f"<div class='definition-box' style='margin-top: 30px;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Recente:</strong> {periodo_recente_text}</div>"
     
@@ -907,7 +907,7 @@ def main_cli():
     args = parser.parse_args()
 
     output_path = "resumo_tendencia.html"  # Saída padrão para CLI
-    gerar_relatorio_tendencia(
+    gerar_analise_comparativa(
         args.json_anterior,
         args.json_recente,
         args.csv_anterior_name,

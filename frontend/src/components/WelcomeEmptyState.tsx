@@ -5,7 +5,7 @@ const WelcomeEmptyState: React.FC = () => {
   return (
     <div className="welcome-empty-state">
       <Rocket size={48} className="text-accent" />
-      <h2>Bem-vindo ao Meu Dash!</h2>
+      <h2>Bem-vindo ao OpsEngine!</h2>
       <p>Sua central de análise está pronta para começar.</p>
       <p>Para visualizar seus KPIs, faça o upload do seu primeiro arquivo de dados no formulário de <strong>Análise Padrão</strong> abaixo.</p>
     </div>

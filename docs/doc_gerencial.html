@@ -136,19 +136,24 @@
 </head>
 <body>
     <div class="container">
-        <h1>Priorização Inteligente de Alertas</h1>
-        <p>Análise | Agrupamento | Priorização | Plano de Ação.</p>
+        <h1>OpsEngine</h1>
+        <p>Priorização Inteligente de Casos com Foco em Remediação</p>
 
         <section id="proposito">
             <div class="card">
-                <h3>Problema: Além dos Números Gerais</h3>
-                <p class="highlight highlight-danger">Nossa visão se limitava a números de alto nível (ex: "30 mil alertas mês", "Squad X teve mais alertas"). Embora utéis, esses dados são puramente descritivos. Eles não respondiam à pergunta fundamental para a eficiência operacional: <strong>"Onde priorizar esforços de criação e revisão das remediações?"</strong>. Faltava uma análise profunda que transformasse dados em um plano de ação mais efetivo para a equipe de Automação.</p>
+                <h3>O Desafio: Volume de Dados vs. Ação Objetiva</h3>
+                <p class="highlight highlight-danger">Nossa visão de saúde operacional é sustentada por uma <strong>grande quantidade de dados</strong> organizados no Power BI. Recebemos métricas cruciais como "30 mil alertas por mês" e "Squad X gerou mais problemas". No entanto, esses relatórios são <strong>descritivos</strong> e, devido ao volume, acabam gerando uma sobrecarga de informações. A questão central que permanece sem resposta é: <strong>"Como transformar esse volume de dados em ação prioritária para a automação?"</strong>. Precisávamos de um mecanismo que transformasse a contagem de problemas em um <strong>plano de trabalho claro</strong>.</p>
 
-                <h3>Solução: Análise Direcionada e Plano de Ação</h3>
-                <p class="highlight highlight-success">Esta ferramenta foi criada para auxiliar nesse cenário. Vai além da contagem de alertas para realizar uma <strong>análise direcionada</strong>: agrupa alertas em problemas únicos ("Casos"), avalia a eficiência das remediações existentes e, o mais importante, gera um <strong>plano de ação sugerido e priorizado</strong>. Em vez de apenas mostrar o problema operacional, ela entrega o ponto de partida para a <strong>melhoria da automação</strong>.</p>
+                <h3>A Solução: Transformando o Ruído em Plano de Ação</h3>
+                <p class="highlight highlight-success">Esta ferramenta foi desenvolvida para ser o <strong>complemento de inteligência</strong> ao seu monitoramento. Ela não apenas conta os alertas, mas sim realiza uma <strong>análise focada e profunda</strong>. A ferramenta opera de maneira simples e eficiente:
+                <ul style="color: var(--text-secondary-color); margin-top: 15px; margin-bottom: 20px; padding-left: 30px;">
+                    <li><strong>Agrupa alertas</strong> similares em problemas únicos, que chamamos de <strong>"Casos"</strong>.</li>
+                    <li><strong>Verifica a eficácia</strong> das remediações ativas, mapeando quais falharam ou não existem.</li>
+                    <li>Gera um <strong>Plano de Ação sugerido e prioritário</strong>.</li>
+                </ul>
+                Em resumo, o sistema pega o volume de dados do seu monitoramento e entrega à sua equipe o <strong>foco exato</strong> de onde investir tempo para <strong>melhorar a automação</strong>, garantindo que o esforço traga o maior retorno operacional.</p>
             </div>
         </section>
-
         <section id="interpretacao">
             <h2>Classificação da Análise: Os 3 Pilares</h2>
             <p>Para priorizar, a ferramenta classifica os problemas em três categorias principais, permitindo uma visão completa da saúde da automação.</p>
@@ -191,7 +196,7 @@
                     </li>
                     <li>
                         <strong>Nossa automação está sendo eficiente?</strong><br>
-                        <small style="color: var(--text-secondary-color); margin-left: 15px;">A remediação associada falhou ou ficou presa em um estado de "in progress"? Este é o "Score de Ineficiência".</small>
+                        <small style="color: var(--text-secondary-color); margin-left: 15px;">A remediação associada teve qual status? "Closed Incomplete", "Closed"? Este é o "Score de Ineficiência".</small>
                     </li>
                     <li>
                         <strong>Qual o impacto operacional?</strong><br>

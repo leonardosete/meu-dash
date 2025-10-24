@@ -31,7 +31,7 @@ A arquitetura segue um padrão de 3 camadas:
 
 - **Casos vs. Alertas:** A análise agrupa múltiplos alertas (sintomas) em "Casos" únicos (causa raiz), permitindo focar na resolução de problemas.
 - **Score de Prioridade Ponderado:** A criticidade de cada caso é calculada por um score que multiplica três pilares: **Risco** (severidade do alerta), **Ineficiência** (falha da automação) e **Impacto** (volume de alertas gerados).
-- **Análise de Tendência:** A cada novo processamento, o sistema compara os resultados com o período anterior, gerando um "Diagnóstico Rápido" que classifica a evolução da saúde operacional em cenários como "Regressão", "Evolução Positiva" ou "Alta Eficácia, Baixa Estabilidade".
+- **Análise Comparativa:** A cada novo processamento, o sistema compara os resultados com o período anterior, gerando um "Diagnóstico Rápido" que classifica a evolução da saúde operacional em cenários como "Regressão", "Evolução Positiva" ou "Alta Eficácia, Baixa Estabilidade".
 
 ---
 

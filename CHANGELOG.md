@@ -17,7 +17,7 @@ Este ciclo focou em alinhar a implementação do código com a arquitetura de ca
   - Foram criados testes unitários específicos para as novas funções na camada de serviço, garantindo que a lógica de negócio seja testável de forma isolada.
   - Os testes de integração foram atualizados para refletir a nova arquitetura, mockando as chamadas de serviço em vez de funções internas do controller.
 
-## Outubro 2025 - Redesign da UX e Análise de Tendência
+## Outubro 2025 - Redesign da UX e Análise Comparativa
 
 Este ciclo de desenvolvimento focou em transformar a aplicação de uma ferramenta de análise única para uma plataforma de monitoramento contínuo e análise de tendência.
 
@@ -26,10 +26,10 @@ Este ciclo de desenvolvimento focou em transformar a aplicação de uma ferramen
 - **Refatoração da Interface Principal (`PLAN-UX.md`):**
   - Implementação de um novo layout com dashboard gerencial na página inicial.
   - Separação clara dos fluxos de "Análise Padrão" e "Comparação Direta".
-  - Consolidação dos links de ação (Relatório Completo, Plano de Ação, Análise de Tendência) no card de KPIs para uma interface mais limpa e focada.
+  - Consolidação dos links de ação (Relatório Completo, Plano de Ação, Análise Comparativa) no card de KPIs para uma interface mais limpa e focada.
   - Melhorias de usabilidade com base em testes de aceitação e feedback qualitativo.
 
-- **Implementação da Análise de Tendência Contínua (`PLAN.md`):**
+- **Implementação da Análise Comparativa (`PLAN.md`):**
   - Introdução de um banco de dados para persistir o histórico de análises.
   - Lógica de serviço para comparar automaticamente o upload atual com o período anterior.
   - Geração de um novo relatório (`comparativo_periodos.html`) com KPIs de evolução, como "Taxa de Resolução" e "Novos Problemas".

@@ -236,10 +236,10 @@ sequenceDiagram
     Service->>DB: Consulta o último relatório (para tendência)
     DB-->>Service: Retorna metadados do relatório anterior
     
-    alt Análise de Tendência Aplicável
+    alt Análise Comparativa Aplicável
         Service->>+Analysis: Executa `analisar_arquivo_csv()` (análise leve do arquivo recente)
         Analysis-->>-Service: Retorna JSON temporário
-        Service->>+Analysis: Chama `gerar_relatorio_tendencia()` com JSON anterior e recente
+        Service->>+Analysis: Chama `gerar_analise_comparativa()` com JSON anterior e recente
         Analysis-->>-Service: Gera `comparativo_periodos.html`
     end
 

@@ -26,7 +26,7 @@ def mock_dependencies():
 
 
 @patch("src.services.os.path.exists", return_value=True)
-@patch("src.services.gerar_relatorio_tendencia")
+@patch("src.services.gerar_analise_comparativa")
 @patch("src.services.analisar_arquivo_csv")
 @patch("src.services.gerador_paginas")
 @patch("src.services.context_builder")
@@ -120,7 +120,7 @@ def test_process_upload_and_generate_reports(
 
 
 @patch("src.services.os.path.exists", return_value=True)
-@patch("src.services.gerar_relatorio_tendencia")
+@patch("src.services.gerar_analise_comparativa")
 @patch("src.services.analisar_arquivo_csv")
 @patch("src.services.gerador_paginas")
 @patch("src.services.context_builder")
