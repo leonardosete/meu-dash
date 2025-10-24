@@ -15,13 +15,21 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 
 ### Prioridade 1: Crítico
 
-#### [ ] 🔐 Proteger Todos os Endpoints da API com Autenticação
+#### [x] 🛡️ Implementar Validação de Schema de Entrada (Porteiro de Dados)
+
+- **Justificativa:** A aplicação está processando arquivos CSV que não contêm todas as colunas obrigatórias (ex: `tasks_status`), gerando resultados imprevisíveis e incorretos. Isso é um risco crítico para a integridade dos dados.
+- **Plano de Ação:**
+  - [x] **Consolidar Schema:** A lista `ESSENTIAL_COLS` em `constants.py` foi atualizada para ser a única fonte da verdade, contendo todas as colunas mandatórias definidas pelo usuário.
+  - [x] **Falha Rápida:** A função `carregar_dados` em `analisar_alertas.py` agora valida estritamente a presença de todas essas colunas, lançando um `ValueError` e interrompendo o processo se alguma estiver ausente.
+  - [ ] **Atualizar Documentação:** Garantir que o `README.md` e a documentação gerencial mencionem a obrigatoriedade do novo formato de arquivo.
+
+#### [x] 🔐 Proteger Todos os Endpoints da API com Autenticação
 
 - **Justificativa:** Atualmente, apenas endpoints administrativos (como exclusão) são protegidos. Para um ambiente de produção, todos os endpoints que manipulam dados ou disparam ações (como uploads e comparações) devem ser protegidos para evitar uso não autorizado.
 - **Plano de Ação:**
-  - [ ] **Aplicar Decorador:** Adicionar o decorador `@token_required` a todos os endpoints da API em `app.py` (ex: `/api/v1/upload`, `/api/v1/compare`, etc.).
-  - [ ] **Ajustar Frontend:** Modificar as chamadas de API no frontend (`frontend/src/services/api.ts`) para incluir o token JWT no cabeçalho `Authorization` em todas as requisições.
-  - [ ] **Refinar UI:** Garantir que a UI impeça ações (como upload) se o usuário não estiver autenticado, exibindo uma mensagem apropriada.
+  - [x] **Aplicar Decorador:** Adicionado o decorador `@token_required` aos endpoints de upload e comparação em `app.py`.
+  - [x] **Ajustar Frontend:** O interceptor em `api.ts` já envia o token. A UI foi ajustada para refletir o estado de autenticação.
+  - [x] **Refinar UI:** A interface agora desabilita os formulários de upload e apresenta uma opção de login contextual para usuários não autenticados.
 
 #### [x] 🛡️ Revisão e Reforço da Autenticação
 
@@ -60,11 +68,12 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [ ] **Extrair Novos Dados:** Identificar se é possível extrair informações mais granulares sobre o sucesso da remediação a partir dos sistemas de origem.
   - [ ] **Refinar Score de Ineficiência:** Atualizar a lógica de cálculo do score para incorporar os novos insights, tornando a priorização ainda mais precisa e alinhada com a realidade operacional.
 
-#### [ ] �🚀 Atualizar Pipeline de CI/CD
+#### [x] 🚀 Atualizar Pipeline de CI/CD
 
 - **Justificativa:** O pipeline atual (`.github/workflows/ci.yml`) não valida o código do frontend nem constrói a imagem Docker de produção final, criando um ponto cego de qualidade e um processo de deploy manual.
 - **Plano de Ação:**
   - [ ] **Adicionar Etapas do Frontend:** Integrar no CI os comandos para instalar dependências (`npm install`), rodar lint (`npm run lint`) e testes (`npm run test`) do frontend.
+  - [x] **Adicionar Etapas do Frontend:** Integrado no CI os comandos para instalar dependências (`npm install`), rodar lint (`npm run lint`) e testes (`npm run test`) do frontend.
   - [ ] **Modificar Build do Docker:** Alterar a etapa de build para usar o `Dockerfile` multi-estágio de produção, que constrói o frontend e o backend em uma única imagem.
   - [ ] **Publicar Imagem:** Garantir que a imagem final seja publicada no Docker Hub (ou outro registry) com as tags corretas.
 

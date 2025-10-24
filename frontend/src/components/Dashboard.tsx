@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getDashboardSummary } from '../services/api';
 import { DashboardSummary } from '../types';
 import KpiCard from './KpiCard';
-import HistoryPage from './HistoryPage'; // Importa o componente completo
 import UploadForms from './UploadForms';
-import KpiEarLinks from './KpiEarLinks'; // <-- 1. Importe o novo componente
+import KpiEarLinks from './KpiEarLinks';
+import WelcomeEmptyState from './WelcomeEmptyState'; // Importa o novo componente
 
 const Dashboard = () => {
   const [summaryData, setSummaryData] = useState<DashboardSummary | null>(null);
@@ -41,7 +41,7 @@ const Dashboard = () => {
     }
     
     if (!summaryData?.kpi_summary) {
-      return null;
+      return <WelcomeEmptyState />;
     }
 
     const { kpi_summary } = summaryData;
@@ -82,17 +82,16 @@ const Dashboard = () => {
 
   return (
     <>
-      {summaryData && summaryData.kpi_summary && (
-        <div className="card">
-          {/* 2. Adicione o componente aqui, passando as URLs do kpi_summary */}
+      <div className="kpi-section">
+        {summaryData && summaryData.kpi_summary && (
           <KpiEarLinks 
             reportUrl={summaryData.kpi_summary.report_url}
             actionPlanUrl={summaryData.kpi_summary.action_plan_url}
             trendAnalysisUrl={summaryData.kpi_summary.trend_analysis_url}
           />
-          {renderKpiContent()}
-        </div>
-      )}
+        )}
+        {renderKpiContent()}
+      </div>
       
       <UploadForms onUploadSuccess={fetchData} />
     </>

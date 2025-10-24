@@ -1,15 +1,15 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import Header from './Header';
 
 const Layout: React.FC = () => {
+  const location = useLocation();
+
   return (
     <div className="layout-wrapper">
       <Sidebar />
       <div className="content-wrapper">
-        <Header />
-        <main className="main-content">
+        <main className="main-content page-fade-in" key={location.pathname}>
           <Outlet />
         </main>
       </div>

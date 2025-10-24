@@ -23,56 +23,71 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # Pinned to a specific commit
 
-      # 2. Configuração do Python: Prepara o ambiente Python.
+      # 2. Configuração dos Ambientes (Python e Node.js)
       - name: Set up Python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # Pinned to a specific commit
         with:
           python-version: '3.14'
 
-      # 3. Cache de dependências Pip: Armazena as dependências baixadas para reutilização.
+      - name: Set up Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # 3. Cache e Instalação de Dependências
       - name: Cache pip dependencies
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ~/.cache/pip
-          # A chave de cache muda se o requirements.txt for alterado.
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # 3. Instalação de Dependências: Instala as bibliotecas listadas no requirements.txt.
-      - name: Install dependencies
+      - name: Install Backend Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
-      # 4. Execução dos Testes: Roda a suíte de testes com pytest.
-      # Se este passo falhar, o workflow para aqui.
-      - name: Run tests
-        run: pytest
+      - name: Install Frontend Dependencies
+        run: npm install --prefix frontend
 
-      # 5. Check Code Quality & Formatting
-      - name: Check formatting with ruff format
+      # 4. Validação do Backend
+      - name: Check Backend Formatting
         run: ruff format --check backend
 
-      - name: Lint with Ruff
+      - name: Lint Backend
         run: ruff check backend
 
-      # 6. Run Security Scan with Bandit
-      - name: Run security scan
+      - name: Run Backend Security Scan
         run: bandit -r backend/src -ll -ii
 
-      # 5. Login no Docker Hub: Só executa em pushes para a branch 'main'.
+      - name: Run Backend Tests
+        run: pytest
+
+      # 5. Validação do Frontend
+      - name: Lint Frontend
+        run: npm run lint --prefix frontend
+
+      - name: Run Frontend Tests
+        run: npm run test --prefix frontend
+
+      # 6. Login no Docker Hub (apenas em push para 'main')
       - name: Log in to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # Pinned to a specific commit
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 6. Build e Push da Imagem: Só executa em pushes para a 'main'.
+      # 7. Build e Push da Imagem (apenas em push para 'main')
       - name: Set up Docker Buildx
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # SHA do v2
 
       - name: Build and push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # SHA do v5
         with:
           platforms: linux/amd64

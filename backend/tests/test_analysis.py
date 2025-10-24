@@ -69,7 +69,7 @@ def sample_dataframe():
             ]
         ),
         "number": ["INC1", "INC2", "INC3", "INC4", "INC5", "INC6", "INC7", "INC8"],
-        "remediation_tasks_present": [
+        "has_remediation_task": [
             STATUS_OK,
             STATUS_NOT_OK,
             STATUS_OK,

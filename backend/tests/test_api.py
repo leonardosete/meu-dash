@@ -73,6 +73,16 @@ def test_upload_file_success(client):
     Verifica se a API retorna 200 OK e o JSON de sucesso esperado.
     """
     # Mock da função de serviço para evitar o processamento pesado
+    # ARRANGE: Obter um token JWT válido para a requisição.
+    with client.application.app_context():
+        login_response = client.post(
+            "/admin/login",
+            json={"username": "admin", "password": os.getenv("ADMIN_PASSWORD")},
+        )
+        assert login_response.status_code == 200
+        jwt_token = login_response.get_json()["access_token"]
+
+    # ARRANGE: Configura o mock do serviço e os dados do arquivo.
     mock_result = {
         "run_folder": "run_20240101_120000",
         "report_filename": "resumo_geral.html",
@@ -88,8 +98,12 @@ def test_upload_file_success(client):
             "file_recente": (io.BytesIO(b"col1;col2\nval1;val2"), "test_upload.csv")
         }
 
+        # ACT: Envia a requisição com o token de autorização.
         response = client.post(
-            "/api/v1/upload", data=data, content_type="multipart/form-data"
+            "/api/v1/upload",
+            headers={"Authorization": f"Bearer {jwt_token}"},
+            data=data,
+            content_type="multipart/form-data",
         )
 
         assert response.status_code == 200
@@ -163,6 +177,16 @@ def test_compare_files_success(client):
 
     Usa um mock para a camada de serviço para isolar o teste na camada da API.
     """
+    # ARRANGE: Obter um token JWT válido para a requisição.
+    with client.application.app_context():
+        login_response = client.post(
+            "/admin/login",
+            json={"username": "admin", "password": os.getenv("ADMIN_PASSWORD")},
+        )
+        assert login_response.status_code == 200
+        jwt_token = login_response.get_json()["access_token"]
+
+    # ARRANGE: Configura o mock do serviço e os dados dos arquivos.
     mock_result = {
         "run_folder": "run_compare_123",
         "report_filename": "comparativo.html",
@@ -175,8 +199,12 @@ def test_compare_files_success(client):
             "file_antigo": (io.BytesIO(b"file1"), "file1.csv"),
             "file_recente": (io.BytesIO(b"file2"), "file2.csv"),
         }
+        # ACT: Envia a requisição com o token de autorização.
         response = client.post(
-            "/api/v1/compare", data=data, content_type="multipart/form-data"
+            "/api/v1/compare",
+            headers={"Authorization": f"Bearer {jwt_token}"},
+            data=data,
+            content_type="multipart/form-data",
         )
 
         assert response.status_code == 200

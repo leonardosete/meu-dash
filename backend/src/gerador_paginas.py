@@ -154,7 +154,7 @@ def gerar_ecossistema_de_relatorios(
     ]
     if analysis_results["num_logs_invalidos"] > 0:
         reports_to_generate.append(
-            (LOG_INVALIDOS_FILENAME, FILENAME_INVALID_LOGS_HTML, "Checar Dados (Logs Inválidos)")
+            (LOG_INVALIDOS_FILENAME, FILENAME_INVALID_LOGS_HTML, "Checar Dados")
         )
     _gerar_relatorios_csv_viewer(reports_to_generate, output_dir, frontend_url)
 

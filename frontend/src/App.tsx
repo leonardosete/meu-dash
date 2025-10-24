@@ -3,24 +3,47 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import HistoryPage from './components/HistoryPage';
 import LoginPage from './components/LoginPage';
-import Layout from './components/Layout'; // Importa o novo layout
+import Layout from './components/Layout';
 import LogoutHandler from './components/LogoutHandler';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
+import { Loader2 } from 'lucide-react';
+
+// Componente intermediário que aguarda a inicialização do estado de autenticação
+const AppRoutes: React.FC = () => {
+  const { isInitializing } = useAuth();
+
+  // Se o estado de autenticação ainda não foi verificado, exibe um loader.
+  // Isso impede que a UI seja renderizada em um estado incorreto.
+  if (isInitializing) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Loader2 className="animate-spin" size={48} />
+      </div>
+    );
+  }
+
+  // Após a inicialização, renderiza as rotas normalmente.
+  return (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="history" element={<HistoryPage />} />
+      </Route>
+      <Route path="admin/login" element={<LoginPage />} />
+      <Route path="admin/logout" element={<LogoutHandler />} />
+    </Routes>
+  );
+};
 
 function App() {
   return (
     <Router>
-      <div className="bg-gray-900 text-gray-100 min-h-screen">
-        <Routes>
-          {/* Rotas que usam o layout principal com a barra lateral */}
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="history" element={<HistoryPage />} />
-          </Route>
-          {/* Rotas de autenticação que são páginas independentes */}
-          <Route path="admin/login" element={<LoginPage />} />
-          <Route path="admin/logout" element={<LogoutHandler />} />
-        </Routes>
-      </div>
+      <AuthProvider>
+        <div className="bg-gray-900 text-gray-100 min-h-screen">
+          <AppRoutes />
+        </div>
+      </AuthProvider>
     </Router>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Shield, PieChart, Code, History, LayoutDashboard, LogOut } from 'lucide-react';
 import { API_BASE_URL } from '../services/api'; // Importa a URL base da API
 import { useAuth } from '../hooks/useAuth';
@@ -25,7 +25,10 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
   );
 
   if (isExternal) {
-    const externalUrl = new URL(to, API_BASE_URL).href;
+    // CORREÇÃO: Se a API_BASE_URL for uma string vazia (como em produção),
+    // usamos o caminho 'to' diretamente. Caso contrário, construímos a URL completa.
+    const externalUrl = API_BASE_URL ? new URL(to, API_BASE_URL).href : to;
+    
     // Adiciona target="_blank" para abrir em uma nova aba
     // rel="noopener noreferrer" é uma boa prática de segurança para links externos
     return (
@@ -39,17 +42,19 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
 };
 
 const Sidebar = () => {
+  const location = useLocation();
 
   return (
     <aside className="sidebar-column">
-      <SideCard 
-        to="/" 
-        icon={<LayoutDashboard />} 
-        title="Dashboard Principal" 
-        description="Voltar para a tela inicial." 
-        color="var(--accent-color)" 
-      />
-
+      {location.pathname !== '/' && (
+        <SideCard 
+          to="/" 
+          icon={<LayoutDashboard />} 
+          title="Dashboard Principal" 
+          description="Visão geral dos KPIs e uploads." 
+          color="var(--success-color)" 
+        />
+      )}
       <SideCard 
         to="/docs/doc_gerencial.html" 
         isExternal={true}

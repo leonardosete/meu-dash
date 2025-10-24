@@ -28,9 +28,25 @@ body {
   min-height: 100vh;
 }
 
+/* Animação de Fade-in para as páginas */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
 .layout-wrapper {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch; /* Faz as colunas terem a mesma altura */
   justify-content: center;
   gap: 30px;
   width: 100%;
@@ -51,20 +67,10 @@ body {
   width: 100%;
   max-width: 380px;
   flex-shrink: 0;
-  /* Garante que a sidebar ocupe a altura total */
-  align-self: stretch;
   background-color: var(--card-color);
   padding: 20px;
   border-radius: 16px;
-}
-
-.main-content-column {
-  flex-grow: 1;
-  min-width: 400px;
-  display: flex;
-  align-self: stretch;
-  flex-direction: column;
-  gap: 30px;
+  border: 1px solid var(--border-color);
 }
 
 .main-content {
@@ -72,6 +78,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 30px;
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 
 .card {
@@ -124,31 +135,41 @@ body {
 
 
 /* --- ESTILOS DO DASHBOARD DE KPI (ATUALIZADOS) --- */
+.kpi-section {
+  position: relative;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border-color);
+  /* Adiciona espaço à direita para os links "orelha", evitando sobreposição. */
+  padding-right: 60px;
+}
+
 .kpi-dashboard {
   display: grid;
-  /* Força exatamente 3 colunas, como na imagem de referência */
   grid-template-columns: repeat(3, 1fr); 
-  gap: 0; /* Remove o gap para controlar as bordas/divisórias manualmente */
+  gap: 0;
   width: 100%;
-  padding: 0 20px; /* Adiciona um padding interno para não colar nas bordas do card */
+  padding: 0 20px;
 }
 
 .kpi-card {
-  position: relative; /* Contexto para o posicionamento da divisória */
+  position: relative;
   padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 5px; /* Espaço entre o valor principal e o rótulo */
+  gap: 5px;
+  /* Remove estilos de card individual */
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
-/* Adiciona a divisória vertical entre os cards de KPI */
 .kpi-card:not(:first-child)::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 20%; /* Ajuste para centralizar a linha verticalmente */
+  top: 20%;
   bottom: 20%;
   width: 1px;
   background-color: var(--border-color);
@@ -169,9 +190,7 @@ body {
   opacity: 0.9;
 }
 
-/* Contêiner para o sub-valor e sub-rótulo */
 .kpi-sub-group {
-    /* Adiciona o espaço vertical a partir do rótulo principal */
     margin-top: 15px; 
     display: flex;
     flex-direction: column;
@@ -186,7 +205,6 @@ body {
   line-height: 1.1;
 }
 
-/* Estilo para o texto '42 de 60 Casos', que não tem cor de status */
 .kpi-sub-group .kpi-sub-value:not([class*="text-"]) {
     font-size: 1.1em;
     font-weight: 500;
@@ -200,26 +218,18 @@ body {
   opacity: 0.7;
 }
 
-/* As classes de borda laterais não são mais necessárias no kpi-card, 
-   mas são mantidas caso sejam usadas em outro lugar */
-.card-neon-green { border-left-color: var(--success-color); }
-.card-neon-warning { border-left-color: var(--warning-color); }
-.card-neon-red { border-left-color: var(--danger-color); }
-
 .text-success { color: var(--success-color); }
 .text-warning { color: var(--warning-color); }
 .text-danger { color: var(--danger-color); }
 
 /* --- ESTILOS PARA ABAS E FORMULÁRIOS --- */
-.form-card {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 40px;
+.form-section {
+  padding-top: 10px;
 }
 
 .tab-container {
   width: 100%;
+  position: relative;
 }
 
 .tab-links {
@@ -286,6 +296,10 @@ body {
   cursor: pointer;
   transition: background-color 0.3s, border-color 0.3s;
   margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
 .file-input-wrapper:hover, .file-input-wrapper.drag-active {
@@ -339,33 +353,32 @@ button:disabled {
 }
 /* --- ESTILOS PARA AS "ORELHAS" DE LINKS E TOOLTIPS --- */
 
-/* Contêiner para as "orelhas" de link no card de KPI */
 .kpi-ear-links {
   position: absolute;
-  top: 50%; /* Move o topo do elemento para o meio do card pai */
-  right: 0;
-  transform: translateY(-50%); /* Puxa o elemento para cima pela metade de sua própria altura para centralizá-lo perfeitamente */
+  top: 50%;
+  /* Posiciona os links dentro do novo preenchimento, com 10px de espaço da borda. */
+  right: 10px;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 4px; /* Espaço entre as orelhas */
-  z-index: 5; /* Garante que fique sobre outros elementos */
+  gap: 4px;
+  z-index: 5;
 }
 
-/* Estilo individual de cada "orelha" */
 .kpi-ear-links .report-link-ear {
-  position: relative; /* Define o contexto de posicionamento para o tooltip */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
   text-decoration: none;
-  border-bottom-left-radius: 16px;
+  border-radius: 16px 0 0 16px;
   transition: filter 0.2s ease;
 }
 
 .kpi-ear-links .report-link-ear:hover {
-  filter: brightness(1.2); /* Efeito de brilho ao passar o mouse */
+  filter: brightness(1.2);
 }
 
 .kpi-ear-links .report-link-ear svg {
@@ -374,13 +387,12 @@ button:disabled {
   color: white;
 }
 
-/* Estilo para a dica de ferramenta (tooltip) */
 .has-tooltip::after {
   content: attr(data-tooltip);
   position: absolute;
   top: 50%;
   left: 100%;
-  transform: translateY(-50%) scaleX(0); /* Animação horizontal */
+  transform: translateY(-50%) scaleX(0);
   transform-origin: left;
   opacity: 0;
   pointer-events: none;
@@ -400,7 +412,7 @@ button:disabled {
 }
 
 .has-tooltip:hover::after {
-  transform: translateY(-50%) scaleX(1); /* Estado final da animação */
+  transform: translateY(-50%) scaleX(1);
   opacity: 1;
 }
 
@@ -424,24 +436,79 @@ button:disabled {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(27, 30, 44, 0.7);
+  background-color: rgba(27, 30, 44, 0.85);
   z-index: 10;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  text-decoration: none; /* Remove sublinhado do link */
-  color: var(--text-color); /* Garante que o texto seja visível */
+  color: var(--text-color);
+  transition: background-color 0.3s;
 }
+
 .form-disabled-overlay .overlay-content {
+  display: flex;
   align-items: center;
   gap: 10px;
   font-weight: 600;
-  border-radius: 16px; /* Para corresponder ao card pai */
+  border-radius: 16px;
+  padding: 15px 25px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-color);
+  transition: background-color 0.3s;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
 }
-.has-tooltip:hover::after {
-  transform: translateY(-50%) scaleX(1); /* Estado final da animação */
-  opacity: 1;
+
+.form-disabled-overlay .overlay-content:hover {
+  background-color: #24273A;
+  border-color: var(--accent-color);
+}
+
+.inline-login-form-container {
+  background-color: var(--card-color);
+  padding: 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  cursor: default;
+  border: 1px solid var(--border-color);
+}
+
+.inline-login-form-container h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.3em;
+}
+
+.inline-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+}
+
+.inline-login-form .input-group label {
+  margin-bottom: 6px;
+  font-size: 0.85em;
+}
+
+.inline-login-form .input-group input {
+  padding: 10px 12px;
+}
+
+.inline-login-form button {
+  margin-top: 10px;
+  padding: 12px;
+  font-size: 1em;
+}
+
+.error-message.small {
+  padding: 10px;
+  font-size: 0.85em;
+  margin-bottom: 15px;
 }
 
 /* --- ESTILOS PARA A PÁGINA DE LOGIN DEDICADA --- */
@@ -526,13 +593,26 @@ button:disabled {
   font-size: 0.9em;
 }
 
-.logout-ear-button:hover {
-  filter: brightness(1.2);
+.logout-ear-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 16px 0 16px;
+  background-color: rgba(231, 74, 59, 0.15);
+  color: var(--danger-color);
+  border: none;
+  z-index: 15;
+  transition: background-color 0.2s;
 }
 
-/* Garante que o ícone SVG dentro do botão de logout seja branco */
-.logout-ear-button svg {
-  stroke: white;
+.logout-ear-button:hover {
+  background-color: rgba(231, 74, 59, 0.3);
 }
 
 .login-footer a {
@@ -553,17 +633,17 @@ button:disabled {
 
 .header-content {
   display: flex;
-  justify-content: flex-end; /* Alinha o botão à direita */
+  justify-content: flex-end;
   align-items: center;
 }
 
 .sidebar-footer {
-  margin-top: auto; /* Empurra o rodapé para o final do contêiner flex */
+  margin-top: auto;
   padding-top: 20px;
   border-top: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centraliza o texto da versão */
+  align-items: center;
   gap: 15px;
 }
 
@@ -595,4 +675,33 @@ button:disabled {
 
 .admin-button span {
   font-size: 0.9em;
+}
+
+/* --- ESTILOS PARA O ESTADO VAZIO --- */
+.welcome-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  border: 2px dashed var(--border-color);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.welcome-empty-state h2 {
+  margin: 0;
+  font-size: 1.5em;
+  color: var(--primary-text-color);
+}
+
+.welcome-empty-state p {
+  margin: 0;
+  max-width: 450px;
+  color: var(--text-secondary-color);
+  line-height: 1.6;
+}
+
+.welcome-empty-state .text-accent {
+  color: var(--accent-color);
 }

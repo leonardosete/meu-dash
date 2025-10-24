@@ -21,7 +21,7 @@ from .constants import (
     COL_CREATED_ON,
     COL_NUMBER,
     COL_PRIORITY_GROUP,
-    COL_REMEDIATION_TASKS_PRESENT,
+    COL_HAS_REMEDIATION_TASK,
     COL_SEVERITY,
     ESSENTIAL_COLS,
     GROUP_COLS,
@@ -64,15 +64,14 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
     # Garante que linhas completamente vazias (comuns em CSVs malformados) sejam removidas.
     df.dropna(how="all", inplace=True)
 
-    # Garante que o DataFrame use as novas colunas, preenchendo com NaN se estiverem ausentes no CSV.
-    # Isso mantém a compatibilidade com arquivos antigos durante a transição.
-    df = df.reindex(columns=ESSENTIAL_COLS)
-
+    # VALIDAÇÃO ESTRITA: Garante que todas as colunas definidas como essenciais
+    # estejam presentes no arquivo de entrada. Se alguma faltar, o processo falha.
     missing_cols = [col for col in ESSENTIAL_COLS if col not in df.columns]
     if missing_cols:
         raise ValueError(
-            f"O arquivo CSV não contém as colunas essenciais: {', '.join(missing_cols)}"
+            f"Layout do arquivo incompatível. As seguintes colunas obrigatórias não foram encontradas: {', '.join(missing_cols)}. Consulte a documentação para mais detalhes."
         )
+
 
     all_invalid_dfs = []
     # Usa um conjunto para rastrear os índices das linhas já marcadas como inválidas, evitando duplicatas.
@@ -88,29 +87,29 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
         invalid_indices.update(df_group_cols_na.index)
 
     # VALIDAÇÃO 2: Formato dos Dados (só roda nas linhas que passaram na validação 1)
-    if COL_REMEDIATION_TASKS_PRESENT in df.columns:
-        df[COL_REMEDIATION_TASKS_PRESENT] = (
-            df[COL_REMEDIATION_TASKS_PRESENT].astype(str).str.strip()
+    if COL_HAS_REMEDIATION_TASK in df.columns:
+        df[COL_HAS_REMEDIATION_TASK] = (
+            df[COL_HAS_REMEDIATION_TASK].astype(str).str.strip()
         )
         valid_statuses = {STATUS_OK, STATUS_NOT_OK}
         # Garante que a validação de formato só rode em linhas que ainda não foram invalidadas.
         mask_formato_invalido = ~df.index.isin(invalid_indices) & (
-            df[COL_REMEDIATION_TASKS_PRESENT].notna() & ~df[COL_REMEDIATION_TASKS_PRESENT].isin(valid_statuses)
+            df[COL_HAS_REMEDIATION_TASK].notna() & ~df[COL_HAS_REMEDIATION_TASK].isin(valid_statuses)
         )
         if mask_formato_invalido.any():
             df_formato_invalido = df[mask_formato_invalido].copy()
-            df_formato_invalido["invalidated"] = "Formato de remediation_tasks_present inesperado"
+            df_formato_invalido["invalidated"] = "Formato de has_remediation_task inesperado"
             all_invalid_dfs.append(df_formato_invalido)
             invalid_indices.update(df_formato_invalido.index)
 
     # VALIDAÇÃO 3: Consistência Lógica (só roda nas linhas que passaram nas validações anteriores)
     mask_inconsistencia = (
-        ~df.index.isin(invalid_indices) & (df[COL_REMEDIATION_TASKS_PRESENT] == STATUS_OK) &
+        ~df.index.isin(invalid_indices) & (df[COL_HAS_REMEDIATION_TASK] == STATUS_OK) &
         ~df[COL_TASKS_STATUS].isin(["Closed", "Canceled", "Closed Skipped", "Closed Incomplete", np.nan, None, ""])
     )
     if mask_inconsistencia.any():
         df_inconsistencia = df[mask_inconsistencia].copy()
-        df_inconsistencia["invalidated"] = "Inconsistência: remediation_tasks_present é OK, mas task_status indica falha"
+        df_inconsistencia["invalidated"] = "Inconsistência: has_remediation_task é OK, mas task_status indica falha"
         all_invalid_dfs.append(df_inconsistencia)
         invalid_indices.update(df_inconsistencia.index)
 
@@ -126,11 +125,13 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
         invalid_indices.update(df_data_invalida.index)
 
     # Agora que a validação foi feita, a conversão final pode ser aplicada no df principal.
-    df[COL_CREATED_ON] = datetimes_temp
+    if not mask_data_invalida.all():
+        df[COL_CREATED_ON] = datetimes_temp
 
     # REMOÇÃO CENTRALIZADA: Após todas as validações, remove as linhas inválidas ANTES de qualquer outro processamento.
     num_invalidos = len(invalid_indices)
     if all_invalid_dfs:
+        # Concatena todos os dataframes de linhas inválidas em um único.
         df_invalidos_total = pd.concat(all_invalid_dfs, ignore_index=True)
         log_invalidos_path = os.path.join(output_dir, LOG_INVALIDOS_FILENAME)
         logger.warning(
@@ -143,14 +144,17 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
     # O pré-processamento final só ocorre no DataFrame limpo.
     for col in GROUP_COLS:
         df[col] = df[col].fillna(UNKNOWN).replace("", UNKNOWN)
-    df[COL_REMEDIATION_TASKS_PRESENT] = df[COL_REMEDIATION_TASKS_PRESENT].fillna(NO_STATUS)
+    # Garante que a coluna exista antes de tentar preencher NaNs
+    if COL_HAS_REMEDIATION_TASK in df.columns:
+        df[COL_HAS_REMEDIATION_TASK] = df[COL_HAS_REMEDIATION_TASK].fillna(NO_STATUS)
+
     df["severity_score"] = df[COL_SEVERITY].map(SEVERITY_WEIGHTS).fillna(0)
     df["priority_group_score"] = (
         df[COL_PRIORITY_GROUP].map(PRIORITY_GROUP_WEIGHTS).fillna(0)
     )
     df["score_criticidade_final"] = df["severity_score"] + df["priority_group_score"]
     for col in GROUP_COLS + [
-        COL_REMEDIATION_TASKS_PRESENT,
+        COL_HAS_REMEDIATION_TASK,
         COL_SEVERITY,
         COL_PRIORITY_GROUP,
     ]:
@@ -165,6 +169,12 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     # Define quais status de task são considerados um "sucesso"
     SUCCESS_STATUSES = {"Closed"}
 
+    # GARANTIA DE RETROCOMPATIBILIDADE: Se a coluna de status de task não existir,
+    # retorna uma ação padrão para evitar erros.
+    if COL_TASKS_STATUS not in df.columns:
+        df["acao_sugerida"] = ACAO_STATUS_AUSENTE
+        return df
+        
     # Extrai informações da cronologia de tasks e do status final (o primeiro da lista, que corresponde ao alerta mais recente)
     last_status = df["status_chronology"].str[-1].fillna(NO_STATUS)
     first_status = df[COL_TASKS_STATUS].fillna(NO_STATUS)
@@ -208,7 +218,7 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
         COL_CREATED_ON: ["min", "max"],
         COL_NUMBER: ["nunique", lambda x: ", ".join(sorted(x.unique()))],
         # CORREÇÃO: A coluna 'statuses' agora é apenas um artefato legado. A cronologia real virá de 'tasks_status'.
-        COL_REMEDIATION_TASKS_PRESENT: lambda x: ", ".join(sorted(x.dropna().astype(str).unique())),
+        COL_HAS_REMEDIATION_TASK: lambda x: ", ".join(sorted(x.dropna().astype(str).unique())),
         "score_criticidade_final": "max", # Pega o maior score de risco do grupo
         COL_TASKS_STATUS: "first", # Pega o status da task do alerta mais recente
     }
@@ -254,6 +264,12 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
     # Se a coluna 'tasks_status' contiver um status de falha, o peso será > 1.0
     # CORREÇÃO: Usa o PIOR status da cronologia para o cálculo, garantindo que
     # a ineficiência seja penalizada mesmo que o último status seja de sucesso.
+    # CORREÇÃO 2: Verifica se a coluna 'status_chronology' existe antes de aplicar o fator.
+    # Isso garante retrocompatibilidade com arquivos CSV antigos.
+    if "status_chronology" not in summary.columns:
+        summary["fator_ineficiencia_task"] = 1.0
+        logger.warning("Coluna 'status_chronology' não encontrada. Fator de ineficiência de tasks não será aplicado.")
+        return summary
     default_weight = TASK_STATUS_WEIGHTS.get("default", 1.0)
     def get_max_inefficiency_factor(chronology):
         if not chronology:
@@ -292,13 +308,19 @@ colunas_essenciais_relatorio = [
     "last_event",
     "alert_count",
     "alert_numbers",
-    "tasks_status",
-    "status_chronology",
     # Colunas específicas do plano de ação
     "status_tratamento",
     "responsavel",
     "data_previsao_solucao",
 ]
+
+# Adiciona colunas opcionais se elas existirem no DataFrame, mantendo a retrocompatibilidade.
+colunas_opcionais_relatorio = [
+    "tasks_status",
+    "status_chronology",
+]
+colunas_essenciais_relatorio.extend(colunas_opcionais_relatorio)
+
 
 # Mapa de emojis centralizado para garantir consistência em todos os relatórios.
 FULL_EMOJI_MAP = {
@@ -315,6 +337,11 @@ FULL_EMOJI_MAP = {
 def _save_csv(df, path, sort_by, full_emoji_map, ascending=False):
     """Função auxiliar para salvar DataFrames em CSV com formatação padronizada."""
     if not df.empty:
+        # Garante que colunas de metadados internos não vazem para os relatórios.
+        colunas_a_remover = ["processing_status", "error_message"]
+        df = df.drop(
+            columns=[col for col in colunas_a_remover if col in df.columns]
+        )
         df_to_save = df.copy()
         df_to_save["acao_sugerida"] = df_to_save["acao_sugerida"].apply(
             lambda x: f"{full_emoji_map.get(x, '')} {x}".strip()
@@ -354,6 +381,11 @@ def gerar_relatorios_csv(
 def export_summary_to_json(summary: pd.DataFrame, output_path: str):
     """Salva o dataframe de resumo em formato JSON."""
     logger.info("Exportando resumo para JSON...")
+    # Garante que colunas de metadados internos não vazem para o JSON.
+    colunas_a_remover = ["processing_status", "error_message"]
+    summary = summary.drop(
+        columns=[col for col in colunas_a_remover if col in summary.columns]
+    )
     summary_json = summary.copy()
     for col in ["first_event", "last_event"]:
         if col in summary_json.columns:

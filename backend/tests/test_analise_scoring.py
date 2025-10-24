@@ -30,7 +30,7 @@ def test_fator_ineficiencia_task_calculation():
             format="mixed",
         ),
         "number": ["1", "2", "3", "4"],
-        "remediation_tasks_present": ["REM_OK", "REM_OK", "REM_NOT_OK", "NO_STATUS"],
+        "has_remediation_task": ["REM_OK", "REM_OK", "REM_NOT_OK", "NO_STATUS"],
         "severity": ["Alto", "Alto", "Médio", "Crítico"],
         "sn_priority_group": ["Alto(a)", "Alto(a)", "Moderado(a)", "Urgente"],
         # Cenários de tasks_status
