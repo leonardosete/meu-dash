@@ -1,9 +1,36 @@
 /* HistoryPage.css */
 
+.history-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px; /* Espaço entre os dois cards de histórico */
+}
+
+.history-page-container > h2 {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 1.8em;
+  font-weight: 600;
+}
+
+.history-card {
+  padding: 30px;
+}
+
+.history-card h3 {
+  font-size: 1.3em;
+  color: var(--primary-text-color);
+  margin-top: 0;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+  font-weight: 500;
+}
+
 .history-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
 }
 
 .history-table th,

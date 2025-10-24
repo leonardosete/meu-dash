@@ -36,7 +36,8 @@ export interface UploadSuccessResponse {
 }
 
 export interface Report {
-  id: number;
+  id: string; // ID can be 'standard-X' or 'comparative-Y'
+  type: 'standard' | 'comparative';
   timestamp: string;
   original_filename: string;
   date_range: string;

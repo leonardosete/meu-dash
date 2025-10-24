@@ -525,7 +525,7 @@ def get_reports():
                 format: date-time
                 description: Data e hora da criação do relatório.
     """
-    reports_data = services.get_reports_list(models.Report)
+    reports_data = services.get_unified_history_list(models.Report, models.TrendAnalysis)
 
     # Enriquece com as URLs antes de retornar
     for report in reports_data:

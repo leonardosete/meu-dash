@@ -238,37 +238,58 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
     }
 
 
-def get_reports_list(Report) -> list:
+def get_unified_history_list(Report, TrendAnalysis) -> list:
     """
-    Busca e retorna uma lista de todos os relatórios do banco de dados.
-
-    Args:
-        Report: Modelo Report do SQLAlchemy.
-
-    Returns:
-        Uma lista de dicionários, onde cada dicionário contém os metadados
-        de um relatório.
+    Busca e retorna uma lista unificada de todos os relatórios e análises de tendência.
     """
+    history_items = []
+
+    # 1. Busca relatórios de Análise Padrão
     reports = Report.query.order_by(Report.timestamp.desc()).all()
-    report_data = []
     for report in reports:
         try:
-            report_data.append(
-                {
-                    "id": report.id,
-                    "timestamp": report.timestamp,
-                    "original_filename": report.original_filename,
-                    "date_range": report.date_range,
-                    "run_folder": os.path.basename(os.path.dirname(report.report_path)),
-                    "filename": os.path.basename(report.report_path),
-                }
-            )
+            history_items.append({
+                "id": f"standard-{report.id}",
+                "type": "standard",
+                "timestamp": report.timestamp,
+                "original_filename": report.original_filename,
+                "date_range": report.date_range,
+                "run_folder": os.path.basename(os.path.dirname(report.report_path)),
+                "filename": os.path.basename(report.report_path),
+            })
         except Exception as e:
-            logger.warning(
-                f"Erro ao processar dados do relatório {report.id} para a lista: {e}"
-            )
-            continue
-    return report_data
+            logger.warning(f"Erro ao processar relatório padrão {report.id}: {e}")
+
+    # 2. Busca relatórios de Análise Comparativa (Tendência)
+    analyses = TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).all()
+    for analysis in analyses:
+        try:
+            # Constrói um nome descritivo para a análise de tendência
+            prev_file = analysis.previous_report.original_filename if analysis.previous_report else "N/A"
+            curr_file = analysis.current_report.original_filename if analysis.current_report else "N/A"
+            filename = f"Comparativo: {os.path.basename(curr_file)} vs {os.path.basename(prev_file)}"
+
+            # Constrói o intervalo de datas combinado
+            date_range = "N/A"
+            if analysis.current_report and analysis.current_report.date_range:
+                date_range = analysis.current_report.date_range
+
+            history_items.append({
+                "id": f"comparative-{analysis.id}",
+                "type": "comparative",
+                "timestamp": analysis.timestamp,
+                "original_filename": filename,
+                "date_range": date_range,
+                "run_folder": os.path.basename(os.path.dirname(analysis.trend_report_path)),
+                "filename": os.path.basename(analysis.trend_report_path),
+            })
+        except Exception as e:
+            logger.warning(f"Erro ao processar análise de tendência {analysis.id}: {e}")
+
+    # 3. Ordena a lista combinada pela data
+    history_items.sort(key=lambda x: x["timestamp"], reverse=True)
+
+    return history_items
 
 
 def delete_report_and_artifacts(report_id: int, db, Report) -> bool:
