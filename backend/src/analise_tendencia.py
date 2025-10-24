@@ -128,7 +128,7 @@ def _determine_verdict(kpis):
 
 
 def _determine_action_points(
-    kpis, new_cases_summary, persistent_summary, is_direct_comparison
+    kpis, new_cases_summary, persistent_summary, is_direct_comparison, run_folder=None, base_url=""
 ):
     """Determina os pontos de ação, vitórias e links com base nos dados."""
     action_point = ""
@@ -141,7 +141,10 @@ def _determine_action_points(
         if is_direct_comparison:
             action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> '{squad_highlight_html}'</strong> registrou o maior número de Casos sem remediação recentemente. Focar a investigação nesta equipe."
         else:
-            action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
+            if run_folder and base_url:
+                action_plan_url = f"{base_url}/reports/{run_folder}/planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
+            else:
+                action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
             action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> \'{squad_highlight_html}\'</strong> registrou o maior número de Casos sem remediação recentemente. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
     elif not persistent_summary.empty:
         top_persistent_squad = persistent_summary.index[0]
@@ -152,7 +155,10 @@ def _determine_action_points(
         if is_direct_comparison:
             action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> '{squad_highlight_html}'</strong> concentra o maior número de problemas persistentes. Ação de causa raiz é necessária."
         else:
-            action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
+            if run_folder and base_url:
+                action_plan_url = f"{base_url}/reports/{run_folder}/planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
+            else:
+                action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
             action_point = f'<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> \'{squad_highlight_html}\'</strong> concentra o maior número de problemas persistentes. <a href="{action_plan_url}" style="font-weight: 600;">Ver Plano de Ação.</a>'
 
     recognition_point = ""
@@ -160,9 +166,6 @@ def _determine_action_points(
         recognition_point = f"<li>✅ <strong>Principal Vitória:</strong> <strong>{kpis['resolved']} Casos</strong> foram resolvidos desde o período anterior, demonstrando evolução com as remediações."
 
     general_action_plan_link = ""
-    if not is_direct_comparison:
-        action_url = "atuar.html?back=comparativo_periodos.html"
-        general_action_plan_link = f'<li>📋 <strong>Plano de Ação Geral:</strong> <a href="{action_url}" style="font-weight: 600;">Ver todos os Casos que necessitam de ação.</a>'
 
     return action_point, recognition_point, general_action_plan_link
 
@@ -172,6 +175,8 @@ def generate_executive_summary_html(
     persistent_summary,
     new_cases_summary,
     is_direct_comparison: bool,
+    run_folder: str = None,
+    base_url: str = "",
 ):
     """Gera um resumo executivo com os principais insights e pontos de ação."""
     verdict_text, verdict_class = _determine_verdict(kpis)
@@ -180,7 +185,7 @@ def generate_executive_summary_html(
         recognition_point,
         general_action_plan_link,
     ) = _determine_action_points(
-        kpis, new_cases_summary, persistent_summary, is_direct_comparison
+        kpis, new_cases_summary, persistent_summary, is_direct_comparison, run_folder, base_url
     )
 
     summary_html = f"""
@@ -636,6 +641,8 @@ def gerar_relatorio_tendencia(
     date_range_recente: str = None,
     is_direct_comparison: bool = False,
     frontend_url: str = "/",
+    run_folder: str = None,
+    base_url: str = "",
 ):
     """Função principal para gerar o relatório de tendência."""
     df_p1 = load_summary_from_json(json_anterior)
@@ -716,6 +723,8 @@ def gerar_relatorio_tendencia(
         trend_data["persistent_squads_summary"],
         trend_data["new_cases"],
         is_direct_comparison,
+        run_folder=run_folder,
+        base_url=base_url,
     )
     body += executive_summary_html
     

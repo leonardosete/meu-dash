@@ -105,9 +105,7 @@ const Dashboard = () => {
       
       <div className="form-section-container">
         {reportUrls ? (
-          <div key="previews" className="page-fade-in">
-            <ReportPreviews urls={reportUrls} quickDiagnosis={quickDiagnosis} />
-          </div>
+          <ReportPreviews key="previews" urls={reportUrls} quickDiagnosis={quickDiagnosis} />
         ) : (
           <div key="forms" className="page-fade-in">
             <UploadForms onUploadSuccess={handleUploadSuccess} />

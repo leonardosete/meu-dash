@@ -777,10 +777,10 @@ button:disabled {
 }
 
 .previews-grid {
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 30px;
-  justify-content: center;
-  align-items: stretch;
   flex-grow: 1;
   min-height: 0;
 }
@@ -793,8 +793,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   text-align: left;
-  flex: 1;
-  min-width: 300px;
+  min-width: 0; /* Reset min-width for grid items */
 }
 
 .preview-card-header {
@@ -826,7 +825,6 @@ button:disabled {
   border-radius: 8px;
   overflow: hidden;
   position: relative;
-  /* A propriedade padding-top foi removida para permitir que o flexbox controle a altura */
   background-color: #fff; /* Cor de fundo enquanto o iframe carrega */
 }
 
@@ -839,6 +837,14 @@ button:disabled {
   border: 0;
   transform: scale(0.24);
   transform-origin: 0 0;
+  filter: grayscale(100%);
+  opacity: 0.8;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.iframe-wrapper:hover iframe {
+  filter: grayscale(0%);
+  opacity: 1;
 }
 
 /* --- ESTILOS PARA O QUICK DIAGNOSIS --- */

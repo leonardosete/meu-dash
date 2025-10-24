@@ -217,11 +217,17 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
                     kpis, merged_df = calculate_kpis_and_merged_df(df_p1_atuacao, df_p2_atuacao)
                     trend_data = prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao)
 
+                    current_run_folder = os.path.basename(os.path.dirname(curr_report.report_path))
+                    backend_port = os.getenv("BACKEND_PORT", "5001")
+                    base_url = f"http://127.0.0.1:{backend_port}"
+
                     quick_diagnosis_html = generate_executive_summary_html(
                         kpis,
                         trend_data["persistent_squads_summary"],
                         trend_data["new_cases"],
                         is_direct_comparison=False,
+                        run_folder=current_run_folder,
+                        base_url=base_url,
                     )
 
     return {
@@ -415,6 +421,9 @@ def process_upload_and_generate_reports(
             logger.info("Período do upload é mais recente. Gerando tendência...")
             output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
 
+            backend_port = os.getenv("BACKEND_PORT", "5001")
+            base_url = f"http://127.0.0.1:{backend_port}"
+
             # REFATORADO: Usa o resultado da análise completa já executada
             _kpis, diagnosis_html = gerar_relatorio_tendencia(
                 json_anterior=previous_report_for_trend.json_summary_path,
@@ -427,6 +436,8 @@ def process_upload_and_generate_reports(
                 date_range_anterior=previous_report_for_trend.date_range,
                 date_range_recente=date_range_recente,
                 frontend_url=frontend_url,  # Passa a URL para o relatório de tendência
+                run_folder=run_folder_name,
+                base_url=base_url,
             )
             quick_diagnosis_html = diagnosis_html
             trend_report_path_relative = os.path.basename(output_trend_path)
@@ -577,6 +588,10 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
         )
 
         output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
+        
+        backend_port = os.getenv("BACKEND_PORT", "5001")
+        base_url = f"http://127.0.0.1:{backend_port}"
+
         gerar_relatorio_tendencia(
             json_anterior=results_anterior["json_path"],
             json_recente=results_recente["json_path"],
@@ -587,6 +602,8 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
             date_range_recente=get_date_range_from_file(filepath_recente),
             is_direct_comparison=True,
             frontend_url=frontend_url,
+            run_folder=run_folder_name,
+            base_url=base_url,
         )
         return {
             "run_folder": run_folder_name,
