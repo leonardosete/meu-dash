@@ -21,7 +21,7 @@
 
 body {
   margin: 0;
-  padding: 20px 5% 5vh 5%; /* Adiciona 5% de padding inferior */
+  padding: 20px 2% 2% 2%; /* Define o espaçamento geral da página */
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -659,8 +659,7 @@ button:disabled {
 }
 
 .previews-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
   gap: 30px;
   justify-content: center;
 }
@@ -673,6 +672,9 @@ button:disabled {
   display: flex;
   flex-direction: column;
   text-align: left;
+  flex: 1;
+  min-width: 300px;
+  max-width: 380px;
 }
 
 .preview-card-header {
