@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import FileInput from './FileInput';
-import { uploadStandardAnalysis, uploadComparativeAnalysis, login as apiLogin } from '../services/api';
-import { Loader2, Lock, LogOut } from 'lucide-react';
+import { uploadStandardAnalysis, uploadComparativeAnalysis } from '../services/api';
+import { Loader2, Lock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { UploadSuccessResponse } from '../types';
+import { Link } from 'react-router-dom';
 
 interface UploadFormsProps {
-  onUploadSuccess: () => void;
+  onUploadSuccess: (data: UploadSuccessResponse) => void;
 }
 
 const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
-  const { isAuthenticated, login, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<'padrao' | 'comparativa'>('padrao');
   const [padraoFile, setPadraoFile] = useState<FileList | null>(null);
   const [fileAntigo, setFileAntigo] = useState<FileList | null>(null);
@@ -17,13 +19,6 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [standardError, setStandardError] = useState<string | null>(null);
   const [comparativeError, setComparativeError] = useState<string | null>(null);
-
-  // Estado para o formulário de login inline
-  const [isLoginVisible, setIsLoginVisible] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [isLoginLoading, setIsLoginLoading] = useState(false);
 
   const handlePadraoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +29,8 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
     setIsLoading(true);
     setStandardError(null);
     try {
-      await uploadStandardAnalysis(padraoFile[0]);
-      onUploadSuccess();
+      const result = await uploadStandardAnalysis(padraoFile[0]);
+      onUploadSuccess(result);
     } catch (err: any) {
       setStandardError(err.response?.data?.error || 'Ocorreu um erro no upload.');
     } finally {
@@ -67,62 +62,11 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
     }
   };
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsLoginLoading(true);
-    setLoginError(null);
-    try {
-      const { access_token } = await apiLogin({ username, password });
-      login(access_token);
-      setIsLoginVisible(false);
-    } catch (err: any) {
-      setLoginError(err.response?.data?.error || 'Falha na autenticação.');
-    } finally {
-      setIsLoginLoading(false);
-    }
-  };
-
   const renderOverlayContent = () => {
-    if (!isLoginVisible) {
-      return (
-        <button type="button" className="overlay-content" onClick={() => setIsLoginVisible(true)}>
-          <Lock size={24} />
-          <span>Faça login para habilitar o upload de arquivos.</span>
-        </button>
-      );
-    }
-
     return (
-      <div className="inline-login-form-container" onClick={(e) => e.stopPropagation()}>
-        <h3>Acesso Administrativo</h3>
-        {loginError && <div className="error-message small">{loginError}</div>}
-        <form onSubmit={handleLoginSubmit} className="inline-login-form">
-          <div className="input-group">
-            <label htmlFor="inline-username">Usuário</label>
-            <input
-              id="inline-username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-          <div className="input-group">
-            <label htmlFor="inline-password">Senha</label>
-            <input
-              id="inline-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" disabled={isLoginLoading}>
-            {isLoginLoading ? <Loader2 className="animate-spin" /> : 'Entrar'}
-          </button>
-        </form>
+      <div className="overlay-content">
+        <Lock size={24} />
+        <Link to="/admin/login" className="login-link-in-overlay">Faça login para habilitar o upload de arquivos.</Link>
       </div>
     );
   };
@@ -130,15 +74,6 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
   return (
     <div className="form-section">
       <div className="tab-container" style={{ position: 'relative' }}>
-        {isAuthenticated && (
-          <button 
-            onClick={logout} 
-            className="logout-ear-button"
-            title="Sair do Modo Admin"
-          >
-            <LogOut size={20} />
-          </button>
-        )}
         {!isAuthenticated && (
           <div className="form-disabled-overlay">
             {renderOverlayContent()}

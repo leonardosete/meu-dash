@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, PieChart, Code, History, LayoutDashboard, LogOut } from 'lucide-react';
-import { API_BASE_URL } from '../services/api'; // Importa a URL base da API
+import { Shield, PieChart, Code, History, LayoutDashboard, LogOut, FilePlus2 } from 'lucide-react';
+import { API_BASE_URL } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import { useDashboard } from '../contexts/DashboardContext';
 
 interface SideCardProps {
-  to: string;
+  to?: string;
+  onClick?: () => void;
   icon: React.ReactElement;
   title: string;
   description: string;
@@ -13,7 +15,7 @@ interface SideCardProps {
   isExternal?: boolean;
 }
 
-const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color, isExternal = false }) => {
+const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, description, color, isExternal = false }) => {
   const content = (
     <>
       {React.cloneElement(icon, { color })}
@@ -24,13 +26,16 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
     </>
   );
 
+  if (onClick) {
+    return (
+      <button onClick={onClick} className="card side-card">
+        {content}
+      </button>
+    );
+  }
+
   if (isExternal) {
-    // CORREÇÃO: Se a API_BASE_URL for uma string vazia (como em produção),
-    // usamos o caminho 'to' diretamente. Caso contrário, construímos a URL completa.
-    const externalUrl = API_BASE_URL ? new URL(to, API_BASE_URL).href : to;
-    
-    // Adiciona target="_blank" para abrir em uma nova aba
-    // rel="noopener noreferrer" é uma boa prática de segurança para links externos
+    const externalUrl = to ? (API_BASE_URL ? new URL(to, API_BASE_URL).href : to) : '#';
     return (
       <a href={externalUrl} className="card side-card" target="_blank" rel="noopener noreferrer">
         {content}
@@ -38,11 +43,13 @@ const SideCard: React.FC<SideCardProps> = ({ to, icon, title, description, color
     );
   }
 
-  return <Link to={to} className="card side-card">{content}</Link>;
+  return <Link to={to || '#'} className="card side-card">{content}</Link>;
 };
 
 const Sidebar = () => {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
+  const { reportUrls, setReportUrls } = useDashboard();
 
   return (
     <aside className="sidebar-column">
@@ -55,6 +62,17 @@ const Sidebar = () => {
           color="var(--success-color)" 
         />
       )}
+      
+      {reportUrls && (
+        <SideCard
+          onClick={() => setReportUrls(null)}
+          icon={<FilePlus2 />}
+          title="Nova Análise"
+          description="Voltar para a tela de upload."
+          color="var(--success-color)"
+        />
+      )}
+
       <SideCard 
         to="/docs/doc_gerencial.html" 
         isExternal={true}
@@ -64,7 +82,6 @@ const Sidebar = () => {
         color="var(--accent-color)" 
       />
       <SideCard 
-        // O link aponta para a rota raiz do Flasgger no backend.
         to="/apidocs" 
         isExternal={true}
         icon={<Code />} 
@@ -80,9 +97,16 @@ const Sidebar = () => {
         color="var(--text-color)"
       />
 
-      {/* MELHORIA DE UX: O card de login/logout é movido para o final e separado visualmente */}
       <div className="sidebar-footer">
-        {/* Adiciona o número da versão no rodapé da sidebar */}
+        {isAuthenticated && (
+          <SideCard
+            to="/admin/logout"
+            icon={<LogOut />}
+            title="Sair do Modo Admin"
+            description="Desconectar da sessão administrativa."
+            color="var(--danger-color)"
+          />
+        )}
         <div className="sidebar-version">
           v{import.meta.env.VITE_APP_VERSION}
         </div>

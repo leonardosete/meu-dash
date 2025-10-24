@@ -126,7 +126,7 @@ def calculate_kpi_summary(report_path: str) -> dict | None:
         return None
 
 
-def get_dashboard_summary_data(db, Report, TrendAnalysis, reports_folder: str) -> dict:
+def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
     """
     Busca e consolida todos os dados necessários para o dashboard principal.
 
@@ -138,53 +138,52 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis, reports_folder: str) -
         db: Instância do SQLAlchemy.
         Report: Modelo Report.
         TrendAnalysis: Modelo TrendAnalysis.
-        reports_folder: Caminho para a pasta de relatórios.
 
     Returns:
         Um dicionário contendo os dados brutos para o dashboard.
     """
-    trend_history = []
-    last_action_plan = None
     kpi_summary = None
-    last_report_info = None
+    latest_report_files = None
 
     last_report = Report.query.order_by(Report.timestamp.desc()).first()
     if last_report:
         run_folder_path = os.path.dirname(last_report.report_path)
         run_folder_name = os.path.basename(run_folder_path)
 
-        last_report_info = {
-            "run_folder": run_folder_name,
-            "filename": os.path.basename(last_report.report_path),
-            "timestamp": last_report.timestamp,
-        }
-
-        action_plan_csv_path = os.path.join(run_folder_path, "atuar.csv")
-        if (
-            os.path.exists(action_plan_csv_path)
-            and os.path.getsize(action_plan_csv_path) > 100
-        ):
-            last_action_plan = {"date": last_report.timestamp}
-
+        # Calcula os KPIs do último relatório
         if last_report.json_summary_path and os.path.exists(
             last_report.json_summary_path
         ):
             kpi_summary = calculate_kpi_summary(last_report.json_summary_path)
 
+        # Prepara os nomes dos arquivos do último relatório para a API construir as URLs
+        latest_report_files = {
+            "run_folder": run_folder_name,
+            "summary": os.path.basename(last_report.report_path),
+        }
+        action_plan_path = os.path.join(run_folder_path, "atuar.html")
+        if os.path.exists(action_plan_path):
+            latest_report_files["action_plan"] = "atuar.html"
+
+    # Busca o histórico de tendências separadamente
+    trend_history = []
     trend_analyses = (
         TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).limit(60).all()
     )
-    for analysis in trend_analyses:
+    for i, analysis in enumerate(trend_analyses):
         try:
             run_folder = os.path.basename(os.path.dirname(analysis.trend_report_path))
             filename = os.path.basename(analysis.trend_report_path)
-            trend_history.append(
-                {
-                    "run_folder": run_folder,
-                    "filename": filename,
-                    "date": analysis.timestamp,
-                }
-            )
+            trend_info = {
+                "run_folder": run_folder,
+                "filename": filename,
+                "date": analysis.timestamp,
+            }
+            trend_history.append(trend_info)
+            # Se for a análise de tendência mais recente, adiciona ao `latest_report_files`
+            if i == 0 and latest_report_files:
+                latest_report_files["trend_run_folder"] = run_folder
+                latest_report_files["trend"] = filename
         except Exception as e:
             logger.warning(
                 f"Erro ao processar histórico de tendência para o relatório {analysis.id}: {e}"
@@ -193,9 +192,8 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis, reports_folder: str) -
 
     return {
         "kpi_summary": kpi_summary,
-        "last_action_plan": last_action_plan,
         "trend_history": trend_history,
-        "last_report_info": last_report_info,
+        "latest_report_files": latest_report_files,
     }
 
 
@@ -456,9 +454,14 @@ def process_upload_and_generate_reports(
     _enforce_report_limit(db, Report)
 
     # 7. Retornar resultado
+    # Verifica a existência dos arquivos opcionais antes de incluir no retorno
+    action_plan_filename = "atuar.html" if os.path.exists(os.path.join(output_dir, "atuar.html")) else None
+
     return {
         "run_folder": run_folder_name,
-        "report_filename": os.path.basename(summary_html_path),
+        "summary_report_filename": os.path.basename(summary_html_path),
+        "action_plan_filename": action_plan_filename,
+        "trend_report_filename": trend_report_path_relative,
         "json_summary_path": analysis_results["json_path"],
     }
 

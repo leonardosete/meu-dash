@@ -1,21 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getDashboardSummary } from '../services/api';
-import { DashboardSummary } from '../types';
+import { DashboardSummary, UploadSuccessResponse } from '../types';
 import KpiCard from './KpiCard';
 import UploadForms from './UploadForms';
-import KpiEarLinks from './KpiEarLinks';
-import WelcomeEmptyState from './WelcomeEmptyState'; // Importa o novo componente
+import WelcomeEmptyState from './WelcomeEmptyState';
+import ReportPreviews from './ReportPreviews';
+import { useDashboard } from '../contexts/DashboardContext';
 
 const Dashboard = () => {
   const [summaryData, setSummaryData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { reportUrls, setReportUrls } = useDashboard();
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getDashboardSummary();
       setSummaryData(data);
+      // Se a API retornar as URLs do último relatório, exibe as prévias.
+      if (data.latest_report_urls) {
+        setReportUrls(data.latest_report_urls);
+      }
       setError(null);
     } catch (err) {
       setError('Falha ao carregar os dados do dashboard. O backend está no ar?');
@@ -23,13 +29,19 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setReportUrls]);
 
   useEffect(() => {
     fetchData();
-    document.addEventListener('visibilitychange', fetchData);
-    return () => document.removeEventListener('visibilitychange', fetchData);
+    // A lógica de recarregar ao mudar a visibilidade foi removida para
+    // não limpar a tela de pré-visualização inesperadamente.
   }, [fetchData]);
+
+  const handleUploadSuccess = (data: UploadSuccessResponse) => {
+    // Após um novo upload, atualiza tanto os KPIs quanto as URLs das prévias.
+    setSummaryData(prev => ({ ...prev!, kpi_summary: data.kpi_summary }));
+    setReportUrls(data.report_urls);
+  };
 
   const renderKpiContent = () => {
     if (loading) {
@@ -83,17 +95,20 @@ const Dashboard = () => {
   return (
     <>
       <div className="kpi-section">
-        {summaryData && summaryData.kpi_summary && (
-          <KpiEarLinks 
-            reportUrl={summaryData.kpi_summary.report_url}
-            actionPlanUrl={summaryData.kpi_summary.action_plan_url}
-            trendAnalysisUrl={summaryData.kpi_summary.trend_analysis_url}
-          />
-        )}
         {renderKpiContent()}
       </div>
       
-      <UploadForms onUploadSuccess={fetchData} />
+      <div className="form-section-container">
+        {reportUrls ? (
+          <div key="previews" className="page-fade-in">
+            <ReportPreviews urls={reportUrls} />
+          </div>
+        ) : (
+          <div key="forms" className="page-fade-in">
+            <UploadForms onUploadSuccess={handleUploadSuccess} />
+          </div>
+        )}
+      </div>
     </>
   );
 };

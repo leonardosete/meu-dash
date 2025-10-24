@@ -21,11 +21,9 @@
 
 body {
   margin: 0;
-  padding: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  padding: 20px 5% 5vh 5%; /* Adiciona 5% de padding inferior */
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 /* Animação de Fade-in para as páginas */
@@ -49,8 +47,7 @@ body {
   align-items: stretch; /* Faz as colunas terem a mesma altura */
   justify-content: center;
   gap: 30px;
-  width: 100%;
-  max-width: 1440px; /* Aumentado de 1200px para expandir o layout */
+  width: 100%; /* Garante que o layout ocupe todo o espaço disponível */
 }
 
 .content-wrapper {
@@ -130,6 +127,14 @@ body {
   height: 28px;
   flex-shrink: 0;
 }
+
+button.side-card {
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
 .doc-gerencial-card svg { color: var(--accent-color); }
 .doc-tecnica-card svg { color: #38bdf8; }
 
@@ -139,8 +144,6 @@ body {
   position: relative;
   padding-bottom: 40px;
   border-bottom: 1px solid var(--border-color);
-  /* Adiciona espaço à direita para os links "orelha", evitando sobreposição. */
-  padding-right: 60px;
 }
 
 .kpi-dashboard {
@@ -351,70 +354,6 @@ button:disabled {
   text-align: left;
   font-size: 0.9em;
 }
-/* --- ESTILOS PARA AS "ORELHAS" DE LINKS E TOOLTIPS --- */
-
-.kpi-ear-links {
-  position: absolute;
-  top: 50%;
-  /* Posiciona os links dentro do novo preenchimento, com 10px de espaço da borda. */
-  right: 10px;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 5;
-}
-
-.kpi-ear-links .report-link-ear {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  text-decoration: none;
-  border-radius: 16px 0 0 16px;
-  transition: filter 0.2s ease;
-}
-
-.kpi-ear-links .report-link-ear:hover {
-  filter: brightness(1.2);
-}
-
-.kpi-ear-links .report-link-ear svg {
-  width: 20px;
-  height: 20px;
-  color: white;
-}
-
-.has-tooltip::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  transform: translateY(-50%) scaleX(0);
-  transform-origin: left;
-  opacity: 0;
-  pointer-events: none;
-  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
-  background-color: #24273A;
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin-left: 12px;
-  z-index: 10;
-  font-size: 0.85em;
-  line-height: 1.4;
-  max-width: 250px;
-  text-align: center;
-  white-space: normal;
-  border: 1px solid var(--border-color);
-}
-
-.has-tooltip:hover::after {
-  transform: translateY(-50%) scaleX(1);
-  opacity: 1;
-}
 
 .form-label {
   display: block;
@@ -457,8 +396,13 @@ button:disabled {
   background-color: var(--card-color);
   transition: background-color 0.3s;
   cursor: pointer;
-  width: 100%;
+  width: auto;
   justify-content: center;
+}
+
+.login-link-in-overlay {
+  color: var(--text-color);
+  text-decoration: none;
 }
 
 .form-disabled-overlay .overlay-content:hover {
@@ -593,28 +537,6 @@ button:disabled {
   font-size: 0.9em;
 }
 
-.logout-ear-button {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0 16px 0 16px;
-  background-color: rgba(231, 74, 59, 0.15);
-  color: var(--danger-color);
-  border: none;
-  z-index: 15;
-  transition: background-color 0.2s;
-}
-
-.logout-ear-button:hover {
-  background-color: rgba(231, 74, 59, 0.3);
-}
-
 .login-footer a {
   color: var(--text-secondary-color);
   text-decoration: none;
@@ -704,4 +626,83 @@ button:disabled {
 
 .welcome-empty-state .text-accent {
   color: var(--accent-color);
+}
+
+/* --- ESTILOS PARA A NOVA SEÇÃO DE PRÉ-VISUALIZAÇÃO --- */
+.form-section-container {
+  position: relative;
+}
+
+.report-previews-container {
+  text-align: center;
+}
+
+.previews-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 15px;
+}
+
+.previews-header h2 {
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.previews-description {
+  font-size: 0.95em;
+  color: var(--text-secondary-color);
+  margin-bottom: 30px;
+}
+
+.previews-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.preview-card {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-card h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.iframe-wrapper {
+  flex-grow: 1;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  padding-top: 75%; /* Proporção 4:3 */
+  background-color: #fff; /* Cor de fundo enquanto o iframe carrega */
+}
+
+.iframe-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 417%; /* 100% / 0.24 (escala) */
+  height: 417%;
+  border: 0;
+  transform: scale(0.24);
+  transform-origin: 0 0;
+}
+
+.preview-link {
+  margin-top: 20px;
+  font-size: 0.9em;
+  font-weight: 500;
 }

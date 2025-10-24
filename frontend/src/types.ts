@@ -7,10 +7,6 @@ export interface KpiSummary {
   taxa_sucesso_valor: number;
   casos_sucesso: number;
   total_casos: number;
-  report_url?: string;
-  // --- NOVAS PROPRIEDADES ADICIONADAS ---
-  action_plan_url?: string;      // URL para o "Plano de Ação"
-  trend_analysis_url?: string; // URL para a "Análise de Tendência"
 }
 
 export interface TrendHistoryItem {
@@ -19,9 +15,33 @@ export interface TrendHistoryItem {
   url: string;
 }
 
+export interface ReportUrls {
+  summary?: string;
+  action_plan?: string;
+  trend?: string;
+}
+
 export interface DashboardSummary {
   kpi_summary: KpiSummary | null;
-  last_action_plan: { url: string } | null;
-  last_report_info: { run_folder: string; filename: string } | null;
   trend_history: TrendHistoryItem[];
+  latest_report_urls: ReportUrls | null;
+}
+
+export interface UploadSuccessResponse {
+  success: boolean;
+  report_urls: ReportUrls;
+  kpi_summary: KpiSummary | null;
+}
+
+export interface Report {
+  id: number;
+  timestamp: string;
+  original_filename: string;
+  date_range: string;
+  url: string;
+}
+
+export interface LoginCredentials {
+  username?: string;
+  password?: string;
 }

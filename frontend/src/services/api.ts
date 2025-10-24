@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { DashboardSummary, LoginCredentials, Report } from '../types';
+import { DashboardSummary, LoginCredentials, Report, UploadSuccessResponse } from '../types';
 
 // Em produção (import.meta.env.PROD é true), a URL base é uma string vazia,
 // tornando as chamadas de API relativas ao domínio atual (ex: /api/v1/...).
@@ -55,7 +55,7 @@ export const getDashboardSummary = async (): Promise<DashboardSummary> => {
  * Envia um arquivo para a análise padrão.
  * @param file O arquivo a ser enviado.
  */
-export const uploadStandardAnalysis = async (file: File): Promise<{ success: boolean; report_url: string }> => {
+export const uploadStandardAnalysis = async (file: File): Promise<UploadSuccessResponse> => {
   const formData = new FormData();
   formData.append('file_recente', file);
 

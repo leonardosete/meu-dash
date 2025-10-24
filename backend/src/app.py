@@ -198,39 +198,36 @@ def get_dashboard_summary():
         db=db,
         Report=models.Report,
         TrendAnalysis=models.TrendAnalysis,
-        reports_folder=app.config["REPORTS_FOLDER"],
     )
 
-    # Enriquece os dados com URLs geradas pelo Flask
-    if summary_data.get("kpi_summary"):
-        last_report_info = summary_data["last_report_info"]
-        if last_report_info:
-            summary_data["kpi_summary"]["report_url"] = url_for(
+    # Constrói as URLs para os relatórios mais recentes, se existirem
+    latest_files = summary_data.get("latest_report_files")
+    if latest_files:
+        urls = {
+            "summary": url_for(
                 "serve_report",
-                run_folder=last_report_info["run_folder"],
-                filename=last_report_info["filename"],
-                _external=True,  # Gera uma URL absoluta (ex: http://127.0.0.1:5001/...)
-            )
-
-        # Adiciona a URL do plano de ação ao kpi_summary, se existir
-        if summary_data.get("last_action_plan"):
-            summary_data["kpi_summary"]["action_plan_url"] = url_for(
-                "serve_report",
-                run_folder=last_report_info["run_folder"],
-                filename="atuar.html",  # CORREÇÃO: Aponta para o plano de ação geral
+                run_folder=latest_files["run_folder"],
+                filename=latest_files["summary"],
                 _external=True,
             )
-
-        # Adiciona a URL da última análise de tendência ao kpi_summary, se existir
-        if summary_data.get("trend_history"):
-            latest_trend = summary_data["trend_history"][0]
-            summary_data["kpi_summary"]["trend_analysis_url"] = url_for(
+        }
+        if latest_files.get("action_plan"):
+            urls["action_plan"] = url_for(
                 "serve_report",
-                run_folder=latest_trend["run_folder"],
-                filename=latest_trend["filename"],
+                run_folder=latest_files["run_folder"],
+                filename=latest_files["action_plan"],
                 _external=True,
             )
+        if latest_files.get("trend"):
+            urls["trend"] = url_for(
+                "serve_report",
+                run_folder=latest_files["trend_run_folder"],
+                filename=latest_files["trend"],
+                _external=True,
+            )
+        summary_data["latest_report_urls"] = urls
 
+    # Enriquece o histórico de tendências com URLs
     for trend in summary_data["trend_history"]:
         trend["url"] = url_for(
             "serve_report", run_folder=trend["run_folder"], filename=trend["filename"]
@@ -266,9 +263,9 @@ def upload_file_api():
           properties:
             success:
               type: boolean
-            report_url:
-              type: string
-              description: URL para o relatório principal gerado.
+            report_urls:
+              type: object
+              description: URLs para os relatórios gerados.
             kpi_summary:
               type: object
               description: Resumo dos KPIs da nova análise.
@@ -300,18 +297,36 @@ def upload_file_api():
         if result and result.get("warning"):
             return jsonify({"error": result["warning"]}), 400
 
-        report_url = url_for(
-            "serve_report",
-            run_folder=result["run_folder"],
-            filename=result["report_filename"],
-        )
+        report_urls = {
+            "summary": url_for(
+                "serve_report",
+                run_folder=result["run_folder"],
+                filename=result["summary_report_filename"],
+                _external=True,
+            )
+        }
+        if result.get("action_plan_filename"):
+            report_urls["action_plan"] = url_for(
+                "serve_report",
+                run_folder=result["run_folder"],
+                filename=result["action_plan_filename"],
+                _external=True,
+            )
+        if result.get("trend_report_filename"):
+            report_urls["trend"] = url_for(
+                "serve_report",
+                run_folder=result["run_folder"],
+                filename=result["trend_report_filename"],
+                _external=True,
+            )
+
         new_kpi_summary = (
             services.calculate_kpi_summary(result["json_summary_path"])
             if result.get("json_summary_path")
             else None
         )
 
-        return jsonify(success=True, report_url=report_url, kpi_summary=new_kpi_summary)
+        return jsonify(success=True, report_urls=report_urls, kpi_summary=new_kpi_summary)
 
     except Exception as e:
         return jsonify({"error": f"Erro fatal no processo de upload: {str(e)}"}), 500
