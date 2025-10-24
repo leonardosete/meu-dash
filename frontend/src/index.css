@@ -50,7 +50,7 @@ body {
   justify-content: center;
   gap: 30px;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1440px; /* Aumentado de 1200px para expandir o layout */
 }
 
 .content-wrapper {
