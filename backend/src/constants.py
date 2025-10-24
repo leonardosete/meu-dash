@@ -81,6 +81,7 @@ COL_PILAR = "Pilar"
 COL_TASKS_COUNT = "tasks_count"
 COL_TASKS_NUMBERS = "tasks_numbers"
 COL_TASKS_STATUS = "tasks_status"
+COL_LAST_TASK_STATUS = "last_tasks_status"
 COL_ALERT_FOUND = "alert_found"
 
 # Colunas que definem um grupo único de alertas

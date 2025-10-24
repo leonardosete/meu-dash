@@ -23,6 +23,7 @@ from .constants import (
     COL_PRIORITY_GROUP,
     COL_HAS_REMEDIATION_TASK,
     COL_SEVERITY,
+    COL_LAST_TASK_STATUS,
     ESSENTIAL_COLS,
     GROUP_COLS,
     LIMIAR_ALERTAS_RECORRENTES,
@@ -171,13 +172,14 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
 
     # GARANTIA DE RETROCOMPATIBILIDADE: Se a coluna de status de task não existir,
     # retorna uma ação padrão para evitar erros.
-    if COL_TASKS_STATUS not in df.columns:
+    if COL_LAST_TASK_STATUS not in df.columns:
         df["acao_sugerida"] = ACAO_STATUS_AUSENTE
         return df
         
     # Extrai informações da cronologia de tasks e do status final (o primeiro da lista, que corresponde ao alerta mais recente)
-    last_status = df["status_chronology"].str[-1].fillna(NO_STATUS)
-    first_status = df[COL_TASKS_STATUS].fillna(NO_STATUS)
+    SUCCESS_STATUSES = {"Closed"}
+    # CORREÇÃO: Usa o 'last_tasks_status' (o mais recente) como base para a lógica.
+    last_status = df[COL_LAST_TASK_STATUS].fillna(NO_STATUS)
     has_success = df["status_chronology"].apply(
         lambda c: bool(c) and any(s in SUCCESS_STATUSES for s in c)
     )
@@ -187,12 +189,12 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
 
     conditions = [
         has_only_no_status,
-        first_status == "No Task Found",
+        last_status == "No Task Found",
         # PRIORIDADE 1: Casos crônicos, mesmo que sejam "sucesso parcial", devem ser tratados como instabilidade.
-        (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES) & last_status.isin(SUCCESS_STATUSES.union({"Closed Skipped", "Canceled"})),
+        (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES) & last_status.isin(SUCCESS_STATUSES),
         last_status.isin(["Closed Skipped", "Canceled"]), # Casos de sucesso parcial não crônicos.
-        (last_status.isin(SUCCESS_STATUSES)) & df['status_chronology'].apply(lambda x: len({s for s in x if pd.notna(s) and s != NO_STATUS}) > 1),
-        (last_status.isin(SUCCESS_STATUSES)),
+        (last_status.isin(SUCCESS_STATUSES)) & has_success & df['status_chronology'].apply(lambda x: len({s for s in x if pd.notna(s) and s != NO_STATUS}) > 1),
+        (last_status.isin(SUCCESS_STATUSES)) & has_success,
         (~last_status.isin(SUCCESS_STATUSES)) & has_success,
         ~has_success,
     ]
@@ -238,8 +240,8 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
         "alert_count",
         "alert_numbers",
         "statuses",
-        "score_criticidade_agregado", # Nome da coluna após a agregação
-        "tasks_status",
+        "score_criticidade_agregado",  # Nome da coluna após a agregação
+        "last_tasks_status",  # Renomeado para clareza
     ]
     if not df.empty:
         sorted_df = df.sort_values(by=GROUP_COLS + [COL_CREATED_ON])
@@ -308,18 +310,14 @@ colunas_essenciais_relatorio = [
     "last_event",
     "alert_count",
     "alert_numbers",
+    # Colunas opcionais que fornecem contexto adicional
+    "status_chronology",
+    "last_tasks_status",
     # Colunas específicas do plano de ação
     "status_tratamento",
     "responsavel",
     "data_previsao_solucao",
 ]
-
-# Adiciona colunas opcionais se elas existirem no DataFrame, mantendo a retrocompatibilidade.
-colunas_opcionais_relatorio = [
-    "tasks_status",
-    "status_chronology",
-]
-colunas_essenciais_relatorio.extend(colunas_opcionais_relatorio)
 
 
 # Mapa de emojis centralizado para garantir consistência em todos os relatórios.
@@ -346,6 +344,12 @@ def _save_csv(df, path, sort_by, full_emoji_map, ascending=False):
         df_to_save["acao_sugerida"] = df_to_save["acao_sugerida"].apply(
             lambda x: f"{full_emoji_map.get(x, '')} {x}".strip()
         )
+        # Garante que as datas sejam formatadas no padrão brasileiro para os relatórios.
+        for col in ["first_event", "last_event"]:
+            if col in df_to_save.columns:
+                # Converte para datetime se não for, e então formata.
+                df_to_save[col] = pd.to_datetime(df_to_save[col]).dt.strftime('%d/%m/%Y %H:%M:%S')
+
         if "score_ponderado_final" in df_to_save.columns:
             df_to_save["score_ponderado_final"] = df_to_save["score_ponderado_final"].round(1)
         df_to_save = df_to_save.sort_values(by=sort_by, ascending=ascending)
@@ -389,7 +393,7 @@ def export_summary_to_json(summary: pd.DataFrame, output_path: str):
     summary_json = summary.copy()
     for col in ["first_event", "last_event"]:
         if col in summary_json.columns:
-            summary_json[col] = summary_json[col].astype(str)
+            summary_json[col] = pd.to_datetime(summary_json[col]).dt.strftime('%d/%m/%Y %H:%M:%S')
     summary_json.to_json(output_path, orient="records", indent=4, date_format="iso")
     logger.info(f"Resumo salvo em: {output_path}")
 

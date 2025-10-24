@@ -60,13 +60,13 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [ ] **Validação Funcional E2E (Mundo Real):** Realizar teste de ponta a ponta com um arquivo CSV real, extraído do ambiente de produção, para validar a robustez do "porteiro" de dados (`carregar_dados`) e a precisão do cálculo do "Score Ponderado Final".
   - [x] **Validação Funcional E2E:** Realizar teste de ponta a ponta com um arquivo real para validar o cálculo do "Score Ponderado Final" e garantir que a documentação da funcionalidade está visível no relatório.
 
-#### [ ] � Aprofundar Análise de Eficácia da Remediação
+#### [x] 🔬 Aprofundar Análise de Eficácia da Remediação
 
-- **Justificativa:** A análise atual confirma a *execução* da automação (baseado na existência e status da task), mas não a sua *eficácia* real em resolver a causa raiz. O relatório `resumo_geral.html` destaca essa limitação como um "Ponto de Atenção".
+- **Justificativa:** A análise inicial confirmava apenas a *execução* da automação. A análise foi aprofundada para avaliar a *eficácia* com base no status de fechamento da tarefa (`tasks_status`), alimentando o "Multiplicador de Ineficiência".
 - **Plano de Ação:**
-  - [ ] **Workshop com Time de Automação:** Realizar uma sessão para mapear o significado detalhado dos status de fechamento das tarefas de remediação (REM00XXXXX).
-  - [ ] **Extrair Novos Dados:** Identificar se é possível extrair informações mais granulares sobre o sucesso da remediação a partir dos sistemas de origem.
-  - [ ] **Refinar Score de Ineficiência:** Atualizar a lógica de cálculo do score para incorporar os novos insights, tornando a priorização ainda mais precisa e alinhada com a realidade operacional.
+  - [x] **Análise de Status:** Implementada a lógica para interpretar `tasks_status` (ex: "Closed Incomplete", "Closed Skipped") e diferenciar sucesso de falha.
+  - [x] **Refinamento do Score:** Criado o "Pilar 2.1: Multiplicador de Ineficiência de Tasks" para penalizar casos com falhas de automação.
+  - [ ] **Próximo Nível (Estratégico):** Realizar workshop com o time de Automação para mapear outros status de fechamento e, se possível, analisar logs internos das tarefas para uma análise ainda mais precisa.
 
 #### [x] 🚀 Atualizar Pipeline de CI/CD
 

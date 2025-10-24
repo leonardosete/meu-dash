@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from src.analisar_alertas import analisar_grupos, adicionar_acao_sugerida
 from src.constants import (
     COL_TASKS_STATUS,
+    COL_LAST_TASK_STATUS,
     PRIORITY_GROUP_WEIGHTS,
     SEVERITY_WEIGHTS,
     STATUS_OK,
@@ -149,8 +150,8 @@ def test_adicionar_acao_sugerida():
             ["No Task Found"], # Falha Persistente (No Task Found)
         ],
         "alert_count": [2, 2, 2, 2, 2, 0, 6, 1],
-        # Adiciona a coluna 'tasks_status' que agora é necessária pela função
-        COL_TASKS_STATUS: ["Closed", "Closed Incomplete", "Closed Incomplete", "Closed", NO_STATUS, NO_STATUS, "Closed", "No Task Found"]
+        # Adiciona a coluna 'last_tasks_status' que agora é necessária pela função
+        COL_LAST_TASK_STATUS: ["Closed", "Closed Incomplete", "Closed Incomplete", "Closed", NO_STATUS, NO_STATUS, "Closed", "No Task Found"]
     }
     df = pd.DataFrame(data)
     df = adicionar_acao_sugerida(df)
