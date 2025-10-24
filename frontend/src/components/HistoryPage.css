@@ -77,6 +77,9 @@
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: auto; /* Override global button width: 100% */
+  font-family: inherit; /* Ensure consistent font */
+  line-height: inherit; /* Ensure consistent line height */
 }
 
 .action-button.view {

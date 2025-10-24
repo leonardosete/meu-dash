@@ -1,10 +1,9 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Shield, PieChart, Code, History, LayoutDashboard, LogOut, FilePlus2, ChevronsLeft } from 'lucide-react';
+import { Shield, PieChart, Code, History, LayoutDashboard, LogOut, FilePlus2 } from 'lucide-react';
 import { API_BASE_URL } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboard } from '../contexts/DashboardContext';
-import { useSidebar } from '../contexts/SidebarContext';
 
 interface SideCardProps {
   to?: string;
@@ -20,16 +19,21 @@ const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, descripti
   const content = (
     <>
       {React.cloneElement(icon, { color })}
-      <div className="side-card-text">
+      <div className="side-card-tooltip">
         <h3>{title}</h3>
         <p>{description}</p>
       </div>
     </>
   );
 
+  const commonProps = {
+    className: "card side-card",
+    title: `${title} - ${description}` // Adiciona um title nativo para acessibilidade
+  };
+
   if (onClick) {
     return (
-      <button onClick={onClick} className="card side-card">
+      <button onClick={onClick} {...commonProps}>
         {content}
       </button>
     );
@@ -38,13 +42,13 @@ const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, descripti
   if (isExternal) {
     const externalUrl = to ? (API_BASE_URL ? new URL(to, API_BASE_URL).href : to) : '#';
     return (
-      <a href={externalUrl} className="card side-card" target="_blank" rel="noopener noreferrer">
+      <a href={externalUrl} target="_blank" rel="noopener noreferrer" {...commonProps}>
         {content}
       </a>
     );
   }
 
-  return <Link to={to || '#'} className="card side-card">{content}</Link>;
+  return <Link to={to || '#'} {...commonProps}>{content}</Link>;
 };
 
 const Sidebar: React.FC = () => {
@@ -52,7 +56,6 @@ const Sidebar: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
   const { reportUrls, setReportUrls } = useDashboard();
   const navigate = useNavigate();
-  const { isCollapsed, toggleSidebar } = useSidebar();
 
   const handleLogout = () => {
     logout();
@@ -63,9 +66,6 @@ const Sidebar: React.FC = () => {
     <aside className="sidebar-column">
       <div className="sidebar-header">
         <h2 className="sidebar-title">Menu</h2>
-        <button onClick={toggleSidebar} className="sidebar-toggle-btn" title={isCollapsed ? "Expandir menu" : "Recolher menu"}>
-          <ChevronsLeft size={24} />
-        </button>
       </div>
 
       <div className="sidebar-cards-container">

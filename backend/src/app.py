@@ -332,7 +332,8 @@ def upload_file_api():
             success=True, 
             report_urls=report_urls, 
             kpi_summary=new_kpi_summary,
-            quick_diagnosis_html=quick_diagnosis_html
+            quick_diagnosis_html=quick_diagnosis_html,
+            date_range=result.get("date_range")
         )
 
     except Exception as e:

@@ -80,6 +80,7 @@ body {
   border: 1px solid var(--border-color);
   transition: max-width 0.3s ease-in-out, padding 0.3s ease-in-out;
   position: relative;
+  z-index: 10; /* Garante que a sidebar e seus filhos (tooltips) fiquem acima do conteúdo principal */
 }
 
 .main-content {
@@ -108,6 +109,7 @@ body {
 }
 
 .side-card {
+  position: relative; /* Essencial para o posicionamento do tooltip */
   display: flex;
   align-items: center;
   gap: 15px;
@@ -124,17 +126,7 @@ body {
   border-color: var(--accent-color);
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
-.side-card-text h3 {
-  margin: 0 0 4px 0;
-  color: var(--primary-text-color);
-  font-size: 1.05em;
-  font-weight: 600;
-}
-.side-card-text p {
-  margin: 0;
-  font-size: 0.85em;
-  opacity: 0.8;
-}
+
 .side-card svg {
   width: 28px;
   height: 28px;
@@ -169,39 +161,67 @@ button.side-card {
   transform: translateX(0);
 }
 
-.sidebar-toggle-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary-color);
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s ease-in-out, background-color 0.2s;
-  width: auto;
-}
-
-.sidebar-toggle-btn:hover {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-}
-
 .sidebar-cards-container {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow: hidden;
+  overflow: visible; /* Permite que o tooltip seja exibido fora do contêiner */
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
-.side-card-text {
-  transition: opacity 0.2s ease, max-width 0.3s ease, margin-left 0.3s ease;
-  white-space: normal; /* Permite a quebra de linha */
+/* --- ESTILOS DO TOOLTIP --- */
+.side-card-tooltip {
+  position: absolute;
+  left: calc(100% + 15px);
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  z-index: 100;
+  white-space: nowrap;
+  
+  /* Escondido por padrão */
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+  pointer-events: none;
+}
+
+/* Seta padrão apontando para a esquerda */
+.side-card-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent var(--bg-color) transparent transparent;
+}
+
+.side-card:hover .side-card-tooltip {
+  visibility: visible;
   opacity: 1;
 }
 
-/* Collapsed State Styles */
+.side-card-tooltip h3 {
+  margin: 0 0 4px 0;
+  color: var(--primary-text-color);
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.side-card-tooltip p {
+  margin: 0;
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+/* --- ESTADO RECOLHIDO (AGORA É O PADRÃO) --- */
 .layout-wrapper.sidebar-collapsed {
   gap: 15px;
 }
@@ -217,13 +237,7 @@ button.side-card {
 }
 
 .layout-wrapper.sidebar-collapsed .sidebar-title {
-  opacity: 0;
-  transform: translateX(-20px);
-  pointer-events: none;
-}
-
-.layout-wrapper.sidebar-collapsed .sidebar-toggle-btn {
-  transform: rotate(180deg);
+  display: none;
 }
 
 .layout-wrapper.sidebar-collapsed .side-card {
@@ -233,20 +247,12 @@ button.side-card {
   padding: 0;
 }
 
-.layout-wrapper.sidebar-collapsed .side-card-text {
-  opacity: 0;
-  max-width: 0;
-  margin-left: -15px;
-  white-space: nowrap;
-}
-
 .layout-wrapper.sidebar-collapsed .sidebar-footer {
   align-items: center;
 }
 
 .layout-wrapper.sidebar-collapsed .sidebar-version {
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 }
 
 
@@ -765,11 +771,18 @@ button:disabled {
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 15px;
   flex-shrink: 0;
+  gap: 15px;
 }
 
 .previews-header h2 {
   margin: 0;
   font-size: 1.5em;
+}
+
+.previews-date-range {
+  font-size: 1em;
+  font-weight: 500;
+  color: var(--text-secondary-color);
 }
 
 .previews-description {

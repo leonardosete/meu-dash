@@ -5,15 +5,17 @@ import { ExternalLink } from 'lucide-react';
 interface ReportPreviewsProps {
   urls: ReportUrls;
   quickDiagnosis: string | null;
+  dateRange: string | null;
 }
 
-const ReportPreviews: React.FC<ReportPreviewsProps> = ({ urls, quickDiagnosis }) => {
+const ReportPreviews: React.FC<ReportPreviewsProps> = ({ urls, quickDiagnosis, dateRange }) => {
   const hasAllThree = urls.summary && urls.action_plan && urls.trend;
 
   return (
     <div className="report-previews-container">
       <div className="previews-header">
         <h2>Relatórios Gerados</h2>
+        {dateRange && <span className="previews-date-range">({dateRange})</span>}
       </div>
       <div className="previews-grid">
         {urls.summary && (

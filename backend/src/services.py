@@ -151,9 +151,11 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
     kpi_summary = None
     latest_report_files = None
     quick_diagnosis_html = None
+    latest_report_date_range = None
 
     last_report = Report.query.order_by(Report.timestamp.desc()).first()
     if last_report:
+        latest_report_date_range = last_report.date_range
         run_folder_path = os.path.dirname(last_report.report_path)
         run_folder_name = os.path.basename(run_folder_path)
 
@@ -235,6 +237,7 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
         "trend_history": trend_history,
         "latest_report_files": latest_report_files,
         "quick_diagnosis_html": quick_diagnosis_html,
+        "latest_report_date_range": latest_report_date_range,
     }
 
 
@@ -533,6 +536,7 @@ def process_upload_and_generate_reports(
         "trend_report_filename": trend_report_path_relative,
         "json_summary_path": analysis_results["json_path"],
         "quick_diagnosis_html": quick_diagnosis_html,
+        "date_range": date_range_recente,
     }
 
 

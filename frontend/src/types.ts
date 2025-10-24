@@ -26,6 +26,7 @@ export interface DashboardSummary {
   trend_history: TrendHistoryItem[];
   latest_report_urls: ReportUrls | null;
   quick_diagnosis_html?: string | null;
+  latest_report_date_range?: string | null;
 }
 
 export interface UploadSuccessResponse {
@@ -33,6 +34,7 @@ export interface UploadSuccessResponse {
   report_urls: ReportUrls;
   kpi_summary: KpiSummary | null;
   quick_diagnosis_html: string | null;
+  date_range: string | null;
 }
 
 export interface Report {

@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { reportUrls, setReportUrls, quickDiagnosis, setQuickDiagnosis } = useDashboard();
+  const [dateRange, setDateRange] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -21,6 +22,7 @@ const Dashboard = () => {
       // Se a API retornar as URLs do último relatório, exibe as prévias.
       if (data.latest_report_urls) {
         setReportUrls(data.latest_report_urls);
+        setDateRange(data.latest_report_date_range || null);
       }
       // Se a API retornar o diagnóstico, o exibe.
       if (data.quick_diagnosis_html) {
@@ -46,6 +48,7 @@ const Dashboard = () => {
     setSummaryData(prev => ({ ...prev!, kpi_summary: data.kpi_summary }));
     setReportUrls(data.report_urls);
     setQuickDiagnosis(data.quick_diagnosis_html);
+    setDateRange(data.date_range);
   };
 
   const renderKpiContent = () => {
@@ -105,7 +108,7 @@ const Dashboard = () => {
       
       <div className="form-section-container">
         {reportUrls ? (
-          <ReportPreviews key="previews" urls={reportUrls} quickDiagnosis={quickDiagnosis} />
+          <ReportPreviews key="previews" urls={reportUrls} quickDiagnosis={quickDiagnosis} dateRange={dateRange} />
         ) : (
           <div key="forms" className="page-fade-in">
             <UploadForms onUploadSuccess={handleUploadSuccess} />
