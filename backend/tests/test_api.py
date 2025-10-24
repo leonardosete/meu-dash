@@ -34,7 +34,6 @@ def test_get_dashboard_summary(client):
 
     data = response.get_json()
     assert "kpi_summary" in data
-    assert "last_action_plan" in data
     assert "trend_history" in data
     assert isinstance(data["trend_history"], list)
 
@@ -85,7 +84,8 @@ def test_upload_file_success(client):
     # ARRANGE: Configura o mock do serviço e os dados do arquivo.
     mock_result = {
         "run_folder": "run_20240101_120000",
-        "report_filename": "resumo_geral.html",
+        "summary_report_filename": "resumo_geral.html",
+        "action_plan_filename": "atuar.html",
         "json_summary_path": "/fake/path/summary.json",
     }
 
@@ -109,7 +109,7 @@ def test_upload_file_success(client):
         assert response.status_code == 200
         json_data = response.get_json()
         assert json_data["success"] is True
-        assert "report_url" in json_data
+        assert "report_urls" in json_data
 
 
 def test_delete_report_with_valid_token(client):

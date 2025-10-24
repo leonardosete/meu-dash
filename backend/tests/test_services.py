@@ -79,6 +79,9 @@ def test_process_upload_and_generate_reports(
         "json_path": "fake/path/full_summary.json",
     }
 
+    # CORREÇÃO: Configura o mock para retornar uma tupla válida, evitando o ValueError.
+    mock_gerar_tendencia.return_value = (None, "<html></html>")
+
     # O gerador de páginas principal retorna o caminho do dashboard como uma STRING
     mock_dashboard_path = "fake/path/resumo_geral.html"
     mock_gerador_paginas.gerar_ecossistema_de_relatorios.return_value = (
@@ -116,7 +119,7 @@ def test_process_upload_and_generate_reports(
     mock_db_session.commit.assert_called_once()
 
     # Valida o dicionário de retorno
-    assert result["report_filename"] == os.path.basename(mock_dashboard_path)
+    assert result["summary_report_filename"] == os.path.basename(mock_dashboard_path)
 
 
 @patch("src.services.os.path.exists", return_value=True)
@@ -157,6 +160,9 @@ def test_process_upload_for_continuous_trend_analysis(
         "num_logs_invalidos": 0,
         "json_path": "fake/path/summary.json",
     }
+
+    # CORREÇÃO: Configura o mock para retornar uma tupla válida.
+    mock_gerar_tendencia.return_value = (None, "<html></html>")
 
     # --- 1. PRIMEIRO UPLOAD (ARQUIVO A) ---
     print("--- Testando Upload A ---")
@@ -230,7 +236,9 @@ def test_process_upload_for_continuous_trend_analysis(
         output_path=ANY,
         date_range_anterior=report_A.date_range,
         date_range_recente="02/01/2025 a 02/01/2025",
-        frontend_url=os.getenv("FRONTEND_BASE_URL"),
+        frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
+        run_folder=ANY,
+        base_url=ANY,
     )
     # Verifica se o Report B e a Trend B vs A foram salvos
     assert mock_db.session.add.call_count == 2
@@ -275,7 +283,9 @@ def test_process_upload_for_continuous_trend_analysis(
         output_path=ANY,
         date_range_anterior=report_B.date_range,
         date_range_recente="03/01/2025 a 03/01/2025",
-        frontend_url=os.getenv("FRONTEND_BASE_URL"),
+        frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
+        run_folder=ANY,
+        base_url=ANY,
     )
     assert mock_db.session.add.call_count == 2
     assert trend_C_vs_B.current_report_id == 3
