@@ -49,7 +49,7 @@ swagger_template = {
     "swagger": "2.0",
     "info": {
         "title": "OpsEngine API",
-        "description": "API para análise de alertas e tendências.",
+        "description": "Priorização Inteligente de Casos com Foco em Remediação",
         "version": "1.0.0",
     },
     "securityDefinitions": {
