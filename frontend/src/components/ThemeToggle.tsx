@@ -9,7 +9,6 @@ const ThemeToggle: React.FC = () => {
     <button
       className="theme-toggle-button"
       onClick={toggleTheme}
-      title={theme === 'light' ? 'Mudar para modo escuro' : 'Mudar para modo claro'}
     >
       {theme === 'light' ? <Moon /> : <Sun />}
     </button>

@@ -29,6 +29,7 @@ const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, descripti
 
   const commonProps = {
     className: "card side-card",
+    title: "" // Adicionado para sobrescrever o tooltip nativo
   };
 
   if (onClick) {

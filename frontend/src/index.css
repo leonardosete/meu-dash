@@ -137,7 +137,7 @@ body {
 }
 
 button.side-card:hover {
-  border-color: var(--border-color); /* Reverte para a cor de borda padrão no hover */
+  background-color: var(--bg-color); /* Mantém o fundo original no hover */
 }
 
 .side-card svg {
