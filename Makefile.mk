@@ -147,8 +147,9 @@ check-backend-docker:
 test-backend-docker:
 	@echo ">>> [DOCKER] Executando testes do backend com pytest..."
 	# Usa 'run --rm' que inicia um contêiner para o teste e o remove depois.
-	# Especifica o caminho para os testes para evitar erros de 'import file mismatch'.
-	@docker-compose run --rm backend pytest backend/tests
+	# A flag '--workdir /app/backend' garante que o comando seja executado
+	# dentro do diretório do backend, onde o pyproject.toml de teste está localizado.
+	@docker-compose run --rm --workdir /app/backend backend pytest
 
 lint-frontend-docker:
 	@echo ">>> [DOCKER] Executando linter do frontend com ESLint..."

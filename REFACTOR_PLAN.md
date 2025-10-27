@@ -1,11 +1,11 @@
-# ✅ Plano de Ação: Finalização e Limpeza (Pós-Refatoração)
+# ✅ Plano de Ação: Fase 3 - Finalização e Limpeza
 
-**Data do Diagnóstico:** 2024-10-27
+**Última Atualização:** 2025-10-15
 **Arquiteto de Refatoração:** Gemini Code Assist
 
 ## 1. Resumo do Estado Atual
 
-A refatoração principal de desacoplamento (API + SPA) foi concluída com sucesso. O projeto está agora na **Fase 3: Finalização e Limpeza**. Este documento detalha as tarefas pendentes, priorizadas por impacto e risco, para levar o projeto a um estado de prontidão para produção.
+A refatoração principal para uma arquitetura desacoplada (API Flask + SPA React) foi concluída. O projeto está na **Fase 3: Finalização e Limpeza**, com foco em robustecer a segurança, a lógica de negócio e a documentação.
 
 As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior clareza.
 
@@ -13,97 +13,68 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 
 ## 2. Tarefas Pendentes por Prioridade
 
-### Prioridade 1: Crítico
+### Prioridade 1: Crítico / Alto
 
-#### [x] 🛡️ Implementar Validação de Schema de Entrada (Porteiro de Dados)
+#### [ ] 🧠 Validar e Refinar Lógica de Análise de Scoring
 
-- **Justificativa:** A aplicação está processando arquivos CSV que não contêm todas as colunas obrigatórias (ex: `tasks_status`), gerando resultados imprevisíveis e incorretos. Isso é um risco crítico para a integridade dos dados.
+- **Justificativa:** A principal funcionalidade de negócio (cálculo do `score_ponderado_final`) passou por múltiplas refatorações. É crucial garantir que o resultado final esteja 100% correto e alinhado com as regras de negócio.
 - **Plano de Ação:**
-  - [x] **Consolidar Schema:** A lista `ESSENTIAL_COLS` em `constants.py` foi atualizada para ser a única fonte da verdade, contendo todas as colunas mandatórias definidas pelo usuário.
-  - [x] **Falha Rápida:** A função `carregar_dados` em `analisar_alertas.py` agora valida estritamente a presença de todas essas colunas, lançando um `ValueError` e interrompendo o processo se alguma estiver ausente.
-  - [ ] **Atualizar Documentação:** Garantir que o `README.md` e a documentação gerencial mencionem a obrigatoriedade do novo formato de arquivo.
-
-#### [x] 🔐 Proteger Todos os Endpoints da API com Autenticação
-
-- **Justificativa:** Atualmente, apenas endpoints administrativos (como exclusão) são protegidos. Para um ambiente de produção, todos os endpoints que manipulam dados ou disparam ações (como uploads e comparações) devem ser protegidos para evitar uso não autorizado.
-- **Plano de Ação:**
-  - [x] **Aplicar Decorador:** Adicionado o decorador `@token_required` aos endpoints de upload e comparação em `app.py`.
-  - [x] **Ajustar Frontend:** O interceptor em `api.ts` já envia o token. A UI foi ajustada para refletir o estado de autenticação.
-  - [x] **Refinar UI:** A interface agora desabilita os formulários de upload e apresenta uma opção de login contextual para usuários não autenticados.
-
-#### [x] 🛡️ Revisão e Reforço da Autenticação
-
-- **Justificativa:** O fluxo de autenticação JWT está funcional, mas requer uma validação de segurança e usabilidade completa antes da produção. Uma falha aqui representa um risco de segurança direto.
-- **Plano de Ação:**
-  - [x] **Validação E2E:** Realizar testes de ponta a ponta para o fluxo de login, logout e acesso a rotas protegidas (ex: exclusão de relatório) em um ambiente de produção simulado.
-  - [x] **Consistência da UI:** Garantir que a interface reaja de forma consistente ao estado de autenticação (ex: exibir/ocultar o card "Modo Admin" e o botão de exclusão).
-  - [x] **Revisão de Segurança:** Analisada e corrigida a implementação do JWT (expiração do token e `SECRET_KEY` agora são configuráveis via variáveis de ambiente).
+  - [ ] **Revisão de Código:** Analisar detalhadamente os scripts `analisar_alertas.py` e `analise_tendencia.py` em busca de "code smells", inconsistências ou bugs na lógica de cálculo.
+  - [ ] **Melhorar Docstrings:** Garantir que todas as funções críticas nesses arquivos tenham docstrings claras, explicando o propósito, os parâmetros e os retornos.
+  - [ ] **Validação Funcional E2E:** Realizar um teste de ponta a ponta com um arquivo CSV real para validar a precisão do "Score Ponderado Final" e da "Ação Sugerida".
 
 ---
 
-### Prioridade 2: Alto
+### Prioridade 2: Médio
 
-#### [x] 🧠 Refinar Lógica de Análise com Novas Colunas
+#### [ ] 🚀 Finalizar Pipeline de CI/CD
 
-- **Justificativa:** A principal funcionalidade de negócio (cálculo do score de prioridade) não está utilizando a lógica mais recente, que depende de novas colunas no CSV de entrada. Isso significa que o valor gerado pela ferramenta está incompleto.
-- **Contexto (Nova Estrutura de Colunas):**
-
-  ```
-  Duração;sys_created_on;assignment_group;short_description;node;cmdb_ci;number;severity;parent;cmdb_ci.sys_class_name;source;sn_priority_group;state;sys_id;type.display_value;u_action_time;u_closed_date;acknowledged;correlation_group;event_count;incident;metric_name;message_key;com_remediacao;Pilar;tasks_count;tasks_numbers;tasks_status;remediation_tasks_present;alert_found;processing_status;error_message
-  ```
-
+- **Justificativa:** O pipeline atual (`.github/workflows/ci.yml`) já valida o backend e o frontend, mas não constrói a imagem Docker de produção final, criando um processo de deploy manual.
 - **Plano de Ação:**
-  - [x] **Atualizar Constantes:** Adicionar as novas colunas ao `backend/src/constants.py` e atualizar a lista `ESSENTIAL_COLS`.
-  - [x] **Adaptar Ingestão:** Modificar a função `carregar_dados` em `analisar_alertas.py` para processar o novo formato.
-  - [x] **Implementar Lógica:** Incorporar a coluna `tasks_status` no cálculo do "Score de Ineficiência" e no `score_ponderado_final`.
-  - [x] **Atualizar e Robustecer Testes Unitários:** Garantir que a nova lógica de scoring, incluindo o `fator_ineficiencia_task`, esteja completamente coberta por testes.
-  - [ ] **Validação Funcional E2E (Mundo Real):** Realizar teste de ponta a ponta com um arquivo CSV real, extraído do ambiente de produção, para validar a robustez do "porteiro" de dados (`carregar_dados`) e a precisão do cálculo do "Score Ponderado Final".
-  - [x] **Validação Funcional E2E:** Realizar teste de ponta a ponta com um arquivo real para validar o cálculo do "Score Ponderado Final" e garantir que a documentação da funcionalidade está visível no relatório.
-
-#### [x] 🔬 Aprofundar Análise de Eficácia da Remediação
-
-- **Justificativa:** A análise inicial confirmava apenas a *execução* da automação. A análise foi aprofundada para avaliar a *eficácia* com base no status de fechamento da tarefa (`tasks_status`), alimentando o "Multiplicador de Ineficiência".
-- **Plano de Ação:**
-  - [x] **Análise de Status:** Implementada a lógica para interpretar `tasks_status` (ex: "Closed Incomplete", "Closed Skipped") e diferenciar sucesso de falha.
-  - [x] **Refinamento do Score:** Criado o "Pilar 2.1: Multiplicador de Ineficiência de Tasks" para penalizar casos com falhas de automação.
-  - [ ] **Próximo Nível (Estratégico):** Realizar workshop com o time de Automação para mapear outros status de fechamento e, se possível, analisar logs internos das tarefas para uma análise ainda mais precisa.
-
-#### [x] 🚀 Atualizar Pipeline de CI/CD
-
-- **Justificativa:** O pipeline atual (`.github/workflows/ci.yml`) não valida o código do frontend nem constrói a imagem Docker de produção final, criando um ponto cego de qualidade e um processo de deploy manual.
-- **Plano de Ação:**
-  - [ ] **Adicionar Etapas do Frontend:** Integrar no CI os comandos para instalar dependências (`npm install`), rodar lint (`npm run lint`) e testes (`npm run test`) do frontend.
-  - [x] **Adicionar Etapas do Frontend:** Integrado no CI os comandos para instalar dependências (`npm install`), rodar lint (`npm run lint`) e testes (`npm run test`) do frontend.
   - [ ] **Modificar Build do Docker:** Alterar a etapa de build para usar o `Dockerfile` multi-estágio de produção, que constrói o frontend e o backend em uma única imagem.
   - [ ] **Publicar Imagem:** Garantir que a imagem final seja publicada no Docker Hub (ou outro registry) com as tags corretas.
 
 ---
 
-### Prioridade 3: Médio
+## 3. Tarefas Concluídas (Histórico da Fase 3)
 
-#### [ ] 🧹 Remover Código Morto
+A lista abaixo resume as principais tarefas que já foram concluídas nesta fase, conforme registrado no `DIARIO_DE_BORDO.md`.
 
-- **Justificativa:** A existência de código e dependências não utilizadas (como o diretório `templates/` e rotas de renderização no backend) aumenta a carga cognitiva e a complexidade acidental do projeto.
+#### [x] ️ Implementar Validação de Schema de Entrada (Porteiro de Dados)
+
+- **Resultado:** A função `carregar_dados` agora valida estritamente o schema do CSV na entrada, rejeitando arquivos inválidos e garantindo a integridade dos dados.
+
+#### [x] 🔐 Proteger Todos os Endpoints da API com Autenticação
+
+- **Resultado:** Todos os endpoints que disparam ações (`upload`, `compare`, `delete`) foram protegidos com o decorador `@token_required`. A UI foi ajustada para refletir o estado de autenticação.
+
+#### [x] 📚 Criar Documentação da API com Flasgger
+
+- **Resultado:** Todos os endpoints da API foram documentados com Flasgger, gerando uma UI do Swagger (`/apidocs`) interativa. O `README.md` foi atualizado para apontar para esta nova documentação.
+
+#### [x] 🧹 Limpeza e Organização da Documentação
+
+- **Resultado:** O `ARCHITECTURE.md` foi atualizado, links quebrados no `README.md` e `CONTRIBUTING.md` foram corrigidos, e foi criado o `guia.md` para centralizar a navegação.
+
+#### [x] 🐞 Correções de Bugs e Refatorações Diversas
+
+- **Resultado:** Resolvidos inúmeros bugs e débitos técnicos identificados pelo SonarQube e durante a depuração, incluindo: problemas de I/O no Docker, links de retorno quebrados nos relatórios, bugs de interatividade e reatividade na UI, entre outros.
+
+#### [x] 🔬 Robustecer e Organizar Testes do Backend
+
+- **Justificativa:** Os testes são nossa rede de segurança. Eles precisam estar bem organizados e cobrir toda a lógica de negócio para permitir futuras refatorações com confiança.
 - **Plano de Ação:**
-  - [ ] **Remover Diretório `templates/`:** Excluir o diretório `backend/templates/`, pois a API não renderiza mais HTML diretamente.
-  - [ ] **Remover Rotas Obsoletas:** Garantir que todas as chamadas `render_template` e as rotas associadas foram removidas de `app.py`.
-  - [ ] **Limpar Dependências:** Analisar o `requirements.txt` e remover pacotes que não são mais necessários (ex: `Jinja2`, se não for mais usado para gerar os artefatos de relatório).
+  - [x] **Refatorar Estrutura:** Mover a configuração do Pytest do `pyproject.toml` da raiz para um novo arquivo `backend/pyproject.toml`, isolando o ambiente de teste.
+  - [x] **Revisar Cobertura:** Analisar os testes existentes (ex: `test_analise_scoring.py`) para garantir que eles validam os cenários corretos da lógica de scoring.
+  - [x] **Separar Responsabilidades:** Garantir que não haja "lixo" de teste no código da aplicação e que os testes estejam focados em validar uma única funcionalidade por vez.
+- **Resultado:** A estrutura de testes foi isolada, o `Makefile.mk` foi corrigido, e os testes de scoring foram refatorados para maior cobertura e clareza. Bugs na lógica de negócio foram encontrados e corrigidos graças a essa robustez.
 
-#### [ ] 📚 Atualizar Documentação
+#### [x] ⚙️ Consolidar Ferramentas de Qualidade
 
-- **Justificativa:** Documentação desatualizada ou inconsistente é um débito técnico que gera confusão e pode levar a erros.
-- **Plano de Ação:**
-  - [ ] **Consolidar Documentação Técnica:** Substituir a antiga `doc_tecnica.html` pela documentação da API gerada pelo Flasgger (`/apidocs`), atualizando todos os links no `README.md`.
-  - [ ] **Revisar Documentação Gerencial:** Ajustar o texto da `doc_gerencial.html` para refletir o estado atual e o valor da ferramenta.
-  - [ ] **Atualizar `README.md`:** Revisar o `README.md` para garantir que ele reflete a arquitetura final e os novos processos.
-  - [ ] **Finalizar este Plano:** Ao concluir todas as tarefas, marcar este documento como concluído e arquivá-lo.
+- **Resultado:** A configuração da ferramenta `black` foi removida do `pyproject.toml`, padronizando o uso do `Ruff` para formatação e linting.
 
 ---
 
-### Prioridade 4: Baixo
+## 4. Decisões Estratégicas e Débitos Técnicos Conhecidos
 
-#### [ ] ⚙️ Consolidar Ferramentas de Qualidade
-
-- **Justificativa:** O arquivo `pyproject.toml` contém uma configuração para a ferramenta `black`, mas o projeto padronizou o uso de `Ruff` para formatação e linting. É uma pequena inconsistência que deve ser corrigida.
-- **Plano de Ação:**
-  - [ ] **Remover Configuração do Black:** Excluir a seção `[tool.black]` do arquivo `pyproject.toml` para eliminar a ambiguidade.
+- **Geração de HTML no Backend:** Decidimos **manter** a lógica de geração de relatórios HTML no backend por enquanto. A tarefa "Remover Código Morto" (`templates/`) foi reavaliada e está incorreta, pois este código está em uso. A migração dessa lógica para o frontend é uma refatoração futura, a ser planejada em uma "Fase 4".

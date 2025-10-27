@@ -1,80 +1,126 @@
 import pandas as pd
 import numpy as np
+import pytest
 from src.analisar_alertas import analisar_grupos
 from src.constants import (
     TASK_STATUS_WEIGHTS,
-    ACAO_FALHA_PERSISTENTE,
+    ACAO_WEIGHTS,
     ACAO_SUCESSO_PARCIAL,
     ACAO_SEMPRE_OK,
+    ACAO_INTERMITENTE,
+    ACAO_FALHA_PERSISTENTE,
+    ACAO_STATUS_AUSENTE,
 )
 
 
-def test_fator_ineficiencia_task_calculation():
+# Helper para calcular o score esperado, evitando repetição e cálculos manuais.
+def calcular_score_esperado(
+    score_base, peso_acao, alert_count, fator_ineficiencia_task
+):
     """
-    Valida se o 'fator_ineficiencia_task' é calculado corretamente com base no
-    pior status da cronologia e se ele impacta o score final.
+    Calcula o score ponderado final esperado com base nos fatores.
     """
-    # Dados de exemplo com diferentes status de task
-    data = {
-        "assignment_group": ["SQUAD_A", "SQUAD_A", "SQUAD_B", "SQUAD_C"],
-        "short_description": ["Problema 1", "Problema 1", "Problema 2", "Problema 3"],
-        "node": ["server1", "server1", "server2", "server3"],
-        "cmdb_ci": ["ci1", "ci1", "ci2", "ci3"],
-        "source": ["source1", "source1", "source2", "source3"],
-        "metric_name": ["metric1", "metric1", "metric2", "metric3"],
-        "cmdb_ci.sys_class_name": ["c1", "c1", "c2", "c3"],
-        "sys_created_on": pd.to_datetime(
-            ["2023-01-01 10:00", "2023-01-01 11:00", "2023-01-02", "2023-01-03"],
-            # CORREÇÃO: Adiciona format='mixed' para lidar com formatos de data inconsistentes no teste.
-            # Isso espelha a robustez da nossa função de carregamento principal.
-            format="mixed",
-        ),
-        "number": ["1", "2", "3", "4"],
-        "has_remediation_task": ["REM_OK", "REM_OK", "REM_NOT_OK", "NO_STATUS"],
-        "severity": ["Alto", "Alto", "Médio", "Crítico"],
-        "sn_priority_group": ["Alto(a)", "Alto(a)", "Moderado(a)", "Urgente"],
-        # Cenários de tasks_status
-        # Problema 1: Falhou e depois sucesso. Deve pegar o peso da falha.
-        # Problema 2: Sucesso parcial.
-        # Problema 3: Sucesso limpo.
-        "tasks_status": ["Closed", "Closed Incomplete", "Canceled", "Closed"],
-        "severity_score": [8, 8, 5, 10],
-        "priority_group_score": [8, 8, 5, 10],
-        "score_criticidade_final": [16, 16, 10, 20],
+    fator_volume = 1 + np.log(alert_count)
+    return score_base * peso_acao * fator_volume * fator_ineficiencia_task
+
+
+@pytest.fixture
+def sample_data():
+    """Fixture com dados de teste abrangendo múltiplos cenários."""
+    return {
+        "assignment_group": ["SQUAD_A", "SQUAD_A", "SQUAD_B", "SQUAD_C", "SQUAD_D", "SQUAD_E"],
+        "short_description": ["P1", "P1", "P2", "P3", "P4", "P5"],
+        "node": ["s1", "s1", "s2", "s3", "s4", "s5"],
+        "cmdb_ci": ["ci1", "ci1", "ci2", "ci3", "ci4", "ci5"],
+        "source": ["src1", "src1", "src2", "src3", "src4", "src5"],
+        "metric_name": ["m1", "m1", "m2", "m3", "m4", "m5"],
+        "cmdb_ci.sys_class_name": ["c1", "c1", "c2", "c3", "c4", "c5"],
+        "sys_created_on": pd.to_datetime([
+            "2023-01-01 10:00", "2023-01-01 11:00",  # P1
+            "2023-01-02",  # P2
+            "2023-01-03",  # P3
+            "2023-01-04",  # P4
+            "2023-01-05",  # P5
+        ], format="mixed"),
+        "number": ["1", "2", "3", "4", "5", "6"],
+        "has_remediation_task": ["REM_OK", "REM_OK", "REM_NOT_OK", "NO_STATUS", "REM_OK", "REM_OK"],
+        "severity": ["Alto", "Alto", "Médio", "Crítico", "Baixo", "Médio"],
+        "sn_priority_group": ["Alto(a)", "Alto(a)", "Moderado(a)", "Urgente", "Baixo(a)", "Moderado(a)"],
+        # Cenários de tasks_status:
+        # P1: Falha e depois sucesso (deve pegar o pior caso: Closed Incomplete).
+        # P2: Status não mapeado (deve usar default).
+        # P3: Sucesso limpo.
+        # P4: Status nulo/vazio (deve usar default).
+        # P5: Sucesso parcial (Closed Skipped).
+        "tasks_status": ["Closed", "Closed Incomplete", "Canceled", "Closed", None, "Closed Skipped"],
+        "severity_score": [8, 8, 5, 10, 2, 5],
+        "priority_group_score": [8, 8, 5, 10, 2, 5],
+        "score_criticidade_final": [16, 16, 10, 20, 4, 10],
     }
-    df = pd.DataFrame(data)
 
+
+@pytest.mark.parametrize(
+    "problem_id, expected_factor",
+    [
+        ("P1", TASK_STATUS_WEIGHTS.get("Closed Incomplete")),  # Pior caso na cronologia
+        ("P2", TASK_STATUS_WEIGHTS.get("default")),           # Status não mapeado
+        ("P3", TASK_STATUS_WEIGHTS.get("default")),           # Sucesso limpo
+        ("P4", TASK_STATUS_WEIGHTS.get("default")),           # Status nulo
+        ("P5", TASK_STATUS_WEIGHTS.get("Closed Skipped")),    # Sucesso parcial
+    ],
+)
+def test_fator_ineficiencia_task(sample_data, problem_id, expected_factor):
+    """Valida se o 'fator_ineficiencia_task' é calculado corretamente para diferentes cenários."""
+    df = pd.DataFrame(sample_data)
     summary = analisar_grupos(df)
+    result = summary[summary["short_description"] == problem_id].iloc[0]
+    assert result["fator_ineficiencia_task"] == expected_factor
 
-    # Extrai os resultados para validação
-    problema1 = summary[summary["short_description"] == "Problema 1"].iloc[0]
-    problema2 = summary[summary["short_description"] == "Problema 2"].iloc[0]
-    problema3 = summary[summary["short_description"] == "Problema 3"].iloc[0]
 
-    # Valida o fator de ineficiência (deve pegar o pior da cronologia)
-    assert problema1["fator_ineficiencia_task"] == TASK_STATUS_WEIGHTS.get(
-        "Closed Incomplete"
+@pytest.mark.parametrize(
+    "problem_id, expected_acao",
+    [
+        ("P1", ACAO_INTERMITENTE),       # Falhou e depois sucesso
+        # CORREÇÃO: "Canceled" não é uma falha persistente, mas um tipo de sucesso parcial.
+        ("P2", ACAO_SUCESSO_PARCIAL),    # Status não mapeado (Canceled)
+        ("P3", ACAO_SEMPRE_OK),          # Sempre sucesso
+        ("P4", ACAO_STATUS_AUSENTE),     # Status nulo
+        ("P5", ACAO_SUCESSO_PARCIAL),    # Sucesso parcial (skipped)
+    ],
+)
+def test_acao_sugerida(sample_data, problem_id, expected_acao):
+    """Valida se a 'acao_sugerida' é definida corretamente."""
+    df = pd.DataFrame(sample_data)
+    summary = analisar_grupos(df)
+    result = summary[summary["short_description"] == problem_id].iloc[0]
+    assert result["acao_sugerida"] == expected_acao
+
+
+@pytest.mark.parametrize(
+    "problem_id, score_base, alert_count",
+    [
+        ("P1", 16, 2),
+        ("P2", 10, 1),
+        ("P3", 20, 1),
+        ("P4", 4, 1),
+        ("P5", 10, 1),
+    ],
+)
+def test_score_ponderado_final(sample_data, problem_id, score_base, alert_count):
+    """Valida o cálculo completo do 'score_ponderado_final'."""
+    df = pd.DataFrame(sample_data)
+    summary = analisar_grupos(df)
+    result = summary[summary["short_description"] == problem_id].iloc[0]
+
+    # Obtém os fatores calculados pela função
+    acao_sugerida = result["acao_sugerida"]
+    fator_ineficiencia = result["fator_ineficiencia_task"]
+    peso_acao = ACAO_WEIGHTS.get(acao_sugerida, 1.0)
+
+    # Calcula o score esperado usando o helper
+    score_esperado = calcular_score_esperado(
+        score_base, peso_acao, alert_count, fator_ineficiencia
     )
-    assert problema2["fator_ineficiencia_task"] == TASK_STATUS_WEIGHTS.get(
-        "default"
-    )  # Canceled não tem peso, usa default
-    assert problema3["fator_ineficiencia_task"] == TASK_STATUS_WEIGHTS.get("default")
 
-    # Valida o score final, garantindo que o fator foi aplicado
-    # Problema 1: score_base * peso_acao * fator_volume * fator_ineficiencia
-    # score_base = 16, peso_acao = 1.2 (Intermitente), fator_volume = 1 + log(2)
-    # fator_ineficiencia = 1.5
-    score_esperado_p1 = 16 * 1.2 * (1 + np.log(2)) * 1.5
-    assert round(problema1["score_ponderado_final"], 1) == round(score_esperado_p1, 1)
-
-    # Problema 2: score_base * peso_acao * fator_volume * fator_ineficiencia
-    # score_base = 10, peso_acao = 1.1 (Sucesso Parcial), fator_volume = 1 + log(1) = 1
-    # fator_ineficiencia = 1.0
-    score_esperado_p2 = 10 * 1.1 * 1.0 * 1.0
-    assert round(problema2["score_ponderado_final"], 1) == round(score_esperado_p2, 1)
-
-    # Problema 3: score_base * peso_acao * fator_volume * fator_ineficiencia
-    # score_base = 20, peso_acao = 1.0 (Sempre OK), fator_volume = 1 + log(1) = 1
-    # fator_ineficiencia = 1.0
-    score_esperado_p3 = 20 * 1.0 * 1.0 * 1.0
-    assert round(problema3["score_ponderado_final"], 1) == round(score_esperado_p3, 1)
+    # Compara o resultado real com o esperado
+    assert round(result["score_ponderado_final"], 2) == round(score_esperado, 2)

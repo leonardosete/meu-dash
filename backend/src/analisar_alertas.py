@@ -187,12 +187,17 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
         lambda c: not c or all(s == NO_STATUS for s in c)
     )
 
+    # CORREÇÃO: A lógica foi reestruturada para maior clareza e para tratar os casos de borda corretamente.
     conditions = [
-        has_only_no_status,
+        # PRIORIDADE 0: Se o status for nulo ou a cronologia vazia, é um problema de coleta de dados.
+        (last_status == NO_STATUS) | has_only_no_status,
+        # PRIORIDADE 1: Se a tarefa não foi encontrada, é uma falha de remediação.
         last_status == "No Task Found",
-        # PRIORIDADE 1: Casos crônicos, mesmo que sejam "sucesso parcial", devem ser tratados como instabilidade.
+        # PRIORIDADE 2: Casos crônicos, mesmo que sejam "sucesso", devem ser tratados como instabilidade.
         (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES) & last_status.isin(SUCCESS_STATUSES),
+        # PRIORIDADE 3: Casos de sucesso parcial (incluindo "Canceled").
         last_status.isin(["Closed Skipped", "Canceled"]), # Casos de sucesso parcial não crônicos.
+        # Lógica de sucesso/falha padrão
         (last_status.isin(SUCCESS_STATUSES)) & has_success & df['status_chronology'].apply(lambda x: len({s for s in x if pd.notna(s) and s != NO_STATUS}) > 1),
         (last_status.isin(SUCCESS_STATUSES)) & has_success,
         (~last_status.isin(SUCCESS_STATUSES)) & has_success,
