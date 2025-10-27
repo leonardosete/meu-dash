@@ -29,7 +29,6 @@ const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, descripti
 
   const commonProps = {
     className: "card side-card",
-    title: `${title} - ${description}` // Adiciona um title nativo para acessibilidade
   };
 
   if (onClick) {

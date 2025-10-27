@@ -420,12 +420,11 @@ body.light-mode .upload-form-card {
   text-align: center;
 }
 
-.file-input-wrapper:hover, .file-input-wrapper.drag-active {
+.file-input-wrapper.drag-active {
   background-color: #24273A;
   border-color: var(--accent-color);
 }
 
-body.light-mode .file-input-wrapper:hover,
 body.light-mode .file-input-wrapper.drag-active {
   background-color: #e9ecef;
 }
