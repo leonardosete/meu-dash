@@ -12,7 +12,6 @@ interface UploadFormsProps {
 
 const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
   const { isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState<'padrao' | 'comparativa'>('padrao');
   const [padraoFile, setPadraoFile] = useState<FileList | null>(null);
   const [fileAntigo, setFileAntigo] = useState<FileList | null>(null);
   const [fileRecente, setFileRecente] = useState<FileList | null>(null);
@@ -65,7 +64,7 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
 
   return (
     <div className="form-section">
-      <div className="tab-container" style={{ position: 'relative' }}>
+      <div className="upload-forms-container" style={{ position: 'relative' }}>
         {!isAuthenticated && (
           <div className="form-disabled-overlay">
             {showLoginForm ? (
@@ -79,33 +78,36 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
           </div>
         )}
         <div className={!isAuthenticated ? 'forms-wrapper-disabled' : ''}>
-          <div className="tab-links">
-            <button className={`tab-link ${activeTab === 'padrao' ? 'active' : ''}`} onClick={() => setActiveTab('padrao')}>Análise Padrão</button>
-            <button className={`tab-link ${activeTab === 'comparativa' ? 'active' : ''}`} onClick={() => setActiveTab('comparativa')}>Análise Comparativa</button>
-          </div>
-          <div id="tab-padrao" className={`tab-content ${activeTab === 'padrao' ? 'active' : ''}`}>
-            {standardError && <div className="error-message">{standardError}</div>}
-            <p className="tab-description">Processe o arquivo de dados mais recente. O sistema o comparará com a última análise registrada no histórico para gerar um relatório completo e a análise de tendência contínua.</p>
-            <form onSubmit={handlePadraoSubmit}>
-              <label htmlFor="file_recente" className="form-label">Selecione o arquivo de dados mais recente:</label>
-              <FileInput id="file_recente" name="file_recente" onFileChange={setPadraoFile} isMultiple={false} />
-              <button type="submit" disabled={isLoading}>
-                {isLoading ? <Loader2 className="animate-spin" /> : 'Analisar e Comparar com Histórico'}
-              </button>
-            </form>
-          </div>
-          <div id="tab-comparativa" className={`tab-content ${activeTab === 'comparativa' ? 'active' : ''}`}>
-            {comparativeError && <div className="error-message">{comparativeError}</div>}
-            <p className="tab-description">Compare dois arquivos de dados específicos para gerar um relatório de tendência sob demanda. Ideal para análises pontuais e investigativas entre períodos não sequenciais.</p>
-            <form onSubmit={handleComparativaSubmit}>
-              <label htmlFor="file_antigo" className="form-label">Selecione o arquivo de dados mais antigo (base):</label>
-              <FileInput id="file_antigo" name="file_antigo" onFileChange={setFileAntigo} isMultiple={false} />
-              <label htmlFor="file_recente_comp" className="form-label" style={{ marginTop: '15px' }}>Selecione o arquivo de dados mais recente:</label>
-              <FileInput id="file_recente_comp" name="file_recente_comp" onFileChange={setFileRecente} isMultiple={false} />
-              <button type="submit" disabled={isLoading}>
-                {isLoading ? <Loader2 className="animate-spin" /> : 'Comparar Arquivos'}
-              </button>
-            </form>
+          <div className="upload-forms-grid">
+            {/* --- Bloco de Análise Padrão --- */}
+            <div className="upload-form-card">
+              <h3>Análise Padrão</h3>
+              <p className="form-description">Processe o arquivo de dados mais recente. O sistema o comparará com a última análise registrada no histórico para gerar um relatório completo e a análise de tendência contínua.</p>
+              <form onSubmit={handlePadraoSubmit}>
+                {standardError && <div className="error-message">{standardError}</div>}
+                <label htmlFor="file_recente" className="form-label">Selecione o arquivo de dados mais recente:</label>
+                <FileInput id="file_recente" name="file_recente" onFileChange={setPadraoFile} isMultiple={false} />
+                <button type="submit" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="animate-spin" /> : 'Analisar e Comparar com Histórico'}
+                </button>
+              </form>
+            </div>
+
+            {/* --- Bloco de Análise Comparativa --- */}
+            <div className="upload-form-card">
+              <h3>Análise Comparativa</h3>
+              <p className="form-description">Compare dois arquivos de dados específicos para gerar um relatório de tendência sob demanda. Ideal para análises pontuais e investigativas entre períodos não sequenciais.</p>
+              <form onSubmit={handleComparativaSubmit}>
+                {comparativeError && <div className="error-message">{comparativeError}</div>}
+                <label htmlFor="file_antigo" className="form-label">Selecione o arquivo de dados mais antigo (base):</label>
+                <FileInput id="file_antigo" name="file_antigo" onFileChange={setFileAntigo} isMultiple={false} />
+                <label htmlFor="file_recente_comp" className="form-label" style={{ marginTop: '15px' }}>Selecione o arquivo de dados mais recente:</label>
+                <FileInput id="file_recente_comp" name="file_recente_comp" onFileChange={setFileRecente} isMultiple={false} />
+                <button type="submit" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="animate-spin" /> : 'Comparar Arquivos'}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

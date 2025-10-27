@@ -351,71 +351,59 @@ button.side-card {
 .text-warning { color: var(--warning-color); }
 .text-danger { color: var(--danger-color); }
 
-/* --- ESTILOS PARA ABAS E FORMULÁRIOS --- */
+/* --- ESTILOS PARA FORMULÁRIOS DE UPLOAD --- */
 .form-section {
   padding-top: 10px;
 }
 
-.tab-container {
+.upload-forms-container {
   width: 100%;
   position: relative;
 }
 
-.tab-links {
+.upload-forms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: stretch; /* Garante que os cards tenham a mesma altura */
+}
+
+.upload-form-card {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 30px;
   display: flex;
-  margin-bottom: 30px;
-  border-bottom: 1px solid var(--border-color);
+  flex-direction: column;
+  background-color: var(--bg-color);
 }
 
-.tab-link {
-  padding: 12px 20px;
-  cursor: pointer;
-  background-color: transparent;
-  border: none;
-  color: var(--text-secondary-color);
-  font-size: 1.1em;
-  font-weight: 500;
-  position: relative;
-  transition: color 0.3s;
+body.light-mode .upload-form-card {
+  background-color: #f8f9fa;
 }
 
-.tab-link:hover {
+.upload-form-card h3 {
+  margin-top: 0;
+  text-align: center;
+  font-size: 1.2em;
+  margin-bottom: 15px;
   color: var(--primary-text-color);
 }
 
-.tab-link.active {
-  color: var(--accent-color);
-  font-weight: 600;
+.upload-form-card .form-description {
+  font-size: 0.9em;
+  color: var(--text-secondary-color);
+  margin-bottom: 25px;
+  text-align: center;
 }
 
-.tab-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background-color: var(--accent-color);
-  border-radius: 3px 3px 0 0;
+.upload-form-card form {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Faz o formulário ocupar o espaço disponível */
 }
 
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
-}
-
-.tab-description {
-  font-size: 0.95em;
-  color: var(--text-color);
-  opacity: 0.8;
-  margin-top: 0;
-  margin-bottom: 30px;
-  max-width: 90%;
-  margin-left: auto;
-  margin-right: auto;
+.upload-form-card form button {
+  margin-top: auto; /* Empurra o botão para o final do card */
 }
 
 .file-input-wrapper {
