@@ -375,7 +375,7 @@ button.side-card {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 body.light-mode .upload-form-card {
