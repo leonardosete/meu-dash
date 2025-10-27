@@ -21,13 +21,13 @@ const ReportPreviews: React.FC<ReportPreviewsProps> = ({ urls, quickDiagnosis, d
         {urls.summary && (
           <div className="preview-card">
             <div className="preview-card-header">
-              <h3>Resumo Geral</h3>
+              <h3>Relatório Completo</h3>
               <a href={urls.summary} target="_blank" rel="noopener noreferrer" className="preview-external-link" title="Abrir em nova aba">
                 <ExternalLink size={20} />
               </a>
             </div>
             <div className="iframe-wrapper">
-              <iframe src={urls.summary} title="Resumo Geral" loading="lazy"></iframe>
+              <iframe src={urls.summary} title="Relatório Completo" loading="lazy"></iframe>
             </div>
           </div>
         )}
