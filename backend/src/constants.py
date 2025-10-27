@@ -22,16 +22,31 @@ ACAO_FLAGS_OK = [ACAO_SEMPRE_OK, ACAO_ESTABILIZADA]
 ACAO_FLAGS_INSTABILIDADE = [ACAO_INSTABILIDADE_CRONICA]
 
 # Pesos para o cálculo de Score de Criticidade
+# Dicionário para mapear variações de 'severity' para uma chave padronizada.
+# Isso torna o sistema robusto a variações de acentuação e capitalização.
+SEVERITY_MAP = {
+    # Adicionadas as chaves simples que faltavam
+    "critico": "critico",
+    "alto": "alto",
+    "alto / major": "alto",
+    "medio": "medio",
+    "medio / minor": "medio",
+    "aviso": "aviso",
+    "baixo": "baixo",
+    "baixo / informativo": "baixo",
+    "ok": "ok",
+    "limpar": "limpar",
+}
+
+# Pesos para o cálculo de Score de Criticidade (usando chaves padronizadas)
 SEVERITY_WEIGHTS = {
-    "Crítico": 10,
-    "Alto": 8,
-    "Alto / Major": 8,
-    "Médio": 5,
-    "Médio / Minor": 5,
-    "Aviso": 3,
-    "Baixo / Informativo": 2,
-    "OK": 0,
-    "Limpar": 0,
+    "critico": 10,
+    "alto": 8,
+    "medio": 5,
+    "aviso": 3,
+    "baixo": 2,
+    "ok": 0,
+    "limpar": 0,
 }
 PRIORITY_GROUP_WEIGHTS = {"Urgente": 10, "Alto(a)": 8, "Moderado(a)": 5, "Baixo(a)": 2, "Vazio": 1}
 ACAO_WEIGHTS = {
@@ -131,4 +146,5 @@ LOG_INVALIDOS_FILENAME = "invalid_cols.csv"
 # Limite de histórico de relatórios a serem mantidos no banco de dados e no disco.
 MAX_REPORTS_HISTORY = 60
 
+# Limite de alertas para um caso ser considerado de instabilidade crônica.
 LIMIAR_ALERTAS_RECORRENTES = 5

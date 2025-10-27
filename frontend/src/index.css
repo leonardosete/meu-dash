@@ -25,6 +25,12 @@ body.light-mode {
   --border-color: #dee2e6;
 }
 
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
 
 html, body, #root {
   height: 100%;
@@ -96,13 +102,13 @@ body {
   flex-grow: 1;
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 30px;
+  gap: 15px; /* REDUCED */
   background: var(--card-color);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  padding: 40px;
+  padding: 20px; /* REDUCED */
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-  overflow: hidden;
+  overflow: hidden; /* NO SCROLL */
 }
 
 .card {
@@ -272,13 +278,13 @@ button.side-card {
 /* --- ESTILOS DO DASHBOARD DE KPI (ATUALIZADOS) --- */
 .kpi-section {
   position: relative;
-  padding-bottom: 40px;
+  padding-bottom: 15px; /* REDUCED */
   border-bottom: 1px solid var(--border-color);
 }
 
 .kpi-dashboard {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); 
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 0;
   width: 100%;
   padding: 0 20px;
@@ -366,20 +372,22 @@ button.side-card {
 }
 
 .upload-forms-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  align-items: stretch; /* Garante que os cards tenham a mesma altura */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px; /* REDUCED */
+  align-items: stretch;
 }
 
 .upload-form-card {
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 30px;
+  padding: 20px; /* REDUCED */
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  flex: 1 1 400px; /* Permite crescer e encolher com base de 400px */
+  min-width: 380px; /* Impede que o card fique muito estreito antes de quebrar a linha */
 }
 
 body.light-mode .upload-form-card {
@@ -390,14 +398,14 @@ body.light-mode .upload-form-card {
   margin-top: 0;
   text-align: center;
   font-size: 1.2em;
-  margin-bottom: 15px;
+  margin-bottom: 10px; /* REDUCED */
   color: var(--primary-text-color);
 }
 
 .upload-form-card .form-description {
   font-size: 0.9em;
   color: var(--text-secondary-color);
-  margin-bottom: 25px;
+  margin-bottom: 10px; /* REDUCED */
   text-align: center;
 }
 
@@ -414,10 +422,10 @@ body.light-mode .upload-form-card {
 .file-input-wrapper {
   border: 2px dashed var(--border-color);
   border-radius: 10px;
-  padding: 25px;
+  padding: 15px; /* REDUCED */
   cursor: pointer;
   transition: background-color 0.3s, border-color 0.3s;
-  margin-bottom: 30px;
+  margin-bottom: 15px; /* REDUCED */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -450,11 +458,11 @@ button {
   background-color: var(--accent-color);
   color: white;
   border: none;
-  padding: 14px 30px;
+  padding: 10px 15px; /* REDUCED */
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 1.1em;
+  font-size: 0.9em; /* REDUCED */
   transition: background-color 0.2s;
   width: 100%;
 }
@@ -768,6 +776,7 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   flex-direction: column;
   min-height: 0;
   flex-grow: 1;
+  justify-content: center; /* Centraliza o conteúdo verticalmente */
 }
 
 .report-previews-container {
@@ -776,6 +785,7 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   flex-direction: column;
   width: 100%;
   height: 100%;
+  justify-content: space-between; /* Empurra o conteúdo para o topo e para a base */
 }
 
 .previews-header {
@@ -809,9 +819,8 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
 
 .previews-grid {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 15px; /* REDUCED */
   flex-grow: 1;
   min-height: 0;
 }
@@ -891,7 +900,7 @@ body.light-mode .preview-card {
 
 /* --- ESTILOS PARA O QUICK DIAGNOSIS --- */
 .quick-diagnosis-wrapper {
-  margin-top: 30px;
+  margin-top: 10px; /* REDUCED */
 }
 
 .quick-diagnosis-wrapper .card.highlight {
