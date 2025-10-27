@@ -136,6 +136,10 @@ body {
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 
+button.side-card:hover {
+  border-color: var(--border-color); /* Reverte para a cor de borda padrão no hover */
+}
+
 .side-card svg {
   width: 28px;
   height: 28px;
@@ -420,11 +424,13 @@ body.light-mode .upload-form-card {
   text-align: center;
 }
 
+.file-input-wrapper:hover,
 .file-input-wrapper.drag-active {
   background-color: #24273A;
   border-color: var(--accent-color);
 }
 
+body.light-mode .file-input-wrapper:hover,
 body.light-mode .file-input-wrapper.drag-active {
   background-color: #e9ecef;
 }
