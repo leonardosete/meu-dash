@@ -219,7 +219,7 @@ def _render_conceitos_section() -> str:
                         <p style="margin-top: 10px;">Status como <strong>"Closed"</strong> são considerados sucesso, enquanto status como <strong>"Closed Incomplete"</strong> ou <strong>"Closed Skipped"</strong> são tratados como falhas ou sucessos parciais. Essa distinção é fundamental para o cálculo do "Multiplicador de Ineficiência", que penaliza casos onde a automação não foi totalmente eficaz.</p>
                         
                         <div style="background-color: #fffbe6; border-left: 5px solid #ffe58f; padding: 15px 20px; margin-top: 15px; color: #665424;">
-                            <strong>Próximos Passos:</strong> A análise atual já é um grande avanço. O próximo nível de profundidade, conforme planejado, envolve um trabalho conjunto com o time de Automação para entender o significado detalhado de outros status de fechamento e, possivelmente, analisar os logs internos das tarefas para uma avaliação de eficácia ainda mais precisa.
+                            <strong>Próximos Passos:</strong> O próximo nível de profundidade, a ser explorado futuramente, é a integração com os sistemas de automação para <strong>analisar os logs internos das tarefas</strong>. Isso permitiria diferenciar, por exemplo, uma falha de "permissão negada" de uma falha de "recurso não encontrado", tornando o diagnóstico ainda mais preciso.
                         </div>
                     </div>
                 </div>
