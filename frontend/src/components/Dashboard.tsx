@@ -84,7 +84,7 @@ const Dashboard = () => {
           colorClass={kpi_summary.casos_atuacao > 0 ? 'text-danger' : 'text-success'}
         />
         <KpiCard
-          title="Casos com Instabilidade"
+          title="Casos Remediados com Frequência"
           value={kpi_summary.casos_instabilidade}
           subValue={kpi_summary.alertas_instabilidade > 0 ? kpi_summary.alertas_instabilidade : undefined}
           subLabel={kpi_summary.alertas_instabilidade > 0 ? "Alertas" : undefined}

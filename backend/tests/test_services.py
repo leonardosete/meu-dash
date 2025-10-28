@@ -400,11 +400,17 @@ def test_calculate_kpi_summary_success(tmp_path):
     assert result["total_casos"] == 3
     assert result["casos_atuacao"] == 1
     assert result["casos_instabilidade"] == 1
-    assert result["casos_sucesso"] == 2  # (total_casos - casos_atuacao)
+    # CORREÇÃO: O teste estava validando uma lógica antiga. A nova lógica conta apenas os sucessos plenos.
+    # Com os dados do teste, há apenas 1 caso de sucesso pleno (ACAO_SEMPRE_OK).
+    assert result["casos_sucesso"] == 1
     assert result["alertas_atuacao"] == 10
     assert result["alertas_instabilidade"] == 5
-    assert result["alertas_sucesso"] == 7  # (alertas_instabilidade + alertas_sucesso)
-    assert result["taxa_sucesso_automacao"] == "66.7%"
+    # CORREÇÃO: O teste estava validando uma lógica antiga. A nova lógica conta apenas os alertas de sucessos plenos.
+    # Com os dados do teste, há apenas 1 caso de sucesso pleno (ACAO_SEMPRE_OK) com 2 alertas.
+    assert result["alertas_sucesso"] == 2
+    # CORREÇÃO: O teste estava validando uma lógica antiga. A nova lógica calcula a taxa de sucesso
+    # com base nos sucessos plenos (1) sobre o total de casos (3).
+    assert result["taxa_sucesso_automacao"] == "33.3%"
 
 
 @pytest.mark.parametrize(

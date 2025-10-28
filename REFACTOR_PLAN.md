@@ -24,9 +24,9 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [x] **Validação de Integração E2E (Geral):** Realizar um teste de ponta a ponta com um arquivo CSV complexo para validar a integração do sistema.
   - [x] **Validação de Regressão (Cenários Específicos):** Executar testes E2E com múltiplos arquivos CSV, cada um focado em uma regra de negócio específica. - **CONCLUÍDO**
     - [x] Cenário: Instabilidade Crônica
-    - [x] Cenário: Sucesso Parcial (Closed Skipped, Canceled) - **Concluído**
-    - [x] Cenário: Falha Persistente - **Concluído**
-    - [x] Cenário: Sucesso Estabilizado - **Concluído**
+    - [x] Cenário: Sucesso Parcial (Closed Skipped, Canceled)
+    - [x] Cenário: Falha Persistente
+    - [x] Cenário: Sucesso Estabilizado
   - [ ] **Validação de Negócio (Golden File):** Validar o resultado da análise de um arquivo CSV de produção contra o resultado esperado, definido pelo especialista de negócio.
 
 ---
