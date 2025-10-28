@@ -517,7 +517,7 @@ def renderizar_resumo_executivo(
     body_content += "</div>"
 
     # Abre um novo grid para os cards de volume
-    body_content += '<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">'
+    body_content += '<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">'
 
     tooltip_volume_casos = (
         "Distribuição do total de Casos únicos analisados no período."
