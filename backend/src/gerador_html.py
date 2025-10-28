@@ -578,20 +578,17 @@ def renderizar_resumo_executivo(
         card7_html += "<p>Nenhum caso prioritário precisa de atuação. ✅</p>"
     card7_html += "</div></div>"
 
-    # --- MONTAGEM DO NOVO LAYOUT ---
+    # --- MONTAGEM DO NOVO LAYOUT SIMÉTRICO ---
     body_content += renderizar_template_string(
         '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}VISÃO GERAL</button>', CHEVRON_SVG=CHEVRON_SVG
     )
     body_content += '<div class="content" style="display: block; padding-top: 20px;">'
     
-    # Linha superior com 3 KPIs
-    body_content += f'<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 20px;">{card1_html}{card2_html}{card3_html}</div>'
+    # Grid 2x2 para os 4 KPIs principais
+    body_content += f'<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px;">{card1_html}{card2_html}{card3_html}{card4_html}</div>'
 
-    # Grid principal (Sucesso na esquerda, volumes e squads na direita)
-    body_content += '<div class="grid-container" style="grid-template-columns: 1.5fr 1fr; align-items: start; gap: 20px;">'
-    body_content += f'<div>{card4_html}</div>' # Coluna da esquerda
-    body_content += f'<div style="display: flex; flex-direction: column; gap: 20px;">{card5_html}{card6_html}{card7_html}</div>' # Coluna da direita
-    body_content += '</div>' # Fim do grid principal
+    # Grid para os 3 cards de detalhe
+    body_content += f'<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">{card5_html}{card6_html}{card7_html}</div>'
 
     body_content += '</div>' # Fim do .content da Visão Geral
 
