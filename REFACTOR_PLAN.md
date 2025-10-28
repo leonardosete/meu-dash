@@ -20,8 +20,10 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 - **Justificativa:** A principal funcionalidade de negócio (cálculo do `score_ponderado_final`) passou por múltiplas refatorações. É crucial garantir que o resultado final esteja 100% correto e alinhado com as regras de negócio.
 - **Plano de Ação:**
   - [x] **Revisão de Código:** Analisar detalhadamente os scripts `analisar_alertas.py` e `analise_tendencia.py` em busca de "code smells", inconsistências ou bugs na lógica de cálculo.
-  - [x] **Melhorar Docstrings:** Garantir que todas as funções críticas nesses arquivos tenham docstrings claras, explicando o propósito, os parâmetros e os retornos.
-  - [ ] **Validação Funcional E2E:** Realizar um teste de ponta a ponta com um arquivo CSV real para validar a precisão do "Score Ponderado Final" e da "Ação Sugerida".
+  - [x] **Melhorar Docstrings:** Garantir que todas as funções críticas em `analisar_alertas.py` tenham docstrings claras.
+  - [x] **Validação de Integração E2E:** Realizar um teste de ponta a ponta com um arquivo CSV complexo para validar a integração do sistema.
+  - [ ] **Validação de Regressão (Cenários Específicos):** Executar testes E2E com múltiplos arquivos CSV, cada um focado em uma regra de negócio específica (ex: instabilidade crônica, falha persistente, etc.).
+  - [ ] **Validação de Negócio (Golden File):** Validar o resultado da análise de um arquivo CSV de produção contra o resultado esperado, definido pelo especialista de negócio.
 
 ---
 
