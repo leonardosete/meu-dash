@@ -186,7 +186,7 @@ def _render_conceitos_section() -> str:
                             <tbody>
                                 <tr><td>Crítico</td><td style="color: var(--danger-color); font-weight: 500;">10</td><td>Urgente</td><td style="color: var(--danger-color); font-weight: 500;">10</td></tr>
                                 <tr><td>Alto / Major</td><td style="color: var(--warning-color); font-weight: 500;">8</td><td>Alto(a)</td><td style="color: var(--warning-color); font-weight: 500;">8</td></tr>
-                                <tr><td>Médio / Minor</td><td style="color: var(--accent-color); font-weight: 500;">5</td><td>Moderado(a)</td><td style="color: var(--accent-color); font-weight: 500;">5</td></tr>
+                                <tr><td>Medio / Minor</td><td style="color: var(--accent-color); font-weight: 500;">5</td><td>Moderado(a)</td><td style="color: var(--accent-color); font-weight: 500;">5</td></tr>
                                 <tr><td>Aviso / Baixo</td><td>2-3</td><td>Baixo(a)</td><td>2</td></tr>
                             </tbody>
                         </table>

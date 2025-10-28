@@ -136,43 +136,60 @@
 </head>
 <body>
     <div class="container">
-        <h1>OpsEngine</h1>
-        <p>Priorização Inteligente de Casos com Foco em Remediação</p>
+        <h1>SmartRemedy</h1>
+        <p>Priorização Inteligente de Alertas com Foco em Remediação</p>
 
         <section id="proposito">
             <div class="card">
-                <h3>O Desafio: Volume de Dados vs. Ação Objetiva</h3>
-                <p class="highlight highlight-danger">Nossa visão de saúde operacional é sustentada por uma <strong>grande quantidade de dados</strong> organizados no Power BI. Recebemos métricas cruciais como "30 mil alertas por mês" e "Squad X gerou mais problemas". No entanto, esses relatórios são <strong>descritivos</strong> e, devido ao volume, acabam gerando uma sobrecarga de informações. A questão central que permanece sem resposta é: <strong>"Como transformar esse volume de dados em ação prioritária para a automação?"</strong>. Precisávamos de um mecanismo que transformasse a contagem de problemas em um <strong>plano de trabalho claro</strong>.</p>
-
-                <h3>A Solução: Transformando o Ruído em Plano de Ação</h3>
-                <p class="highlight highlight-success">Esta ferramenta foi desenvolvida para ser o <strong>complemento de inteligência</strong> ao seu monitoramento. Ela não apenas conta os alertas, mas sim realiza uma <strong>análise focada e profunda</strong>. A ferramenta opera de maneira simples e eficiente:
-                <ul style="color: var(--text-secondary-color); margin-top: 15px; margin-bottom: 20px; padding-left: 30px;">
-                    <li><strong>Agrupa alertas</strong> similares em problemas únicos, que chamamos de <strong>"Casos"</strong>.</li>
-                    <li><strong>Verifica a eficácia</strong> das remediações ativas, mapeando quais falharam ou não existem.</li>
-                    <li>Gera um <strong>Plano de Ação sugerido e prioritário</strong>.</li>
-                </ul>
-                Em resumo, o sistema pega o volume de dados do seu monitoramento e entrega à sua equipe o <strong>foco exato</strong> de onde investir tempo para <strong>melhorar a automação</strong>, garantindo que o esforço traga o maior retorno operacional.</p>
+                <h3>O Desafio: A Lacuna entre Dados Descritivos e Inteligência Acionável</h3>
+                <p class="highlight highlight-danger">
+                    Os dashboards atuais, como o Power BI, nos fornecem uma excelente **visão descritiva** da operação, mostrando a existência de automações com base na coluna <code>com_remediacao</code>. No entanto, essa visão de alto nível possui duas lacunas críticas que impedem uma gestão de eficiência:
+                </p>
+                <div class="highlight highlight-danger" style="margin-top:10px;">
+                    <strong>1. A Incerteza da Execução:</strong> A informação de que uma remediação "existe" não garante que ela foi de fato acionada para um alerta específico. A análise manual revelou que essa suposição é frequentemente incorreta, levando a uma falsa sensação de segurança.<br><br>
+                    <strong>2. A Cegueira da Eficácia:</strong> Mesmo quando uma automação é executada, os dashboards atuais não medem seu **resultado**. Uma automação que falhou (<code>Closed Incomplete</code>) é tratada da mesma forma que uma que funcionou, mascarando a ineficiência e o desperdício de recursos.
+                </div>
+                <p class="highlight highlight-danger">
+                    Essa falta de profundidade nos leva a uma pergunta fundamental que os dados descritivos não conseguem responder: <strong>"Onde nosso esforço para automatizar está realmente gerando valor, e onde ele está sendo desperdiçado?"</strong>
+                </p>
+            
+                <h3>A Solução: Uma Camada de Inteligência Diagnóstica</h3>
+                <p class="highlight highlight-success">
+                    O <strong>SmartRemedy</strong> foi criado para preencher exatamente essa lacuna, atuando como um complemento de inteligência aos dashboards existentes. Ele vai além da análise descritiva e realiza um **diagnóstico automatizado da eficácia** do nosso Self-Healing.
+                    <ul style="color: var(--text-secondary-color); margin-top: 15px; margin-bottom: 20px; padding-left: 30px;">
+                        <li><strong>1. Validação da Execução:</strong> Em vez de confiar em dados declarados, a ferramenta verifica o status real da tarefa de automação (<code>tasks_status</code>), trazendo <strong>certeza</strong> sobre o que foi ou não executado.</li>
+                        <li><strong>2. Medição da Eficácia:</strong> O sistema é o único que analisa o **resultado** da automação, diferenciando sucessos plenos, sucessos parciais (ex: 'Skipped') e falhas, revelando a verdadeira eficiência do processo.</li>
+                        <li><strong>3. Priorização por Impacto Real:</strong> Com base nesses dados validados, a ferramenta aplica um score ponderado que direciona o esforço da equipe para os problemas que, se resolvidos, trarão o maior retorno para a estabilidade da operação.</li>
+                    </ul>
+                    Em resumo, o SmartRemedy não substitui o Power BI; ele o **aprimora**. Ele transforma a visão descritiva em um <strong>diagnóstico acionável</strong>, permitindo que as equipes de automação e SRE invistam seu tempo onde ele realmente importa.
+                </p>
             </div>
+
         </section>
         <section id="interpretacao">
-            <h2>Classificação da Análise: Os 3 Pilares</h2>
-            <p>Para priorizar, a ferramenta classifica os problemas em três categorias principais, permitindo uma visão completa da saúde da automação.</p>
+            <h2>Classificação da Análise: Os 4 Pilares da Saúde da Automação</h2>
+            <p>Para priorizar, a ferramenta classifica os problemas em quatro categorias principais, permitindo uma visão completa e acionável da saúde da automação.</p>
 
-            <div class="grid-container">
+            <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                 <div class="card kpi-card">
                     <div class="kpi-value" style="color: var(--danger-color);">🔥</div>
                     <h3 style="border:none; margin-top:15px;">Pilar 1: Foco de Atuação</h3>
-                    <p>Identifica problemas onde a <strong>remediação</strong> falhou ou não existe. Estes são os principais drenos de tempo da equipe e o ponto de partida para melhorias.</p>
+                    <p>Casos onde a automação falhou, é inexistente ou intermitente. Estes são os principais drenos de tempo da equipe e o ponto de partida para melhorias de alto impacto.</p>
                 </div>
                 <div class="card kpi-card">
                     <div class="kpi-value" style="color: var(--warning-color);">⚠️</div>
                     <h3 style="border:none; margin-top:15px;">Pilar 2: Instabilidade Crônica</h3>
-                    <p>Mede problemas que são "resolvidos" pela <strong>remediação</strong>, mas que ocorrem com alta frequência. Sinaliza que a causa raiz persiste, mesmo que o sintoma seja tratado.</p>
+                    <p>Casos que, mesmo sendo remediados, ocorrem com alta frequência. Sinaliza que a causa raiz do problema persiste, exigindo uma investigação mais profunda.</p>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-value" style="color: var(--info-color);">🛠️</div>
+                    <h3 style="border:none; margin-top:15px;">Pilar 3: Pontos de Atenção</h3>
+                    <p>Casos onde a automação rodou, mas não concluiu com 100% de eficácia (ex: 'Skipped', 'Canceled'). São oportunidades de baixo esforço para refinar e melhorar a robustez da automação.</p>
                 </div>
                 <div class="card kpi-card">
                     <div class="kpi-value" style="color: var(--success-color);">✅</div>
-                    <h3 style="border:none; margin-top:15px;">Pilar 3: Sucesso da Automação</h3>
-                    <p>Mostra o volume de problemas que a <strong>remediação</strong> tratou com sucesso, sem intervenção humana. Fornece o contexto do que está funcionando bem.</p>
+                    <h3 style="border:none; margin-top:15px;">Pilar 4: Sucesso da Automação</h3>
+                    <p>Casos que a automação tratou com sucesso pleno e sem histórico de falhas. Fornece o contexto do que está funcionando bem e valida o trabalho da equipe.</p>
                 </div>
             </div>
         </section>
@@ -196,7 +213,7 @@
                     </li>
                     <li>
                         <strong>Nossa automação está sendo eficiente?</strong><br>
-                        <small style="color: var(--text-secondary-color); margin-left: 15px;">A remediação associada teve qual status? "Closed Incomplete", "Closed"? Este é o "Score de Ineficiência".</small>
+                        <small style="color: var(--text-secondary-color); margin-left: 15px;">A remediação associada teve qual status de fechamento? "Closed Incomplete", "Closed Skipped"? Este é o "Score de Ineficiência".</small>
                     </li>
                     <li>
                         <strong>Qual o impacto operacional?</strong><br>
@@ -208,18 +225,18 @@
             
             <h3>Medindo a Evolução: Análise Padrão vs. Comparativa</h3>
             <div class="card">
-                <p>A ferramenta oferece duas formas de análises, cada uma com um propósito estratégico distinto, refletindo as abas "Análise Padrão" e "Análise Comparativa" da interface principal.</p>
+                <p>A ferramenta oferece duas formas de análises, cada uma com um propósito estratégico distinto, refletindo as abas "Análise Padrão" e "Análise Comparativa" na interface da aplicação.</p>
                 
                 <h4 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Análise Padrão (Acompanhamento Contínuo)</h4>
-                <p>Este é o fluxo principal, acessado pela aba "Análise Padrão". Ao processar um único arquivo, o sistema gera o dashboard completo e, automaticamente, um <strong>relatório comparativo</strong> com o período anterior, permitindo o acompanhamento da evolução dos Casos. Ele responde a perguntas como:</p>
+                <p>Este é o fluxo principal. Ao processar um único arquivo, o sistema gera o dashboard completo e, automaticamente, um <strong>relatório comparativo</strong> com o período anterior, permitindo o acompanhamento da evolução dos Casos. Ele responde a perguntas como:</p>
                 <ul style="list-style-type: '•';">
-                    <li>Quantos Casos com problemas na remediações foram resolvidos? (<strong>Taxa de Resolução</strong>)</li>
+                    <li>Quantos Casos com problemas nas remediações foram resolvidos? (<strong>Taxa de Resolução</strong>)</li>
                     <li>Quantos Casos novos surgiram e exigem atenção? (<strong>Taxa de Novos Problemas</strong>)</li>
                     <li>Quais problemas são "crônicos" e persistem ao longo do tempo?</li>
                 </ul>
 
                 <h4 style="margin-top: 25px; border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">Análise Comparativa (Investigação Pontual)</h4>
-                <p>Acessada pela aba "Análise Comparativa", esta função permite uma comparação direta entre quaisquer dois arquivos <code>.csv</code> de alertas escolhidos pelo usuário. Ela gera <strong>apenas o relatório comparativo</strong> e é ideal para investigações específicas, como: "A nova remediação que a Squad A implantou na terça-feira foi eficaz?", "Tivemos uma crise na quinta-feira. Quais falhas de automação surgiram nesse dia em comparação com um dia normal?", ou "O problema crônico de 'disco cheio no sistema Y', que foi tratado no mês passado, voltou a aparecer esta semana?".</p>
+                <p>Esta função permite uma comparação direta entre quaisquer dois arquivos <code>.csv</code> de alertas escolhidos pelo usuário. Ela gera <strong>apenas o relatório comparativo</strong> e é ideal para investigações específicas, como: "A nova remediação que a Squad A implantou na terça-feira foi eficaz?", "Tivemos uma crise na quinta-feira. Quais falhas de automação surgiram nesse dia em comparação com um dia normal?", ou "O problema crônico de 'disco cheio no sistema Y', que foi tratado no mês passado, voltou a aparecer esta semana?".</p>
 
                 <h3 style="margin-top: 30px;">Diagnóstico Rápido</h3>
                 <p>O principal diferencial dos relatórios gerados nas análises comparativas é o <strong>"Diagnóstico Rápido"</strong>, posicionado no topo da página. Ele aplica um conjunto de regras de análise para interpretar os dados e fornecer um veredito claro e acionável sobre o cenário recente. Os possíveis cenários são:</p>

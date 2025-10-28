@@ -80,7 +80,7 @@ def sample_dataframe():
             STATUS_NOT_OK,
             STATUS_NOT_OK,
         ],
-        "severity": ["Alto", "Alto", "Médio", "Médio", "Crítico", "Alto", "Alto", "Crítico"],
+        "severity": ["Alto", "Alto", "Medio", "Medio", "Crítico", "Alto", "Alto", "Crítico"],
         "sn_priority_group": ["Alto(a)", "Alto(a)", "Moderado(a)", "Moderado(a)", "Alto(a)", "Baixo(a)", "Baixo(a)", "Alto(a)"],
         "node": ["node1", "node1", "node2", "node2", "node3", "node4", "node4", "node5"],
         "source": [

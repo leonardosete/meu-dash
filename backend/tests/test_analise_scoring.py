@@ -45,7 +45,7 @@ def sample_data():
         "number": ["1", "2", "3", "4", "5", "6"],
         # P1 e P2 agora formam um grupo intermitente. P1 falhou, P2 teve sucesso parcial.
         "has_remediation_task": ["REM_NOT_OK", "REM_OK", "REM_OK", "NO_STATUS", "REM_OK", "REM_OK"],
-        "severity": ["Alto", "Alto", "Médio", "Crítico", "Baixo", "Médio"],
+        "severity": ["Alto", "Alto", "Medio", "Crítico", "Baixo", "Medio"],
         "sn_priority_group": ["Alto(a)", "Alto(a)", "Moderado(a)", "Urgente", "Baixo(a)", "Moderado(a)"],
         # Cenários de tasks_status:
         # P1: Grupo com histórico de falha (Closed Incomplete) e sucesso (Closed).
