@@ -22,7 +22,7 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [x] **Revisão de Código:** Analisar detalhadamente os scripts `analisar_alertas.py` e `analise_tendencia.py` em busca de "code smells", inconsistências ou bugs na lógica de cálculo.
   - [x] **Melhorar Docstrings:** Garantir que todas as funções críticas em `analisar_alertas.py` tenham docstrings claras.
   - [x] **Validação de Integração E2E (Geral):** Realizar um teste de ponta a ponta com um arquivo CSV complexo para validar a integração do sistema.
-  - [x] **Validação de Regressão (Cenários Específicos):** Executar testes E2E com múltiplos arquivos CSV, cada um focado em uma regra de negócio específica. - **CONCLUÍDO**
+  - [x] **Validação de Regressão (Cenários Específicos):** Executar testes E2E com múltiplos arquivos CSV, cada um focado em uma regra de negócio específica.
     - [x] Cenário: Instabilidade Crônica
     - [x] Cenário: Sucesso Parcial (Closed Skipped, Canceled)
     - [x] Cenário: Falha Persistente
@@ -31,7 +31,17 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 
 ---
 
-### Prioridade 2: Médio
+### Prioridade 2: Alto
+
+#### [ ] 📄 Revisar e Atualizar Documentação Gerencial (`doc_gerencial.html`)
+
+- **Justificativa:** Este documento é a "página de venda" da ferramenta para stakeholders. Ele precisa refletir com precisão a inteligência e o valor da versão atual do sistema.
+- **Plano de Ação:**
+  - [ ] Reestruturar a seção "Classificação da Análise" para incluir o 4º pilar: "Pontos de Atenção".
+  - [ ] Atualizar a explicação do "Score Ponderado" para incluir o `fator_ineficiencia_task` e os novos status (`Canceled`, `Closed Skipped`).
+  - [ ] Garantir que a linguagem seja clara, focada em valor de negócio e que todos os exemplos estejam alinhados com a lógica atual.
+
+### Prioridade 3: Médio
 
 #### [ ] 🚀 Finalizar Pipeline de CI/CD
 
@@ -39,6 +49,21 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 - **Plano de Ação:**
   - [ ] **Modificar Build do Docker:** Alterar a etapa de build para usar o `Dockerfile` multi-estágio de produção, que constrói o frontend e o backend em uma única imagem.
   - [ ] **Publicar Imagem:** Garantir que a imagem final seja publicada no Docker Hub (ou outro registry) com as tags corretas.
+
+#### [ ] 📚 Revisar e Atualizar Documentação para o Usuário Final (Seção "Conceitos")
+
+- **Justificativa:** A seção "Conceitos" no dashboard (`resumo_geral.html`) serve como a documentação "viva" para o usuário. Ela precisa refletir 100% a lógica de negócio final e estável.
+- **Plano de Ação:**
+  - [ ] Revisar todas as tabelas de pesos e multiplicadores em `gerador_html.py` para garantir que correspondam aos valores em `constants.py`.
+  - [ ] Ajustar os textos e exemplos para que sejam claros, simples e precisos.
+
+### Prioridade 4: Baixo (Melhoria de UX)
+
+#### [ ] ✨ Ajuste de UX: Trocar Ícone do Card "Pontos de Atenção"
+
+- **Justificativa:** O ícone atual '⚠️' pode ser confundido com "Instabilidade Crônica". Um ícone de ferramenta '🛠️' comunicaria melhor a ideia de "automação que precisa de ajuste".
+- **Plano de Ação:**
+  - [ ] Modificar o `gerador_html.py` para substituir o ícone no card de "Pontos de Atenção".
 
 ---
 
@@ -84,3 +109,18 @@ A lista abaixo resume as principais tarefas que já foram concluídas nesta fase
 ## 4. Decisões Estratégicas e Débitos Técnicos Conhecidos
 
 - **Geração de HTML no Backend:** Decidimos **manter** a lógica de geração de relatórios HTML no backend por enquanto. A tarefa "Remover Código Morto" (`templates/`) foi reavaliada e está incorreta, pois este código está em uso. A migração dessa lógica para o frontend é uma refatoração futura, a ser planejada em uma "Fase 4".
+
+---
+
+## 🚀 Plano de Ação: Fase 4 - Evolução e Novas Features (Backlog)
+
+### Prioridade Alta
+
+#### [ ] 🧠 Implementar Persistência de Estado para Remediação Manual
+
+- **Justificativa:** Atualmente, a análise é "stateless". Para evitar que a equipe precise reavaliar manualmente o mesmo caso a cada nova análise, é necessário um mecanismo para persistir a decisão de `manual_remediation_expected`.
+- **Plano de Ação:**
+  - [ ] **Definir Arquitetura:** Criar um ADR (Architecture Decision Record) para decidir a melhor abordagem de persistência (ex: banco de dados SQLite, arquivo de estado JSON).
+  - [ ] **Implementar Lógica de Persistência:** Adicionar a lógica no backend para salvar e consultar o estado de um caso.
+  - [ ] **Ajustar Geração de Relatórios:** Modificar o `analisar_alertas.py` para considerar o estado persistido ao gerar o `atuar.csv`.
+  - [ ] **Ajustar UI (se necessário):** Avaliar se a interface do frontend precisa de alguma modificação para suportar este fluxo.
