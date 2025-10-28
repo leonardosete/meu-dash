@@ -23,6 +23,7 @@ from .constants import (
     MAX_REPORTS_HISTORY,
     ACAO_FLAGS_ATUACAO,
     ACAO_FLAGS_INSTABILIDADE,
+    ACAO_SUCESSO_PARCIAL,
 )
 
 logger = logging.getLogger(__name__)
@@ -96,6 +97,11 @@ def calculate_kpi_summary(report_path: str) -> dict | None:
             for item in summary_data
             if item.get("acao_sugerida") in ACAO_FLAGS_INSTABILIDADE
         )
+        casos_sucesso_parcial = sum(
+            1
+            for item in summary_data
+            if item.get("acao_sugerida") == ACAO_SUCESSO_PARCIAL
+        )
         alertas_instabilidade = sum(
             item.get("alert_count", 0)
             for item in summary_data
@@ -111,6 +117,11 @@ def calculate_kpi_summary(report_path: str) -> dict | None:
             for item in summary_data
             if item.get("acao_sugerida") in ACAO_FLAGS_ATUACAO
         )
+        alertas_sucesso_parcial = sum(
+            item.get("alert_count", 0)
+            for item in summary_data
+            if item.get("acao_sugerida") == ACAO_SUCESSO_PARCIAL
+        )
         taxa_sucesso = (
             (1 - (casos_atuacao / total_casos)) * 100 if total_casos > 0 else 100
         )
@@ -121,6 +132,8 @@ def calculate_kpi_summary(report_path: str) -> dict | None:
             "alertas_atuacao": alertas_atuacao,
             "casos_instabilidade": casos_instabilidade,
             "alertas_instabilidade": alertas_instabilidade,
+            "casos_sucesso_parcial": casos_sucesso_parcial,
+            "alertas_sucesso_parcial": alertas_sucesso_parcial,
             "alertas_sucesso": alertas_sucesso,
             "taxa_sucesso_automacao": f"{taxa_sucesso:.1f}%",
             "taxa_sucesso_valor": taxa_sucesso,

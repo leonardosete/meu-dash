@@ -3,6 +3,8 @@ export interface KpiSummary {
   alertas_atuacao: number;
   casos_instabilidade: number;
   alertas_instabilidade: number;
+  casos_sucesso_parcial: number;
+  alertas_sucesso_parcial: number;
   taxa_sucesso_automacao: string;
   taxa_sucesso_valor: number;
   casos_sucesso: number;

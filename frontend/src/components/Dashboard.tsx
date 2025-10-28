@@ -91,6 +91,13 @@ const Dashboard = () => {
           colorClass={kpi_summary.casos_instabilidade > 0 ? 'text-warning' : 'text-success'}
         />
         <KpiCard
+          title="Pontos de Atenção"
+          value={kpi_summary.casos_sucesso_parcial}
+          subValue={kpi_summary.alertas_sucesso_parcial > 0 ? kpi_summary.alertas_sucesso_parcial : undefined}
+          subLabel={kpi_summary.alertas_sucesso_parcial > 0 ? "Alertas" : undefined}
+          colorClass={kpi_summary.casos_sucesso_parcial > 0 ? 'text-warning' : 'text-success'}
+        />
+        <KpiCard
           title="Sucesso da Automação"
           value={kpi_summary.taxa_sucesso_automacao}
           subValue={`${kpi_summary.casos_sucesso} de ${kpi_summary.total_casos} Casos`}
