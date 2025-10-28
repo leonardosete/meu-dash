@@ -305,6 +305,7 @@ def renderizar_resumo_executivo(
         total_grupos,
         grupos_atuacao,
         grupos_instabilidade,
+        grupos_sucesso_parcial,
         taxa_sucesso,
         casos_ok_estaveis,
         top_squads,
@@ -332,6 +333,7 @@ def renderizar_resumo_executivo(
             "total_grupos",
             "grupos_atuacao",
             "grupos_instabilidade",
+            "grupos_sucesso_parcial",
             "taxa_sucesso",
             "casos_ok_estaveis",
             "top_squads",
@@ -461,6 +463,43 @@ def renderizar_resumo_executivo(
     </div>
     """
 
+    if grupos_sucesso_parcial > 0:
+        parcial_view_icon_html = f'<a href="pontos_de_atencao.html?back=resumo_geral.html" class="download-link" title="Visualizar detalhes dos Casos de sucesso parcial">{VIEW_ICON_SVG}</a>'
+    else:
+        disabled_svg = VIEW_ICON_SVG.replace(
+            'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
+        )
+        parcial_view_icon_html = f'<span class="download-link" title="Nenhum caso de sucesso parcial detectado." style="cursor: not-allowed;">{disabled_svg}</span>'
+    
+    parcial_card_class = (
+        "card-neon card-neon-blue"
+        if grupos_sucesso_parcial > 0
+        else "card-neon card-neon-blue" # Mantem azul, pois não é um alerta critico
+    )
+    parcial_kpi_color = (
+        "color: var(--accent-color);" # Mantem azul
+    )
+    tooltip_parcial_text = "Casos onde a automação foi executada, mas não concluída (ex: 'Skipped', 'Canceled'). Oportunidades para refinar a automação."
+    parcial_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span style="font-size: 1.5em;">⚠️</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_parcial_text)}</div></div>"""
+
+    body_content += f"""
+    <div class="card kpi-card {parcial_card_class}">
+        {parcial_status_icon_html}
+        <p class="kpi-value" style="{parcial_kpi_color}">{grupos_sucesso_parcial}</p>
+        <p class="kpi-label">Pontos de Atenção na Automação</p>
+        {parcial_view_icon_html}
+    </div>
+    """
+
+    parcial_card_class = (
+        "card-neon card-neon-blue"
+        if grupos_sucesso_parcial > 0
+        else "card-neon card-neon-blue"  # Mantem azul, pois não é um alerta critico
+    )
+    parcial_kpi_color = "color: var(--accent-color);"  # Mantem azul
+    tooltip_parcial_text = "Casos onde a automação foi executada, mas não concluída (ex: 'Skipped', 'Canceled'). Oportunidades para refinar a automação."
+    parcial_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span style="font-size: 1.5em;">⚠️</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_parcial_text)}</div></div>"""
+
     casos_sucesso = total_grupos - grupos_atuacao
     tooltip_gauge = f"Percentual e contagem de Casos resolvidos automaticamente: {casos_sucesso} de {total_grupos} problemas tiveram a remediação executada com sucesso."
     sucesso_page_name = "sucesso_automacao.html"
@@ -490,6 +529,7 @@ def renderizar_resumo_executivo(
         <div class="volume-card-item"><span class="volume-card-label">Total de Casos</span><span class="volume-card-value">{total_grupos}</span></div>
         <div class="volume-card-item"><span class="volume-card-label">Remediados (Estável)</span><span class="volume-card-value" style="color: var(--success-color);">{casos_ok_estaveis}</span></div>
         <div class="volume-card-item"><span class="volume-card-label">Remediados (Frequente)</span><span class="volume-card-value" style="color: var(--warning-color);">{grupos_instabilidade}</span></div>
+        <div class="volume-card-item"><span class="volume-card-label">Remediados (Parcial)</span><span class="volume-card-value" style="color: var(--accent-color);">{grupos_sucesso_parcial}</span></div>
         <div class="volume-card-item"><span class="volume-card-label">Sem Remediação</span><span class="volume-card-value" style="color: var(--danger-color);">{grupos_atuacao}</span></div>
     </div>
     """
@@ -507,6 +547,7 @@ def renderizar_resumo_executivo(
         <div class="volume-card-item"><span class="volume-card-label">Total de Alertas</span><span class="volume-card-value">{total_alertas_geral}</span></div>
         <div class="volume-card-item"><span class="volume-card-label">Remediados (Estável)</span><span class="volume-card-value" style="{remediados_color_style}">{total_alertas_remediados_ok}</span></div>
         <div class="volume-card-item"><span class="volume-card-label">Remediados (Frequente)</span><span class="volume-card-value" style="color: var(--warning-color);">{total_alertas_instabilidade}</span></div>
+        <div class="volume-card-item"><span class="volume-card-label">Remediados (Parcial)</span><span class="volume-card-value" style="color: var(--accent-color);">{context.get("total_alertas_sucesso_parcial", 0)}</span></div>
         <div class="volume-card-item"><span class="volume-card-label">Sem Remediação</span><span class="volume-card-value" style="{sem_remediacao_color_style}">{total_alertas_problemas}</span></div>
         <a href="visualizador_json.html" target="_blank" class="download-link" title="Visualizar JSON com todos os Casos">{VIEW_ICON_SVG}</a>
     </div>

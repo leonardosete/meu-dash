@@ -12,6 +12,7 @@ from .constants import (
     ACAO_FLAGS_ATUACAO,
     ACAO_FLAGS_INSTABILIDADE,
     ACAO_INSTABILIDADE_CRONICA,
+    ACAO_SUCESSO_PARCIAL,
     LOG_INVALIDOS_FILENAME,  # noqa: F401
     ACAO_FLAGS_OK,
     ACAO_INCONSISTENTE,
@@ -150,11 +151,12 @@ def gerar_ecossistema_de_relatorios(
     # REFATORAÇÃO: Centraliza a geração de relatórios de visualização de CSV.
     reports_to_generate = [
         ("remediados.csv", FILENAME_SUCCESS, "Sucesso da Automação"),
-        ("remediados_frequentes.csv", FILENAME_INSTABILITY, "Instabilidade Crônica"),
+        ("remediados_frequentes.csv", FILENAME_INSTABILITY, "Casos de Instabilidade Crônica"),
+        ("pontos_de_atencao.csv", "pontos_de_atencao.html", "Pontos de Atenção na Automação"),
     ]
     if analysis_results["num_logs_invalidos"] > 0:
         reports_to_generate.append(
-            (LOG_INVALIDOS_FILENAME, FILENAME_INVALID_LOGS_HTML, "Checar Dados")
+            (LOG_INVALIDOS_FILENAME, FILENAME_INVALID_LOGS_HTML, "Alertas com Dados Inválidos")
         )
     _gerar_relatorios_csv_viewer(reports_to_generate, output_dir, frontend_url)
 

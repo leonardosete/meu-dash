@@ -138,6 +138,7 @@
             header: true,
             skipEmptyLines: true,
             dynamicTyping: true,
+            delimiter: ";",
             complete: function(results) {
                 if (results.errors.length > 0) {
                     statusMessage.textContent = 'Erro ao processar os dados do CSV embutido.';

@@ -447,10 +447,16 @@ def gerar_relatorios_csv(
     alerts_instabilidade = summary[
         summary["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)
     ].copy()
+    alerts_sucesso_parcial = summary[
+        summary["acao_sugerida"] == ACAO_SUCESSO_PARCIAL
+    ].copy()
 
     _save_csv(alerts_atuacao, output_actuation, "score_ponderado_final", FULL_EMOJI_MAP, False)
     _save_csv(alerts_ok, output_ok, "last_event", FULL_EMOJI_MAP, False)
     _save_csv(alerts_instabilidade, output_instability, "alert_count", FULL_EMOJI_MAP, False)
+    _save_csv(
+        alerts_sucesso_parcial, os.path.join(os.path.dirname(output_ok), "pontos_de_atencao.csv"), "score_ponderado_final", FULL_EMOJI_MAP, False
+    )
     return alerts_atuacao.sort_values(by="score_ponderado_final", ascending=False)
 
 

@@ -63,7 +63,7 @@ def sample_data():
     "problem_id, expected_factor",
     [
         ("P1", TASK_STATUS_WEIGHTS.get("Closed Incomplete")),  # Pior caso na cronologia
-        ("P2", TASK_STATUS_WEIGHTS.get("default")),           # Status não mapeado
+        ("P2", TASK_STATUS_WEIGHTS.get("Canceled")),          # Status "Canceled" tem peso específico
         ("P3", TASK_STATUS_WEIGHTS.get("default")),           # Sucesso limpo
         ("P4", TASK_STATUS_WEIGHTS.get("default")),           # Status nulo
         ("P5", TASK_STATUS_WEIGHTS.get("Closed Skipped")),    # Sucesso parcial

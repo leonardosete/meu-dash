@@ -8,6 +8,7 @@ import logging
 import pandas as pd
 
 from .constants import (
+    ACAO_SUCESSO_PARCIAL,
     ACAO_FLAGS_INSTABILIDADE,
     ACAO_FLAGS_OK,
     COL_ASSIGNMENT_GROUP,
@@ -46,17 +47,22 @@ def build_dashboard_context(
 
     total_grupos = len(summary_df)
     grupos_atuacao = len(df_atuacao)
-    grupos_instabilidade = (
-        summary_df["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE).sum()
-    )
+    grupos_instabilidade = summary_df["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE).sum()
+    grupos_sucesso_parcial = summary_df["acao_sugerida"].eq(ACAO_SUCESSO_PARCIAL).sum()
+
     taxa_sucesso = (
         (1 - (grupos_atuacao / total_grupos)) * 100 if total_grupos > 0 else 100
     )
-    casos_ok_estaveis = total_grupos - grupos_atuacao - grupos_instabilidade
+    casos_ok_estaveis = (
+        total_grupos - grupos_atuacao - grupos_instabilidade - grupos_sucesso_parcial
+    )
 
     df_ok_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_OK)]
     df_instabilidade_filtered = summary_df[
         summary_df["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)
+    ]
+    df_sucesso_parcial_filtered = summary_df[
+        summary_df["acao_sugerida"] == ACAO_SUCESSO_PARCIAL
     ]
 
     all_squads = df_atuacao[COL_ASSIGNMENT_GROUP].value_counts()
@@ -91,6 +97,7 @@ def build_dashboard_context(
     total_alertas_remediados_ok = df_ok_filtered["alert_count"].sum()
     total_alertas_instabilidade = df_instabilidade_filtered["alert_count"].sum()
     total_alertas_problemas = df_atuacao["alert_count"].sum()
+    total_alertas_sucesso_parcial = df_sucesso_parcial_filtered["alert_count"].sum()
     total_alertas_geral = summary_df["alert_count"].sum()
 
     start_date = summary_df["first_event"].min() if not summary_df.empty else None
@@ -115,6 +122,7 @@ def build_dashboard_context(
         "total_grupos": total_grupos,
         "grupos_atuacao": grupos_atuacao,
         "grupos_instabilidade": grupos_instabilidade,
+        "grupos_sucesso_parcial": grupos_sucesso_parcial,
         "taxa_sucesso": taxa_sucesso,
         "casos_ok_estaveis": casos_ok_estaveis,
         "top_squads": top_squads,
@@ -126,6 +134,7 @@ def build_dashboard_context(
         "total_alertas_remediados_ok": total_alertas_remediados_ok,
         "total_alertas_instabilidade": total_alertas_instabilidade,
         "total_alertas_problemas": total_alertas_problemas,
+        "total_alertas_sucesso_parcial": total_alertas_sucesso_parcial,
         "total_alertas_geral": total_alertas_geral,
         "all_squads": all_squads,
         "top_5_squads_agrupadas": top_5_squads_agrupadas,

@@ -1,6 +1,6 @@
 # ✅ Plano de Ação: Fase 3 - Finalização e Limpeza
 
-**Última Atualização:** 2025-10-15
+**Última Atualização:** 2025-10-28
 **Arquiteto de Refatoração:** Gemini Code Assist
 
 ## 1. Resumo do Estado Atual
@@ -21,8 +21,12 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 - **Plano de Ação:**
   - [x] **Revisão de Código:** Analisar detalhadamente os scripts `analisar_alertas.py` e `analise_tendencia.py` em busca de "code smells", inconsistências ou bugs na lógica de cálculo.
   - [x] **Melhorar Docstrings:** Garantir que todas as funções críticas em `analisar_alertas.py` tenham docstrings claras.
-  - [x] **Validação de Integração E2E:** Realizar um teste de ponta a ponta com um arquivo CSV complexo para validar a integração do sistema.
-  - [ ] **Validação de Regressão (Cenários Específicos):** Executar testes E2E com múltiplos arquivos CSV, cada um focado em uma regra de negócio específica (ex: instabilidade crônica, falha persistente, etc.).
+  - [x] **Validação de Integração E2E (Geral):** Realizar um teste de ponta a ponta com um arquivo CSV complexo para validar a integração do sistema.
+  - [x] **Validação de Regressão (Cenários Específicos):** Executar testes E2E com múltiplos arquivos CSV, cada um focado em uma regra de negócio específica.
+    - [x] Cenário: Instabilidade Crônica
+    - [x] Cenário: Sucesso Parcial (Closed Skipped, Canceled) - **Concluído**
+    - [x] Cenário: Falha Persistente - **Concluído**
+    - [x] Cenário: Sucesso Estabilizado - **Concluído**
   - [ ] **Validação de Negócio (Golden File):** Validar o resultado da análise de um arquivo CSV de produção contra o resultado esperado, definido pelo especialista de negócio.
 
 ---
@@ -42,7 +46,7 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 
 A lista abaixo resume as principais tarefas que já foram concluídas nesta fase, conforme registrado no `DIARIO_DE_BORDO.md`.
 
-#### [x] ️ Implementar Validação de Schema de Entrada (Porteiro de Dados)
+### [x] ️ Implementar Validação de Schema de Entrada (Porteiro de Dados)
 
 - **Resultado:** A função `carregar_dados` agora valida estritamente o schema do CSV na entrada, rejeitando arquivos inválidos e garantindo a integridade dos dados.
 

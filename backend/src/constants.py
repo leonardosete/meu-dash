@@ -7,7 +7,7 @@ ACAO_FALHA_PERSISTENTE = "Desenvolver remediação (nenhum sucesso registrado)"
 ACAO_STATUS_AUSENTE = "Verificar coleta de dados da remediação (status ausente)"
 ACAO_SEMPRE_OK = "Remediação automática funcional"
 ACAO_INCONSISTENTE = "Analisar causa raiz das falhas (remediação inconsistente)"
-ACAO_SUCESSO_PARCIAL = "Revisar automação (sucesso parcial / pulado)"
+ACAO_SUCESSO_PARCIAL = "Revisar automação (sucesso parcial)"
 ACAO_INSTABILIDADE_CRONICA = "Revisar causa raiz (remediação recorrente)"
 
 # Mapeamento de Ações para categorização
@@ -16,7 +16,6 @@ ACAO_FLAGS_ATUACAO = [
     ACAO_FALHA_PERSISTENTE,
     ACAO_STATUS_AUSENTE,
     ACAO_INCONSISTENTE,
-    ACAO_SUCESSO_PARCIAL,
 ]
 ACAO_FLAGS_OK = [ACAO_SEMPRE_OK, ACAO_ESTABILIZADA]
 ACAO_FLAGS_INSTABILIDADE = [ACAO_INSTABILIDADE_CRONICA]
@@ -62,6 +61,8 @@ ACAO_WEIGHTS = {
 TASK_STATUS_WEIGHTS = {
     "Closed Incomplete": 1.5,
     "Closed Skipped": 1.2,
+    # Adicionado para tratar "Canceled" como um sucesso parcial com a mesma penalidade.
+    "Canceled": 1.2,
     # Status que não indicam ineficiência têm peso 1.0 (não penalizam)
     "default": 1.0,
 }
