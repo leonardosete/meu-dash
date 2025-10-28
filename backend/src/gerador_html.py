@@ -473,12 +473,14 @@ def renderizar_resumo_executivo(
         parcial_view_icon_html = f'<span class="download-link" title="Nenhum caso de sucesso parcial detectado." style="cursor: not-allowed;">{disabled_svg}</span>'
     
     parcial_card_class = (
-        "card-neon card-neon-blue"
+        "card-neon card-neon-warning"
         if grupos_sucesso_parcial > 0
-        else "card-neon card-neon-blue" # Mantem azul, pois não é um alerta critico
+        else "card-neon card-neon-blue"
     )
     parcial_kpi_color = (
-        "color: var(--accent-color);" # Mantem azul
+        "color: var(--warning-color);"
+        if grupos_sucesso_parcial > 0
+        else "color: var(--accent-color);"
     )
     tooltip_parcial_text = "Casos onde a automação foi executada, mas não concluída (ex: 'Skipped', 'Canceled'). Oportunidades para refinar a automação."
     parcial_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span style="font-size: 1.5em;">⚠️</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_parcial_text)}</div></div>"""
