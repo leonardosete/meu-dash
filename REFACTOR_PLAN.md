@@ -19,8 +19,8 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 
 - **Justificativa:** A principal funcionalidade de negócio (cálculo do `score_ponderado_final`) passou por múltiplas refatorações. É crucial garantir que o resultado final esteja 100% correto e alinhado com as regras de negócio.
 - **Plano de Ação:**
-  - [ ] **Revisão de Código:** Analisar detalhadamente os scripts `analisar_alertas.py` e `analise_tendencia.py` em busca de "code smells", inconsistências ou bugs na lógica de cálculo.
-  - [ ] **Melhorar Docstrings:** Garantir que todas as funções críticas nesses arquivos tenham docstrings claras, explicando o propósito, os parâmetros e os retornos.
+  - [x] **Revisão de Código:** Analisar detalhadamente os scripts `analisar_alertas.py` e `analise_tendencia.py` em busca de "code smells", inconsistências ou bugs na lógica de cálculo.
+  - [x] **Melhorar Docstrings:** Garantir que todas as funções críticas nesses arquivos tenham docstrings claras, explicando o propósito, os parâmetros e os retornos.
   - [ ] **Validação Funcional E2E:** Realizar um teste de ponta a ponta com um arquivo CSV real para validar a precisão do "Score Ponderado Final" e da "Ação Sugerida".
 
 ---

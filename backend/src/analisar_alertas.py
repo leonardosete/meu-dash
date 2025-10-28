@@ -46,7 +46,22 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 def _validar_e_separar_linhas_invalidas(df: pd.DataFrame, output_dir: str) -> Tuple[pd.DataFrame, int]:
-    """Valida a integridade e o formato dos dados, separando linhas inválidas."""
+    """
+    Valida a integridade dos dados de um DataFrame e separa as linhas inválidas.
+
+    Esta função realiza múltiplas validações (integridade estrutural, formato de dados,
+    datas inválidas) e move as linhas que falham em qualquer uma delas para um
+    arquivo de log separado (`invalid_cols.csv`), retornando um DataFrame limpo.
+
+    Args:
+        df (pd.DataFrame): O DataFrame de entrada a ser validado.
+        output_dir (str): O diretório onde o log de linhas inválidas será salvo.
+
+    Returns:
+        Tuple[pd.DataFrame, int]: Uma tupla contendo:
+            - O DataFrame limpo, sem as linhas inválidas.
+            - O número de linhas inválidas que foram removidas.
+    """
     all_invalid_dfs = []
     invalid_indices = set()
 
@@ -92,7 +107,25 @@ def _validar_e_separar_linhas_invalidas(df: pd.DataFrame, output_dir: str) -> Tu
 
 
 def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
-    """Carrega, valida e pré-processa os dados de um arquivo CSV."""
+    """
+    Carrega, valida e pré-processa os dados de um arquivo CSV.
+
+    Esta função orquestra o processo de ingestão de dados. Ela lê um arquivo CSV,
+    valida se o schema (colunas obrigatórias) está correto, chama a função de
+    validação de linhas e realiza um pré-processamento final nos dados limpos.
+
+    Args:
+        filepath (str): O caminho para o arquivo CSV a ser carregado.
+        output_dir (str): O diretório de saída para logs de validação.
+
+    Returns:
+        Tuple[pd.DataFrame, int]: Uma tupla contendo:
+            - O DataFrame pré-processado e pronto para análise.
+            - O número de linhas inválidas que foram detectadas e removidas.
+
+    Raises:
+        ValueError: Se o arquivo CSV não contiver todas as colunas essenciais.
+    """
     logger.info(f"Carregando e preparando dados de '{filepath}'...")
     try:
         # MELHORIA: Usa sep=None para que o 'engine' do Python detecte
@@ -135,7 +168,21 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
 
 
 def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
-    """Adiciona a coluna 'acao_sugerida' com base na cronologia dos status."""
+    """
+    Adiciona a coluna 'acao_sugerida' com base na cronologia dos status das tarefas.
+
+    Esta função implementa a árvore de decisão principal da aplicação. Ela analisa
+    o histórico de status de remediação de cada "Caso" e atribui uma ação
+    sugerida com base em um conjunto de regras de negócio priorizadas (ex:
+    instabilidade crônica, falha persistente, sucesso, etc.).
+
+    Args:
+        df (pd.DataFrame): O DataFrame de resumo dos "Casos", que deve conter
+            as colunas 'last_tasks_status', 'status_chronology' e 'alert_count'.
+
+    Returns:
+        pd.DataFrame: O DataFrame de entrada com a coluna 'acao_sugerida' adicionada.
+    """
     # Define quais status de task são considerados um "sucesso"
     SUCCESS_STATUSES = {"Closed"}
 
@@ -195,7 +242,20 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _calcular_fatores_de_ponderacao(summary: pd.DataFrame) -> pd.DataFrame:
-    """Calcula e adiciona as colunas de fatores de ponderação ao sumário."""
+    """
+    Calcula e adiciona as colunas de fatores de ponderação ao sumário.
+
+    Esta função calcula os três multiplicadores que compõem o score ponderado:
+    1.  **fator_peso_remediacao**: Penaliza casos que exigem mais esforço (ex: desenvolver automação).
+    2.  **fator_ineficiencia_task**: Penaliza casos onde a automação falhou.
+    3.  **fator_volume**: Penaliza casos que ocorrem com mais frequência.
+
+    Args:
+        summary (pd.DataFrame): O DataFrame de resumo dos "Casos".
+
+    Returns:
+        pd.DataFrame: O DataFrame de resumo com as colunas de fatores adicionadas.
+    """
     # Fator 1: Peso da Ação de Remediação
     summary["fator_peso_remediacao"] = (
         summary["acao_sugerida"].map(ACAO_WEIGHTS).fillna(1.0)
@@ -221,7 +281,22 @@ def _calcular_fatores_de_ponderacao(summary: pd.DataFrame) -> pd.DataFrame:
 
 
 def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
-    """Agrupa e analisa os alertas para criar um sumário de problemas únicos."""
+    """
+    Função central que agrupa alertas em "Casos" e calcula o score ponderado.
+
+    Esta função recebe um DataFrame de alertas individuais, executa a lógica de
+    cálculo de risco base, agrupa os alertas em "Casos" únicos, agrega as
+    informações relevantes (como contagem e cronologia) e, por fim, calcula o
+    `score_ponderado_final` para cada caso.
+
+    Args:
+        df (pd.DataFrame): O DataFrame de alertas pré-processado pela função
+            `carregar_dados`.
+
+    Returns:
+        pd.DataFrame: Um DataFrame de resumo onde cada linha representa um "Caso" único,
+        enriquecido com todos os scores e fatores.
+    """
     logger.info("Analisando e agrupando alertas...")
 
     # Normaliza a coluna de severidade (lowercase, sem acentos) para a busca no mapa.
