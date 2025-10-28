@@ -219,7 +219,7 @@ def _render_conceitos_section() -> str:
                         <p style="margin-top: 10px;">Status como <strong>"Closed"</strong> são considerados sucesso, enquanto status como <strong>"Closed Incomplete"</strong> ou <strong>"Closed Skipped"</strong> são tratados como falhas ou sucessos parciais. Essa distinção é fundamental para o cálculo do "Multiplicador de Ineficiência", que penaliza casos onde a automação não foi totalmente eficaz.</p>
                         
                         <div style="background-color: #fffbe6; border-left: 5px solid #ffe58f; padding: 15px 20px; margin-top: 15px; color: #665424;">
-                            <strong>Próximos Passos:</strong> O próximo nível de profundidade, a ser explorado futuramente, é a integração com os sistemas de automação para <strong>analisar os logs internos das tarefas</strong>. Isso permitiria diferenciar, por exemplo, uma falha de "permissão negada" de uma falha de "recurso não encontrado", tornando o diagnóstico ainda mais preciso.
+                            <strong>Próximos Passos:</strong> A análise atual já é um grande avanço. O próximo nível de profundidade, conforme planejado, envolve um trabalho conjunto com o time de Automação para entender o significado detalhado de outros status de fechamento e, possivelmente, analisar os logs internos das tarefas para uma avaliação de eficácia ainda mais precisa.
                         </div>
                     </div>
                 </div>
@@ -385,9 +385,24 @@ def renderizar_resumo_executivo(
     body_content += renderizar_template_string(_render_conceitos_section(), CHEVRON_SVG=CHEVRON_SVG)
     body_content += _render_notification_banners(num_logs_invalidos, trend_report_path)
 
-    # --- CAPTURA DOS CARDS EM VARIÁVEIS ---
+    # Renderiza o restante do corpo, que já usa f-strings de forma segura
+    body_content += renderizar_template_string(
+        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}VISÃO GERAL</button>', CHEVRON_SVG=CHEVRON_SVG
+    )
+    body_content += '<div class="content" style="display: block; padding-top: 20px;">'
 
-    # Card 1: Casos sem Remediação
+    # CORREÇÃO: Altera o estilo do grid para forçar 2 colunas e adiciona um espaçamento.
+    body_content += '<div class="grid-container" style="grid-template-columns: repeat(2, 1fr); gap: 20px;">'
+
+    gauge_color_class = "var(--success-color)"
+    automation_card_class = "card-neon-green"
+    if taxa_sucesso < 50:
+        gauge_color_class = "var(--danger-color)"
+        automation_card_class = "card-neon-red"
+    elif taxa_sucesso < 70:
+        gauge_color_class = "var(--warning-color)"
+        automation_card_class = "card-neon-warning"
+
     if grupos_atuacao > 0:
         view_icon_html = f'<a href="atuar.html?back=resumo_geral.html" class="download-link" title="Abrir editor para atuar.csv">{VIEW_ICON_SVG}</a>'
     else:
@@ -407,7 +422,7 @@ def renderizar_resumo_executivo(
         if grupos_atuacao > 0
         else "color: var(--accent-color);"
     )
-    card1_html = f"""
+    body_content += f"""
     <div class="card kpi-card {card_class}">
         {status_icon_html}
         <p class="kpi-value" style="{kpi_color_style}">{grupos_atuacao}</p>
@@ -416,7 +431,6 @@ def renderizar_resumo_executivo(
     </div>
     """
 
-    # Card 2: Casos Remediados com Frequência
     if grupos_instabilidade > 0:
         instabilidade_view_icon_html = f'<a href="instabilidade_cronica.html?back=resumo_geral.html" class="download-link" title="Visualizar detalhes dos Casos de instabilidade">{VIEW_ICON_SVG}</a>'
     else:
@@ -440,7 +454,8 @@ def renderizar_resumo_executivo(
         else "Nenhum ponto de alta recorrência crônica detectado."
     )
     instabilidade_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{"flashing-icon" if grupos_instabilidade > 0 else ""}" style="font-size: 1.5em;">{"⚠️" if grupos_instabilidade > 0 else "✅"}</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_instabilidade_text)}</div></div>"""
-    card2_html = f"""
+
+    body_content += f"""
     <div class="card kpi-card {instabilidade_card_class}">
         {instabilidade_status_icon_html}
         <p class="kpi-value" style="{instabilidade_kpi_color}">{grupos_instabilidade}</p>
@@ -449,7 +464,6 @@ def renderizar_resumo_executivo(
     </div>
     """
 
-    # Card 3: Pontos de Atenção na Automação
     if grupos_sucesso_parcial > 0:
         parcial_view_icon_html = f'<a href="pontos_de_atencao.html?back=resumo_geral.html" class="download-link" title="Visualizar detalhes dos Casos de sucesso parcial">{VIEW_ICON_SVG}</a>'
     else:
@@ -457,15 +471,19 @@ def renderizar_resumo_executivo(
             'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
         )
         parcial_view_icon_html = f'<span class="download-link" title="Nenhum caso de sucesso parcial detectado." style="cursor: not-allowed;">{disabled_svg}</span>'
+    
     parcial_card_class = (
-        "card-neon card-neon-warning"
+        "card-neon card-neon-blue"
         if grupos_sucesso_parcial > 0
-        else "card-neon card-neon-blue"
+        else "card-neon card-neon-blue" # Mantem azul, pois não é um alerta critico
     )
-    parcial_kpi_color = "color: var(--warning-color);"
+    parcial_kpi_color = (
+        "color: var(--accent-color);" # Mantem azul
+    )
     tooltip_parcial_text = "Casos onde a automação foi executada, mas não concluída (ex: 'Skipped', 'Canceled'). Oportunidades para refinar a automação."
-    parcial_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span class="{"flashing-icon" if grupos_sucesso_parcial > 0 else ""}" style="font-size: 1.5em;">⚠️</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_parcial_text)}</div></div>"""
-    card3_html = f"""
+    parcial_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span style="font-size: 1.5em;">⚠️</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_parcial_text)}</div></div>"""
+
+    body_content += f"""
     <div class="card kpi-card {parcial_card_class}">
         {parcial_status_icon_html}
         <p class="kpi-value" style="{parcial_kpi_color}">{grupos_sucesso_parcial}</p>
@@ -474,40 +492,37 @@ def renderizar_resumo_executivo(
     </div>
     """
 
-    # Card 4: Sucesso da Automação
-    gauge_color_class = "var(--success-color)"
-    automation_card_class = "card-neon-green"
-    if taxa_sucesso < 50:
-        gauge_color_class = "var(--danger-color)"
-        automation_card_class = "card-neon-red"
-    elif taxa_sucesso < 70:
-        gauge_color_class = "var(--warning-color)"
-        automation_card_class = "card-neon-warning"
     casos_sucesso = total_grupos - grupos_atuacao
     tooltip_gauge = f"Percentual e contagem de Casos resolvidos automaticamente: {casos_sucesso} de {total_grupos} problemas tiveram a remediação executada com sucesso."
     sucesso_page_name = "sucesso_automacao.html"
-    if casos_sucesso > 0:
+    # CORREÇÃO: A condição para ativar o link deve ser baseada nos casos de sucesso pleno (`casos_ok_estaveis`),
+    # que são os que de fato populam o relatório `sucesso_automacao.html`.
+    # A variável `casos_sucesso` inclui os parciais e instáveis, causando o bug do link quebrado.
+    if casos_ok_estaveis > 0:
         sucesso_view_icon_html = f'<a href="{sucesso_page_name}?back=resumo_geral.html" class="download-link" title="Visualizar detalhes dos Casos resolvidos">{VIEW_ICON_SVG}</a>'
     else:
         disabled_svg = VIEW_ICON_SVG.replace(
             'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
         )
         sucesso_view_icon_html = f'<span class="download-link" title="Nenhum caso resolvido automaticamente." style="cursor: not-allowed;">{disabled_svg}</span>'
-    card4_html = f"""
+    body_content += f"""
     <div class="card kpi-card card-neon {automation_card_class}">
         <div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span style="font-size: 1.5em;">🤖</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_gauge)}</div></div>
         <p class="kpi-value" style="color: {gauge_color_class}; font-size: 4em; margin: 0;">{taxa_sucesso:.1f}%</p>
         <p class="kpi-label" style="margin-top: 0px; margin-bottom: 10px;">Sucesso da Automação</p>
-        <p style="font-size: 1.2em; color: var(--text-secondary-color); margin: 0;">{casos_sucesso} <span style="font-size: 0.8em;">de</span> {total_grupos} <span style="font-size: 0.8em;">Casos</span></p>
+        <p style="font-size: 1.2em; color: var(--text-secondary-color); margin: 0;">{casos_ok_estaveis} <span style="font-size: 0.8em;">de</span> {total_grupos} <span style="font-size: 0.8em;">Casos</span></p>
         {sucesso_view_icon_html}
     </div>
     """
+    body_content += "</div>"
 
-    # Card 5: Volume de Casos
+    # Abre um novo grid para os cards de volume
+    body_content += '<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">'
+
     tooltip_volume_casos = (
         "Distribuição do total de Casos únicos analisados no período."
     )
-    card5_html = f"""
+    body_content += f"""
     <div class="card">
         <h3><span class="card-title">Volume de Casos</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_volume_casos)}</div></div></h3>
         <div class="volume-card-item"><span class="volume-card-label">Total de Casos</span><span class="volume-card-value">{total_grupos}</span></div>
@@ -518,7 +533,6 @@ def renderizar_resumo_executivo(
     </div>
     """
 
-    # Card 6: Volume de Alertas
     tooltip_volume = "Distribuição do total de alertas únicos analisados no período."
     sem_remediacao_color_style = (
         "color: var(--danger-color);"
@@ -526,7 +540,7 @@ def renderizar_resumo_executivo(
         else "color: var(--text-secondary-color);"
     )
     remediados_color_style = "color: var(--success-color);"
-    card6_html = f"""
+    body_content += f"""
     <div class="card">
         <h3><span class="card-title">Volume de Alertas</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content">{escape(tooltip_volume)}</div></div></h3>
         <div class="volume-card-item"><span class="volume-card-label">Total de Alertas</span><span class="volume-card-value">{total_alertas_geral}</span></div>
@@ -538,9 +552,9 @@ def renderizar_resumo_executivo(
     </div>
     """
 
-    # Card 7: Top 5 Squads Prioritárias
     tooltip_top5 = "As 5 squads com maior carga de criticidade, classificadas pela soma da prioridade de todos os seus Casos em aberto."
-    card7_html = f"""
+
+    body_content += f"""
     <div class="card" style="padding-bottom: 15px;">
         <h3><span class="card-title">Top 5 Squads Prioritárias</span><div class="tooltip-container"><span class="info-icon">i</span><div class="tooltip-content" style="width: 280px; margin-left: -140px;">{escape(tooltip_top5)}</div></div></h3>
         <div style="flex-grow: 1; display: flex; flex-direction: column;">
@@ -565,7 +579,8 @@ def renderizar_resumo_executivo(
             plan_path = (
                 f"{plan_dir_base_name}/plano-de-acao-{sanitized_squad_name}.html"
             )
-            card7_html += f"""
+
+            body_content += f"""
             <a href="{plan_path}" class="priority-list-item-new" title="Ver plano de ação para {squad_name}">
                 <div class="squad-info-new">
                     {SQUAD_ICON_SVG}
@@ -575,24 +590,10 @@ def renderizar_resumo_executivo(
             </a>
             """
     else:
-        card7_html += "<p>Nenhum caso prioritário precisa de atuação. ✅</p>"
-    card7_html += "</div></div>"
+        body_content += "<p>Nenhum caso prioritário precisa de atuação. ✅</p>"
+    body_content += "</div></div>"
+    body_content += "</div></div>"
 
-    # --- MONTAGEM DO NOVO LAYOUT SIMÉTRICO ---
-    body_content += renderizar_template_string(
-        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}VISÃO GERAL</button>', CHEVRON_SVG=CHEVRON_SVG
-    )
-    body_content += '<div class="content" style="display: block; padding-top: 20px;">'
-    
-    # Grid 2x2 para os 4 KPIs principais
-    body_content += f'<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px;">{card1_html}{card2_html}{card3_html}{card4_html}</div>'
-
-    # Grid para os 3 cards de detalhe
-    body_content += f'<div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">{card5_html}{card6_html}{card7_html}</div>'
-
-    body_content += '</div>' # Fim do .content da Visão Geral
-
-    # --- RESTANTE DO CONTEÚDO (SEÇÕES SEGUINTES) ---
     body_content += renderizar_template_string(
         '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TOP 5 - SEM REMEDIAÇÃO</button>', CHEVRON_SVG=CHEVRON_SVG
     )

@@ -43,12 +43,13 @@ def sample_data():
             "2023-01-05",  # P5
         ], format="mixed"),
         "number": ["1", "2", "3", "4", "5", "6"],
-        "has_remediation_task": ["REM_OK", "REM_OK", "REM_NOT_OK", "NO_STATUS", "REM_OK", "REM_OK"],
+        # P1 e P2 agora formam um grupo intermitente. P1 falhou, P2 teve sucesso parcial.
+        "has_remediation_task": ["REM_NOT_OK", "REM_OK", "REM_OK", "NO_STATUS", "REM_OK", "REM_OK"],
         "severity": ["Alto", "Alto", "Médio", "Crítico", "Baixo", "Médio"],
         "sn_priority_group": ["Alto(a)", "Alto(a)", "Moderado(a)", "Urgente", "Baixo(a)", "Moderado(a)"],
         # Cenários de tasks_status:
-        # P1: Falha e depois sucesso (deve pegar o pior caso: Closed Incomplete).
-        # P2: Status não mapeado (deve usar default).
+        # P1: Grupo com histórico de falha (Closed Incomplete) e sucesso (Closed).
+        # P2: Grupo com histórico de falha (Closed Incomplete) e sucesso parcial (Canceled).
         # P3: Sucesso limpo.
         # P4: Status nulo/vazio (deve usar default).
         # P5: Sucesso parcial (Closed Skipped).
@@ -63,7 +64,7 @@ def sample_data():
     "problem_id, expected_factor",
     [
         ("P1", TASK_STATUS_WEIGHTS.get("Closed Incomplete")),  # Pior caso na cronologia
-        ("P2", TASK_STATUS_WEIGHTS.get("Canceled")),          # Status "Canceled" tem peso específico
+        ("P2", TASK_STATUS_WEIGHTS.get("Canceled")),          # O status do último alerta é Canceled
         ("P3", TASK_STATUS_WEIGHTS.get("default")),           # Sucesso limpo
         ("P4", TASK_STATUS_WEIGHTS.get("default")),           # Status nulo
         ("P5", TASK_STATUS_WEIGHTS.get("Closed Skipped")),    # Sucesso parcial
@@ -81,8 +82,9 @@ def test_fator_ineficiencia_task(sample_data, problem_id, expected_factor):
     "problem_id, expected_acao",
     [
         ("P1", ACAO_INTERMITENTE),       # Falhou e depois sucesso
-        # CORREÇÃO: "Canceled" não é uma falha persistente, mas um tipo de sucesso parcial.
-        ("P2", ACAO_SUCESSO_PARCIAL),    # Status não mapeado (Canceled)
+        # Cenário P2 é um único alerta com status "Canceled" e sem histórico de falha.
+        # A ação correta é Sucesso Parcial.
+        ("P2", ACAO_SUCESSO_PARCIAL),
         ("P3", ACAO_SEMPRE_OK),          # Sempre sucesso
         ("P4", ACAO_STATUS_AUSENTE),     # Status nulo
         ("P5", ACAO_SUCESSO_PARCIAL),    # Sucesso parcial (skipped)

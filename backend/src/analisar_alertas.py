@@ -183,57 +183,55 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: O DataFrame de entrada com a coluna 'acao_sugerida' adicionada.
     """
-    # Define quais status de task são considerados um "sucesso"
-    SUCCESS_STATUSES = {"Closed"}
-
     # GARANTIA DE RETROCOMPATIBILIDADE: Se a coluna de status de task não existir,
     # retorna uma ação padrão para evitar erros.
     if COL_LAST_TASK_STATUS not in df.columns:
         df["acao_sugerida"] = ACAO_STATUS_AUSENTE
         return df
         
-    # Extrai informações da cronologia de tasks e do status final (o primeiro da lista, que corresponde ao alerta mais recente)
     SUCCESS_STATUSES = {"Closed"}
-    # CORREÇÃO: Usa o 'last_tasks_status' (o mais recente) como base para a lógica.
+    PARTIAL_SUCCESS_STATUSES = {"Closed Skipped", "Canceled"}
+    ANY_SUCCESS_STATUSES = SUCCESS_STATUSES.union(PARTIAL_SUCCESS_STATUSES)
+
     last_status = df[COL_LAST_TASK_STATUS].fillna(NO_STATUS)
     has_success = df["status_chronology"].apply(
-        lambda c: bool(c) and any(s in SUCCESS_STATUSES for s in c)
+        lambda c: bool(c) and any(s in ANY_SUCCESS_STATUSES for s in c)
     )
     has_only_no_status = df["status_chronology"].apply(
         lambda c: not c or all(s == NO_STATUS for s in c)
     )
+    # Nova variável para detectar histórico de falhas (qualquer status que não seja de sucesso)
+    has_failure_in_history = df["status_chronology"].apply(
+        lambda c: bool(c) and any(s not in ANY_SUCCESS_STATUSES and s != NO_STATUS for s in c)
+    )
 
-    # CORREÇÃO: A lógica foi reestruturada para maior clareza e para tratar os casos de borda corretamente.
+    # Árvore de decisão hierárquica e definitiva, reconstruída para clareza e correção.
     conditions = [
         # PRIORIDADE 0: Se o status for nulo ou a cronologia vazia, é um problema de coleta de dados.
-        # Regra de Negócio: Dados de remediação ausentes. Ação é investigar a coleta.
         (last_status == NO_STATUS) | has_only_no_status,
         # PRIORIDADE 1: Se a tarefa não foi encontrada, é uma falha de remediação.
-        # Regra de Negócio: A automação nem sequer foi acionada. Ação é desenvolver/corrigir o gatilho.
         last_status == "No Task Found",
-        # PRIORIDADE 2: Casos crônicos, mesmo que sejam "sucesso", devem ser tratados como instabilidade.
-        # Regra de Negócio: O problema se repete >5 vezes, mesmo com automação. A causa raiz é outra.
-        (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES) & last_status.isin(SUCCESS_STATUSES),
-        # PRIORIDADE 3: Casos de sucesso parcial (incluindo "Canceled").
-        # Regra de Negócio: A automação rodou mas não resolveu completamente. Ação é revisar o script.
-        last_status.isin(["Closed Skipped", "Canceled"]), # Casos de sucesso parcial não crônicos.
-        # PRIORIDADE 4: A automação rodou, falhou, mas depois teve sucesso. Indica estabilização.
-        (last_status.isin(SUCCESS_STATUSES)) & has_success & df['status_chronology'].apply(lambda x: len({s for s in x if pd.notna(s) and s != NO_STATUS}) > 1),
-        # PRIORIDADE 5: A automação sempre teve sucesso.
+        # PRIORIDADE 2: Casos crônicos, mesmo que sejam "sucesso pleno", devem ser tratados como instabilidade.
+        (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES) & last_status.isin(ANY_SUCCESS_STATUSES),
+        # PRIORIDADE 3: Último status NÃO é sucesso pleno, mas já teve sucesso E falha no passado -> INTERMITENTE
+        (~last_status.isin(SUCCESS_STATUSES)) & has_success & has_failure_in_history,
+        # PRIORIDADE 4: Último status é SUCESSO PLENO, mas já teve falha no passado -> ESTABILIZADA
+        (last_status.isin(SUCCESS_STATUSES)) & has_failure_in_history,
+        # PRIORIDADE 5: Último status é SUCESSO PLENO e nunca teve falha -> SEMPRE OK
         (last_status.isin(SUCCESS_STATUSES)) & has_success,
-        # PRIORIDADE 6: A automação teve sucesso no passado, mas a última execução falhou. Indica intermitência.
-        (~last_status.isin(SUCCESS_STATUSES)) & has_success,
-        # PRIORIDADE 7: A automação nunca teve sucesso. Falha persistente.
+        # PRIORIDADE 6: Último status é SUCESSO PARCIAL e NUNCA teve falha -> SUCESSO PARCIAL
+        (last_status.isin(PARTIAL_SUCCESS_STATUSES)) & ~has_failure_in_history,
+        # PRIORIDADE 7: Se nenhuma das anteriores, significa que nunca teve sucesso -> FALHA PERSISTENTE
         ~has_success,
     ]
     choices = [
         ACAO_STATUS_AUSENTE,
         ACAO_FALHA_PERSISTENTE, # Trata "No Task Found" como falha persistente
         ACAO_INSTABILIDADE_CRONICA,
-        ACAO_SUCESSO_PARCIAL,
+        ACAO_INTERMITENTE,
         ACAO_ESTABILIZADA,
         ACAO_SEMPRE_OK,
-        ACAO_INTERMITENTE,
+        ACAO_SUCESSO_PARCIAL,
         ACAO_FALHA_PERSISTENTE,
     ]
     df["acao_sugerida"] = np.select(conditions, choices, default=UNKNOWN)

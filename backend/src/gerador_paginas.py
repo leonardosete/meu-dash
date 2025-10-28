@@ -623,14 +623,21 @@ def _gerar_relatorios_csv_viewer(reports_config: list, output_dir: str, frontend
         output_dir (str): O diretório de saída para os relatórios.
         frontend_url (str): A URL base do frontend para links de retorno.
     """
+    logger.info("Gerando páginas de visualização de CSV de forma condicional...")
     for csv_filename, output_html_filename, page_title in reports_config:
-        gerar_pagina_visualizacao_csv(
-            output_dir=output_dir,
-            csv_filename=csv_filename,
-            output_html_filename=output_html_filename,
-            page_title=page_title,
-            frontend_url=frontend_url,
-        )
+        csv_path = os.path.join(output_dir, csv_filename)
+        # CONDIÇÃO: Só gera o HTML se o CSV existir e tiver mais do que apenas o cabeçalho.
+        if os.path.exists(csv_path) and os.path.getsize(csv_path) > 100: # Um valor seguro para garantir que há dados
+            gerar_pagina_visualizacao_csv(
+                output_dir=output_dir,
+                csv_filename=csv_filename,
+                output_html_filename=output_html_filename,
+                page_title=page_title,
+                frontend_url=frontend_url,
+            )
+        else:
+            logger.info(f"Skipping HTML generation for '{output_html_filename}' because '{csv_filename}' is empty or does not exist.")
+
 
 
 def gerar_paginas_atuar_por_squad(

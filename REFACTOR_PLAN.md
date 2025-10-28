@@ -22,7 +22,7 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [x] **Revisão de Código:** Analisar detalhadamente os scripts `analisar_alertas.py` e `analise_tendencia.py` em busca de "code smells", inconsistências ou bugs na lógica de cálculo.
   - [x] **Melhorar Docstrings:** Garantir que todas as funções críticas em `analisar_alertas.py` tenham docstrings claras.
   - [x] **Validação de Integração E2E (Geral):** Realizar um teste de ponta a ponta com um arquivo CSV complexo para validar a integração do sistema.
-  - [x] **Validação de Regressão (Cenários Específicos):** Executar testes E2E com múltiplos arquivos CSV, cada um focado em uma regra de negócio específica.
+  - [x] **Validação de Regressão (Cenários Específicos):** Executar testes E2E com múltiplos arquivos CSV, cada um focado em uma regra de negócio específica. - **CONCLUÍDO**
     - [x] Cenário: Instabilidade Crônica
     - [x] Cenário: Sucesso Parcial (Closed Skipped, Canceled) - **Concluído**
     - [x] Cenário: Falha Persistente - **Concluído**

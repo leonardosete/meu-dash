@@ -50,13 +50,14 @@ def build_dashboard_context(
     grupos_instabilidade = summary_df["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE).sum()
     grupos_sucesso_parcial = summary_df["acao_sugerida"].eq(ACAO_SUCESSO_PARCIAL).sum()
 
-    taxa_sucesso = (
-        (1 - (grupos_atuacao / total_grupos)) * 100 if total_grupos > 0 else 100
-    )
     casos_ok_estaveis = (
         total_grupos - grupos_atuacao - grupos_instabilidade - grupos_sucesso_parcial
     )
 
+    # CORREÇÃO: A taxa de sucesso deve ser baseada apenas nos casos que são 100% OK e estáveis.
+    taxa_sucesso = (
+        (casos_ok_estaveis / total_grupos) * 100 if total_grupos > 0 else 0
+    )
     df_ok_filtered = summary_df[summary_df["acao_sugerida"].isin(ACAO_FLAGS_OK)]
     df_instabilidade_filtered = summary_df[
         summary_df["acao_sugerida"].isin(ACAO_FLAGS_INSTABILIDADE)
