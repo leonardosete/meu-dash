@@ -24,6 +24,7 @@ from .constants import (
     ACAO_FLAGS_ATUACAO,
     ACAO_FLAGS_INSTABILIDADE,
     ACAO_SUCESSO_PARCIAL,
+    ACAO_FLAGS_OK,
 )
 
 logger = logging.getLogger(__name__)
@@ -110,7 +111,7 @@ def calculate_kpi_summary(report_path: str) -> dict | None:
         alertas_sucesso = sum(
             item.get("alert_count", 0)
             for item in summary_data
-            if item.get("acao_sugerida") not in ACAO_FLAGS_ATUACAO
+            if item.get("acao_sugerida") in ACAO_FLAGS_OK
         )
         alertas_atuacao = sum(
             item.get("alert_count", 0)
@@ -122,10 +123,10 @@ def calculate_kpi_summary(report_path: str) -> dict | None:
             for item in summary_data
             if item.get("acao_sugerida") == ACAO_SUCESSO_PARCIAL
         )
-        taxa_sucesso = (
-            (1 - (casos_atuacao / total_casos)) * 100 if total_casos > 0 else 100
-        )
-        casos_sucesso = total_casos - casos_atuacao
+        
+        # CORREÇÃO: A lógica de sucesso agora considera todos os tipos de não-sucesso.
+        casos_sucesso = total_casos - casos_atuacao - casos_instabilidade - casos_sucesso_parcial
+        taxa_sucesso = (casos_sucesso / total_casos) * 100 if total_casos > 0 else 0
 
         return {
             "casos_atuacao": casos_atuacao,
