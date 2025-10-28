@@ -41,6 +41,14 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [ ] Atualizar a explicação do "Score Ponderado" para incluir o `fator_ineficiencia_task` e os novos status (`Canceled`, `Closed Skipped`).
   - [ ] Garantir que a linguagem seja clara, focada em valor de negócio e que todos os exemplos estejam alinhados com a lógica atual.
 
+#### [ ] 💬 Revisar Mensagens do "Diagnóstico Rápido"
+
+- **Justificativa:** As mensagens do "Diagnóstico Rápido" são a primeira e mais importante interpretação da ferramenta para o usuário. Elas precisam ser 100% coerentes com a lógica de negócio e claras para o gestor.
+- **Plano de Ação:**
+  - [ ] Revisar cada um dos cenários de diagnóstico (`_determine_verdict` em `analise_tendencia.py`).
+  - [ ] Garantir que a linguagem seja precisa, concisa e transmita o insight correto.
+  - [ ] Verificar se os emojis e a classe CSS (`highlight-success`, `highlight-danger`, etc.) estão alinhados com a mensagem.
+
 ### Prioridade 3: Médio
 
 #### [ ] 🚀 Finalizar Pipeline de CI/CD
