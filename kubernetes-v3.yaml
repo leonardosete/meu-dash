@@ -110,8 +110,8 @@ spec:
       - name: smart-remedy-api
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
-        # CORREÇÃO: Aponta para o novo ponto de entrada 'backend.wsgi:app'
-        command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "backend.wsgi:app", "--chdir", "/app"]
+        # CORREÇÃO: Aponta para o novo ponto de entrada 'wsgi:app' e define o diretório de trabalho correto.
+        command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app", "--chdir", "/app/backend"]
         envFrom:
         - secretRef:
             name: admin-credentials
@@ -153,6 +153,9 @@ kind: Ingress
 metadata:
   name: smart-remedy-ingress
   namespace: smart-remedy
+  # CORREÇÃO: Adiciona a anotação para compatibilidade com versões mais antigas do NGINX Ingress Controller.
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
 spec:
   ingressClassName: nginx
   tls:
