@@ -2,15 +2,15 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: smart-plan
+  name: smart-remedy
 
 ---
 # --- ServiceAccount: Define uma identidade dedicada e com privilégios mínimos para a aplicação ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: smart-plan-sa
-  namespace: smart-plan
+  name: smart-remedy-sa
+  namespace: smart-remedy
 automountServiceAccountToken: false
 
 ---
@@ -18,12 +18,12 @@ automountServiceAccountToken: false
 apiVersion: v1
 kind: Service
 metadata:
-  name: smart-plan-headless
-  namespace: smart-plan
+  name: smart-remedy-headless
+  namespace: smart-remedy
 spec:
   clusterIP: None
   selector:
-    app: smart-plan
+    app: smart-remedy
   ports:
   - port: 80
     targetPort: http
@@ -33,12 +33,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: smart-plan
-  namespace: smart-plan
+  name: smart-remedy
+  namespace: smart-remedy
 spec:
   type: ClusterIP
   selector:
-    app: smart-plan
+    app: smart-remedy
   ports:
   - name: http
     port: 80
@@ -49,46 +49,46 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: smart-plan-pdb
-  namespace: smart-plan
+  name: smart-remedy-pdb
+  namespace: smart-remedy
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: smart-plan
+      app: smart-remedy
 
 ---
 # --- StatefulSet: Orquestração dos Pods da aplicação ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: smart-plan
-  namespace: smart-plan
+  name: smart-remedy
+  namespace: smart-remedy
 spec:
-  serviceName: "smart-plan-headless"
+  serviceName: "smart-remedy-headless"
   replicas: 1
   selector:
     matchLabels:
-      app: smart-plan
+      app: smart-remedy
   template:
     metadata:
       labels:
-        app: smart-plan
+        app: smart-remedy
     spec:
-      serviceAccountName: smart-plan-sa
+      serviceAccountName: smart-remedy-sa
       automountServiceAccountToken: false
 
       containers:
       # Contêiner do Nginx: serve o frontend e faz proxy para o backend
-      - name: smart-plan-nginx
-        image: sevenleo/smart-plan:latest
+      - name: smart-remedy-nginx
+        image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
         ports:
         - name: http
           containerPort: 80
         command: ["nginx", "-g", "daemon off;"]
         volumeMounts:
-        - name: smart-plan-data
+        - name: smart-remedy-data
           mountPath: /app/data
         resources:
           requests:
@@ -107,8 +107,8 @@ spec:
             port: http
 
       # Contêiner da API (Gunicorn/Flask): roda a lógica de negócio
-      - name: smart-plan-api
-        image: sevenleo/smart-plan:latest
+      - name: smart-remedy-api
+        image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
         # CORREÇÃO: Aponta para o novo ponto de entrada 'backend.wsgi:app'
         command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "backend.wsgi:app", "--chdir", "/app"]
@@ -117,7 +117,7 @@ spec:
             name: admin-credentials
         env:
         - name: FRONTEND_BASE_URL
-          value: "https://smart-plan.devops-master.shop"
+          value: "https://smart-remedy.devops-master.shop"
         - name: JWT_EXPIRATION_HOURS
           value: "1"
         readinessProbe:
@@ -134,11 +134,11 @@ spec:
             cpu: "512m"
             memory: "1Gi"
         volumeMounts:
-        - name: smart-plan-data
+        - name: smart-remedy-data
           mountPath: /app/data
   volumeClaimTemplates:
   - metadata:
-      name: smart-plan-data
+      name: smart-remedy-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
       storageClassName: "standard"
@@ -151,22 +151,22 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: smart-plan-ingress
-  namespace: smart-plan
+  name: smart-remedy-ingress
+  namespace: smart-remedy
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - smart-plan.devops-master.shop
-    secretName: smart-plan-tls-secret
+    - smart-remedy.devops-master.shop
+    secretName: smart-remedy-tls-secret
   rules:
-  - host: smart-plan.devops-master.shop
+  - host: smart-remedy.devops-master.shop
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: smart-plan
+            name: smart-remedy
             port:
               number: 80

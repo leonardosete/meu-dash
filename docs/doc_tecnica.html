@@ -279,10 +279,10 @@ make setup-and-run</code></pre>
                 <h4><code>Dockerfile</code></h4>
                 <p>O <code>Dockerfile</code> multi-stage constrói uma imagem de produção otimizada. Ele configura o timezone para <strong>America/Sao_Paulo</strong> e executa o comando <code>flask db upgrade</code> antes de iniciar o <strong>Gunicorn</strong>, garantindo que o ambiente e o banco de dados estejam sempre corretos na inicialização do container.</p>
 <pre><code># Build da imagem
-docker build -t meu-dash-web .
+docker build -t smart-remedy .
 
 # Execução do container
-docker run -p 8000:8000 -v ./data:/app/data -e ADMIN_TOKEN="seu-token" meu-dash-web</code></pre>
+docker run -p 8000:8000 -v ./data:/app/data -e ADMIN_TOKEN="seu-token" smart-remedy</code></pre>
                 <h4><code>kubernetes.yaml</code></h4>
                 <p>Define os recursos para implantação em Kubernetes, incluindo <strong>StatefulSet</strong> e <strong>PersistentVolumeClaim</strong>. O manifesto está configurado para injetar o <code>ADMIN_TOKEN</code> como uma variável de ambiente a partir de um <strong>Kubernetes Secret</strong>. Para detalhes sobre como criar e gerenciar este segredo, consulte a seção "Guia de Contribuição" abaixo.</p>
             </div>

@@ -92,10 +92,9 @@ jobs:
         with:
           platforms: linux/amd64
           context: . # O contexto agora é a raiz para encontrar o Dockerfile
-          dockerfile: ./Dockerfile # Aponta explicitamente para o Dockerfile na raiz
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:${{ github.sha }}
