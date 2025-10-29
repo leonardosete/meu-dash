@@ -1,27 +1,26 @@
 import pytest
-from src.app import app as create_flask_app, db
+from src.app import create_app, db
 
 
 @pytest.fixture
 def app():
     """Cria e configura uma nova instância da aplicação para cada teste."""
-    # Garante que a aplicação seja criada com a configuração de teste desde o início,
-    # usando um banco de dados em memória para total isolamento.
-    create_flask_app.config.update(
+    # Cria a aplicação usando a factory e passando a configuração de teste.
+    # Isso garante que a aplicação é criada desde o início com o ambiente correto.
+    flask_app = create_app(
         {
             "TESTING": True,
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-            "WTF_CSRF_ENABLED": False,  # Desativa CSRF para testes de formulário
+            "WTF_CSRF_ENABLED": False,
             "SECRET_KEY": "test-secret-key",
-            # Adiciona placeholders para as pastas, já que o app não as define mais em modo de teste.
             "UPLOAD_FOLDER": "/tmp/pytest-uploads",
             "REPORTS_FOLDER": "/tmp/pytest-reports",
         }
     )
 
-    with create_flask_app.app_context():
+    with flask_app.app_context():
         db.create_all()
-        yield create_flask_app
+        yield flask_app
         db.session.remove()
         db.drop_all()
 
