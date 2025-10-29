@@ -19,8 +19,9 @@ const InlineLoginForm: React.FC = () => {
       const response = await api.login({ username, password });
       login(response.access_token);
       // O componente pai (UploadForms) se tornará visível reativamente
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Falha na autenticação.");
+    } catch (err) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || "Falha na autenticação.");
       setIsLoading(false);
     }
   };

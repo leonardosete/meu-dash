@@ -1,7 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Shield,
   PieChart,
   Code,
   History,

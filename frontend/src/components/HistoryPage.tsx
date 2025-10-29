@@ -16,8 +16,9 @@ const HistoryPage: React.FC = () => {
         setIsLoading(true);
         const data = await api.getReports();
         setReports(data);
-      } catch (err: any) {
-        setError(err.message || "Falha ao buscar o histórico de relatórios.");
+      } catch (err) {
+        const apiError = err as { message?: string };
+        setError(apiError.message || "Falha ao buscar o histórico de relatórios.");
       } finally {
         setIsLoading(false);
       }
@@ -41,8 +42,9 @@ const HistoryPage: React.FC = () => {
 
         await api.deleteReport(numericId);
         setReports(reports.filter((report) => report.id !== reportId));
-      } catch (err: any) {
-        setError(err.response?.data?.error || "Falha ao excluir o relatório.");
+      } catch (err) {
+        const apiError = err as { response?: { data?: { error?: string } } };
+        setError(apiError.response?.data?.error || "Falha ao excluir o relatório.");
         setTimeout(() => setError(null), 5000);
       }
     }

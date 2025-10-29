@@ -34,9 +34,10 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
     try {
       const result = await uploadStandardAnalysis(padraoFile[0]);
       onUploadSuccess(result);
-    } catch (err: any) {
+    } catch (err) {
+      const apiError = err as { response?: { data?: { error?: string } } };
       setStandardError(
-        err.response?.data?.error || "Ocorreu um erro no upload.",
+        apiError.response?.data?.error || "Ocorreu um erro no upload.",
       );
     } finally {
       setIsLoading(false);
@@ -63,9 +64,10 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
       if (result.report_url) {
         window.location.href = result.report_url;
       }
-    } catch (err: any) {
+    } catch (err) {
+      const apiError = err as { response?: { data?: { error?: string } } };
       setComparativeError(
-        err.response?.data?.error || "Ocorreu um erro na comparação.",
+        apiError.response?.data?.error || "Ocorreu um erro na comparação.",
       );
     } finally {
       setIsLoading(false);
