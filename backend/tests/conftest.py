@@ -1,12 +1,12 @@
 import pytest
-from src.app import app as flask_app, db
+from src.app import create_app, db
 
 
 @pytest.fixture
 def app():
     """Cria e configura uma nova instância da aplicação para cada teste."""
-    # Configura a aplicação importada diretamente com as configurações de teste.
-    flask_app.config.update(
+    # Cria a aplicação usando a factory com a configuração de teste.
+    app = create_app(
         {
             "TESTING": True,
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
@@ -17,9 +17,9 @@ def app():
         }
     )
 
-    with flask_app.app_context():
+    with app.app_context():
         db.create_all()
-        yield flask_app
+        yield app
         db.session.remove()
         db.drop_all()
 
