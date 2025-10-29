@@ -27,14 +27,15 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
-        # **A CORREÇÃO DEFINITIVA ESTÁ AQUI**
-        # Configuração robusta para o Flasgger que funciona em todos os ambientes.
+        # **CORREÇÃO DEFINITIVA**
+        # A configuração completa do Swagger, incluindo 'oauth2', agora está na
+        # configuração base da aplicação, garantindo que funcione tanto na UI
+        # quanto nos testes.
         SWAGGER={
             'title': 'SmartRemedy API',
             'uiversion': 3,
-            'specs_route': "/apidocs/"
-            # Ao omitir a chave 'oauth2', evitamos que o template renderize o 'None' inválido.
-            # Ao ter este dicionário, garantimos que os testes não falhem com 'KeyError'.
+            'specs_route': "/apidocs/",
+            'oauth2': {}  # Esta linha previne o erro 'None is not defined' no JavaScript.
         }
     )
 
