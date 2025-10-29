@@ -22,13 +22,19 @@ def create_app(test_config=None):
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
     )
 
-    # Configuração base, aplicada a todos os ambientes (dev, prod, test)
+    # --- CONFIGURAÇÃO CENTRALIZADA ---
+    # Configuração base, aplicada a todos os ambientes (dev, prod, test).
     app.config.from_mapping(
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
+        # **A CORREÇÃO DEFINITIVA ESTÁ AQUI**
+        # Configuração robusta para o Flasgger que funciona em todos os ambientes.
         SWAGGER={
+            'title': 'SmartRemedy API',
             'uiversion': 3,
-            'oauth2': {}
+            'specs_route': "/apidocs/"
+            # Ao omitir a chave 'oauth2', evitamos que o template renderize o 'None' inválido.
+            # Ao ter este dicionário, garantimos que os testes não falhem com 'KeyError'.
         }
     )
 
@@ -47,6 +53,7 @@ def create_app(test_config=None):
     db.init_app(app)
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
+    # O template define o CONTEÚDO da especificação da API.
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -74,8 +81,8 @@ def create_app(test_config=None):
             }
         },
     }
-    # Inicializa o Swagger, que agora lerá a configuração 'SWAGGER' do app.config
-    # em qualquer ambiente, pois ela está na configuração base.
+    
+    # Inicializa o Swagger. Ele automaticamente usará a configuração de app.config['SWAGGER'].
     Swagger(app, template=swagger_template)
 
     CORS(
