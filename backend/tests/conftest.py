@@ -13,6 +13,9 @@ def app():
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
             "WTF_CSRF_ENABLED": False,  # Desativa CSRF para testes de formulário
             "SECRET_KEY": "test-secret-key",
+            # Adiciona placeholders para as pastas, já que o app não as define mais em modo de teste.
+            "UPLOAD_FOLDER": "/tmp/pytest-uploads",
+            "REPORTS_FOLDER": "/tmp/pytest-reports",
         }
     )
 

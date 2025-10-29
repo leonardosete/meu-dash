@@ -22,20 +22,24 @@ app = Flask(
 # --- SWAGGER UI CONFIGURATION ---
 # Flasgger is now only used to generate the /apispec_1.json definition.
 # The UI is served as a static file by Nginx to prevent rendering bugs.
-# --- CONFIGURAÇÃO DE CAMINHOS E BANCO DE DADOS ---
-# Aponta para o diretório de dados montado via Docker Compose
-DATA_DIR = "/app/data"
-UPLOAD_FOLDER = os.path.join(DATA_DIR, "uploads")
-REPORTS_FOLDER = os.path.join(DATA_DIR, "reports")
-DB_PATH = os.path.join(DATA_DIR, "meu_dash.db")
 
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["REPORTS_FOLDER"] = REPORTS_FOLDER
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
+# --- CONFIGURAÇÃO DE CAMINHOS E BANCO DE DADOS ---
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-# Carrega a chave secreta a partir de uma variável de ambiente para segurança.
-# NUNCA deixe uma chave secreta fixa no código em produção.
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
+# Condicionalmente, define a configuração para ambiente de produção/desenvolvimento.
+# Se a variável de ambiente do Pytest estiver presente, esta seção é pulada,
+# deixando a configuração a cargo do conftest.py.
+if "PYTEST_CURRENT_TEST" not in os.environ:
+    DATA_DIR = "/app/data"
+    UPLOAD_FOLDER = os.path.join(DATA_DIR, "uploads")
+    REPORTS_FOLDER = os.path.join(DATA_DIR, "reports")
+    DB_PATH = os.path.join(DATA_DIR, "meu_dash.db")
+
+    app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+    app.config["REPORTS_FOLDER"] = REPORTS_FOLDER
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
+
 
 # Aponta para o diretório de migrações dentro da estrutura do backend
 MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "..", "migrations")
