@@ -40,8 +40,10 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     # Garante que as pastas existam APÓS a configuração ser carregada
-    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
+    # Apenas cria as pastas se não estiver em modo de teste
+    if not app.config.get("TESTING"):
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+        os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
 
     MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "..", "migrations")
     db.init_app(app)
@@ -467,7 +469,3 @@ def create_app(test_config=None):
             return jsonify({"error": "Credenciais inválidas."}), 401
 
     return app
-
-
-# Cria a instância da aplicação para ser usada pelo Gunicorn/Flask CLI
-app = create_app()

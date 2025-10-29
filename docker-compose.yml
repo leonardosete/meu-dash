@@ -5,28 +5,19 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    # Usa Gunicorn, um servidor WSGI de produção, que é multithread e mais robusto
-    # Usa Gunicorn, um servidor WSGI de produção, que é multithread e mais robusto.
-    # O comando foi ajustado para ser encapsulado em 'sh -c', garantindo que o PYTHONPATH
-    # (definido no 'environment' abaixo) seja processado de forma confiável antes da execução do Gunicorn.
-    # que o servidor de desenvolvimento do Flask. Isso resolve problemas de concorrência
-    # que podem causar a tela em branco no frontend. O '--reload' habilita o live-reloading.
-    command: sh -c "gunicorn --workers 4 --bind 0.0.0.0:5000 --reload 'src.app:app' --chdir /app/backend"
+    # CORREÇÃO: Aponta o Gunicorn para o novo ponto de entrada 'wsgi:app',
+    # que usa a Application Factory de forma segura.
+    command: sh -c "gunicorn --workers 4 --bind 0.0.0.0:5000 --reload 'wsgi:app' --chdir /app/backend"
     ports:
       - "${BACKEND_PORT:-5001}:5000"
     volumes:
-      # Monta o código-fonte e os templates para live-reloading.
-      - ./backend:/app/backend # Monta o diretório do backend
-      # Usa um volume nomeado para os dados, evitando problemas de permissão do host.
+      - ./backend:/app/backend
       - data-volume:/app/data
-      # Monta o diretório de documentação para que possa ser servido.
       - ./docs:/app/docs
     environment:
       - FLASK_APP=src.app
       - FLASK_DEBUG=True
-      # Garante que o Python encontre os módulos da aplicação.
       - PYTHONPATH=/app/backend
-      # Informa ao backend a URL do frontend para gerar links corretos nos relatórios
       - FRONTEND_BASE_URL=http://127.0.0.1:${FRONTEND_PORT:-5174}
     env_file:
       - .env
@@ -37,10 +28,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile.bandit
-    # Este serviço é apenas para execução de tarefas, não precisa de portas.
-    # O comando será fornecido via 'docker-compose run'.
     volumes:
-      # Monta o código-fonte para que o Bandit possa analisá-lo.
       - ./backend/src:/app/src
 
   frontend:
@@ -49,25 +37,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    # Garante que o contêiner rode com o mesmo usuário do host,
-    # evitando problemas de permissão de escrita em volumes montados.
-    # A variável de ambiente UID é lida do arquivo .env ou do sistema.
     user: "${UID:-1000}:${GID:-1000}"
     working_dir: /app
     ports:
-      # Expõe a porta do Vite para acesso no navegador.
       - "${FRONTEND_PORT:-5174}:5173"
     volumes:
-      # Monta o diretório local do frontend para dentro do contêiner,
-      # permitindo o live-reloading de todos os arquivos (src, public, index.html).
       - ./frontend:/app
-      # "Máscara" a pasta node_modules local, forçando o uso da pasta
-      # que foi instalada durante o build da imagem. Isso evita conflitos e melhora a performance.
       - /app/node_modules
-    # Inicia o servidor de desenvolvimento do Vite. O script 'dev' no package.json
-    # já contém a flag '--host', portanto não a repetimos aqui.
     command: npm run dev
 
-# Declara o volume nomeado para persistência dos dados do banco e relatórios.
 volumes:
   data-volume:

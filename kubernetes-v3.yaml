@@ -11,8 +11,6 @@ kind: ServiceAccount
 metadata:
   name: smart-plan-sa
   namespace: smart-plan
-# Desabilita a montagem automática do token, pois a aplicação não precisa interagir com a API do K8s.
-# Esta é uma prática de segurança recomendada (princípio de privilégio mínimo).
 automountServiceAccountToken: false
 
 ---
@@ -77,7 +75,6 @@ spec:
       labels:
         app: smart-plan
     spec:
-      # Associa o Pod ao ServiceAccount dedicado e desabilita a montagem do token.
       serviceAccountName: smart-plan-sa
       automountServiceAccountToken: false
 
@@ -89,12 +86,10 @@ spec:
         ports:
         - name: http
           containerPort: 80
-        # Comando para iniciar o Nginx em primeiro plano.
         command: ["nginx", "-g", "daemon off;"]
         volumeMounts:
         - name: smart-plan-data
           mountPath: /app/data
-        # Define os recursos para o contêiner do Nginx.
         resources:
           requests:
             cpu: "128m"
@@ -102,10 +97,9 @@ spec:
           limits:
             cpu: "256m"
             memory: "256Mi"
-        # As sondas de saúde agora apontam para o Nginx, que é a porta de entrada do Pod.
         readinessProbe:
           httpGet:
-            path: / # Uma requisição para a raiz do frontend é suficiente
+            path: /
             port: http
         livenessProbe:
           httpGet:
@@ -116,10 +110,8 @@ spec:
       - name: smart-plan-api
         image: sevenleo/smart-plan:latest
         imagePullPolicy: Always
-        # Este contêiner não expõe portas para fora do Pod.
-        # Ele é acessado pelo Nginx via localhost.
-        # Comando para iniciar a aplicação Python com Gunicorn.
-        command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "src.app:app", "--chdir", "/app"]
+        # CORREÇÃO: Aponta para o novo ponto de entrada 'backend.wsgi:app'
+        command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "backend.wsgi:app", "--chdir", "/app"]
         envFrom:
         - secretRef:
             name: admin-credentials
@@ -128,7 +120,6 @@ spec:
           value: "https://smart-plan.devops-master.shop"
         - name: JWT_EXPIRATION_HOURS
           value: "1"
-        # A sonda de saúde para a API verifica o endpoint /health diretamente no Gunicorn
         readinessProbe:
           httpGet:
             path: /health
@@ -162,16 +153,12 @@ kind: Ingress
 metadata:
   name: smart-plan-ingress
   namespace: smart-plan
-  annotations:
-    # Adicione aqui anotações específicas do seu Ingress Controller, se necessário
-    # Ex: kubernetes.io/ingress.class: "nginx"
-    # Ex: cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
     - smart-plan.devops-master.shop
-    secretName: smart-plan-tls-secret # O Cert-Manager pode criar isso automaticamente
+    secretName: smart-plan-tls-secret
   rules:
   - host: smart-plan.devops-master.shop
     http:
