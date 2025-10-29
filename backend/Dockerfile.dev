@@ -1,17 +1,16 @@
-FROM python:3.14-alpine
+# Use uma imagem base do Python 3.12, que é estável e compatível com as ferramentas.
+FROM python:3.12-slim-bookworm
 
+# Define o diretório de trabalho dentro do contêiner.
 WORKDIR /app
 
-COPY requirements.txt .
-# Adiciona as ferramentas de build necessárias para compilar dependências como 'greenlet'.
-RUN apk add --no-cache build-base
+# Instala as dependências do sistema, se houver.
+# RUN apt-get update && apt-get install -y ...
 
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Copia o arquivo de dependências e as instala.
+# Isso aproveita o cache do Docker: as dependências só são reinstaladas se o requirements.txt mudar.
+COPY ./requirements.txt /app/backend/requirements.txt
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 
-COPY . .
-
-EXPOSE 5000
-
-# O comando será fornecido pelo docker-compose
-CMD ["make", "run"]
+# O código-fonte será montado por um volume no docker-compose.yml,
+# então não precisamos copiá-lo aqui para o ambiente de desenvolvimento.
