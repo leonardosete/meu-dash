@@ -29,7 +29,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # Pinned to a specific commit
         with:
-          python-version: '3.14'
+          python-version: '3.12'
 
       - name: Set up Node.js
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
@@ -66,7 +66,7 @@ jobs:
         run: bandit -r backend/src -ll -ii
 
       - name: Run Backend Tests
-        run: pytest
+        run: pytest backend/
 
       # 5. Validação do Frontend
       - name: Lint Frontend
