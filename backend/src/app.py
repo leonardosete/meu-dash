@@ -31,10 +31,6 @@ def create_app(test_config=None):
             UPLOAD_FOLDER=os.path.join("/app/data", "uploads"),
             REPORTS_FOLDER=os.path.join("/app/data", "reports"),
             SQLALCHEMY_DATABASE_URI=f"sqlite:///{os.path.join('/app/data', 'meu_dash.db')}",
-            # CORREÇÃO DEFINITIVA: Adiciona uma configuração explícita para o Swagger UI,
-            # fornecendo um objeto vazio para a configuração OAuth2. Isso impede
-            # que o Flasgger injete um 'None' inválido no template JavaScript.
-            SWAGGER={"uiversion": 3, "oauth2": {}},
         )
     else:
         # Carrega a configuração de teste se fornecida
@@ -47,6 +43,7 @@ def create_app(test_config=None):
     db.init_app(app)
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
+    # 1. Define a ESPECIFICAÇÃO da API (o conteúdo do Swagger)
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -74,7 +71,13 @@ def create_app(test_config=None):
             }
         },
     }
-    Swagger(app, template=swagger_template)
+
+    # 2. Define a CONFIGURAÇÃO da UI do Swagger (como a página se parece e se comporta)
+    #    Esta é a correção definitiva para o erro 'None is not defined'.
+    swagger_config = {"uiversion": 3, "oauth2": {}}
+
+    # 3. Inicializa o Swagger passando a especificação e a configuração da UI explicitamente
+    Swagger(app, template=swagger_template, config=swagger_config)
 
     CORS(
         app,
