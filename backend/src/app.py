@@ -23,38 +23,25 @@ def create_app(test_config=None):
     )
 
     # --- CONFIGURAÇÃO CENTRALIZADA ---
-    # Configuração base, aplicada a todos os ambientes (dev, prod, test).
     app.config.from_mapping(
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
-        # **CORREÇÃO DEFINITIVA**
-        # A configuração completa do Swagger, incluindo 'oauth2', agora está na
-        # configuração base da aplicação, garantindo que funcione tanto na UI
-        # quanto nos testes.
-        SWAGGER={
-            'title': 'SmartRemedy API',
-            'uiversion': 3,
-            'specs_route': "/apidocs/",
-            'oauth2': {}  # Esta linha previne o erro 'None is not defined' no JavaScript.
-        }
     )
 
     if test_config is None:
-        # Configuração para produção/desenvolvimento (usa o banco de dados em arquivo)
         app.config.from_mapping(
             UPLOAD_FOLDER=os.path.join("/app/data", "uploads"),
             REPORTS_FOLDER=os.path.join("/app/data", "reports"),
             SQLALCHEMY_DATABASE_URI=f"sqlite:///{os.path.join('/app/data', 'meu_dash.db')}",
         )
     else:
-        # Carrega a configuração de teste, que sobrescreve a base (ex: usa DB em memória)
         app.config.from_mapping(test_config)
 
     MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "..", "migrations")
     db.init_app(app)
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
-    # O template define o CONTEÚDO da especificação da API.
+    # --- CONFIGURAÇÃO EXPLÍCITA E ROBUSTA DO SWAGGER ---
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -82,9 +69,25 @@ def create_app(test_config=None):
             }
         },
     }
-    
-    # Inicializa o Swagger. Ele automaticamente usará a configuração de app.config['SWAGGER'].
-    Swagger(app, template=swagger_template)
+
+    swagger_config = {
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": 'apispec_1',
+                "route": '/apispec_1.json',
+                "rule_filter": lambda rule: True,
+                "model_filter": lambda tag: True,
+            }
+        ],
+        "static_url_path": "/flasgger_static",
+        "swagger_ui": True,
+        "specs_route": "/apidocs/",
+        "uiversion": 3,
+        "oauth2": {}  # A chave que previne o erro de JS 'None is not defined'
+    }
+
+    Swagger(app, template=swagger_template, config=swagger_config)
 
     CORS(
         app,
