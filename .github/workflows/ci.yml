@@ -91,7 +91,8 @@ jobs:
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # SHA do v5
         with:
           platforms: linux/amd64
-          context: ./backend # O contexto do build agora é a pasta backend
+          context: . # O contexto agora é a raiz para encontrar o Dockerfile
+          dockerfile: ./Dockerfile # Aponta explicitamente para o Dockerfile na raiz
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
