@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: frontend/package.json
 
       # 3. Cache e Instalação de Dependências
       - name: Cache pip dependencies
