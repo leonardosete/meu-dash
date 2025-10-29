@@ -120,10 +120,45 @@ def create_app(test_config=None):
     # --- ROTAS DA APLICAÇÃO ---
     @app.route("/health")
     def health_check():
+        """
+        Verifica a saúde da aplicação.
+        ---
+        tags:
+          - Health
+        responses:
+          200:
+            description: A aplicação está funcionando.
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: ok
+        """
         return jsonify({"status": "ok"}), 200
 
     @app.route("/api/v1/dashboard-summary")
     def get_dashboard_summary():
+        """
+        Busca o resumo de dados para o dashboard principal.
+        ---
+        tags:
+          - Dashboard
+        responses:
+          200:
+            description: Resumo dos dados do dashboard retornado com sucesso.
+            schema:
+              type: object
+              properties:
+                kpi_summary:
+                  type: object
+                trend_history:
+                  type: array
+                  items:
+                    type: object
+                latest_report_urls:
+                  type: object
+        """
         summary_data = services.get_dashboard_summary_data(
             db=db, Report=models.Report, TrendAnalysis=models.TrendAnalysis
         )
@@ -163,6 +198,44 @@ def create_app(test_config=None):
     @app.route("/api/v1/upload", methods=["POST"])
     @token_required
     def upload_file_api():
+        """
+        Realiza o upload de um arquivo CSV para análise padrão.
+        ---
+        tags:
+          - Analysis
+        security:
+          - Bearer: []
+        consumes:
+          - multipart/form-data
+        parameters:
+          - name: file_recente
+            in: formData
+            type: file
+            required: true
+            description: O arquivo CSV a ser analisado.
+        responses:
+          200:
+            description: Análise concluída com sucesso.
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                report_urls:
+                  type: object
+          400:
+            description: Erro de validação (ex: nenhum arquivo enviado).
+            schema:
+              $ref: '#/definitions/Error'
+          401:
+            description: Erro de autenticação (token ausente ou inválido).
+            schema:
+              $ref: '#/definitions/Error'
+          500:
+            description: Erro interno no servidor durante a análise.
+            schema:
+              $ref: '#/definitions/Error'
+        """
         file_recente = request.files.get("file_recente")
         if not file_recente or file_recente.filename == "":
             return jsonify({"error": "Nenhum arquivo selecionado."}), 400
@@ -220,6 +293,49 @@ def create_app(test_config=None):
     @app.route("/api/v1/compare", methods=["POST"])
     @token_required
     def compare_files_api():
+        """
+        Realiza a comparação direta entre dois arquivos CSV.
+        ---
+        tags:
+          - Analysis
+        security:
+          - Bearer: []
+        consumes:
+          - multipart/form-data
+        parameters:
+          - name: file_antigo
+            in: formData
+            type: file
+            required: true
+            description: O arquivo CSV mais antigo para a comparação.
+          - name: file_recente
+            in: formData
+            type: file
+            required: true
+            description: O arquivo CSV mais recente para a comparação.
+        responses:
+          200:
+            description: Comparação concluída com sucesso.
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                report_url:
+                  type: string
+          400:
+            description: Erro de validação (ex: arquivos ausentes).
+            schema:
+              $ref: '#/definitions/Error'
+          401:
+            description: Erro de autenticação (token ausente ou inválido).
+            schema:
+              $ref: '#/definitions/Error'
+          500:
+            description: Erro interno no servidor durante a comparação.
+            schema:
+              $ref: '#/definitions/Error'
+        """
         file_antigo = request.files.get("file_antigo")
         file_recente = request.files.get("file_recente")
         if not file_antigo or file_antigo.filename == "":
@@ -277,6 +393,30 @@ def create_app(test_config=None):
 
     @app.route("/api/v1/reports")
     def get_reports():
+        """
+        Lista todos os relatórios de análise disponíveis.
+        ---
+        tags:
+          - Reports
+        responses:
+          200:
+            description: Lista de relatórios retornada com sucesso.
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                  timestamp:
+                    type: string
+                  original_filename:
+                    type: string
+                  url:
+                    type: string
+        """
         reports_data = services.get_unified_history_list(
             models.Report, models.TrendAnalysis
         )
@@ -291,6 +431,40 @@ def create_app(test_config=None):
     @app.route("/api/v1/reports/<int:report_id>", methods=["DELETE"])
     @token_required
     def delete_report_api(report_id):
+        """
+        Exclui um relatório específico e seus artefatos.
+        ---
+        tags:
+          - Reports
+        security:
+          - Bearer: []
+        parameters:
+          - name: report_id
+            in: path
+            type: integer
+            required: true
+            description: O ID do relatório a ser excluído.
+        responses:
+          200:
+            description: Relatório excluído com sucesso.
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+          401:
+            description: Erro de autenticação.
+            schema:
+              $ref: '#/definitions/Error'
+          404:
+            description: Relatório não encontrado.
+            schema:
+              $ref: '#/definitions/Error'
+          500:
+            description: Erro interno no servidor.
+            schema:
+              $ref: '#/definitions/Error'
+        """
         try:
             success = services.delete_report_and_artifacts(
                 report_id=report_id, db=db, Report=models.Report
@@ -310,6 +484,47 @@ def create_app(test_config=None):
 
     @app.route("/admin/login", methods=["POST"])
     def login_api():
+        """
+        Autentica um usuário administrativo e retorna um token JWT.
+        ---
+        tags:
+          - Authentication
+        consumes:
+          - application/json
+        parameters:
+          - name: body
+            in: body
+            required: true
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  description: Nome de usuário do administrador.
+                password:
+                  type: string
+                  description: Senha do administrador.
+        responses:
+          200:
+            description: Autenticação bem-sucedida.
+            schema:
+              type: object
+              properties:
+                access_token:
+                  type: string
+                  description: Token de acesso JWT.
+          400:
+            description: Requisição inválida (dados ausentes).
+            schema:
+              $ref: '#/definitions/Error'
+          401:
+            description: Credenciais inválidas.
+            schema:
+              $ref: '#/definitions/Error'
+        """
         auth_data = request.get_json()
         if (
             not auth_data
