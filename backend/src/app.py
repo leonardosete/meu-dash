@@ -114,8 +114,11 @@ from . import services, models  # noqa: E402
 #     db.metadata.create_all(db.engine, checkfirst=True)
 
 
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
+# Apenas cria os diretórios se não estivermos em modo de teste.
+# Isso evita o PermissionError no ambiente de CI.
+if not app.config.get("TESTING"):
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
 
 
 # --- ROTAS DE HEALTH CHECK PARA KUBERNETES ---
