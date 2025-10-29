@@ -133,7 +133,7 @@ const Sidebar: React.FC = () => {
           color="var(--accent-color)"
         />
         <SideCard
-          to="/apidocs"
+          to="/apidocs/"
           isExternal={true}
           icon={<Code />}
           title="Documentação da API"
