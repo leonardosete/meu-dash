@@ -451,11 +451,7 @@ def login_api():
         description: Credenciais inválidas.
     """
     auth_data = request.get_json()
-    if (
-        not auth_data
-        or not auth_data.get("username")
-        or not auth_data.get("password")
-    ):
+    if not auth_data or not auth_data.get("username") or not auth_data.get("password"):
         return jsonify({"error": "Usuário e senha são obrigatórios."}), 400
     username = auth_data.get("username")
     password = auth_data.get("password")
@@ -468,9 +464,7 @@ def login_api():
             "iat": datetime.now(timezone.utc),
             "sub": "admin",
         }
-        access_token = jwt.encode(
-            payload, app.config["SECRET_KEY"], algorithm="HS256"
-        )
+        access_token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
         return jsonify({"access_token": access_token})
     else:
         return jsonify({"error": "Credenciais inválidas."}), 401
