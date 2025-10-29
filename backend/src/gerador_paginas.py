@@ -405,9 +405,7 @@ def gerar_pagina_squads(  # type: ignore
     logger.info("Gerando página com a lista completa de squads...")
     output_path = os.path.join(output_dir, FILENAME_ALL_SQUADS)
     title = "Lista Completa de Squads por Casos"
-    body_content = (
-        f'<p><a href="{summary_filename}">&larr; Voltar para o Dashboard</a></p><div class="card">'
-    )
+    body_content = f'<p><a href="{summary_filename}">&larr; Voltar para o Dashboard</a></p><div class="card">'
     squads_com_casos = all_squads[all_squads > 0]
     body_content += f"<h3>{title} ({len(squads_com_casos)} squads)</h3>"
     if not squads_com_casos.empty:
