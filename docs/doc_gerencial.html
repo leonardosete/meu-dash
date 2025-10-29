@@ -163,14 +163,14 @@
             <div class="card">
                 <h3>O Desafio: A Lacuna entre Dados Descritivos e Inteligência Acionável</h3>
                 <p class="highlight highlight-danger text-secondary">
-                    Os dashboards atuais, como o Power BI, nos fornecem uma excelente <strong>visão descritiva</strong> da operação, mostrando a existência de automações com base na coluna <code>com_remediacao</code>. No entanto, essa visão de alto nível possui duas lacunas críticas que impedem uma gestão de eficiência:
+                    Os dashboards atuais no Power BI (Acompanhamento de Alertas), nos fornecem uma ampla e excelente visão descritiva da operação. Na qual consome e exibe de forma organizada, um alto volume de dados sobre diversas fontes de Alertas. Entretanto, nosso  objetivo nesse novo projeto, é <strong>complementar</strong> um ponto específico onde o Power BI, não consegue abordar de forma mais aprofundada, que é sobre a presença e efetividade das Remediações (Self-Healing). Os dashboards nos trazem informações mais simplistas à esse respeito, sendo basicamente se o recurso/métrica possui ou não remediação: "com_remediacao" = Sim/Não. Entendemos que temos 2 pontos fundamentais não cobertos:
                 </p>
                 <div class="highlight highlight-danger mt-15">
-                    <strong>1. A Incerteza da Execução:</strong> A informação de que uma remediação "existe" não garante que ela foi de fato acionada para um alerta específico. Análises manuais revelaram alertas onde o valor "com_remediacao" = "Sim", mas o alerta em questão, não possuía Self-Healing ativo.<br><br>
-                    <strong>2. A Cegueira da Efocácia:</strong> Mesmo quando uma automação é executada, os dashboards atuais não medem seu <strong>resultado</strong>. Uma automação que falhou (<code>Closed Incomplete</code>) é tratada da mesma forma que uma que funcionou, mascarando a ineficiência e o desperdício de recursos.
+                    <span style="color: var(--danger-color);"><strong>1. Garantia da presença e execução:</strong> a informação "com_remediacao" que os dashboards obtém, não são validações caso a caso, se o alerta possuia uma "Tarefa de Correção" atrelada à ele = REMXXXX no Service Now. E sim que, a Squad autorizou que fosse configurado uma remediação para a métrica.</span><br><br>
+                    <strong>2. Status do Self-healing:</strong> Mesmo quando uma automação é executada, os dashboards atuais não medem seu <strong>resultado</strong>. Uma automação que falhou <strong>"Closed Incomplete"</strong> é tratada da mesma forma que uma que funcionou <strong>"Closed"</strong>, ocultando uma possível ineficiência do self-healing ou mesmo, deixando de dar maior atenção à um problema mais grave. Apenas assume que existe uma remediação.
                 </div>
                 <p class="highlight highlight-danger text-secondary">
-                    Essa falta de profundidade nos leva a uma pergunta fundamental que os dados descritivos não conseguem responder: <strong>"Onde nosso esforço para automatizar está realmente gerando valor, e onde ele está sendo desperdiçado?"</strong>
+                    Esses pontos não cobertos atualmente, não nos permitem responder: <strong>"Onde o self-healing existe e funciona bem e principalmente, onde ele deveria existir ou não funciona bem?"</strong>
                 </p>
             
                 <h3>A Solução: Uma Camada de Inteligência Diagnóstica</h3>
@@ -179,11 +179,11 @@
                     <p class="text-secondary">Enquanto o fluxo padrão (Dynatrace → ServiceNow → Job de Correção) visa evitar que o alerta chegue ao NOC, nossa ferramenta responde à pergunta crítica: <strong>"E quando o job falha?"</strong></p>
                     <p class="text-secondary">O SmartRemedy entra em ação exatamente nesse ponto, realizando um diagnóstico automatizado para:</p>
                     <ul class="mt-15 mb-20">
-                        <li><strong>1. Medir a Eficiência:</strong> Analisamos o resultado real da tarefa de automação (<code>tasks_status</code>), diferenciando sucessos plenos, sucessos parciais ('Skipped', 'Canceled') e falhas ('Closed Incomplete'). Isso revela a verdadeira eficiência do processo.</li>
+                        <li><strong>1. Medir a Eficiência:</strong> Analisamos o resultado real da tarefa de automação, diferenciando sucessos plenos, sucessos parciais ('Skipped', 'Canceled') e falhas ('Closed Incomplete'). Isso revela a verdadeira eficiência do processo.</li>
                         <li><strong>2. Validar a Execução:</strong> Em vez de confiar em dados declarados, trazemos <strong>certeza</strong> sobre o que foi ou não executado, identificando onde a automação nem sequer foi acionada.</li>
-                        <li><strong>3. Priorizar por Impacto Real:</strong> Com base nesses dados, aplicamos um score ponderado que direciona o esforço da equipe para os problemas que, se resolvidos, <strong>restauram a promessa de agilidade, confiabilidade e disponibilidade</strong> que o processo de Self-Healing deveria entregar.</li>
+                        <li><strong>3. Priorizar por Impacto Real:</strong> Com base nesses dados, aplicamos um sistema de <strong>score ponderado</strong> que direciona o esforço da equipe para os problemas que, se resolvidos, <strong>restauram a promessa de agilidade, confiabilidade e disponibilidade</strong> que o processo de Self-Healing deveria entregar.</li>
                     </ul>
-                    <p class="text-secondary">Em resumo, ele transforma a visão descritiva em um <strong>diagnóstico acionável</strong>, permitindo que as equipes de automação e SRE invistam seu tempo onde ele realmente importa: na causa raiz das falhas do Self-Healing.</p>
+                    <p class="text-secondary">Em resumo, ele transforma a visão descritiva em um <strong>diagnóstico acionável</strong>, permitindo que as equipes de Automação e demais times envolvidos, invistam tempo e esforço na criação e melhoria dos Self-Healings.</p>
                 </div>
             </div>
 
