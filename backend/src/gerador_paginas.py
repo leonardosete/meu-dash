@@ -48,7 +48,11 @@ FILENAME_INVALID_LOGS_HTML = "qualidade_dados_remediacao.html"
 FILENAME_JSON_VIEWER = "visualizador_json.html"
 FILENAME_JSON_SUMMARY = "resumo_problemas.json"
 
-BASE_TEMPLATE_DIR = "/app/templates"
+# SOLUÇÃO DEFINITIVA: Calcula o caminho para a pasta de templates de forma dinâmica.
+# Isso funciona tanto no ambiente de desenvolvimento (volume mount) quanto no de produção (cópia de arquivos).
+BASE_TEMPLATE_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "templates")
+)
 
 # =============================================================================
 # FUNÇÕES DE GERAÇÃO DE PÁGINAS HTML
@@ -205,7 +209,6 @@ def gerar_resumo_executivo(
     body_content = gerador_html.renderizar_resumo_executivo(context, frontend_url)
 
     # Carrega o template principal
-    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
     HTML_TEMPLATE = carregar_template_html(
         os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE)
     )
@@ -258,7 +261,6 @@ def gerar_relatorios_por_squad(  # type: ignore
     }
     footer_text = f"Relatório gerado em {timestamp_str}"
 
-    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
     HTML_TEMPLATE = carregar_template_html(
         os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE)
     )
@@ -434,7 +436,6 @@ def gerar_pagina_squads(  # type: ignore
     body_content += "</div>"
     footer_text = f"Relatório gerado em {timestamp_str}"
 
-    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
     HTML_TEMPLATE = carregar_template_html(
         os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE)
     )
@@ -473,7 +474,6 @@ def gerar_paginas_detalhe_problema(  # type: ignore
         "🔁": "🔁",
     }
 
-    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
     HTML_TEMPLATE = carregar_template_html(
         os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE)
     )
@@ -549,7 +549,6 @@ def gerar_paginas_detalhe_metrica(  # type: ignore
         ACAO_INCONSISTENTE: "🔍",
     }
 
-    # CORREÇÃO: Usa um caminho absoluto para o template, garantindo que funcione no contêiner.
     HTML_TEMPLATE = carregar_template_html(
         os.path.join(BASE_TEMPLATE_DIR, MAIN_TEMPLATE)
     )
