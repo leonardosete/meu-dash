@@ -114,9 +114,10 @@ from . import services, models  # noqa: E402
 #     db.metadata.create_all(db.engine, checkfirst=True)
 
 
-# Apenas cria os diretórios se não estivermos em modo de teste.
-# Isso evita o PermissionError no ambiente de CI.
-if not app.config.get("TESTING"):
+# SOLUÇÃO DEFINITIVA: Apenas cria os diretórios se não estivermos em um ambiente de teste.
+# O Pytest define a variável de ambiente 'PYTEST_CURRENT_TEST' automaticamente.
+# Esta verificação ocorre antes da configuração do Flask, resolvendo o problema de ordem de inicialização.
+if "PYTEST_CURRENT_TEST" not in os.environ:
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
 
