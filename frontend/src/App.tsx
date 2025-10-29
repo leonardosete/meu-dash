@@ -3,11 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./components/Dashboard";
 import HistoryPage from "./components/HistoryPage";
 import Layout from "./components/Layout";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./components/AuthProvider";
 import { useAuth } from "./hooks/useAuth";
 import { Loader2 } from "lucide-react";
-import { DashboardProvider } from "./contexts/DashboardContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { DashboardProvider } from "./components/DashboardProvider";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 // Componente intermediário que aguarda a inicialização do estado de autenticação
 const AppRoutes: React.FC = () => {

@@ -1,9 +1,4 @@
-import React, {
-  createContext,
-  useState,
-  useCallback,
-  ReactNode,
-} from "react";
+import { createContext } from "react";
 import { ReportUrls } from "../types";
 
 interface DashboardContextType {
@@ -13,38 +8,6 @@ interface DashboardContextType {
   setQuickDiagnosis: (html: string | null) => void;
 }
 
-// Exporta o Context para que o hook possa usá-lo
 export const DashboardContext = createContext<DashboardContextType | undefined>(
   undefined,
 );
-
-export const DashboardProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const [reportUrls, setReportUrls] = useState<ReportUrls | null>(null);
-  const [quickDiagnosis, setQuickDiagnosis] = useState<string | null>(null);
-
-  const handleSetReportUrls = useCallback((urls: ReportUrls | null) => {
-    setReportUrls(urls);
-    if (urls === null) {
-      setQuickDiagnosis(null);
-    }
-  }, []);
-
-  const handleSetQuickDiagnosis = useCallback((html: string | null) => {
-    setQuickDiagnosis(html);
-  }, []);
-
-  const value = {
-    reportUrls,
-    setReportUrls: handleSetReportUrls,
-    quickDiagnosis,
-    setQuickDiagnosis: handleSetQuickDiagnosis,
-  };
-
-  return (
-    <DashboardContext.Provider value={value}>
-      {children}
-    </DashboardContext.Provider>
-  );
-};
