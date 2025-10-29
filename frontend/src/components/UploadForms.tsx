@@ -5,7 +5,7 @@ import {
   uploadComparativeAnalysis,
 } from "../services/api";
 import { Loader2, LogIn } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { UploadSuccessResponse } from "../types";
 import InlineLoginForm from "./InlineLoginForm";
 

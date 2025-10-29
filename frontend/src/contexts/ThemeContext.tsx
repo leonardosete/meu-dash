@@ -4,7 +4,6 @@ import React, {
   useCallback,
   ReactNode,
   useEffect,
-  useContext,
 } from "react";
 
 type Theme = "light" | "dark";
@@ -16,7 +15,8 @@ interface ThemeContextType {
 
 const THEME_KEY = "meu_dash_theme";
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+// Exporta o Context para que o hook possa usá-lo
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -24,7 +24,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
-    // Na primeira montagem, verifica o localStorage para definir o tema inicial.
     try {
       const storedTheme = localStorage.getItem(THEME_KEY) as Theme | null;
       if (storedTheme && ["light", "dark"].includes(storedTheme)) {
@@ -36,7 +35,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    // Sempre que o tema mudar, atualiza o localStorage e a classe no body.
     try {
       localStorage.setItem(THEME_KEY, theme);
       document.body.classList.toggle("light-mode", theme === "light");
@@ -54,12 +52,4 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
-};
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme deve ser usado dentro de um ThemeProvider");
-  }
-  return context;
 };

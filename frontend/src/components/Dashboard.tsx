@@ -5,7 +5,7 @@ import KpiCard from "./KpiCard";
 import UploadForms from "./UploadForms";
 import WelcomeEmptyState from "./WelcomeEmptyState";
 import ReportPreviews from "./ReportPreviews";
-import { useDashboard } from "../contexts/DashboardContext";
+import { useDashboard } from "../hooks/useDashboard";
 
 const Dashboard = () => {
   const [summaryData, setSummaryData] = useState<DashboardSummary | null>(null);

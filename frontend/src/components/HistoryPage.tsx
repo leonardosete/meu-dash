@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import * as api from "../services/api";
 import "./HistoryPage.css"; // Importa o CSS específico
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { Report } from "../types"; // Importa o tipo Report atualizado
 
 const HistoryPage: React.FC = () => {

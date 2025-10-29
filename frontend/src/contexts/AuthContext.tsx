@@ -4,7 +4,6 @@ import React, {
   useCallback,
   ReactNode,
   useEffect,
-  useContext,
 } from "react";
 
 const TOKEN_KEY = "meu_dash_auth_token";
@@ -12,15 +11,16 @@ const TOKEN_KEY = "meu_dash_auth_token";
 interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
-  isInitializing: boolean; // Novo estado para controlar a verificação inicial
+  isInitializing: boolean;
   login: (newToken: string) => void;
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
+// Exporta o Context para que o hook possa usá-lo
+export const AuthContext = createContext<AuthContextType>({
   token: null,
   isAuthenticated: false,
-  isInitializing: true, // A aplicação sempre começa em estado de inicialização
+  isInitializing: true,
   login: () => {},
   logout: () => {},
 });
@@ -37,7 +37,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    // Na primeira montagem, verifica o localStorage para definir o estado de autenticação.
     try {
       const storedToken = localStorage.getItem(TOKEN_KEY);
       setToken(storedToken);
@@ -45,17 +44,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       console.error("Falha ao acessar o localStorage:", error);
       setToken(null);
     } finally {
-      // Marca a inicialização como concluída, liberando a renderização da UI.
       setIsInitializing(false);
     }
 
-    // Adiciona um listener para o evento de erro de autenticação disparado pelo interceptor da API
     const handleAuthError = () => {
       logout();
     };
     window.addEventListener("auth-error", handleAuthError);
 
-    // Limpa o listener quando o componente é desmontado
     return () => {
       window.removeEventListener("auth-error", handleAuthError);
     };
@@ -71,12 +67,4 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const value = { token, isAuthenticated, isInitializing, login, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
-  }
-  return context;
 };

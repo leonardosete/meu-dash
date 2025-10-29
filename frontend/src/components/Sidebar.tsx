@@ -9,8 +9,8 @@ import {
   FilePlus2,
 } from "lucide-react";
 import { API_BASE_URL } from "../services/api";
-import { useAuth } from "../contexts/AuthContext";
-import { useDashboard } from "../contexts/DashboardContext";
+import { useAuth } from "../hooks/useAuth";
+import { useDashboard } from "../hooks/useDashboard";
 import ThemeToggle from "./ThemeToggle";
 
 interface SideCardProps {
