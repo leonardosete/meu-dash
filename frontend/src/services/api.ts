@@ -6,12 +6,9 @@ import {
   UploadSuccessResponse,
 } from "../types";
 
-// Em produção (import.meta.env.PROD é true), a URL base é uma string vazia,
-// tornando as chamadas de API relativas ao domínio atual (ex: /api/v1/...).
-// Em desenvolvimento, ele usa a variável de ambiente ou o fallback para o servidor local.
-export const API_BASE_URL = import.meta.env.PROD
-  ? ""
-  : import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5001";
+// Com o proxy configurado no Vite, a URL base é sempre relativa ao domínio atual.
+// Isso simplifica a configuração e funciona tanto em desenvolvimento quanto em produção.
+export const API_BASE_URL = "";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

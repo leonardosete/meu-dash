@@ -13,6 +13,28 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true, // Listen on all addresses, including 0.0.0.0
+    proxy: {
+      // Redireciona todas as chamadas de API para o backend
+      "/api": {
+        target: "http://backend:5000",
+        changeOrigin: true,
+      },
+      // Redireciona o acesso à documentação do Flasgger
+      "/apidocs": {
+        target: "http://backend:5000",
+        changeOrigin: true,
+      },
+      // Redireciona o acesso aos relatórios gerados
+      "/reports": {
+        target: "http://backend:5000",
+        changeOrigin: true,
+      },
+      // Redireciona o acesso à documentação estática
+      "/docs": {
+        target: "http://backend:5000",
+        changeOrigin: true,
+      },
+    },
   },
   // Define global environment variables that will be replaced at build time.
   define: {
