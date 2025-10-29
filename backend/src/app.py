@@ -8,13 +8,16 @@ from flask import Flask, abort, jsonify, request, send_from_directory, url_for
 from flask_cors import CORS
 from flask_migrate import Migrate
 
-from . import db, services, models
+from . import db
 
 
 def create_app(test_config=None):
     """
     Application Factory: Cria e configura a instância da aplicação Flask.
     """
+    # Move as importações para dentro da factory para garantir a ordem de inicialização correta.
+    from . import models, services
+
     app = Flask(
         __name__,
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
