@@ -96,7 +96,7 @@
         }
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 25px;
         }
         .highlight {
@@ -166,7 +166,7 @@
                     Os dashboards atuais no Power BI (Acompanhamento de Alertas), nos fornecem uma ampla e excelente visão descritiva da operação. Na qual consome e exibe de forma organizada, um alto volume de dados sobre diversas fontes de Alertas. Entretanto, nosso  objetivo nesse novo projeto, é <strong>complementar</strong> um ponto específico onde o Power BI, não consegue abordar de forma mais aprofundada, que é sobre a presença e efetividade das Remediações (Self-Healing). Os dashboards nos trazem informações mais simplistas à esse respeito, sendo basicamente se o recurso/métrica possui ou não remediação: "com_remediacao" = Sim/Não. Entendemos que temos 2 pontos fundamentais não cobertos:
                 </p>
                 <div class="highlight highlight-danger mt-15">
-                    <span style="color: var(--danger-color);"><strong>1. Garantia da presença e execução:</strong> a informação "com_remediacao" que os dashboards obtém, não são validações caso a caso, se o alerta possuia uma "Tarefa de Correção" atrelada à ele = REMXXXX no Service Now. E sim que, a Squad autorizou que fosse configurado uma remediação para a métrica.</span><br><br>
+                    <span><strong>1. Garantia da presença e execução:</strong> a informação "com_remediacao" que os dashboards obtém, não são validações caso a caso, se o alerta possuia uma "Tarefa de Correção" atrelada à ele = REMXXXX no Service Now. E sim que, a Squad autorizou que fosse configurado uma remediação para a métrica.</span><br><br>
                     <strong>2. Status do Self-healing:</strong> Mesmo quando uma automação é executada, os dashboards atuais não medem seu <strong>resultado</strong>. Uma automação que falhou <strong>"Closed Incomplete"</strong> é tratada da mesma forma que uma que funcionou <strong>"Closed"</strong>, ocultando uma possível ineficiência do self-healing ou mesmo, deixando de dar maior atenção à um problema mais grave. Apenas assume que existe uma remediação.
                 </div>
                 <p class="highlight highlight-danger text-secondary">
