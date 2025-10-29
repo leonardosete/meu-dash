@@ -1,5 +1,11 @@
-import React, { createContext, useState, useCallback, ReactNode, useContext } from 'react';
-import { ReportUrls } from '../types';
+import React, {
+  createContext,
+  useState,
+  useCallback,
+  ReactNode,
+  useContext,
+} from "react";
+import { ReportUrls } from "../types";
 
 interface DashboardContextType {
   reportUrls: ReportUrls | null;
@@ -8,9 +14,13 @@ interface DashboardContextType {
   setQuickDiagnosis: (html: string | null) => void;
 }
 
-export const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
+export const DashboardContext = createContext<DashboardContextType | undefined>(
+  undefined,
+);
 
-export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const DashboardProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [reportUrls, setReportUrls] = useState<ReportUrls | null>(null);
   const [quickDiagnosis, setQuickDiagnosis] = useState<string | null>(null);
 
@@ -25,15 +35,24 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
     setQuickDiagnosis(html);
   }, []);
 
-  const value = { reportUrls, setReportUrls: handleSetReportUrls, quickDiagnosis, setQuickDiagnosis: handleSetQuickDiagnosis };
+  const value = {
+    reportUrls,
+    setReportUrls: handleSetReportUrls,
+    quickDiagnosis,
+    setQuickDiagnosis: handleSetQuickDiagnosis,
+  };
 
-  return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
+  return (
+    <DashboardContext.Provider value={value}>
+      {children}
+    </DashboardContext.Provider>
+  );
 };
 
 export const useDashboard = () => {
   const context = useContext(DashboardContext);
   if (context === undefined) {
-    throw new Error('useDashboard must be used within a DashboardProvider');
+    throw new Error("useDashboard must be used within a DashboardProvider");
   }
   return context;
 };

@@ -1,10 +1,18 @@
-import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Shield, PieChart, Code, History, LayoutDashboard, LogOut, FilePlus2 } from 'lucide-react';
-import { API_BASE_URL } from '../services/api';
-import { useAuth } from '../hooks/useAuth';
-import { useDashboard } from '../contexts/DashboardContext';
-import ThemeToggle from './ThemeToggle';
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Shield,
+  PieChart,
+  Code,
+  History,
+  LayoutDashboard,
+  LogOut,
+  FilePlus2,
+} from "lucide-react";
+import { API_BASE_URL } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
+import { useDashboard } from "../contexts/DashboardContext";
+import ThemeToggle from "./ThemeToggle";
 
 interface SideCardProps {
   to?: string;
@@ -16,7 +24,15 @@ interface SideCardProps {
   isExternal?: boolean;
 }
 
-const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, description, color, isExternal = false }) => {
+const SideCard: React.FC<SideCardProps> = ({
+  to,
+  onClick,
+  icon,
+  title,
+  description,
+  color,
+  isExternal = false,
+}) => {
   const content = (
     <>
       {React.cloneElement(icon, { color })}
@@ -29,7 +45,7 @@ const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, descripti
 
   const commonProps = {
     className: "card side-card",
-    title: "" // Adicionado para sobrescrever o tooltip nativo
+    title: "", // Adicionado para sobrescrever o tooltip nativo
   };
 
   if (onClick) {
@@ -41,15 +57,28 @@ const SideCard: React.FC<SideCardProps> = ({ to, onClick, icon, title, descripti
   }
 
   if (isExternal) {
-    const externalUrl = to ? (API_BASE_URL ? new URL(to, API_BASE_URL).href : to) : '#';
+    const externalUrl = to
+      ? API_BASE_URL
+        ? new URL(to, API_BASE_URL).href
+        : to
+      : "#";
     return (
-      <a href={externalUrl} target="_blank" rel="noopener noreferrer" {...commonProps}>
+      <a
+        href={externalUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        {...commonProps}
+      >
         {content}
       </a>
     );
   }
 
-  return <Link to={to || '#'} {...commonProps}>{content}</Link>;
+  return (
+    <Link to={to || "#"} {...commonProps}>
+      {content}
+    </Link>
+  );
 };
 
 const Sidebar: React.FC = () => {
@@ -60,7 +89,7 @@ const Sidebar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -70,16 +99,16 @@ const Sidebar: React.FC = () => {
       </div>
 
       <div className="sidebar-cards-container">
-        {location.pathname !== '/' && (
-          <SideCard 
-            to="/" 
-            icon={<LayoutDashboard />} 
-            title="Dashboard Principal" 
-            description="Visão geral dos KPIs e uploads." 
-            color="var(--success-color)" 
+        {location.pathname !== "/" && (
+          <SideCard
+            to="/"
+            icon={<LayoutDashboard />}
+            title="Dashboard Principal"
+            description="Visão geral dos KPIs e uploads."
+            color="var(--success-color)"
           />
         )}
-        
+
         {reportUrls && (
           <SideCard
             onClick={() => setReportUrls(null)}
@@ -89,27 +118,27 @@ const Sidebar: React.FC = () => {
             color="var(--success-color)"
           />
         )}
-        <SideCard 
-          to="/history" 
-          icon={<History />} 
-          title="Histórico de Análises" 
-          description="Visualize e gerencie todos os relatórios." 
-          color="var(--text-color)" 
+        <SideCard
+          to="/history"
+          icon={<History />}
+          title="Histórico de Análises"
+          description="Visualize e gerencie todos os relatórios."
+          color="var(--text-color)"
         />
-        <SideCard 
-          to="/docs/doc_gerencial.html" 
+        <SideCard
+          to="/docs/doc_gerencial.html"
           isExternal={true}
-          icon={<PieChart />} 
-          title="Documentação Gerencial" 
-          description="Conhecendo a ferrementa." 
-          color="var(--accent-color)" 
+          icon={<PieChart />}
+          title="Documentação Gerencial"
+          description="Conhecendo a ferrementa."
+          color="var(--accent-color)"
         />
-        <SideCard 
-          to="/apidocs" 
+        <SideCard
+          to="/apidocs"
           isExternal={true}
-          icon={<Code />} 
-          title="Documentação da API" 
-          description="Navegue e teste os endpoints (Swagger)." 
+          icon={<Code />}
+          title="Documentação da API"
+          description="Navegue e teste os endpoints (Swagger)."
           color="#38bdf8"
         />
       </div>

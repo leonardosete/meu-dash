@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { getDashboardSummary } from '../services/api';
-import { DashboardSummary, UploadSuccessResponse } from '../types';
-import KpiCard from './KpiCard';
-import UploadForms from './UploadForms';
-import WelcomeEmptyState from './WelcomeEmptyState';
-import ReportPreviews from './ReportPreviews';
-import { useDashboard } from '../contexts/DashboardContext';
+import React, { useState, useEffect, useCallback } from "react";
+import { getDashboardSummary } from "../services/api";
+import { DashboardSummary, UploadSuccessResponse } from "../types";
+import KpiCard from "./KpiCard";
+import UploadForms from "./UploadForms";
+import WelcomeEmptyState from "./WelcomeEmptyState";
+import ReportPreviews from "./ReportPreviews";
+import { useDashboard } from "../contexts/DashboardContext";
 
 const Dashboard = () => {
   const [summaryData, setSummaryData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { reportUrls, setReportUrls, quickDiagnosis, setQuickDiagnosis } = useDashboard();
+  const { reportUrls, setReportUrls, quickDiagnosis, setQuickDiagnosis } =
+    useDashboard();
   const [dateRange, setDateRange] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -30,7 +31,9 @@ const Dashboard = () => {
       }
       setError(null);
     } catch (err) {
-      setError('Falha ao carregar os dados do dashboard. O backend está no ar?');
+      setError(
+        "Falha ao carregar os dados do dashboard. O backend está no ar?",
+      );
       console.error(err);
     } finally {
       setLoading(false);
@@ -45,7 +48,7 @@ const Dashboard = () => {
 
   const handleUploadSuccess = (data: UploadSuccessResponse) => {
     // Após um novo upload, atualiza tanto os KPIs quanto as URLs das prévias.
-    setSummaryData(prev => ({ ...prev!, kpi_summary: data.kpi_summary }));
+    setSummaryData((prev) => ({ ...prev!, kpi_summary: data.kpi_summary }));
     setReportUrls(data.report_urls);
     setQuickDiagnosis(data.quick_diagnosis_html);
     setDateRange(data.date_range);
@@ -53,23 +56,25 @@ const Dashboard = () => {
 
   const renderKpiContent = () => {
     if (loading) {
-      return <div className="text-center p-10">Carregando dados do dashboard...</div>;
+      return (
+        <div className="text-center p-10">Carregando dados do dashboard...</div>
+      );
     }
 
     if (error) {
       return <div className="text-center p-10 text-red-400">{error}</div>;
     }
-    
+
     if (!summaryData?.kpi_summary) {
       return <WelcomeEmptyState />;
     }
 
     const { kpi_summary } = summaryData;
-    
+
     const getSuccessColor = (rate: number) => {
-      if (rate < 50) return 'text-danger';
-      if (rate < 70) return 'text-warning';
-      return 'text-success';
+      if (rate < 50) return "text-danger";
+      if (rate < 70) return "text-warning";
+      return "text-success";
     };
 
     const successColorClass = getSuccessColor(kpi_summary.taxa_sucesso_valor);
@@ -79,23 +84,49 @@ const Dashboard = () => {
         <KpiCard
           title="Casos sem Remediação"
           value={kpi_summary.casos_atuacao}
-          subValue={kpi_summary.casos_atuacao > 0 ? kpi_summary.alertas_atuacao : undefined}
+          subValue={
+            kpi_summary.casos_atuacao > 0
+              ? kpi_summary.alertas_atuacao
+              : undefined
+          }
           subLabel={kpi_summary.casos_atuacao > 0 ? "Alertas" : undefined}
-          colorClass={kpi_summary.casos_atuacao > 0 ? 'text-danger' : 'text-success'}
+          colorClass={
+            kpi_summary.casos_atuacao > 0 ? "text-danger" : "text-success"
+          }
         />
         <KpiCard
           title="Casos Remediados com Frequência"
           value={kpi_summary.casos_instabilidade}
-          subValue={kpi_summary.alertas_instabilidade > 0 ? kpi_summary.alertas_instabilidade : undefined}
-          subLabel={kpi_summary.alertas_instabilidade > 0 ? "Alertas" : undefined}
-          colorClass={kpi_summary.casos_instabilidade > 0 ? 'text-warning' : 'text-success'}
+          subValue={
+            kpi_summary.alertas_instabilidade > 0
+              ? kpi_summary.alertas_instabilidade
+              : undefined
+          }
+          subLabel={
+            kpi_summary.alertas_instabilidade > 0 ? "Alertas" : undefined
+          }
+          colorClass={
+            kpi_summary.casos_instabilidade > 0
+              ? "text-warning"
+              : "text-success"
+          }
         />
         <KpiCard
           title="Pontos de Atenção"
           value={kpi_summary.casos_sucesso_parcial}
-          subValue={kpi_summary.alertas_sucesso_parcial > 0 ? kpi_summary.alertas_sucesso_parcial : undefined}
-          subLabel={kpi_summary.alertas_sucesso_parcial > 0 ? "Alertas" : undefined}
-          colorClass={kpi_summary.casos_sucesso_parcial > 0 ? 'text-warning' : 'text-success'}
+          subValue={
+            kpi_summary.alertas_sucesso_parcial > 0
+              ? kpi_summary.alertas_sucesso_parcial
+              : undefined
+          }
+          subLabel={
+            kpi_summary.alertas_sucesso_parcial > 0 ? "Alertas" : undefined
+          }
+          colorClass={
+            kpi_summary.casos_sucesso_parcial > 0
+              ? "text-warning"
+              : "text-success"
+          }
         />
         <KpiCard
           title="Sucesso da Automação"
@@ -109,13 +140,16 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="kpi-section">
-        {renderKpiContent()}
-      </div>
-      
+      <div className="kpi-section">{renderKpiContent()}</div>
+
       <div className="form-section-container">
         {reportUrls ? (
-          <ReportPreviews key="previews" urls={reportUrls} quickDiagnosis={quickDiagnosis} dateRange={dateRange} />
+          <ReportPreviews
+            key="previews"
+            urls={reportUrls}
+            quickDiagnosis={quickDiagnosis}
+            dateRange={dateRange}
+          />
         ) : (
           <div key="forms" className="page-fade-in">
             <UploadForms onUploadSuccess={handleUploadSuccess} />

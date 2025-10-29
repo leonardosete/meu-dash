@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import FileInput from './FileInput';
-import { uploadStandardAnalysis, uploadComparativeAnalysis } from '../services/api';
-import { Loader2, LogIn } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { UploadSuccessResponse } from '../types';
-import InlineLoginForm from './InlineLoginForm';
+import React, { useState } from "react";
+import FileInput from "./FileInput";
+import {
+  uploadStandardAnalysis,
+  uploadComparativeAnalysis,
+} from "../services/api";
+import { Loader2, LogIn } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { UploadSuccessResponse } from "../types";
+import InlineLoginForm from "./InlineLoginForm";
 
 interface UploadFormsProps {
   onUploadSuccess: (data: UploadSuccessResponse) => void;
@@ -23,7 +26,7 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
   const handlePadraoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!padraoFile || padraoFile.length === 0) {
-      alert('Por favor, selecione um arquivo.');
+      alert("Por favor, selecione um arquivo.");
       return;
     }
     setIsLoading(true);
@@ -32,7 +35,9 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
       const result = await uploadStandardAnalysis(padraoFile[0]);
       onUploadSuccess(result);
     } catch (err: any) {
-      setStandardError(err.response?.data?.error || 'Ocorreu um erro no upload.');
+      setStandardError(
+        err.response?.data?.error || "Ocorreu um erro no upload.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -41,22 +46,27 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
   const handleComparativaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fileAntigo || fileAntigo.length === 0) {
-      setComparativeError('Por favor, selecione o arquivo antigo.');
+      setComparativeError("Por favor, selecione o arquivo antigo.");
       return;
     }
     if (!fileRecente || fileRecente.length === 0) {
-      setComparativeError('Por favor, selecione o arquivo recente.');
+      setComparativeError("Por favor, selecione o arquivo recente.");
       return;
     }
     setIsLoading(true);
     setComparativeError(null);
     try {
-      const result = await uploadComparativeAnalysis(fileAntigo[0], fileRecente[0]);
+      const result = await uploadComparativeAnalysis(
+        fileAntigo[0],
+        fileRecente[0],
+      );
       if (result.report_url) {
         window.location.href = result.report_url;
       }
     } catch (err: any) {
-      setComparativeError(err.response?.data?.error || 'Ocorreu um erro na comparação.');
+      setComparativeError(
+        err.response?.data?.error || "Ocorreu um erro na comparação.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -64,31 +74,51 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
 
   return (
     <div className="form-section">
-      <div className="upload-forms-container" style={{ position: 'relative' }}>
+      <div className="upload-forms-container" style={{ position: "relative" }}>
         {!isAuthenticated && (
           <div className="form-disabled-overlay">
             {showLoginForm ? (
               <InlineLoginForm />
             ) : (
-              <div className="overlay-content" onClick={() => setShowLoginForm(true)}>
+              <div
+                className="overlay-content"
+                onClick={() => setShowLoginForm(true)}
+              >
                 <LogIn size={20} />
                 <span>Faça login para habilitar a análise</span>
               </div>
             )}
           </div>
         )}
-        <div className={!isAuthenticated ? 'forms-wrapper-disabled' : ''}>
+        <div className={!isAuthenticated ? "forms-wrapper-disabled" : ""}>
           <div className="upload-forms-grid">
             {/* --- Bloco de Análise Padrão --- */}
             <div className="upload-form-card">
               <h3>Análise Padrão</h3>
-              <p className="form-description">Processe o arquivo de dados mais recente. O sistema o comparará com a última análise registrada no histórico para gerar um relatório completo e a análise de tendência contínua.</p>
+              <p className="form-description">
+                Processe o arquivo de dados mais recente. O sistema o comparará
+                com a última análise registrada no histórico para gerar um
+                relatório completo e a análise de tendência contínua.
+              </p>
               <form onSubmit={handlePadraoSubmit}>
-                {standardError && <div className="error-message">{standardError}</div>}
-                <label htmlFor="file_recente" className="form-label">Selecione o arquivo de dados mais recente:</label>
-                <FileInput id="file_recente" name="file_recente" onFileChange={setPadraoFile} isMultiple={false} />
+                {standardError && (
+                  <div className="error-message">{standardError}</div>
+                )}
+                <label htmlFor="file_recente" className="form-label">
+                  Selecione o arquivo de dados mais recente:
+                </label>
+                <FileInput
+                  id="file_recente"
+                  name="file_recente"
+                  onFileChange={setPadraoFile}
+                  isMultiple={false}
+                />
                 <button type="submit" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="animate-spin" /> : 'Analisar e Comparar com Histórico'}
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    "Analisar e Comparar com Histórico"
+                  )}
                 </button>
               </form>
             </div>
@@ -96,15 +126,43 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
             {/* --- Bloco de Análise Comparativa --- */}
             <div className="upload-form-card">
               <h3>Análise Comparativa</h3>
-              <p className="form-description">Compare dois arquivos de dados específicos para gerar um relatório de tendência sob demanda. Ideal para análises pontuais e investigativas entre períodos não sequenciais.</p>
+              <p className="form-description">
+                Compare dois arquivos de dados específicos para gerar um
+                relatório de tendência sob demanda. Ideal para análises pontuais
+                e investigativas entre períodos não sequenciais.
+              </p>
               <form onSubmit={handleComparativaSubmit}>
-                {comparativeError && <div className="error-message">{comparativeError}</div>}
-                <label htmlFor="file_antigo" className="form-label">Selecione o arquivo de dados mais antigo (base):</label>
-                <FileInput id="file_antigo" name="file_antigo" onFileChange={setFileAntigo} isMultiple={false} />
-                <label htmlFor="file_recente_comp" className="form-label" style={{ marginTop: '15px' }}>Selecione o arquivo de dados mais recente:</label>
-                <FileInput id="file_recente_comp" name="file_recente_comp" onFileChange={setFileRecente} isMultiple={false} />
+                {comparativeError && (
+                  <div className="error-message">{comparativeError}</div>
+                )}
+                <label htmlFor="file_antigo" className="form-label">
+                  Selecione o arquivo de dados mais antigo (base):
+                </label>
+                <FileInput
+                  id="file_antigo"
+                  name="file_antigo"
+                  onFileChange={setFileAntigo}
+                  isMultiple={false}
+                />
+                <label
+                  htmlFor="file_recente_comp"
+                  className="form-label"
+                  style={{ marginTop: "15px" }}
+                >
+                  Selecione o arquivo de dados mais recente:
+                </label>
+                <FileInput
+                  id="file_recente_comp"
+                  name="file_recente_comp"
+                  onFileChange={setFileRecente}
+                  isMultiple={false}
+                />
                 <button type="submit" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="animate-spin" /> : 'Comparar Arquivos'}
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    "Comparar Arquivos"
+                  )}
                 </button>
               </form>
             </div>

@@ -1,6 +1,12 @@
-import React, { createContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import React, {
+  createContext,
+  useState,
+  useCallback,
+  ReactNode,
+  useEffect,
+} from "react";
 
-const TOKEN_KEY = 'meu_dash_auth_token';
+const TOKEN_KEY = "meu_dash_auth_token";
 
 interface AuthContextType {
   token: string | null;
@@ -18,7 +24,9 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [token, setToken] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -44,11 +52,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const handleAuthError = () => {
       logout();
     };
-    window.addEventListener('auth-error', handleAuthError);
+    window.addEventListener("auth-error", handleAuthError);
 
     // Limpa o listener quando o componente é desmontado
     return () => {
-      window.removeEventListener('auth-error', handleAuthError);
+      window.removeEventListener("auth-error", handleAuthError);
     };
   }, [logout]);
 

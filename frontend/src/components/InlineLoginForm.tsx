@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import * as api from '../services/api';
-import { Loader2 } from 'lucide-react';
+import React, { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import * as api from "../services/api";
+import { Loader2 } from "lucide-react";
 
 const InlineLoginForm: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login } = useAuth();
@@ -20,7 +20,7 @@ const InlineLoginForm: React.FC = () => {
       login(response.access_token);
       // O componente pai (UploadForms) se tornará visível reativamente
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Falha na autenticação.');
+      setError(err.response?.data?.error || "Falha na autenticação.");
       setIsLoading(false);
     }
   };
@@ -52,7 +52,7 @@ const InlineLoginForm: React.FC = () => {
           />
         </div>
         <button type="submit" disabled={isLoading}>
-          {isLoading ? <Loader2 className="animate-spin" /> : 'Entrar'}
+          {isLoading ? <Loader2 className="animate-spin" /> : "Entrar"}
         </button>
       </form>
     </div>
