@@ -15,7 +15,6 @@ def create_app(test_config=None):
     """
     Application Factory: Cria e configura a instância da aplicação Flask.
     """
-    # Move as importações para dentro da factory para garantir a ordem de inicialização correta.
     from . import models, services
 
     app = Flask(
@@ -23,27 +22,31 @@ def create_app(test_config=None):
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
     )
 
+    # Configuração base, aplicada a todos os ambientes (dev, prod, test)
+    app.config.from_mapping(
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
+        SWAGGER={
+            'uiversion': 3,
+            'oauth2': {}
+        }
+    )
+
     if test_config is None:
-        # Configuração padrão para desenvolvimento/produção
+        # Configuração para produção/desenvolvimento (usa o banco de dados em arquivo)
         app.config.from_mapping(
-            SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
             UPLOAD_FOLDER=os.path.join("/app/data", "uploads"),
             REPORTS_FOLDER=os.path.join("/app/data", "reports"),
             SQLALCHEMY_DATABASE_URI=f"sqlite:///{os.path.join('/app/data', 'meu_dash.db')}",
         )
     else:
-        # Carrega a configuração de teste se fornecida
+        # Carrega a configuração de teste, que sobrescreve a base (ex: usa DB em memória)
         app.config.from_mapping(test_config)
 
-    # Aponta para o diretório de migrações
     MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "..", "migrations")
-
-    # Inicializa extensões com a instância do app
     db.init_app(app)
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
-    # 1. Define a ESPECIFICAÇÃO da API (o conteúdo do Swagger)
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -71,13 +74,9 @@ def create_app(test_config=None):
             }
         },
     }
-
-    # 2. Define a CONFIGURAÇÃO da UI do Swagger (como a página se parece e se comporta)
-    #    Esta é a correção definitiva para o erro 'None is not defined'.
-    swagger_config = {"uiversion": 3, "oauth2": {}}
-
-    # 3. Inicializa o Swagger passando a especificação e a configuração da UI explicitamente
-    Swagger(app, template=swagger_template, config=swagger_config)
+    # Inicializa o Swagger, que agora lerá a configuração 'SWAGGER' do app.config
+    # em qualquer ambiente, pois ela está na configuração base.
+    Swagger(app, template=swagger_template)
 
     CORS(
         app,
@@ -526,10 +525,6 @@ def create_app(test_config=None):
                 access_token:
                   type: string
                   description: Token de acesso JWT.
-          400:
-            description: Requisição inválida (dados ausentes).
-            schema:
-              $ref: '#/definitions/Error'
           401:
             description: Credenciais inválidas.
             schema:
