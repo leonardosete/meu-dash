@@ -27,12 +27,17 @@ def create_app(test_config=None):
         # Configuração padrão para desenvolvimento/produção
         app.config.from_mapping(
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
-            # CORREÇÃO DEFINITIVA: Garante que a SECRET_KEY tenha um valor padrão
-            # para evitar que 'None' seja injetado no template do Flasgger.
             SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
             UPLOAD_FOLDER=os.path.join("/app/data", "uploads"),
             REPORTS_FOLDER=os.path.join("/app/data", "reports"),
             SQLALCHEMY_DATABASE_URI=f"sqlite:///{os.path.join('/app/data', 'meu_dash.db')}",
+            # CORREÇÃO DEFINITIVA: Adiciona uma configuração explícita para o Swagger UI,
+            # fornecendo um objeto vazio para a configuração OAuth2. Isso impede
+            # que o Flasgger injete um 'None' inválido no template JavaScript.
+            SWAGGER={
+                'uiversion': 3,
+                'oauth2': {}
+            }
         )
     else:
         # Carrega a configuração de teste se fornecida
