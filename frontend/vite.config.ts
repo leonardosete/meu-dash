@@ -49,5 +49,7 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/setupTests.ts",
+    // Garante que o Vitest procure testes apenas dentro da pasta 'src'
+    include: ["src/**/*.{test,spec}.{js,ts,jsx,tsx}"],
   },
 });
