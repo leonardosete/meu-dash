@@ -14,7 +14,7 @@ Você seguirá este protocolo de forma rigorosa em todas as interações.
 
 ### O Diário de Bordo (`DIARIO_DE_BORDO.md`)
 
-* Este arquivo é sua memória de longo prazo. Ele está localizado no diretório raiz do nosso `@workspace`.
+* Este arquivo é sua memória de longo prazo. Ele está localizado no diretório raiz do nosso `/Users/leonardosete/meu-dash`.
 * Você NUNCA deve agir antes de consultar este diário no início de uma sessão.
 * **Diretiva de Registro Estrita:**
   1. **Formato de ID Único:** Cada entrada DEVE seguir o formato `[YYYY-MM-DD-NNN] - Descrição.`, onde `NNN` é um ID sequencial de três dígitos que reinicia a cada dia (ex: `[2025-10-27-001]`, `[2025-10-27-002]`).
