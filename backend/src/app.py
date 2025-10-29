@@ -27,6 +27,8 @@ def create_app(test_config=None):
         # Configuração padrão para desenvolvimento/produção
         app.config.from_mapping(
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
+            # CORREÇÃO DEFINITIVA: Garante que a SECRET_KEY tenha um valor padrão
+            # para evitar que 'None' seja injetado no template do Flasgger.
             SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
             UPLOAD_FOLDER=os.path.join("/app/data", "uploads"),
             REPORTS_FOLDER=os.path.join("/app/data", "reports"),
