@@ -5,9 +5,9 @@ Estes testes validam os contratos da API (formato JSON, status codes)
 e garantem que a refatoração não quebre a funcionalidade principal.
 """
 
-import os
 import io
 from unittest.mock import patch
+
 from src.models import Report, db
 
 
@@ -64,19 +64,22 @@ def test_get_reports(client):
     assert data[0]["original_filename"] == "test.csv"
 
 
-def test_upload_file_success(client):
+def test_upload_file_success(client, monkeypatch):
     """
     Valida o endpoint POST /api/v1/upload em caso de sucesso.
 
     Usa um mock para a camada de serviço para isolar o teste na camada da API.
     Verifica se a API retorna 200 OK e o JSON de sucesso esperado.
     """
-    # Mock da função de serviço para evitar o processamento pesado
+    # ARRANGE: Configura as variáveis de ambiente para autenticação no escopo do teste.
+    monkeypatch.setenv("ADMIN_USER", "testadmin")
+    monkeypatch.setenv("ADMIN_PASSWORD", "testpass")
+
     # ARRANGE: Obter um token JWT válido para a requisição.
     with client.application.app_context():
         login_response = client.post(
             "/admin/login",
-            json={"username": "admin", "password": os.getenv("ADMIN_PASSWORD")},
+            json={"username": "testadmin", "password": "testpass"},
         )
         assert login_response.status_code == 200
         jwt_token = login_response.get_json()["access_token"]
@@ -112,19 +115,22 @@ def test_upload_file_success(client):
         assert "report_urls" in json_data
 
 
-def test_delete_report_with_valid_token(client):
+def test_delete_report_with_valid_token(client, monkeypatch):
     """
     Valida o endpoint DELETE /api/v1/reports/<id> com um token JWT válido.
 
     Verifica se a API retorna 200 OK com sucesso, e se o relatório
     é de fato removido do banco de dados.
     """
+    # ARRANGE: Configura as variáveis de ambiente para autenticação.
+    monkeypatch.setenv("ADMIN_USER", "testadmin")
+    monkeypatch.setenv("ADMIN_PASSWORD", "testpass")
+
     # ARRANGE: Cria um token JWT válido
-    # As credenciais devem corresponder ao que está no ambiente de teste (ex: .env)
     with client.application.app_context():
         login_response = client.post(
             "/admin/login",
-            json={"username": "admin", "password": os.getenv("ADMIN_PASSWORD")},
+            json={"username": "testadmin", "password": "testpass"},
         )
         assert login_response.status_code == 200
         jwt_token = login_response.get_json()["access_token"]
@@ -171,17 +177,21 @@ def test_delete_report_no_token(client):
     assert "Token" in response.get_json()["error"]
 
 
-def test_compare_files_success(client):
+def test_compare_files_success(client, monkeypatch):
     """
     Valida o endpoint POST /api/v1/compare em caso de sucesso.
 
     Usa um mock para a camada de serviço para isolar o teste na camada da API.
     """
+    # ARRANGE: Configura as variáveis de ambiente para autenticação.
+    monkeypatch.setenv("ADMIN_USER", "testadmin")
+    monkeypatch.setenv("ADMIN_PASSWORD", "testpass")
+
     # ARRANGE: Obter um token JWT válido para a requisição.
     with client.application.app_context():
         login_response = client.post(
             "/admin/login",
-            json={"username": "admin", "password": os.getenv("ADMIN_PASSWORD")},
+            json={"username": "testadmin", "password": "testpass"},
         )
         assert login_response.status_code == 200
         jwt_token = login_response.get_json()["access_token"]
