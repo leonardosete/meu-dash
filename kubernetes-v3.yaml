@@ -140,22 +140,22 @@ spec:
       name: smart-remedy-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "standard"
+      # CORREÇÃO: Remove a linha 'storageClassName' para usar o padrão do cluster.
       resources:
         requests:
           storage: 1Gi
 
 ---
 # --- Ingress: Expõe o serviço para o mundo externo ---
-# CORREÇÃO: Alterada a apiVersion para v1beta1 para maior compatibilidade.
-apiVersion: networking.k8s.io/v1beta1
+# CORREÇÃO: Revertido para a apiVersion v1, que é a correta para o seu cluster.
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: smart-remedy-ingress
   namespace: smart-remedy
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
 spec:
+  # CORREÇÃO: Usa ingressClassName, que é a prática moderna e está no v2.
+  ingressClassName: nginx
   tls:
   - hosts:
     - smart-remedy.devops-master.shop
@@ -165,7 +165,10 @@ spec:
     http:
       paths:
       - path: /
-        # CORREÇÃO: A sintaxe do backend foi ajustada para o padrão v1beta1.
+        pathType: Prefix
+        # CORREÇÃO: Usa a sintaxe correta para a apiVersion v1.
         backend:
-          serviceName: smart-remedy
-          servicePort: 80
+          service:
+            name: smart-remedy
+            port:
+              number: 80
