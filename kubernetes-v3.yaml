@@ -110,7 +110,6 @@ spec:
       - name: smart-remedy-api
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
-        # CORREÇÃO: Aponta para o novo ponto de entrada 'wsgi:app' e define o diretório de trabalho correto.
         command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app", "--chdir", "/app/backend"]
         envFrom:
         - secretRef:
@@ -148,16 +147,15 @@ spec:
 
 ---
 # --- Ingress: Expõe o serviço para o mundo externo ---
-apiVersion: networking.k8s.io/v1
+# CORREÇÃO: Alterada a apiVersion para v1beta1 para maior compatibilidade.
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: smart-remedy-ingress
   namespace: smart-remedy
-  # CORREÇÃO: Adiciona a anotação para compatibilidade com versões mais antigas do NGINX Ingress Controller.
   annotations:
     kubernetes.io/ingress.class: "nginx"
 spec:
-  ingressClassName: nginx
   tls:
   - hosts:
     - smart-remedy.devops-master.shop
@@ -167,9 +165,7 @@ spec:
     http:
       paths:
       - path: /
-        pathType: Prefix
+        # CORREÇÃO: A sintaxe do backend foi ajustada para o padrão v1beta1.
         backend:
-          service:
-            name: smart-remedy
-            port:
-              number: 80
+          serviceName: smart-remedy
+          servicePort: 80
