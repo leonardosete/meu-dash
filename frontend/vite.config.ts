@@ -18,6 +18,10 @@ export default defineConfig({
       "/api": {
         target: "http://backend:5000",
       },
+      // CORREÇÃO: Adiciona a regra de proxy para as rotas de administração
+      "/admin": {
+        target: "http://backend:5000",
+      },
       // Redireciona o acesso à documentação do Flasgger
       "/apidocs": {
         target: "http://backend:5000",
