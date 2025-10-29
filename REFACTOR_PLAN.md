@@ -38,8 +38,9 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 - **Justificativa:** Este documento é a "página de venda" da ferramenta para stakeholders. Ele precisa refletir com precisão a inteligência e o valor da versão atual do sistema.
 - **Plano de Ação:**
   - [ ] Reestruturar a seção "Classificação da Análise" para incluir o 4º pilar: "Pontos de Atenção".
-  - [ ] Atualizar a explicação do "Score Ponderado" para incluir o `fator_ineficiencia_task` e os novos status (`Canceled`, `Closed Skipped`).
+  - [ ] Revisar e refinar a explicação do "Score Ponderado" para incluir o `fator_ineficiencia_task` e os novos status (`Canceled`, `Closed Skipped`).
   - [ ] Garantir que a linguagem seja clara, focada em valor de negócio e que todos os exemplos estejam alinhados com a lógica atual.
+  - [ ] Refinar o conteúdo a partir da seção "Usando o Dashboard para Decisões" em diante, garantindo clareza e precisão.
 
 #### [ ] 💬 Revisar Mensagens do "Diagnóstico Rápido"
 
