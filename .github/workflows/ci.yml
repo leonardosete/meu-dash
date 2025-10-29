@@ -43,9 +43,9 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ~/.cache/pip
-          key: runner.os }}-pip-hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            runner.os }}-pip-
+            ${{ runner.os }}-pip-
 
       - name: Install Backend Dependencies
         run: |
@@ -80,8 +80,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # Pinned to a specific commit
         with:
-          username: secrets.DOCKERHUB_USERNAME
-          password: secrets.DOCKHUB_TOKEN
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 7. Build e Push da Imagem (apenas em push para 'main')
       - name: Set up Docker Buildx
@@ -96,5 +96,5 @@ jobs:
           cache-to: type=gha,mode=max
           push: true
           tags: |
-            secrets.DOCKERHUB_USERNAME/meu-dash-web:latest
-            secrets.DOCKERHUB_USERNAME/meu-dash-web:github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/meu-dash-web:${{ github.sha }}
