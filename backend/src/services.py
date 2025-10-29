@@ -418,6 +418,7 @@ def process_upload_and_generate_reports(
         ocorrer uma falha no processo.
     """
     # 1. Salvar arquivo, preparar ambiente e executar a análise completa UMA VEZ
+    os.makedirs(upload_folder, exist_ok=True)
     filename_recente = secure_filename(file_recente.filename)
     filepath_recente = os.path.join(
         upload_folder, f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename_recente}"
@@ -613,6 +614,7 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
 
     saved_filepaths = []
     try:
+        os.makedirs(upload_folder, exist_ok=True)
         for f in files:
             filename = secure_filename(f.filename)
             filepath = os.path.join(

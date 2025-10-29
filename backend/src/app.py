@@ -104,24 +104,6 @@ CORS(
 # Importações que dependem da inicialização do 'app' e 'db'
 from . import services, models  # noqa: E402
 
-# --- INICIALIZAÇÃO E AUTOCORREÇÃO DO BANCO DE DADOS ---
-# A criação de tabelas foi movida para um comando explícito de migração
-# (ex: 'make migrate-docker') para seguir as melhores práticas.
-# Isso evita que a aplicação tente modificar o schema do banco de dados
-# toda vez que ela é iniciada, o que é problemático em ambientes com múltiplos
-# workers (Gunicorn) e pode causar 'race conditions'.
-# with app.app_context():
-#     db.metadata.create_all(db.engine, checkfirst=True)
-
-
-# SOLUÇÃO DEFINITIVA: Apenas cria os diretórios se não estivermos em um ambiente de teste.
-# O Pytest define a variável de ambiente 'PYTEST_CURRENT_TEST' automaticamente.
-# Esta verificação ocorre antes da configuração do Flask, resolvendo o problema de ordem de inicialização.
-if "PYTEST_CURRENT_TEST" not in os.environ:
-    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
-
-
 # --- ROTAS DE HEALTH CHECK PARA KUBERNETES ---
 
 
