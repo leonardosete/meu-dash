@@ -66,7 +66,8 @@ jobs:
         run: bandit -r backend/src -ll -ii
 
       - name: Run Backend Tests
-        run: pytest backend/
+        # CORREÇÃO: Adiciona o PYTHONPATH para que o pytest encontre o módulo 'src'.
+        run: PYTHONPATH=backend pytest backend/
 
       # 5. Validação do Frontend
       - name: Lint Frontend
@@ -81,7 +82,7 @@ jobs:
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # Pinned to a specific commit
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKHUB_TOKEN }}
 
       # 7. Build e Push da Imagem (apenas em push para 'main')
       - name: Set up Docker Buildx
