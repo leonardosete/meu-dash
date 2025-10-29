@@ -36,7 +36,16 @@ def sample_dataframe():
             "server4",
             "server5",
         ],
-        "metric_name": ["cpu", "cpu", "memory", "memory", "disk", "cpu", "cpu", "network"],
+        "metric_name": [
+            "cpu",
+            "cpu",
+            "memory",
+            "memory",
+            "disk",
+            "cpu",
+            "cpu",
+            "network",
+        ],
         "assignment_group": [
             "group_a",
             "group_a",
@@ -80,9 +89,36 @@ def sample_dataframe():
             STATUS_NOT_OK,
             STATUS_NOT_OK,
         ],
-        "severity": ["Alto", "Alto", "Medio", "Medio", "Crítico", "Alto", "Alto", "Crítico"],
-        "sn_priority_group": ["Alto(a)", "Alto(a)", "Moderado(a)", "Moderado(a)", "Alto(a)", "Baixo(a)", "Baixo(a)", "Alto(a)"],
-        "node": ["node1", "node1", "node2", "node2", "node3", "node4", "node4", "node5"],
+        "severity": [
+            "Alto",
+            "Alto",
+            "Medio",
+            "Medio",
+            "Crítico",
+            "Alto",
+            "Alto",
+            "Crítico",
+        ],
+        "sn_priority_group": [
+            "Alto(a)",
+            "Alto(a)",
+            "Moderado(a)",
+            "Moderado(a)",
+            "Alto(a)",
+            "Baixo(a)",
+            "Baixo(a)",
+            "Alto(a)",
+        ],
+        "node": [
+            "node1",
+            "node1",
+            "node2",
+            "node2",
+            "node3",
+            "node4",
+            "node4",
+            "node5",
+        ],
         "source": [
             "source1",
             "source1",
@@ -127,7 +163,9 @@ def sample_dataframe():
 def test_analisar_grupos(sample_dataframe):
     """Testa se a função analisar_grupos agrupa corretamente os alertas."""
     summary = analisar_grupos(sample_dataframe)
-    assert len(summary) == 5  # Espera 5 grupos únicos após a adição de mais dados de teste
+    assert (
+        len(summary) == 5
+    )  # Espera 5 grupos únicos após a adição de mais dados de teste
     assert "status_chronology" in summary.columns
 
     # Testa a cronologia de um grupo específico
@@ -146,12 +184,28 @@ def test_adicionar_acao_sugerida():
             ["Closed", "Closed"],  # Sempre OK
             [NO_STATUS, NO_STATUS],  # Status Ausente
             [],  # Vazio, deve ser status ausente
-            ["Closed", "Closed", "Closed", "Closed", "Closed", "Closed"], # Instabilidade Crônica
-            ["No Task Found"], # Falha Persistente (No Task Found)
+            [
+                "Closed",
+                "Closed",
+                "Closed",
+                "Closed",
+                "Closed",
+                "Closed",
+            ],  # Instabilidade Crônica
+            ["No Task Found"],  # Falha Persistente (No Task Found)
         ],
         "alert_count": [2, 2, 2, 2, 2, 0, 6, 1],
         # Adiciona a coluna 'last_tasks_status' que agora é necessária pela função
-        COL_LAST_TASK_STATUS: ["Closed", "Closed Incomplete", "Closed Incomplete", "Closed", NO_STATUS, NO_STATUS, "Closed", "No Task Found"]
+        COL_LAST_TASK_STATUS: [
+            "Closed",
+            "Closed Incomplete",
+            "Closed Incomplete",
+            "Closed",
+            NO_STATUS,
+            NO_STATUS,
+            "Closed",
+            "No Task Found",
+        ],
     }
     df = pd.DataFrame(data)
     df = adicionar_acao_sugerida(df)

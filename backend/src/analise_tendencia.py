@@ -104,10 +104,10 @@ def _determine_verdict(kpis):
             else "Alta eficácia na resolução de Casos do período anterior."
         )
         verdict_text = (
-            '⚠️ <strong>Alta Eficácia | Baixa Estabilidade:</strong><br>'
+            "⚠️ <strong>Alta Eficácia | Baixa Estabilidade:</strong><br>"
             f'<span style="display: block; margin-top: 10px; font-size: 0.95em;">A análise mostra dois pontos distintos:<ul><li style="color: {CSS_COLOR_SUCCESS};"><strong>Ponto Positivo:</strong> '
             f'{ponto_positivo_texto}</li><li style="color: {CSS_COLOR_DANGER};"><strong>Ponto de Atenção:</strong> A operação continua instável, gerando <strong>'
-            f'{str(kpis["new"])} novos Casos</strong> que precisam de atuaçao - tratar causa raiz ou criar remediação.</li></ul></span>'
+            f"{str(kpis['new'])} novos Casos</strong> que precisam de atuaçao - tratar causa raiz ou criar remediação.</li></ul></span>"
         )
         return verdict_text, "highlight-warning"
     if kpis["total_p2"] < kpis["total_p1"]:
@@ -128,7 +128,12 @@ def _determine_verdict(kpis):
 
 
 def _determine_action_points(
-    kpis, new_cases_summary, persistent_summary, is_direct_comparison, run_folder=None, base_url=""
+    kpis,
+    new_cases_summary,
+    persistent_summary,
+    is_direct_comparison,
+    run_folder=None,
+    base_url="",
 ):
     """Determina os pontos de ação, vitórias e links com base nos dados."""
     action_point = ""
@@ -137,7 +142,9 @@ def _determine_action_points(
         sanitized_squad_name = re.sub(
             r"[^a-zA-Z0-9_-]", "", top_new_squad.replace(" ", "_")
         )
-        squad_highlight_html = f'<span style="color: {CSS_COLOR_DANGER};">{escape(top_new_squad)}</span>'
+        squad_highlight_html = (
+            f'<span style="color: {CSS_COLOR_DANGER};">{escape(top_new_squad)}</span>'
+        )
         if is_direct_comparison:
             action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> '{squad_highlight_html}'</strong> registrou o maior número de Casos sem remediação recentemente. Focar a investigação nesta equipe."
         else:
@@ -185,7 +192,12 @@ def generate_executive_summary_html(
         recognition_point,
         general_action_plan_link,
     ) = _determine_action_points(
-        kpis, new_cases_summary, persistent_summary, is_direct_comparison, run_folder, base_url
+        kpis,
+        new_cases_summary,
+        persistent_summary,
+        is_direct_comparison,
+        run_folder,
+        base_url,
     )
 
     summary_html = f"""
@@ -268,7 +280,9 @@ def prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao):
     """Prepara todos os DataFrames necessários para o relatório de tendência."""
 
     # Casos novos
-    new_cases_df = merged_df[merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_RIGHT_ONLY].copy()
+    new_cases_df = merged_df[
+        merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_RIGHT_ONLY
+    ].copy()
     new_problems_summary = (
         new_cases_df.groupby(COL_SHORT_DESCRIPTION, observed=True)
         .agg(
@@ -280,7 +294,9 @@ def prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao):
     new_problems_summary["count_p1"] = 0
 
     # Casos resolvidos
-    resolved_cases_df = merged_df[merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_LEFT_ONLY].copy()
+    resolved_cases_df = merged_df[
+        merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_LEFT_ONLY
+    ].copy()
     resolved_problems_summary = (
         resolved_cases_df.groupby(COL_SHORT_DESCRIPTION, observed=True)
         .agg(
@@ -292,7 +308,9 @@ def prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao):
     resolved_problems_summary["count_p2"] = 0
 
     # Casos persistentes (com variação)
-    persistent_cases_df = merged_df[merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_BOTH].copy()
+    persistent_cases_df = merged_df[
+        merged_df[MERGE_COL_INDICATOR] == MERGE_VAL_BOTH
+    ].copy()
     varying_problems_summary = (
         persistent_cases_df.groupby(COL_SHORT_DESCRIPTION, observed=True)
         .agg(
@@ -314,7 +332,9 @@ def prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao):
     )
     squad_trends_p2 = (
         df_p2_atuacao.groupby(COL_ASSIGNMENT_GROUP, observed=True)
-        .agg(count_p2=(COL_ALERT_COUNT, "sum"), num_cases=(COL_ASSIGNMENT_GROUP, "size"))
+        .agg(
+            count_p2=(COL_ALERT_COUNT, "sum"), num_cases=(COL_ASSIGNMENT_GROUP, "size")
+        )
         .reset_index()
     )
     squad_trends_merged = pd.merge(
@@ -379,7 +399,9 @@ def generate_kpis_html(kpis):
     variation_text = ""
     if persistent_alerts_variation != 0:
         sign = "+" if persistent_alerts_variation > 0 else ""
-        color = CSS_COLOR_DANGER if persistent_alerts_variation > 0 else CSS_COLOR_SUCCESS
+        color = (
+            CSS_COLOR_DANGER if persistent_alerts_variation > 0 else CSS_COLOR_SUCCESS
+        )
         variation_text = f' <span style="font-weight: 600; color: {color};">({sign}{persistent_alerts_variation})</span>'
 
     kpi_html = "<h2>Balanço Operacional: O Fluxo de Casos</h2>"
@@ -559,7 +581,9 @@ def generate_persistent_cases_table_html(summary_df, detailed_df, label_p1, labe
 
     total_change_sign = "+" if total_change > 0 else ""
     total_change_color = (
-        CSS_COLOR_DANGER if total_change > 0 else (CSS_COLOR_SUCCESS if total_change < 0 else "var(--text-secondary-color)")
+        CSS_COLOR_DANGER
+        if total_change > 0
+        else (CSS_COLOR_SUCCESS if total_change < 0 else "var(--text-secondary-color)")
     )
 
     table_footer = "<tfoot><tr><td>Total</td>"
@@ -618,7 +642,9 @@ def generate_trend_table_html(df_merged, label_p1, label_p2):
 
     total_change_sign = "+" if total_change > 0 else ""
     total_change_color = (
-        CSS_COLOR_DANGER if total_change > 0 else (CSS_COLOR_SUCCESS if total_change < 0 else "var(--text-secondary-color)")
+        CSS_COLOR_DANGER
+        if total_change > 0
+        else (CSS_COLOR_SUCCESS if total_change < 0 else "var(--text-secondary-color)")
     )
 
     table_footer = "<tfoot><tr><td>Total</td>"
@@ -717,7 +743,7 @@ def gerar_analise_comparativa(
     <p class="lead" style="font-size: 1.2em; color: var(--text-secondary-color); margin-top: -15px;">Foco nos Casos onde a remediação falhou ou não existe. </p>
     """
     body += f"<div class='definition-box' style='margin-top: 30px;'><strong>Período Anterior:</strong> {periodo_anterior_text}<br><strong>Período Recente:</strong> {periodo_recente_text}</div>"
-    
+
     executive_summary_html = generate_executive_summary_html(
         kpis,
         trend_data["persistent_squads_summary"],
@@ -727,7 +753,7 @@ def gerar_analise_comparativa(
         base_url=base_url,
     )
     body += executive_summary_html
-    
+
     body += f"<div class='card'>{generate_kpis_html(kpis)}</div>"
 
     chevron_svg_collapsible = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>'

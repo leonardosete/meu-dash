@@ -243,7 +243,9 @@ def _render_conceitos_section() -> str:
     """
 
 
-def _render_notification_banners(num_logs_invalidos: int, trend_report_path: str) -> str:
+def _render_notification_banners(
+    num_logs_invalidos: int, trend_report_path: str
+) -> str:
     """Renderiza os banners de notificação para qualidade de dados e análise de tendência."""
     banners_html = ""
     # Define os estilos do banner uma vez para ser usado por ambos os avisos
@@ -373,21 +375,24 @@ def renderizar_resumo_executivo(
     </style>
     """
     body_content = list_card_styles
-    
+
     # Adiciona o cabeçalho com o link de volta e o título principal
     body_content += f"""
     <div class="report-header">
         <a href="{frontend_url}" class="home-button">Página Inicial</a>
     </div>
     """
-    
+
     body_content += f"<div class='definition-box' style='text-align: center;'>{date_range_text}</div><!-- AI_SUMMARY_PLACEHOLDER -->"
-    body_content += renderizar_template_string(_render_conceitos_section(), CHEVRON_SVG=CHEVRON_SVG)
+    body_content += renderizar_template_string(
+        _render_conceitos_section(), CHEVRON_SVG=CHEVRON_SVG
+    )
     body_content += _render_notification_banners(num_logs_invalidos, trend_report_path)
 
     # Renderiza o restante do corpo, que já usa f-strings de forma segura
     body_content += renderizar_template_string(
-        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}VISÃO GERAL</button>', CHEVRON_SVG=CHEVRON_SVG
+        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}VISÃO GERAL</button>',
+        CHEVRON_SVG=CHEVRON_SVG,
     )
     body_content += '<div class="content" style="display: block; padding-top: 20px;">'
 
@@ -471,7 +476,7 @@ def renderizar_resumo_executivo(
             'class="download-icon"', 'class="download-icon" style="opacity: 0.4;"'
         )
         parcial_view_icon_html = f'<span class="download-link" title="Nenhum caso de sucesso parcial detectado." style="cursor: not-allowed;">{disabled_svg}</span>'
-    
+
     parcial_card_class = (
         "card-neon card-neon-warning"
         if grupos_sucesso_parcial > 0
@@ -597,7 +602,8 @@ def renderizar_resumo_executivo(
     body_content += "</div></div>"
 
     body_content += renderizar_template_string(
-        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TOP 5 - SEM REMEDIAÇÃO</button>', CHEVRON_SVG=CHEVRON_SVG
+        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TOP 5 - SEM REMEDIAÇÃO</button>',
+        CHEVRON_SVG=CHEVRON_SVG,
     )
     body_content += '<div class="content" style="display: none; padding-top: 20px;"><div class="grid-container" style="grid-template-columns: 1fr 1fr; align-items: stretch; gap: 20px;">'
     tooltip_squads = "Squads com maior número de Casos sem remediação."
@@ -670,7 +676,8 @@ def renderizar_resumo_executivo(
     body_content += "</div></div>"
 
     body_content += renderizar_template_string(
-        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TENDÊNCIAS E OPORTUNIDADES</button>', CHEVRON_SVG=CHEVRON_SVG
+        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TENDÊNCIAS E OPORTUNIDADES</button>',
+        CHEVRON_SVG=CHEVRON_SVG,
     )
     body_content += '<div class="content" style="display: none; padding-top: 20px;"><div class="grid-container" style="grid-template-columns: 1fr; gap: 20px;">'
 
@@ -723,7 +730,8 @@ def renderizar_resumo_executivo(
     body_content += "</div></div></div>"
 
     body_content += renderizar_template_string(
-        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TOP 10 - ALERTAS (GERAL)</button>', CHEVRON_SVG=CHEVRON_SVG
+        '<button type="button" class="collapsible-row active">{{ CHEVRON_SVG }}TOP 10 - ALERTAS (GERAL)</button>',
+        CHEVRON_SVG=CHEVRON_SVG,
     )
     body_content += '<div class="content" style="display: none; padding-top: 20px;">'
     tooltip_recorrentes = "Os 10 tipos de problemas que mais ocorreram (volume total de alertas), independente da automação."

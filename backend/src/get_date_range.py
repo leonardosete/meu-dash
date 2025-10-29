@@ -22,9 +22,7 @@ def get_date_range_from_file(filepath: str) -> Optional[str]:
             sep=None,
             engine="python",
         )
-        datetimes = pd.to_datetime(
-            df["sys_created_on"], errors="coerce", dayfirst=True
-        )
+        datetimes = pd.to_datetime(df["sys_created_on"], errors="coerce", dayfirst=True)
         valid_dates = datetimes.dropna()
 
         if valid_dates.empty:

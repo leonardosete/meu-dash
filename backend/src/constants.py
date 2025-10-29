@@ -47,7 +47,13 @@ SEVERITY_WEIGHTS = {
     "ok": 0,
     "limpar": 0,
 }
-PRIORITY_GROUP_WEIGHTS = {"Urgente": 10, "Alto(a)": 8, "Moderado(a)": 5, "Baixo(a)": 2, "Vazio": 1}
+PRIORITY_GROUP_WEIGHTS = {
+    "Urgente": 10,
+    "Alto(a)": 8,
+    "Moderado(a)": 5,
+    "Baixo(a)": 2,
+    "Vazio": 1,
+}
 ACAO_WEIGHTS = {
     ACAO_FALHA_PERSISTENTE: 1.5,
     ACAO_INTERMITENTE: 1.2,

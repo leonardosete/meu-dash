@@ -45,7 +45,10 @@ logger = logging.getLogger(__name__)
 # PROCESSAMENTO E ANÁLISE DE DADOS
 # =============================================================================
 
-def _validar_e_separar_linhas_invalidas(df: pd.DataFrame, output_dir: str) -> Tuple[pd.DataFrame, int]:
+
+def _validar_e_separar_linhas_invalidas(
+    df: pd.DataFrame, output_dir: str
+) -> Tuple[pd.DataFrame, int]:
     """
     Valida a integridade dos dados de um DataFrame e separa as linhas inválidas.
 
@@ -69,20 +72,27 @@ def _validar_e_separar_linhas_invalidas(df: pd.DataFrame, output_dir: str) -> Tu
     mask_group_cols_na = df[GROUP_COLS].isnull().any(axis=1)
     if mask_group_cols_na.any():
         df_group_cols_na = df[mask_group_cols_na].copy()
-        df_group_cols_na["invalidated"] = "Linha malformada ou truncada (colunas de agrupamento essenciais ausentes)"
+        df_group_cols_na["invalidated"] = (
+            "Linha malformada ou truncada (colunas de agrupamento essenciais ausentes)"
+        )
         all_invalid_dfs.append(df_group_cols_na)
         invalid_indices.update(df_group_cols_na.index)
 
     # VALIDAÇÃO 2: Formato dos Dados
     if COL_HAS_REMEDIATION_TASK in df.columns:
-        df[COL_HAS_REMEDIATION_TASK] = df[COL_HAS_REMEDIATION_TASK].astype(str).str.strip()
+        df[COL_HAS_REMEDIATION_TASK] = (
+            df[COL_HAS_REMEDIATION_TASK].astype(str).str.strip()
+        )
         valid_statuses = {STATUS_OK, STATUS_NOT_OK}
         mask_formato_invalido = ~df.index.isin(invalid_indices) & (
-            df[COL_HAS_REMEDIATION_TASK].notna() & ~df[COL_HAS_REMEDIATION_TASK].isin(valid_statuses)
+            df[COL_HAS_REMEDIATION_TASK].notna()
+            & ~df[COL_HAS_REMEDIATION_TASK].isin(valid_statuses)
         )
         if mask_formato_invalido.any():
             df_formato_invalido = df[mask_formato_invalido].copy()
-            df_formato_invalido["invalidated"] = "Formato de has_remediation_task inesperado"
+            df_formato_invalido["invalidated"] = (
+                "Formato de has_remediation_task inesperado"
+            )
             all_invalid_dfs.append(df_formato_invalido)
             invalid_indices.update(df_formato_invalido.index)
 
@@ -99,8 +109,12 @@ def _validar_e_separar_linhas_invalidas(df: pd.DataFrame, output_dir: str) -> Tu
     if all_invalid_dfs:
         df_invalidos_total = pd.concat(all_invalid_dfs, ignore_index=True)
         log_invalidos_path = os.path.join(output_dir, LOG_INVALIDOS_FILENAME)
-        logger.warning(f"Detectadas {num_invalidos} linhas inválidas. Registrando em '{log_invalidos_path}'...")
-        df_invalidos_total.to_csv(log_invalidos_path, index=False, encoding="utf-8-sig", sep=";")
+        logger.warning(
+            f"Detectadas {num_invalidos} linhas inválidas. Registrando em '{log_invalidos_path}'..."
+        )
+        df_invalidos_total.to_csv(
+            log_invalidos_path, index=False, encoding="utf-8-sig", sep=";"
+        )
         df = df.drop(index=list(invalid_indices)).reset_index(drop=True)
 
     return df, num_invalidos
@@ -156,7 +170,9 @@ def carregar_dados(filepath: str, output_dir: str) -> Tuple[pd.DataFrame, int]:
     df, num_invalidos = _validar_e_separar_linhas_invalidas(df, output_dir)
 
     # O pré-processamento final só ocorre no DataFrame limpo.
-    df[COL_CREATED_ON] = pd.to_datetime(df[COL_CREATED_ON], errors="coerce", format="mixed")
+    df[COL_CREATED_ON] = pd.to_datetime(
+        df[COL_CREATED_ON], errors="coerce", format="mixed"
+    )
     for col in GROUP_COLS:
         df[col] = df[col].fillna(UNKNOWN).replace("", UNKNOWN)
     # Garante que a coluna exista antes de tentar preencher NaNs
@@ -188,7 +204,7 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     if COL_LAST_TASK_STATUS not in df.columns:
         df["acao_sugerida"] = ACAO_STATUS_AUSENTE
         return df
-        
+
     SUCCESS_STATUSES = {"Closed"}
     PARTIAL_SUCCESS_STATUSES = {"Closed Skipped", "Canceled"}
     ANY_SUCCESS_STATUSES = SUCCESS_STATUSES.union(PARTIAL_SUCCESS_STATUSES)
@@ -202,7 +218,8 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     )
     # Nova variável para detectar histórico de falhas (qualquer status que não seja de sucesso)
     has_failure_in_history = df["status_chronology"].apply(
-        lambda c: bool(c) and any(s not in ANY_SUCCESS_STATUSES and s != NO_STATUS for s in c)
+        lambda c: bool(c)
+        and any(s not in ANY_SUCCESS_STATUSES and s != NO_STATUS for s in c)
     )
 
     # Árvore de decisão hierárquica e definitiva, reconstruída para clareza e correção.
@@ -212,7 +229,8 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
         # PRIORIDADE 1: Se a tarefa não foi encontrada, é uma falha de remediação.
         last_status == "No Task Found",
         # PRIORIDADE 2: Casos crônicos, mesmo que sejam "sucesso pleno", devem ser tratados como instabilidade.
-        (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES) & last_status.isin(ANY_SUCCESS_STATUSES),
+        (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES)
+        & last_status.isin(ANY_SUCCESS_STATUSES),
         # PRIORIDADE 3: Último status NÃO é sucesso pleno, mas já teve sucesso E falha no passado -> INTERMITENTE
         (~last_status.isin(SUCCESS_STATUSES)) & has_success & has_failure_in_history,
         # PRIORIDADE 4: Último status é SUCESSO PLENO, mas já teve falha no passado -> ESTABILIZADA
@@ -226,7 +244,7 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     ]
     choices = [
         ACAO_STATUS_AUSENTE,
-        ACAO_FALHA_PERSISTENTE, # Trata "No Task Found" como falha persistente
+        ACAO_FALHA_PERSISTENTE,  # Trata "No Task Found" como falha persistente
         ACAO_INSTABILIDADE_CRONICA,
         ACAO_INTERMITENTE,
         ACAO_ESTABILIZADA,
@@ -262,15 +280,23 @@ def _calcular_fatores_de_ponderacao(summary: pd.DataFrame) -> pd.DataFrame:
     # Fator 2: Ineficiência da Task de Automação
     if "status_chronology" not in summary.columns:
         summary["fator_ineficiencia_task"] = 1.0
-        logger.warning("Coluna 'status_chronology' não encontrada. Fator de ineficiência de tasks não será aplicado.")
+        logger.warning(
+            "Coluna 'status_chronology' não encontrada. Fator de ineficiência de tasks não será aplicado."
+        )
     else:
         default_weight = TASK_STATUS_WEIGHTS.get("default", 1.0)
+
         def get_max_inefficiency_factor(chronology):
             if not chronology:
                 return default_weight
             # Encontra o peso máximo (pior caso) na cronologia
-            return max(TASK_STATUS_WEIGHTS.get(status, default_weight) for status in chronology)
-        summary["fator_ineficiencia_task"] = summary["status_chronology"].apply(get_max_inefficiency_factor)
+            return max(
+                TASK_STATUS_WEIGHTS.get(status, default_weight) for status in chronology
+            )
+
+        summary["fator_ineficiencia_task"] = summary["status_chronology"].apply(
+            get_max_inefficiency_factor
+        )
 
     # Fator 3: Volume de Alertas
     summary["fator_volume"] = 1 + np.log(summary["alert_count"].clip(1))
@@ -298,7 +324,13 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Analisando e agrupando alertas...")
 
     # Normaliza a coluna de severidade (lowercase, sem acentos) para a busca no mapa.
-    severity_normalized = df[COL_SEVERITY].str.lower().str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
+    severity_normalized = (
+        df[COL_SEVERITY]
+        .str.lower()
+        .str.normalize("NFKD")
+        .str.encode("ascii", errors="ignore")
+        .str.decode("utf-8")
+    )
     # Mapeia a versão normalizada para a chave padrão e depois para o peso.
     severity_standardized = severity_normalized.map(SEVERITY_MAP)
     df["severity_score"] = severity_standardized.map(SEVERITY_WEIGHTS).fillna(0)
@@ -312,9 +344,11 @@ def analisar_grupos(df: pd.DataFrame) -> pd.DataFrame:
         COL_CREATED_ON: ["min", "max"],
         COL_NUMBER: ["nunique", lambda x: ", ".join(sorted(x.unique()))],
         # CORREÇÃO: A coluna 'statuses' agora é apenas um artefato legado. A cronologia real virá de 'tasks_status'.
-        COL_HAS_REMEDIATION_TASK: lambda x: ", ".join(sorted(x.dropna().astype(str).unique())),
+        COL_HAS_REMEDIATION_TASK: lambda x: ", ".join(
+            sorted(x.dropna().astype(str).unique())
+        ),
         "score_criticidade_final": "max",  # Pega o maior score de risco do grupo
-        COL_TASKS_STATUS: "first", # Pega o status da task do alerta mais recente
+        COL_TASKS_STATUS: "first",  # Pega o status da task do alerta mais recente
     }
     # GARANTIA DE ORDEM: Ordena o DataFrame pela data de criação ANTES do groupby.
     # Isso garante que a agregação 'first' para 'tasks_status' pegue o status do alerta mais recente.
@@ -402,14 +436,13 @@ FULL_EMOJI_MAP = {
     ACAO_INSTABILIDADE_CRONICA: "🔁",
 }
 
+
 def _save_csv(df, path, sort_by, full_emoji_map, ascending=False):
     """Função auxiliar para salvar DataFrames em CSV com formatação padronizada."""
     if not df.empty:
         # Garante que colunas de metadados internos não vazem para os relatórios.
         colunas_a_remover = ["processing_status", "error_message"]
-        df = df.drop(
-            columns=[col for col in colunas_a_remover if col in df.columns]
-        )
+        df = df.drop(columns=[col for col in colunas_a_remover if col in df.columns])
         df_to_save = df.copy()
         df_to_save["acao_sugerida"] = df_to_save["acao_sugerida"].apply(
             lambda x: f"{full_emoji_map.get(x, '')} {x}".strip()
@@ -418,19 +451,26 @@ def _save_csv(df, path, sort_by, full_emoji_map, ascending=False):
         for col in ["first_event", "last_event"]:
             if col in df_to_save.columns:
                 # Converte para datetime se não for, e então formata.
-                df_to_save[col] = pd.to_datetime(df_to_save[col]).dt.strftime('%d/%m/%Y %H:%M:%S')
+                df_to_save[col] = pd.to_datetime(df_to_save[col]).dt.strftime(
+                    "%d/%m/%Y %H:%M:%S"
+                )
 
         if "score_ponderado_final" in df_to_save.columns:
-            df_to_save["score_ponderado_final"] = df_to_save["score_ponderado_final"].round(1)
+            df_to_save["score_ponderado_final"] = df_to_save[
+                "score_ponderado_final"
+            ].round(1)
         df_to_save = df_to_save.sort_values(by=sort_by, ascending=ascending)
         if "atuar" in path or "plano-de-acao" in path:
             df_to_save["status_tratamento"] = "Pendente"
             df_to_save["responsavel"] = ""
             df_to_save["data_previsao_solucao"] = ""
-        colunas_presentes = [col for col in colunas_essenciais_relatorio if col in df_to_save.columns]
+        colunas_presentes = [
+            col for col in colunas_essenciais_relatorio if col in df_to_save.columns
+        ]
         df_final = df_to_save[colunas_presentes]
         df_final.to_csv(path, index=False, encoding="utf-8-sig", sep=";")
         logger.info(f"Relatório CSV gerado: {path}")
+
 
 def gerar_relatorios_csv(
     summary: pd.DataFrame,
@@ -449,11 +489,19 @@ def gerar_relatorios_csv(
         summary["acao_sugerida"] == ACAO_SUCESSO_PARCIAL
     ].copy()
 
-    _save_csv(alerts_atuacao, output_actuation, "score_ponderado_final", FULL_EMOJI_MAP, False)
-    _save_csv(alerts_ok, output_ok, "last_event", FULL_EMOJI_MAP, False)
-    _save_csv(alerts_instabilidade, output_instability, "alert_count", FULL_EMOJI_MAP, False)
     _save_csv(
-        alerts_sucesso_parcial, os.path.join(os.path.dirname(output_ok), "pontos_de_atencao.csv"), "score_ponderado_final", FULL_EMOJI_MAP, False
+        alerts_atuacao, output_actuation, "score_ponderado_final", FULL_EMOJI_MAP, False
+    )
+    _save_csv(alerts_ok, output_ok, "last_event", FULL_EMOJI_MAP, False)
+    _save_csv(
+        alerts_instabilidade, output_instability, "alert_count", FULL_EMOJI_MAP, False
+    )
+    _save_csv(
+        alerts_sucesso_parcial,
+        os.path.join(os.path.dirname(output_ok), "pontos_de_atencao.csv"),
+        "score_ponderado_final",
+        FULL_EMOJI_MAP,
+        False,
     )
     return alerts_atuacao.sort_values(by="score_ponderado_final", ascending=False)
 
@@ -469,7 +517,9 @@ def export_summary_to_json(summary: pd.DataFrame, output_path: str):
     summary_json = summary.copy()
     for col in ["first_event", "last_event"]:
         if col in summary_json.columns:
-            summary_json[col] = pd.to_datetime(summary_json[col]).dt.strftime('%d/%m/%Y %H:%M:%S')
+            summary_json[col] = pd.to_datetime(summary_json[col]).dt.strftime(
+                "%d/%m/%Y %H:%M:%S"
+            )
     summary_json.to_json(output_path, orient="records", indent=4, date_format="iso")
     logger.info(f"Resumo salvo em: {output_path}")
 

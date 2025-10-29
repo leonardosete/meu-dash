@@ -123,9 +123,11 @@ def calculate_kpi_summary(report_path: str) -> dict | None:
             for item in summary_data
             if item.get("acao_sugerida") == ACAO_SUCESSO_PARCIAL
         )
-        
+
         # CORREÇÃO: A lógica de sucesso agora considera todos os tipos de não-sucesso.
-        casos_sucesso = total_casos - casos_atuacao - casos_instabilidade - casos_sucesso_parcial
+        casos_sucesso = (
+            total_casos - casos_atuacao - casos_instabilidade - casos_sucesso_parcial
+        )
         taxa_sucesso = (casos_sucesso / total_casos) * 100 if total_casos > 0 else 0
 
         return {
@@ -215,25 +217,39 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
 
     # Se houver um relatório de tendência, tenta recriar o diagnóstico rápido
     if latest_report_files and latest_report_files.get("trend"):
-        latest_trend_analysis = TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).first()
+        latest_trend_analysis = TrendAnalysis.query.order_by(
+            TrendAnalysis.timestamp.desc()
+        ).first()
         if latest_trend_analysis:
             prev_report = latest_trend_analysis.previous_report
             curr_report = latest_trend_analysis.current_report
-            if (prev_report and curr_report and
-                os.path.exists(prev_report.json_summary_path) and
-                os.path.exists(curr_report.json_summary_path)):
-                
+            if (
+                prev_report
+                and curr_report
+                and os.path.exists(prev_report.json_summary_path)
+                and os.path.exists(curr_report.json_summary_path)
+            ):
                 df_p1 = load_summary_from_json(prev_report.json_summary_path)
                 df_p2 = load_summary_from_json(curr_report.json_summary_path)
 
                 if df_p1 is not None and df_p2 is not None:
-                    df_p1_atuacao = df_p1[df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
-                    df_p2_atuacao = df_p2[df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)].copy()
+                    df_p1_atuacao = df_p1[
+                        df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)
+                    ].copy()
+                    df_p2_atuacao = df_p2[
+                        df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)
+                    ].copy()
 
-                    kpis, merged_df = calculate_kpis_and_merged_df(df_p1_atuacao, df_p2_atuacao)
-                    trend_data = prepare_trend_dataframes(merged_df, df_p1_atuacao, df_p2_atuacao)
+                    kpis, merged_df = calculate_kpis_and_merged_df(
+                        df_p1_atuacao, df_p2_atuacao
+                    )
+                    trend_data = prepare_trend_dataframes(
+                        merged_df, df_p1_atuacao, df_p2_atuacao
+                    )
 
-                    current_run_folder = os.path.basename(os.path.dirname(curr_report.report_path))
+                    current_run_folder = os.path.basename(
+                        os.path.dirname(curr_report.report_path)
+                    )
                     backend_port = os.getenv("BACKEND_PORT", "5001")
                     base_url = f"http://127.0.0.1:{backend_port}"
 
@@ -265,15 +281,17 @@ def get_unified_history_list(Report, TrendAnalysis) -> list:
     reports = Report.query.order_by(Report.timestamp.desc()).all()
     for report in reports:
         try:
-            history_items.append({
-                "id": f"standard-{report.id}",
-                "type": "standard",
-                "timestamp": report.timestamp,
-                "original_filename": report.original_filename,
-                "date_range": report.date_range,
-                "run_folder": os.path.basename(os.path.dirname(report.report_path)),
-                "filename": os.path.basename(report.report_path),
-            })
+            history_items.append(
+                {
+                    "id": f"standard-{report.id}",
+                    "type": "standard",
+                    "timestamp": report.timestamp,
+                    "original_filename": report.original_filename,
+                    "date_range": report.date_range,
+                    "run_folder": os.path.basename(os.path.dirname(report.report_path)),
+                    "filename": os.path.basename(report.report_path),
+                }
+            )
         except Exception as e:
             logger.warning(f"Erro ao processar relatório padrão {report.id}: {e}")
 
@@ -282,8 +300,16 @@ def get_unified_history_list(Report, TrendAnalysis) -> list:
     for analysis in analyses:
         try:
             # Constrói um nome descritivo para a análise de tendência
-            prev_file = analysis.previous_report.original_filename if analysis.previous_report else "N/A"
-            curr_file = analysis.current_report.original_filename if analysis.current_report else "N/A"
+            prev_file = (
+                analysis.previous_report.original_filename
+                if analysis.previous_report
+                else "N/A"
+            )
+            curr_file = (
+                analysis.current_report.original_filename
+                if analysis.current_report
+                else "N/A"
+            )
             filename = f"Comparativo: {os.path.basename(curr_file)} vs {os.path.basename(prev_file)}"
 
             # Constrói o intervalo de datas combinado
@@ -291,15 +317,19 @@ def get_unified_history_list(Report, TrendAnalysis) -> list:
             if analysis.current_report and analysis.current_report.date_range:
                 date_range = analysis.current_report.date_range
 
-            history_items.append({
-                "id": f"comparative-{analysis.id}",
-                "type": "comparative",
-                "timestamp": analysis.timestamp,
-                "original_filename": filename,
-                "date_range": date_range,
-                "run_folder": os.path.basename(os.path.dirname(analysis.trend_report_path)),
-                "filename": os.path.basename(analysis.trend_report_path),
-            })
+            history_items.append(
+                {
+                    "id": f"comparative-{analysis.id}",
+                    "type": "comparative",
+                    "timestamp": analysis.timestamp,
+                    "original_filename": filename,
+                    "date_range": date_range,
+                    "run_folder": os.path.basename(
+                        os.path.dirname(analysis.trend_report_path)
+                    ),
+                    "filename": os.path.basename(analysis.trend_report_path),
+                }
+            )
         except Exception as e:
             logger.warning(f"Erro ao processar análise de tendência {analysis.id}: {e}")
 
@@ -541,7 +571,9 @@ def process_upload_and_generate_reports(
 
     # 7. Retornar resultado
     # Verifica a existência dos arquivos opcionais antes de incluir no retorno
-    action_plan_filename = "atuar.html" if os.path.exists(os.path.join(output_dir, "atuar.html")) else None
+    action_plan_filename = (
+        "atuar.html" if os.path.exists(os.path.join(output_dir, "atuar.html")) else None
+    )
 
     return {
         "run_folder": run_folder_name,
@@ -627,7 +659,7 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
         )
 
         output_trend_path = os.path.join(output_dir, "comparativo_periodos.html")
-        
+
         backend_port = os.getenv("BACKEND_PORT", "5001")
         base_url = f"http://127.0.0.1:{backend_port}"
 

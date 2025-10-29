@@ -1,12 +1,10 @@
 import os
 from datetime import datetime, timedelta, timezone
 from functools import wraps
-import json
 
 import jwt
 from flasgger import Swagger
-from flask import (Flask, abort, jsonify, request,
-                   send_from_directory, url_for)
+from flask import Flask, abort, jsonify, request, send_from_directory, url_for
 from flask_cors import CORS
 from flask_migrate import Migrate
 
@@ -16,7 +14,9 @@ from . import db  # Importa a instância única de __init__.py
 # Define o caminho dos templates de forma explícita para o ambiente de produção (Docker/K8s),
 # onde os arquivos são copiados para /app/templates.
 # CORREÇÃO: Define o caminho dos templates de forma relativa para maior portabilidade.
-app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), '..', 'templates'))
+app = Flask(
+    __name__, template_folder=os.path.join(os.path.dirname(__file__), "..", "templates")
+)
 
 
 # --- SWAGGER UI CONFIGURATION ---
@@ -57,7 +57,7 @@ swagger_template = {
             "type": "apiKey",
             "name": "Authorization",
             "in": "header",
-            "description": "Token de autorização JWT. Exemplo: \"Bearer {token}\"",
+            "description": 'Token de autorização JWT. Exemplo: "Bearer {token}"',
         }
     },
     "definitions": {
@@ -66,11 +66,11 @@ swagger_template = {
             "properties": {
                 "error": {
                     "type": "string",
-                    "description": "Mensagem de erro descritiva."
+                    "description": "Mensagem de erro descritiva.",
                 }
-            }
+            },
         }
-    }
+    },
 }
 swagger = Swagger(app, template=swagger_template)
 
@@ -82,23 +82,27 @@ CORS(
     resources={
         r"/api/*": {
             "origins": [
-                "http://localhost:5173", "http://127.0.0.1:5173",
-                "http://localhost:5174", "http://127.0.0.1:5174"
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5174",
             ]
         },
         r"/admin/*": {  # Adiciona a regra para as rotas de admin
             "origins": [
-                "http://localhost:5173", "http://127.0.0.1:5173",
-                "http://localhost:5174", "http://127.0.0.1:5174"
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5174",
             ]
-        }
+        },
     },
     supports_credentials=True,
 )
 
 
 # Importações que dependem da inicialização do 'app' e 'db'
-from . import services, models  # noqa: E42
+from . import services, models  # noqa: E402
 
 # --- INICIALIZAÇÃO E AUTOCORREÇÃO DO BANCO DE DADOS ---
 # A criação de tabelas foi movida para um comando explícito de migração
@@ -162,6 +166,7 @@ def token_required(f):
         return f(*args, **kwargs)
 
     return decorated
+
 
 # --- ROTAS PRINCIPAIS DA APLICAÇÃO ---
 
@@ -325,15 +330,15 @@ def upload_file_api():
             if result.get("json_summary_path")
             else None
         )
-        
+
         quick_diagnosis_html = result.get("quick_diagnosis_html")
 
         return jsonify(
-            success=True, 
-            report_urls=report_urls, 
+            success=True,
+            report_urls=report_urls,
             kpi_summary=new_kpi_summary,
             quick_diagnosis_html=quick_diagnosis_html,
-            date_range=result.get("date_range")
+            date_range=result.get("date_range"),
         )
 
     except Exception as e:
@@ -423,6 +428,8 @@ def compare_files_api():
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": f"Erro inesperado: {str(e)}"}), 500
+
+
 # =================================================================
 # FIM DA FUNÇÃO
 # =================================================================
@@ -526,7 +533,9 @@ def get_reports():
                 format: date-time
                 description: Data e hora da criação do relatório.
     """
-    reports_data = services.get_unified_history_list(models.Report, models.TrendAnalysis)
+    reports_data = services.get_unified_history_list(
+        models.Report, models.TrendAnalysis
+    )
 
     # Enriquece com as URLs antes de retornar
     for report in reports_data:
@@ -661,8 +670,7 @@ def login_api():
         # Torna o tempo de expiração configurável, com padrão de 1 hora.
         expiration_hours = int(os.getenv("JWT_EXPIRATION_HOURS", "1"))
         payload = {
-            "exp": datetime.now(timezone.utc)
-            + timedelta(hours=expiration_hours),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=expiration_hours),
             "iat": datetime.now(timezone.utc),
             "sub": "admin",
         }
