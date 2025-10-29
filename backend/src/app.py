@@ -34,10 +34,7 @@ def create_app(test_config=None):
             # CORREÇÃO DEFINITIVA: Adiciona uma configuração explícita para o Swagger UI,
             # fornecendo um objeto vazio para a configuração OAuth2. Isso impede
             # que o Flasgger injete um 'None' inválido no template JavaScript.
-            SWAGGER={
-                'uiversion': 3,
-                'oauth2': {}
-            }
+            SWAGGER={"uiversion": 3, "oauth2": {}},
         )
     else:
         # Carrega a configuração de teste se fornecida

@@ -22,6 +22,10 @@ export default defineConfig({
       "/apidocs": {
         target: "http://backend:5000",
       },
+      // **CORREÇÃO:** Redireciona o acesso aos arquivos estáticos do Flasgger
+      "/flasgger_static": {
+        target: "http://backend:5000",
+      },
       // Redireciona o acesso aos relatórios gerados
       "/reports": {
         target: "http://backend:5000",
