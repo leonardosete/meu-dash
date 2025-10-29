@@ -4,6 +4,7 @@ import React, {
   useCallback,
   ReactNode,
   useEffect,
+  useContext,
 } from "react";
 
 type Theme = "light" | "dark";
@@ -15,9 +16,7 @@ interface ThemeContextType {
 
 const THEME_KEY = "meu_dash_theme";
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(
-  undefined,
-);
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -55,4 +54,12 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
+};
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error("useTheme deve ser usado dentro de um ThemeProvider");
+  }
+  return context;
 };

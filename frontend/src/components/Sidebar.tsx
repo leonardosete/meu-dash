@@ -9,7 +9,7 @@ import {
   FilePlus2,
 } from "lucide-react";
 import { API_BASE_URL } from "../services/api";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../contexts/AuthContext";
 import { useDashboard } from "../contexts/DashboardContext";
 import ThemeToggle from "./ThemeToggle";
 

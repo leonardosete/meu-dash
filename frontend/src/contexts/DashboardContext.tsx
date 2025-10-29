@@ -3,6 +3,7 @@ import React, {
   useState,
   useCallback,
   ReactNode,
+  useContext,
 } from "react";
 import { ReportUrls } from "../types";
 
@@ -13,7 +14,7 @@ interface DashboardContextType {
   setQuickDiagnosis: (html: string | null) => void;
 }
 
-export const DashboardContext = createContext<DashboardContextType | undefined>(
+const DashboardContext = createContext<DashboardContextType | undefined>(
   undefined,
 );
 
@@ -46,4 +47,12 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({
       {children}
     </DashboardContext.Provider>
   );
+};
+
+export const useDashboard = () => {
+  const context = useContext(DashboardContext);
+  if (context === undefined) {
+    throw new Error("useDashboard must be used within a DashboardProvider");
+  }
+  return context;
 };

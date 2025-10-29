@@ -4,6 +4,7 @@ import React, {
   useCallback,
   ReactNode,
   useEffect,
+  useContext,
 } from "react";
 
 const TOKEN_KEY = "meu_dash_auth_token";
@@ -16,7 +17,7 @@ interface AuthContextType {
   logout: () => void;
 }
 
-export const AuthContext = createContext<AuthContextType>({
+const AuthContext = createContext<AuthContextType>({
   token: null,
   isAuthenticated: false,
   isInitializing: true, // A aplicação sempre começa em estado de inicialização
@@ -70,4 +71,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const value = { token, isAuthenticated, isInitializing, login, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+  }
+  return context;
 };
