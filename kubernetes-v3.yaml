@@ -115,7 +115,8 @@ spec:
         imagePullPolicy: Always
         # CORREÇÃO: O ponto de entrada da aplicação é a função create_app()
         # dentro do módulo src.app, e o diretório de trabalho é /app.
-        command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "src.app:create_app()", "--chdir", "/app"]
+        command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "src.app:app", "--chdir", "/app"]
+
         # Variáveis de ambiente no estilo explícito do v2
         env:
         - name: ADMIN_USER
