@@ -30,6 +30,9 @@ RUN apk add --no-cache nginx curl && \
 # Copia o código-fonte do backend
 COPY ./backend/src ./src
 
+# Copia o diretório de migrações do banco de dados. ESSENCIAL para 'flask db upgrade'.
+COPY ./backend/migrations ./migrations
+
 # Copia os templates HTML necessários para a geração de relatórios para o diretório /app/templates.
 COPY ./backend/templates /app/templates
 
@@ -43,5 +46,8 @@ COPY --from=frontend-builder /app/frontend/dist /var/www/html
 # Garante que o usuário 'nginx' (padrão do Alpine) possa ler os arquivos do frontend.
 RUN chown -R nginx:nginx /var/www/html && chmod -R 755 /var/www/html
 
-# O comando de inicialização será definido no manifesto do Kubernetes
-# para cada contêiner (Nginx e Gunicorn).
+# Define o comando padrão que será executado quando o contêiner iniciar.
+# Usar a "forma exec" (array JSON) é a melhor prática.
+# Este comando pode ser completamente sobrescrito pelo Kubernetes,
+# o que nos dá flexibilidade para rodar o servidor, migrações, etc.
+CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "src.app:app", "--chdir", "/app"]
