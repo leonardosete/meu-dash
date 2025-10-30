@@ -63,7 +63,8 @@ jobs:
         run: ruff check backend
 
       - name: Run Backend Security Scan
-        run: bandit -r backend/src -ll -ii
+        run: bandit -c pyproject.toml -r src -ll -ii
+        working-directory: ./backend
 
       - name: Run Backend Tests
         run: pytest
