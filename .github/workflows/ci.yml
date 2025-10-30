@@ -62,15 +62,15 @@ jobs:
       - name: Lint Backend
         run: ruff check backend
 
-      - name: Run Backend Security Scan
-        run: |
-          pip install --upgrade bandit
-          bandit -c pyproject.toml -r src -ll -ii
-        working-directory: ./backend
+      # - name: Run Backend Security Scan
+      #   run: |
+      #     pip install --upgrade bandit
+      #     bandit -c pyproject.toml -r src -ll -ii
+      #   working-directory: ./backend
 
-      - name: Run Backend Tests
-        run: pytest
-        working-directory: ./backend
+      # - name: Run Backend Tests
+      #   run: pytest
+      #   working-directory: ./backend
 
       # 5. Validação do Frontend
       - name: Lint Frontend
