@@ -67,6 +67,7 @@ jobs:
 
       - name: Run Backend Tests
         run: pytest
+        working-directory: ./backend
 
       # 5. Validação do Frontend
       - name: Lint Frontend
