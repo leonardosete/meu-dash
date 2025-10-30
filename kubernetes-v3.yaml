@@ -170,14 +170,36 @@ spec:
 
 ---
 # --- Ingress: Expõe o serviço para o mundo externo ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: smart-remedy-ingress
+#   namespace: smart-remedy
+#   annotations:
+#     # O Ingress Controller NGINX aplicará o certificado wildcard padrão
+#     # configurado via --default-ssl-certificate.
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#   - host: smart-remedy.devops-master.shop
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: smart-remedy
+#             port:
+#               number: 80
+
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: smart-remedy-ingress
+  name: smart-remedy-ingress-http
   namespace: smart-remedy
   annotations:
-    # O Ingress Controller NGINX aplicará o certificado wildcard padrão
-    # configurado via --default-ssl-certificate.
+    nginx.ingress.kubernetes.io/ssl-redirect: "false" # Desabilita o redirecionamento para HTTPS
 spec:
   ingressClassName: nginx
   rules:
