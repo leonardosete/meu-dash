@@ -72,19 +72,15 @@ spec:
       # --- Init Container: Executa a migração do banco de dados ANTES dos contêineres principais ---
       initContainers:
       - name: db-migrator
-        image: sevenleo/smart-remedy:latest # Usa a mesma imagem da aplicação
+        image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
-        # Este comando executa a migração do banco de dados.
         command: ["flask", "db", "upgrade"]
-        # As variáveis de ambiente são necessárias para o Flask encontrar a aplicação e o banco.
         env:
         - name: FLASK_APP
-          value: "src.app"
-        # O volume é montado para que o comando de migração possa acessar o arquivo do banco de dados.
+          value: "wsgi:app" # Aponta para o wsgi.py
         volumeMounts:
         - name: smart-remedy-data
           mountPath: /app/data
-        # Recursos mínimos, pois é uma tarefa de curta duração.
         resources:
           requests:
             cpu: "100m"
@@ -93,46 +89,27 @@ spec:
       serviceAccountName: smart-remedy-sa
       automountServiceAccountToken: false
 
-      containers:
-      # Contêiner do Nginx: serve o frontend e faz proxy para o backend
-      - name: smart-remedy-nginx
-        image: sevenleo/smart-remedy:latest
-        imagePullPolicy: Always
-        ports:
-        - name: http
-          containerPort: 80
-        command: ["nginx", "-g", "daemon off;"]
-        volumeMounts:
-        - name: smart-remedy-data
-          mountPath: /app/data
-        # Recursos ajustados para QoS "Guaranteed" (requests = limits), como no v2
-        resources:
-          requests:
-            cpu: "256m"
-            memory: "256Mi"
-            ephemeral-storage: "512Mi"
-          limits:
-            cpu: "256m"
-            memory: "256Mi"
-            ephemeral-storage: "512Mi"
-        readinessProbe:
-          httpGet:
-            path: /
-            port: http
-        livenessProbe:
-          httpGet:
-            path: /
-            port: http
+      # --- Volume compartilhado para o frontend ---
+      volumes:
+      - name: frontend-dist
+        emptyDir: {}
 
-      # Contêiner da API (Gunicorn/Flask): roda a lógica de negócio
+      # --- Contêiner para construir o frontend e copiar para o volume ---
+      initContainers:
+      - name: frontend-builder
+        image: sevenleo/smart-remedy:latest # A imagem já contém o build
+        imagePullPolicy: Always
+        command: ["/bin/sh", "-c", "cp -r /app/src/static/* /frontend-dist/"]
+        volumeMounts:
+        - name: frontend-dist
+          mountPath: /frontend-dist
+
+      containers:
+      # --- Contêiner da API (Gunicorn/Flask) ---
       - name: smart-remedy-api
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
-        # CORREÇÃO: O ponto de entrada da aplicação é a função create_app()
-        # dentro do módulo src.app, e o diretório de trabalho é /app.
-        command: ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "src.app:app", "--chdir", "/app"]
-
-        # Variáveis de ambiente no estilo explícito do v2
+        # O CMD do Dockerfile já é ["gunicorn", ...], então não precisamos de 'command'
         env:
         - name: ADMIN_USER
           valueFrom:
@@ -150,32 +127,68 @@ spec:
               name: admin-credentials
               key: SECRET_KEY
         - name: FLASK_APP
-          # Informa ao CLI do Flask onde encontrar a aplicação. Essencial para 'flask db upgrade'.
-          value: "src.app"
+          value: "wsgi:app"
         - name: FRONTEND_BASE_URL
           value: "https://smart-remedy.devops-master.shop"
         - name: JWT_EXPIRATION_HOURS
           value: "1"
+        ports:
+        - name: gunicorn
+          containerPort: 5000
         readinessProbe:
           httpGet:
             path: /health
             port: 5000
           initialDelaySeconds: 15
           periodSeconds: 10
-        # Recursos ajustados para QoS "Guaranteed" (requests = limits), como no v2
         resources:
           requests:
             cpu: "256m"
             memory: "512Mi"
-            ephemeral-storage: "512Mi"
           limits:
-            cpu: "256m"
-            memory: "512Mi"
-            ephemeral-storage: "512Mi"
+            cpu: "512m"
+            memory: "1Gi"
         volumeMounts:
         - name: smart-remedy-data
           mountPath: /app/data
-  # CORREÇÃO ERRO 2: Adicionado o storageClassName
+
+      # --- Contêiner Sidecar do Nginx ---
+      - name: smart-remedy-nginx
+        image: nginx:1.25-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 80
+        # Monta a configuração customizada do Nginx
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        # Monta o volume com os arquivos estáticos do frontend
+        - name: frontend-dist
+          mountPath: /var/www/html
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        resources:
+          requests:
+            cpu: "128m"
+            memory: "128Mi"
+          limits:
+            cpu: "256m"
+            memory: "256Mi"
+
+      # --- Volume para a configuração do Nginx ---
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: smart-remedy-nginx-conf
+
   volumeClaimTemplates:
   - metadata:
       name: smart-remedy-data
@@ -187,6 +200,43 @@ spec:
           storage: 2Gi
 
 ---
+# --- ConfigMap para a configuração do Nginx ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smart-remedy-nginx-conf
+  namespace: smart-remedy
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    events {
+        worker_connections 1024;
+    }
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        access_log /dev/stdout;
+        error_log /dev/stderr;
+        sendfile on;
+        keepalive_timeout 65;
+        server {
+            listen 80;
+            location ~ ^/(api|admin|apidocs|flasgger_static|reports|docs)/ {
+                proxy_pass http://127.0.0.1:5000;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            location / {
+                root /var/www/html;
+                try_files $uri $uri/ /index.html;
+            }
+        }
+    }
+
+---
 # --- Ingress: Expõe o serviço para o mundo externo ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -194,10 +244,7 @@ metadata:
   name: smart-remedy-ingress
   namespace: smart-remedy
   annotations:
-    # Força o redirecionamento de todas as requisições HTTP para HTTPS.
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    # Habilita o cabeçalho HTTP Strict Transport Security (HSTS) para maior segurança.
-    # Isso instrui os navegadores a sempre usarem HTTPS para este domínio.
     nginx.ingress.kubernetes.io/hsts: "true"
 spec:
   ingressClassName: nginx

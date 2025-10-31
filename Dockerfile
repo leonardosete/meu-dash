@@ -1,45 +1,47 @@
-# Stage 1: Build Frontend
+# Dockerfile de Produção Multi-Estágio com Nginx + Gunicorn
+
+# --- Estágio 1: Build do Frontend ---
 FROM node:20-alpine AS frontend-builder
-WORKDIR /app
-COPY frontend/package.json frontend/package-lock.json* ./
-# Use --no-optional to speed up install and reduce image size
-RUN npm install --no-optional
+
+WORKDIR /app/frontend
+
+COPY frontend/package*.json ./
+RUN npm install
+
 COPY frontend/ ./
+
 RUN npm run build
 
-# Stage 2: Build Backend
-FROM python:3.10-slim AS backend-builder
+# --- Estágio 2: Aplicação Final (Python Backend) ---
+# Esta imagem conterá apenas a aplicação Python e suas dependências.
+# O Nginx será executado em um contêiner sidecar separado.
+FROM python:3.10-alpine
+
 WORKDIR /app
+
+# Instala dependências de build, pacotes Python e depois limpa.
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY backend/ ./backend/
-COPY backend/migrations/ ./migrations/
+RUN apk add --no-cache --virtual .build-deps build-base python3-dev gcc libc-dev && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apk del .build-deps
 
-# Stage 3: Imagem Final de Produção com Nginx e Gunicorn
-FROM python:3.10-slim
-WORKDIR /app
-# Instala o Nginx
-RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+# Copia o código-fonte do backend
+COPY ./backend/src ./src
 
-# Copia os artefatos do backend
-COPY --from=backend-builder /app/backend ./src
-COPY --from=backend-builder /app/migrations ./migrations
-COPY --from=backend-builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
-# CORREÇÃO: Copia os executáveis (flask, gunicorn) para o PATH
-COPY --from=backend-builder /usr/local/bin /usr/local/bin
+# Copia o diretório de migrações do banco de dados.
+COPY ./backend/migrations ./migrations
 
-# Copia o build do frontend para a pasta de estáticos que o Nginx servirá
-COPY --from=frontend-builder /app/dist ./src/static
+# Copia os templates HTML necessários para a geração de relatórios.
+COPY ./backend/templates /app/templates
 
-# Copia as configurações e o ponto de entrada
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copia a documentação estática.
+COPY ./docs ./docs
+
+# Copia o ponto de entrada do WSGI
 COPY backend/wsgi.py .
 
-# Define as variáveis de ambiente
-ENV FLASK_APP=src.app
+# Expõe a porta do Gunicorn
+EXPOSE 5000
 
-EXPOSE 80
-
-# Define um ENTRYPOINT robusto e um CMD padrão
-ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["gunicorn --workers 4 --bind 127.0.0.1:5000 'src.app:app' --chdir /app & nginx -g 'daemon off;'"]
+# Define o comando padrão para iniciar a API com Gunicorn.
+CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "wsgi:app", "--chdir", "/app"]
