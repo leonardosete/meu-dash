@@ -6,8 +6,9 @@ import {
   UploadSuccessResponse,
 } from "../types";
 
-// Com o proxy configurado no Vite, a URL base é sempre relativa ao domínio atual.
-// Isso simplifica a configuração e funciona tanto em desenvolvimento quanto em produção.
+// CORREÇÃO: A URL base agora é uma string vazia. Isso força o Axios a fazer
+// requisições relativas ao domínio atual (ex: /api/v1/...), que é o
+// comportamento correto quando o frontend e o backend estão no mesmo domínio.
 export const API_BASE_URL = "";
 
 const apiClient = axios.create({
@@ -79,7 +80,11 @@ export const uploadStandardAnalysis = async (
  */
 export const getReports = async (): Promise<Report[]> => {
   const response = await apiClient.get("/api/v1/reports");
-  return response.data;
+  // CORREÇÃO: Monta a URL completa no frontend usando a URL relativa da API.
+  return response.data.map((report) => ({
+    ...report,
+    url: `${API_BASE_URL}${report.url}`,
+  }));
 };
 
 /**
@@ -120,5 +125,9 @@ export const uploadComparativeAnalysis = async (
       "Content-Type": "multipart/form-data",
     },
   });
-  return response.data;
+  // CORREÇÃO: Monta a URL completa no frontend.
+  return {
+    ...response.data,
+    report_url: `${API_BASE_URL}${response.data.report_url}`,
+  };
 };

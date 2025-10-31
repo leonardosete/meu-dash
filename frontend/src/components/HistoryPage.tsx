@@ -108,7 +108,7 @@ const HistoryPage: React.FC = () => {
                       <td>
                         <div className="action-buttons-container">
                           <a
-                            href={`${api.API_BASE_URL}${report.url}`}
+                            href={report.url}
                             className="action-button view"
                           >
                             Visualizar
@@ -155,7 +155,7 @@ const HistoryPage: React.FC = () => {
                       <td>
                         <div className="action-buttons-container">
                           <a
-                            href={`${api.API_BASE_URL}${report.url}`}
+                            href={report.url}
                             className="action-button view"
                           >
                             Visualizar
