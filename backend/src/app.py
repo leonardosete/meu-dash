@@ -23,15 +23,15 @@ def create_app(test_config=None):
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
     )
 
-    # O ProxyFix é crucial para que o Flask entenda o cabeçalho X-Forwarded-Proto do Nginx.
+    # Adiciona o middleware para corrigir o schema (http/https) atrás de um proxy.
+    # x_for=1, x_proto=1, x_host=1 significa que confiamos nos cabeçalhos
+    # do proxy imediatamente à frente da aplicação.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # --- CONFIGURAÇÃO CENTRALIZADA ---
     app.config.from_mapping(
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
-        # SOLUÇÃO RAIZ (1/2): Força o Flask a preferir HTTPS ao gerar URLs.
-        PREFERRED_URL_SCHEME="https",
     )
 
     if test_config is None:
@@ -46,6 +46,7 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     # Garante que as pastas existam APÓS a configuração ser carregada
+    # Apenas cria as pastas se não estiver em modo de teste
     if not app.config.get("TESTING"):
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
         os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
@@ -54,6 +55,7 @@ def create_app(test_config=None):
     db.init_app(app)
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
+    # --- CONFIGURAÇÃO EXPLÍCITA E ROBUSTA DO SWAGGER ---
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -121,6 +123,7 @@ def create_app(test_config=None):
         supports_credentials=True,
     )
 
+    # --- DECORADOR DE AUTENTICAÇÃO ---
     def token_required(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -145,29 +148,36 @@ def create_app(test_config=None):
 
         return decorated
 
+    # --- ROTAS DA APLICAÇÃO ---
     @app.route("/health")
     def health_check():
+        """
+        Verifica a saúde da aplicação.
+        ---
+        tags:
+          - Health
+        responses:
+          200:
+            description: A aplicação está funcionando.
+        """
         return jsonify({"status": "ok"}), 200
 
     @app.route("/api/v1/dashboard-summary")
     def get_dashboard_summary():
         """
+        Busca o resumo de dados para o dashboard principal.
         ---
         tags:
           - Dashboard
-        summary: Obtém os dados de resumo para o dashboard principal.
-        description: Retorna os KPIs do último relatório, o histórico de tendências e os links para os relatórios mais recentes.
         responses:
           200:
-            description: Dados de resumo retornados com sucesso.
+            description: Resumo dos dados do dashboard retornado com sucesso.
         """
         summary_data = services.get_dashboard_summary_data(
             db=db, Report=models.Report, TrendAnalysis=models.TrendAnalysis
         )
         latest_files = summary_data.get("latest_report_files")
         if latest_files:
-            # SOLUÇÃO RAIZ (2/2): Força a geração de URLs absolutas com `_external=True`.
-            # Combinado com PREFERRED_URL_SCHEME='https', isso garante links https.
             urls = {
                 "summary": url_for(
                     "serve_report",
@@ -196,7 +206,6 @@ def create_app(test_config=None):
                 "serve_report",
                 run_folder=trend["run_folder"],
                 filename=trend["filename"],
-                _external=True,
             )
         return jsonify(summary_data)
 
@@ -204,30 +213,22 @@ def create_app(test_config=None):
     @token_required
     def upload_file_api():
         """
+        Realiza o upload de um arquivo CSV para análise padrão.
         ---
         tags:
-          - Análise
-        summary: Realiza a análise padrão de um único arquivo CSV.
-        description: Processa um arquivo, gera o ecossistema de relatórios e o compara com o histórico.
+          - Analysis
         security:
           - Bearer: []
+        consumes:
+          - multipart/form-data
         parameters:
           - name: file_recente
             in: formData
             type: file
             required: true
-            description: O arquivo CSV de dados mais recente para análise.
         responses:
           200:
             description: Análise concluída com sucesso.
-          400:
-            description: Erro de validação (ex: arquivo ausente).
-            schema:
-              $ref: '#/definitions/Error'
-          500:
-            description: Erro interno no servidor durante o processamento.
-            schema:
-              $ref: '#/definitions/Error'
         """
         file_recente = request.files.get("file_recente")
         if not file_recente or file_recente.filename == "":
@@ -243,7 +244,6 @@ def create_app(test_config=None):
             )
             if result and result.get("warning"):
                 return jsonify({"error": result["warning"]}), 400
-            
             report_urls = {
                 "summary": url_for(
                     "serve_report",
@@ -288,35 +288,26 @@ def create_app(test_config=None):
     @token_required
     def compare_files_api():
         """
+        Realiza a comparação direta entre dois arquivos CSV.
         ---
         tags:
-          - Análise
-        summary: Realiza uma comparação direta entre dois arquivos CSV.
-        description: Processa dois arquivos e gera um relatório de tendência sob demanda.
+          - Analysis
         security:
           - Bearer: []
+        consumes:
+          - multipart/form-data
         parameters:
           - name: file_antigo
             in: formData
             type: file
             required: true
-            description: O arquivo CSV mais antigo para a comparação.
           - name: file_recente
             in: formData
             type: file
             required: true
-            description: O arquivo CSV mais recente para a comparação.
         responses:
           200:
             description: Comparação concluída com sucesso.
-          400:
-            description: Erro de validação (ex: arquivos ausentes).
-            schema:
-              $ref: '#/definitions/Error'
-          500:
-            description: Erro interno no servidor durante o processamento.
-            schema:
-              $ref: '#/definitions/Error'
         """
         file_antigo = request.files.get("file_antigo")
         file_recente = request.files.get("file_recente")
@@ -376,11 +367,10 @@ def create_app(test_config=None):
     @app.route("/api/v1/reports")
     def get_reports():
         """
+        Lista todos os relatórios de análise disponíveis.
         ---
         tags:
-          - Histórico
-        summary: Obtém a lista unificada de todos os relatórios gerados.
-        description: Retorna uma lista de relatórios de análise padrão e comparativa, ordenados por data.
+          - Reports
         responses:
           200:
             description: Lista de relatórios retornada com sucesso.
@@ -393,7 +383,6 @@ def create_app(test_config=None):
                 "serve_report",
                 run_folder=report["run_folder"],
                 filename=report["filename"],
-                _external=True,
             )
         return jsonify(reports_data)
 
@@ -401,11 +390,10 @@ def create_app(test_config=None):
     @token_required
     def delete_report_api(report_id):
         """
+        Exclui um relatório específico e seus artefatos.
         ---
         tags:
-          - Histórico
-        summary: Exclui um relatório de análise padrão e seus artefatos.
-        description: Requer autenticação de administrador. A exclusão é permanente.
+          - Reports
         security:
           - Bearer: []
         parameters:
@@ -413,16 +401,9 @@ def create_app(test_config=None):
             in: path
             type: integer
             required: true
-            description: O ID do relatório a ser excluído.
         responses:
           200:
             description: Relatório excluído com sucesso.
-          401:
-            description: Não autorizado (token ausente ou inválido).
-          404:
-            description: Relatório não encontrado.
-          500:
-            description: Erro interno no servidor.
         """
         try:
             success = services.delete_report_and_artifacts(
@@ -444,16 +425,21 @@ def create_app(test_config=None):
     @app.route("/admin/login", methods=["POST"])
     def login_api():
         """
+        Autentica um usuário administrativo e retorna um token JWT.
         ---
         tags:
-          - Autenticação
-        summary: Autentica um administrador e retorna um token JWT.
+          - Authentication
+        consumes:
+          - application/json
         parameters:
           - name: body
             in: body
             required: true
             schema:
               type: object
+              required:
+                - username
+                - password
               properties:
                 username:
                   type: string
@@ -462,10 +448,6 @@ def create_app(test_config=None):
         responses:
           200:
             description: Autenticação bem-sucedida.
-          400:
-            description: Requisição malformada.
-          401:
-            description: Credenciais inválidas.
         """
         auth_data = request.get_json()
         if (
