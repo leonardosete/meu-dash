@@ -69,15 +69,27 @@ spec:
       labels:
         app: smart-remedy
     spec:
-      # --- Init Container: Executa a migração do banco de dados ANTES dos contêineres principais ---
+      serviceAccountName: smart-remedy-sa
+      automountServiceAccountToken: false
+
+      # --- Volumes definidos para o Pod ---
+      volumes:
+      - name: frontend-dist
+        emptyDir: {}
+      - name: nginx-config
+        configMap:
+          name: smart-remedy-nginx-conf
+
+      # --- Init Containers (em uma única lista) ---
       initContainers:
+      # 1. DB Migrator: Prepara o banco de dados.
       - name: db-migrator
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
         command: ["flask", "db", "upgrade"]
         env:
         - name: FLASK_APP
-          value: "wsgi:app" # Aponta para o wsgi.py
+          value: "wsgi:app"
         volumeMounts:
         - name: smart-remedy-data
           mountPath: /app/data
@@ -85,31 +97,21 @@ spec:
           requests:
             cpu: "100m"
             memory: "128Mi"
-
-      serviceAccountName: smart-remedy-sa
-      automountServiceAccountToken: false
-
-      # --- Volume compartilhado para o frontend ---
-      volumes:
-      - name: frontend-dist
-        emptyDir: {}
-
-      # --- Contêiner para construir o frontend e copiar para o volume ---
-      initContainers:
-      - name: frontend-builder
-        image: sevenleo/smart-remedy:latest # A imagem já contém o build
+      # 2. Frontend Copier: Copia os arquivos do frontend da imagem para o volume compartilhado.
+      - name: frontend-copier
+        image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
-        command: ["/bin/sh", "-c", "cp -r /app/src/static/* /frontend-dist/"]
+        command: ["/bin/sh", "-c", "cp -r /app/frontend-dist/* /frontend-dist/"]
         volumeMounts:
         - name: frontend-dist
           mountPath: /frontend-dist
 
+      # --- Contêineres Principais ---
       containers:
       # --- Contêiner da API (Gunicorn/Flask) ---
       - name: smart-remedy-api
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
-        # O CMD do Dockerfile já é ["gunicorn", ...], então não precisamos de 'command'
         env:
         - name: ADMIN_USER
           valueFrom:
@@ -159,12 +161,10 @@ spec:
         ports:
         - name: http
           containerPort: 80
-        # Monta a configuração customizada do Nginx
         volumeMounts:
         - name: nginx-config
           mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
-        # Monta o volume com os arquivos estáticos do frontend
         - name: frontend-dist
           mountPath: /var/www/html
         readinessProbe:
@@ -182,12 +182,6 @@ spec:
           limits:
             cpu: "256m"
             memory: "256Mi"
-
-      # --- Volume para a configuração do Nginx ---
-      volumes:
-      - name: nginx-config
-        configMap:
-          name: smart-remedy-nginx-conf
 
   volumeClaimTemplates:
   - metadata:

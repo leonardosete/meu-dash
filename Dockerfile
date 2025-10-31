@@ -12,9 +12,7 @@ COPY frontend/ ./
 
 RUN npm run build
 
-# --- Estágio 2: Aplicação Final (Python Backend) ---
-# Esta imagem conterá apenas a aplicação Python e suas dependências.
-# O Nginx será executado em um contêiner sidecar separado.
+# --- Estágio 2: Aplicação Final (Python Backend + Frontend Assets) ---
 FROM python:3.14-alpine
 
 WORKDIR /app
@@ -39,6 +37,9 @@ COPY ./docs ./docs
 
 # Copia o ponto de entrada do WSGI
 COPY backend/wsgi.py .
+
+# Copia os arquivos estáticos do frontend (gerados no estágio 1) para um diretório na imagem final.
+COPY --from=frontend-builder /app/frontend/dist /app/frontend-dist
 
 # Expõe a porta do Gunicorn
 EXPOSE 5000
