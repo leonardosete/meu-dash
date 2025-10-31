@@ -7,6 +7,7 @@ from flasgger import Swagger
 from flask import Flask, abort, jsonify, request, send_from_directory, url_for
 from flask_cors import CORS
 from flask_migrate import Migrate
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import db
 
@@ -21,6 +22,11 @@ def create_app(test_config=None):
         __name__,
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
     )
+
+    # --- CORREÇÃO: Adiciona o middleware ProxyFix ---
+    # Isso ensina o Flask a confiar nos cabeçalhos X-Forwarded- do proxy (Nginx).
+    # É essencial para que url_for() com _external=True gere as URLs públicas corretas.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # --- CONFIGURAÇÃO CENTRALIZADA ---
     app.config.from_mapping(
