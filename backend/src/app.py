@@ -30,6 +30,8 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
+        # SOLUÇÃO RAIZ (1/2): Força o Flask a preferir HTTPS ao gerar URLs.
+        PREFERRED_URL_SCHEME="https",
     )
 
     if test_config is None:
@@ -164,12 +166,14 @@ def create_app(test_config=None):
         )
         latest_files = summary_data.get("latest_report_files")
         if latest_files:
-            # Gera URLs relativas que respeitarão o protocolo da página principal
+            # SOLUÇÃO RAIZ (2/2): Força a geração de URLs absolutas com `_external=True`.
+            # Combinado com PREFERRED_URL_SCHEME='https', isso garante links https.
             urls = {
                 "summary": url_for(
                     "serve_report",
                     run_folder=latest_files["run_folder"],
                     filename=latest_files["summary"],
+                    _external=True,
                 )
             }
             if latest_files.get("action_plan"):
@@ -177,12 +181,14 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=latest_files["run_folder"],
                     filename=latest_files["action_plan"],
+                    _external=True,
                 )
             if latest_files.get("trend"):
                 urls["trend"] = url_for(
                     "serve_report",
                     run_folder=latest_files["trend_run_folder"],
                     filename=latest_files["trend"],
+                    _external=True,
                 )
             summary_data["latest_report_urls"] = urls
         for trend in summary_data["trend_history"]:
@@ -190,6 +196,7 @@ def create_app(test_config=None):
                 "serve_report",
                 run_folder=trend["run_folder"],
                 filename=trend["filename"],
+                _external=True,
             )
         return jsonify(summary_data)
 
@@ -242,6 +249,7 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["summary_report_filename"],
+                    _external=True,
                 )
             }
             if result.get("action_plan_filename"):
@@ -249,12 +257,14 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["action_plan_filename"],
+                    _external=True,
                 )
             if result.get("trend_report_filename"):
                 report_urls["trend"] = url_for(
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["trend_report_filename"],
+                    _external=True,
                 )
             new_kpi_summary = (
                 services.calculate_kpi_summary(result["json_summary_path"])
@@ -325,6 +335,7 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["report_filename"],
+                    _external=True,
                 )
                 return jsonify({"success": True, "report_url": report_url})
             return (
@@ -382,6 +393,7 @@ def create_app(test_config=None):
                 "serve_report",
                 run_folder=report["run_folder"],
                 filename=report["filename"],
+                _external=True,
             )
         return jsonify(reports_data)
 
