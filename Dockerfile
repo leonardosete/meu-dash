@@ -1,4 +1,4 @@
-# Dockerfile de Produção Multi-Estágio com Nginx + Gunicorn
+# Dockerfile de Produção Multi-Estágio
 
 # --- Estágio 1: Build do Frontend ---
 FROM node:20-alpine AS frontend-builder
@@ -15,7 +15,7 @@ RUN npm run build
 # --- Estágio 2: Aplicação Final (Python Backend) ---
 # Esta imagem conterá apenas a aplicação Python e suas dependências.
 # O Nginx será executado em um contêiner sidecar separado.
-FROM python:3.10-alpine
+FROM python:3.14-alpine
 
 WORKDIR /app
 
