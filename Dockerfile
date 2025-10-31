@@ -13,7 +13,6 @@ WORKDIR /app
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./backend/
-# CORREÇÃO: O caminho de origem deve ser 'backend/migrations'
 COPY backend/migrations/ ./migrations/
 
 # Stage 3: Imagem Final de Produção com Nginx e Gunicorn
@@ -26,6 +25,8 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 COPY --from=backend-builder /app/backend ./src
 COPY --from=backend-builder /app/migrations ./migrations
 COPY --from=backend-builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+# CORREÇÃO: Copia os executáveis (flask, gunicorn) para o PATH
+COPY --from=backend-builder /usr/local/bin /usr/local/bin
 
 # Copia o build do frontend para a pasta de estáticos que o Nginx servirá
 COPY --from=frontend-builder /app/dist ./src/static
