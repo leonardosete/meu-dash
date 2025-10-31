@@ -23,9 +23,7 @@ def create_app(test_config=None):
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
     )
 
-    # --- CORREÇÃO: Adiciona o middleware ProxyFix ---
-    # Isso ensina o Flask a confiar nos cabeçalhos X-Forwarded- do proxy (Nginx).
-    # É essencial para que url_for() com _external=True gere as URLs públicas corretas.
+    # O ProxyFix é mantido, pois é uma boa prática, mas nossa lógica principal não dependerá mais dele.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # --- CONFIGURAÇÃO CENTRALIZADA ---
@@ -46,7 +44,6 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     # Garante que as pastas existam APÓS a configuração ser carregada
-    # Apenas cria as pastas se não estiver em modo de teste
     if not app.config.get("TESTING"):
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
         os.makedirs(app.config["REPORTS_FOLDER"], exist_ok=True)
@@ -55,7 +52,6 @@ def create_app(test_config=None):
     db.init_app(app)
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
-    # --- CONFIGURAÇÃO EXPLÍCITA E ROBUSTA DO SWAGGER ---
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -123,7 +119,6 @@ def create_app(test_config=None):
         supports_credentials=True,
     )
 
-    # --- DECORADOR DE AUTENTICAÇÃO ---
     def token_required(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -148,42 +143,23 @@ def create_app(test_config=None):
 
         return decorated
 
-    # --- ROTAS DA APLICAÇÃO ---
     @app.route("/health")
     def health_check():
-        """
-        Verifica a saúde da aplicação.
-        ---
-        tags:
-          - Health
-        responses:
-          200:
-            description: A aplicação está funcionando.
-        """
         return jsonify({"status": "ok"}), 200
 
     @app.route("/api/v1/dashboard-summary")
     def get_dashboard_summary():
-        """
-        Busca o resumo de dados para o dashboard principal.
-        ---
-        tags:
-          - Dashboard
-        responses:
-          200:
-            description: Resumo dos dados do dashboard retornado com sucesso.
-        """
         summary_data = services.get_dashboard_summary_data(
             db=db, Report=models.Report, TrendAnalysis=models.TrendAnalysis
         )
         latest_files = summary_data.get("latest_report_files")
         if latest_files:
+            # CORREÇÃO: Removido _external=True para gerar URLs relativas
             urls = {
                 "summary": url_for(
                     "serve_report",
                     run_folder=latest_files["run_folder"],
                     filename=latest_files["summary"],
-                    _external=True,
                 )
             }
             if latest_files.get("action_plan"):
@@ -191,14 +167,12 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=latest_files["run_folder"],
                     filename=latest_files["action_plan"],
-                    _external=True,
                 )
             if latest_files.get("trend"):
                 urls["trend"] = url_for(
                     "serve_report",
                     run_folder=latest_files["trend_run_folder"],
                     filename=latest_files["trend"],
-                    _external=True,
                 )
             summary_data["latest_report_urls"] = urls
         for trend in summary_data["trend_history"]:
@@ -212,24 +186,6 @@ def create_app(test_config=None):
     @app.route("/api/v1/upload", methods=["POST"])
     @token_required
     def upload_file_api():
-        """
-        Realiza o upload de um arquivo CSV para análise padrão.
-        ---
-        tags:
-          - Analysis
-        security:
-          - Bearer: []
-        consumes:
-          - multipart/form-data
-        parameters:
-          - name: file_recente
-            in: formData
-            type: file
-            required: true
-        responses:
-          200:
-            description: Análise concluída com sucesso.
-        """
         file_recente = request.files.get("file_recente")
         if not file_recente or file_recente.filename == "":
             return jsonify({"error": "Nenhum arquivo selecionado."}), 400
@@ -244,12 +200,13 @@ def create_app(test_config=None):
             )
             if result and result.get("warning"):
                 return jsonify({"error": result["warning"]}), 400
+            
+            # CORREÇÃO: Removido _external=True para gerar URLs relativas
             report_urls = {
                 "summary": url_for(
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["summary_report_filename"],
-                    _external=True,
                 )
             }
             if result.get("action_plan_filename"):
@@ -257,14 +214,12 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["action_plan_filename"],
-                    _external=True,
                 )
             if result.get("trend_report_filename"):
                 report_urls["trend"] = url_for(
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["trend_report_filename"],
-                    _external=True,
                 )
             new_kpi_summary = (
                 services.calculate_kpi_summary(result["json_summary_path"])
@@ -287,28 +242,6 @@ def create_app(test_config=None):
     @app.route("/api/v1/compare", methods=["POST"])
     @token_required
     def compare_files_api():
-        """
-        Realiza a comparação direta entre dois arquivos CSV.
-        ---
-        tags:
-          - Analysis
-        security:
-          - Bearer: []
-        consumes:
-          - multipart/form-data
-        parameters:
-          - name: file_antigo
-            in: formData
-            type: file
-            required: true
-          - name: file_recente
-            in: formData
-            type: file
-            required: true
-        responses:
-          200:
-            description: Comparação concluída com sucesso.
-        """
         file_antigo = request.files.get("file_antigo")
         file_recente = request.files.get("file_recente")
         if not file_antigo or file_antigo.filename == "":
@@ -322,11 +255,11 @@ def create_app(test_config=None):
                 reports_folder=app.config["REPORTS_FOLDER"],
             )
             if result:
+                # CORREÇÃO: Removido _external=True para gerar URL relativa
                 report_url = url_for(
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["report_filename"],
-                    _external=True,
                 )
                 return jsonify({"success": True, "report_url": report_url})
             return (
@@ -366,15 +299,6 @@ def create_app(test_config=None):
 
     @app.route("/api/v1/reports")
     def get_reports():
-        """
-        Lista todos os relatórios de análise disponíveis.
-        ---
-        tags:
-          - Reports
-        responses:
-          200:
-            description: Lista de relatórios retornada com sucesso.
-        """
         reports_data = services.get_unified_history_list(
             models.Report, models.TrendAnalysis
         )
@@ -389,22 +313,6 @@ def create_app(test_config=None):
     @app.route("/api/v1/reports/<int:report_id>", methods=["DELETE"])
     @token_required
     def delete_report_api(report_id):
-        """
-        Exclui um relatório específico e seus artefatos.
-        ---
-        tags:
-          - Reports
-        security:
-          - Bearer: []
-        parameters:
-          - name: report_id
-            in: path
-            type: integer
-            required: true
-        responses:
-          200:
-            description: Relatório excluído com sucesso.
-        """
         try:
             success = services.delete_report_and_artifacts(
                 report_id=report_id, db=db, Report=models.Report
@@ -424,31 +332,6 @@ def create_app(test_config=None):
 
     @app.route("/admin/login", methods=["POST"])
     def login_api():
-        """
-        Autentica um usuário administrativo e retorna um token JWT.
-        ---
-        tags:
-          - Authentication
-        consumes:
-          - application/json
-        parameters:
-          - name: body
-            in: body
-            required: true
-            schema:
-              type: object
-              required:
-                - username
-                - password
-              properties:
-                username:
-                  type: string
-                password:
-                  type: string
-        responses:
-          200:
-            description: Autenticação bem-sucedida.
-        """
         auth_data = request.get_json()
         if (
             not auth_data
