@@ -23,7 +23,7 @@ def create_app(test_config=None):
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
     )
 
-    # O ProxyFix é mantido, pois é uma boa prática, mas nossa lógica principal não dependerá mais dele.
+    # O ProxyFix é crucial para que o Flask entenda o cabeçalho X-Forwarded-Proto do Nginx.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # --- CONFIGURAÇÃO CENTRALIZADA ---
@@ -149,6 +149,16 @@ def create_app(test_config=None):
 
     @app.route("/api/v1/dashboard-summary")
     def get_dashboard_summary():
+        """
+        ---
+        tags:
+          - Dashboard
+        summary: Obtém os dados de resumo para o dashboard principal.
+        description: Retorna os KPIs do último relatório, o histórico de tendências e os links para os relatórios mais recentes.
+        responses:
+          200:
+            description: Dados de resumo retornados com sucesso.
+        """
         summary_data = services.get_dashboard_summary_data(
             db=db, Report=models.Report, TrendAnalysis=models.TrendAnalysis
         )
@@ -186,6 +196,32 @@ def create_app(test_config=None):
     @app.route("/api/v1/upload", methods=["POST"])
     @token_required
     def upload_file_api():
+        """
+        ---
+        tags:
+          - Análise
+        summary: Realiza a análise padrão de um único arquivo CSV.
+        description: Processa um arquivo, gera o ecossistema de relatórios e o compara com o histórico.
+        security:
+          - Bearer: []
+        parameters:
+          - name: file_recente
+            in: formData
+            type: file
+            required: true
+            description: O arquivo CSV de dados mais recente para análise.
+        responses:
+          200:
+            description: Análise concluída com sucesso.
+          400:
+            description: Erro de validação (ex: arquivo ausente).
+            schema:
+              $ref: '#/definitions/Error'
+          500:
+            description: Erro interno no servidor durante o processamento.
+            schema:
+              $ref: '#/definitions/Error'
+        """
         file_recente = request.files.get("file_recente")
         if not file_recente or file_recente.filename == "":
             return jsonify({"error": "Nenhum arquivo selecionado."}), 400
@@ -242,6 +278,37 @@ def create_app(test_config=None):
     @app.route("/api/v1/compare", methods=["POST"])
     @token_required
     def compare_files_api():
+        """
+        ---
+        tags:
+          - Análise
+        summary: Realiza uma comparação direta entre dois arquivos CSV.
+        description: Processa dois arquivos e gera um relatório de tendência sob demanda.
+        security:
+          - Bearer: []
+        parameters:
+          - name: file_antigo
+            in: formData
+            type: file
+            required: true
+            description: O arquivo CSV mais antigo para a comparação.
+          - name: file_recente
+            in: formData
+            type: file
+            required: true
+            description: O arquivo CSV mais recente para a comparação.
+        responses:
+          200:
+            description: Comparação concluída com sucesso.
+          400:
+            description: Erro de validação (ex: arquivos ausentes).
+            schema:
+              $ref: '#/definitions/Error'
+          500:
+            description: Erro interno no servidor durante o processamento.
+            schema:
+              $ref: '#/definitions/Error'
+        """
         file_antigo = request.files.get("file_antigo")
         file_recente = request.files.get("file_recente")
         if not file_antigo or file_antigo.filename == "":
@@ -299,6 +366,16 @@ def create_app(test_config=None):
 
     @app.route("/api/v1/reports")
     def get_reports():
+        """
+        ---
+        tags:
+          - Histórico
+        summary: Obtém a lista unificada de todos os relatórios gerados.
+        description: Retorna uma lista de relatórios de análise padrão e comparativa, ordenados por data.
+        responses:
+          200:
+            description: Lista de relatórios retornada com sucesso.
+        """
         reports_data = services.get_unified_history_list(
             models.Report, models.TrendAnalysis
         )
@@ -313,6 +390,30 @@ def create_app(test_config=None):
     @app.route("/api/v1/reports/<int:report_id>", methods=["DELETE"])
     @token_required
     def delete_report_api(report_id):
+        """
+        ---
+        tags:
+          - Histórico
+        summary: Exclui um relatório de análise padrão e seus artefatos.
+        description: Requer autenticação de administrador. A exclusão é permanente.
+        security:
+          - Bearer: []
+        parameters:
+          - name: report_id
+            in: path
+            type: integer
+            required: true
+            description: O ID do relatório a ser excluído.
+        responses:
+          200:
+            description: Relatório excluído com sucesso.
+          401:
+            description: Não autorizado (token ausente ou inválido).
+          404:
+            description: Relatório não encontrado.
+          500:
+            description: Erro interno no servidor.
+        """
         try:
             success = services.delete_report_and_artifacts(
                 report_id=report_id, db=db, Report=models.Report
@@ -332,6 +433,30 @@ def create_app(test_config=None):
 
     @app.route("/admin/login", methods=["POST"])
     def login_api():
+        """
+        ---
+        tags:
+          - Autenticação
+        summary: Autentica um administrador e retorna um token JWT.
+        parameters:
+          - name: body
+            in: body
+            required: true
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+        responses:
+          200:
+            description: Autenticação bem-sucedida.
+          400:
+            description: Requisição malformada.
+          401:
+            description: Credenciais inválidas.
+        """
         auth_data = request.get_json()
         if (
             not auth_data
