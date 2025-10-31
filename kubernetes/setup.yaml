@@ -1,0 +1,24 @@
+# kubernetes/setup.yaml
+---
+# --- Namespace para organizar os recursos da aplicação ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  # O nome do namespace é definido aqui uma única vez.
+  name: smart-remedy
+
+---
+# --- Secret: Armazena as credenciais e chaves da aplicação ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-credentials
+  namespace: smart-remedy
+type: Opaque
+stringData:
+  # ATENÇÃO: Estes são placeholders.
+  # Os valores reais serão injetados de forma segura pelo pipeline de CI/CD.
+  # Não commite valores reais aqui.
+  ADMIN_USER: "admin"
+  ADMIN_PASSWORD: "admin"
+  SECRET_KEY: "uma_outra_chave_aleatoria_e_longa_para_jwt"
