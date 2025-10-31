@@ -63,6 +63,19 @@ def create_app(test_config=None):
             "description": "Priorização Inteligente de Casos com Foco em Remediação",
             "version": "1.0.0",
         },
+        # --- CAUSA RAIZ E CORREÇÃO ---
+        # O Flasgger, ao tentar autodetectar o host e o schema (http/https)
+        # por trás do proxy do Kubernetes, falhava e passava o valor Python `None`
+        # para o template do Swagger UI. O JavaScript no template não entende `None`,
+        # causando o erro "ReferenceError: None is not defined" e impedindo a
+        # renderização.
+        # A solução é definir explicitamente o host, o basePath e o schema,
+        # eliminando a necessidade de autodetection e garantindo que o template
+        # receba valores válidos.
+        "host": "smart-remedy.devops-master.shop",
+        "basePath": "/",
+        "schemes": ["https"],
+        # --- FIM DA CORREÇÃO ---
         "securityDefinitions": {
             "Bearer": {
                 "type": "apiKey",
