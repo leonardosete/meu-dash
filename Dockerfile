@@ -6,7 +6,7 @@ RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Build do Backend (sem mudanças aqui)
+# Stage 2: Build do Backend
 FROM python:3.10-slim AS backend-builder
 WORKDIR /app
 COPY backend/requirements.txt .
@@ -21,14 +21,13 @@ WORKDIR /app
 # Instala Nginx
 RUN apt-get update && apt-get install -y nginx && apt-get clean
 
-# Copia a nova e correta configuração do Nginx
+# Copia a nova e correta configuração do Nginx para dentro da imagem
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copia os artefatos dos stages anteriores
 COPY --from=backend-builder /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
 COPY --from=backend-builder /app/backend/ ./
-COPY --from=backend-builder /app/migrations/ ./migrations
-
+COPY --from=backend-builder /app/migrations/ ./migrations/
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 # Expõe a porta 80 do Nginx
