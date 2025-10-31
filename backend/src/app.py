@@ -143,6 +143,13 @@ def create_app(test_config=None):
 
         return decorated
 
+    # SOLUÇÃO DEFINITIVA: Adiciona um cabeçalho de segurança que instrui o navegador
+    # a atualizar automaticamente todas as requisições inseguras (http) para seguras (https).
+    @app.after_request
+    def add_security_headers(response):
+        response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
+        return response
+
     @app.route("/health")
     def health_check():
         return jsonify({"status": "ok"}), 200
@@ -164,7 +171,7 @@ def create_app(test_config=None):
         )
         latest_files = summary_data.get("latest_report_files")
         if latest_files:
-            # CORREÇÃO: Removido _external=True para gerar URLs relativas
+            # Gera URLs relativas que respeitarão o protocolo da página principal
             urls = {
                 "summary": url_for(
                     "serve_report",
@@ -237,7 +244,6 @@ def create_app(test_config=None):
             if result and result.get("warning"):
                 return jsonify({"error": result["warning"]}), 400
             
-            # CORREÇÃO: Removido _external=True para gerar URLs relativas
             report_urls = {
                 "summary": url_for(
                     "serve_report",
@@ -322,7 +328,6 @@ def create_app(test_config=None):
                 reports_folder=app.config["REPORTS_FOLDER"],
             )
             if result:
-                # CORREÇÃO: Removido _external=True para gerar URL relativa
                 report_url = url_for(
                     "serve_report",
                     run_folder=result["run_folder"],
