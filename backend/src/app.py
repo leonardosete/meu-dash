@@ -63,19 +63,9 @@ def create_app(test_config=None):
             "description": "Priorização Inteligente de Casos com Foco em Remediação",
             "version": "1.0.0",
         },
-        # --- CAUSA RAIZ E CORREÇÃO ---
-        # O Flasgger, ao tentar autodetectar o host e o schema (http/https)
-        # por trás do proxy do Kubernetes, falhava e passava o valor Python `None`
-        # para o template do Swagger UI. O JavaScript no template não entende `None`,
-        # causando o erro "ReferenceError: None is not defined" e impedindo a
-        # renderização.
-        # A solução é definir explicitamente o host, o basePath e o schema,
-        # eliminando a necessidade de autodetection e garantindo que o template
-        # receba valores válidos.
         "host": "smart-remedy.devops-master.shop",
         "basePath": "/",
         "schemes": ["https"],
-        # --- FIM DA CORREÇÃO ---
         "securityDefinitions": {
             "Bearer": {
                 "type": "apiKey",
@@ -96,6 +86,11 @@ def create_app(test_config=None):
             }
         },
     }
+    # --- CAUSA RAIZ E CORREÇÃO ---
+    # O erro 'None is not defined' ocorre porque o template do Flasgger renderiza
+    # a configuração de OAuth como o valor literal 'None' quando ela não está definida.
+    # A solução é fornecer um dicionário vazio como padrão para a configuração de OAuth,
+    # que será renderizado como '{}' em JavaScript, um valor válido que corrige o erro.
     swagger_config = {
         "headers": [],
         "specs": [
@@ -110,6 +105,7 @@ def create_app(test_config=None):
         "swagger_ui": True,
         "specs_route": "/apidocs/",
         "uiversion": 3,
+        "oauth_config": {},  # Adiciona um dicionário vazio para a configuração OAuth
     }
     Swagger(app, template=swagger_template, config=swagger_config)
 
