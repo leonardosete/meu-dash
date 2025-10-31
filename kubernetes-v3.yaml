@@ -178,17 +178,8 @@ kind: Ingress
 metadata:
   name: smart-remedy-ingress
   namespace: smart-remedy
-  annotations:
-    # O Ingress Controller NGINX aplicará o certificado wildcard padrão
-    # configurado via --default-ssl-certificate.
-    # TEMPORÁRIO: Manter HTTP para teste, desabilitando o redirecionamento para HTTPS.
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  annotations: {}
 spec:
-  # A seção TLS está comentada para garantir que o teste seja feito em HTTP puro primeiro.
-  # tls:
-  # - hosts:
-  #   - smart-remedy.devops-master.shop
-  #   secretName: wildcard-devops-master-shop-tls
   ingressClassName: nginx
   rules:
   - host: smart-remedy.devops-master.shop
