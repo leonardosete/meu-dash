@@ -1,11 +1,27 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getDashboardSummary } from "../services/api";
-import { DashboardSummary, UploadSuccessResponse } from "../types";
+import { DashboardSummary, ReportUrls, UploadSuccessResponse } from "../types";
 import KpiCard from "./KpiCard";
 import UploadForms from "./UploadForms";
 import WelcomeEmptyState from "./WelcomeEmptyState";
 import ReportPreviews from "./ReportPreviews";
 import { useDashboard } from "../hooks/useDashboard";
+
+// Função auxiliar para garantir que as URLs usem HTTPS.
+const makeUrlsHttps = (urls: ReportUrls | null): ReportUrls | null => {
+  if (!urls) return null;
+  const newUrls: ReportUrls = {};
+  if (urls.summary) {
+    newUrls.summary = urls.summary.replace(/^http:/, "https");
+  }
+  if (urls.action_plan) {
+    newUrls.action_plan = urls.action_plan.replace(/^http:/, "https");
+  }
+  if (urls.trend) {
+    newUrls.trend = urls.trend.replace(/^http:/, "https");
+  }
+  return newUrls;
+};
 
 const Dashboard = () => {
   const [summaryData, setSummaryData] = useState<DashboardSummary | null>(null);
@@ -20,12 +36,11 @@ const Dashboard = () => {
       setLoading(true);
       const data = await getDashboardSummary();
       setSummaryData(data);
-      // Se a API retornar as URLs do último relatório, exibe as prévias.
       if (data.latest_report_urls) {
-        setReportUrls(data.latest_report_urls);
+        // CORREÇÃO: Garante que as URLs sejam HTTPS antes de usá-las.
+        setReportUrls(makeUrlsHttps(data.latest_report_urls));
         setDateRange(data.latest_report_date_range || null);
       }
-      // Se a API retornar o diagnóstico, o exibe.
       if (data.quick_diagnosis_html) {
         setQuickDiagnosis(data.quick_diagnosis_html);
       }
@@ -42,14 +57,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchData();
-    // A lógica de recarregar ao mudar a visibilidade foi removida para
-    // não limpar a tela de pré-visualização inesperadamente.
   }, [fetchData]);
 
   const handleUploadSuccess = (data: UploadSuccessResponse) => {
-    // Após um novo upload, atualiza tanto os KPIs quanto as URLs das prévias.
     setSummaryData((prev) => ({ ...prev!, kpi_summary: data.kpi_summary }));
-    setReportUrls(data.report_urls);
+    // CORREÇÃO: Garante que as URLs sejam HTTPS antes de usá-las.
+    setReportUrls(makeUrlsHttps(data.report_urls));
     setQuickDiagnosis(data.quick_diagnosis_html);
     setDateRange(data.date_range);
   };
