@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getDashboardSummary } from "../services/api";
-import { DashboardSummary, ReportUrls, UploadSuccessResponse } from "../types";
+import { DashboardSummary, UploadSuccessResponse } from "../types";
 import KpiCard from "./KpiCard";
 import UploadForms from "./UploadForms";
 import WelcomeEmptyState from "./WelcomeEmptyState";
