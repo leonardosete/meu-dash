@@ -1,39 +1,44 @@
-# Stage 1: Build do Frontend
+# Stage 1: Build Frontend
 FROM node:20-alpine AS frontend-builder
-WORKDIR /app/frontend
-COPY frontend/package.json ./
-RUN npm install
+WORKDIR /app
+COPY frontend/package.json frontend/package-lock.json* ./
+# Use --no-optional to speed up install and reduce image size
+RUN npm install --no-optional
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Build do Backend
+# Stage 2: Build Backend
 FROM python:3.10-slim AS backend-builder
 WORKDIR /app
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./backend/
-COPY migrations/ ./migrations/
+# CORREÇÃO: O caminho de origem deve ser 'backend/migrations'
+COPY backend/migrations/ ./migrations/
 
 # Stage 3: Imagem Final de Produção com Nginx e Gunicorn
 FROM python:3.10-slim
 WORKDIR /app
+# Instala o Nginx
+RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
-# Instala Nginx
-RUN apt-get update && apt-get install -y nginx && apt-get clean
+# Copia os artefatos do backend
+COPY --from=backend-builder /app/backend ./src
+COPY --from=backend-builder /app/migrations ./migrations
+COPY --from=backend-builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
-# Copia a nova e correta configuração do Nginx para dentro da imagem
+# Copia o build do frontend para a pasta de estáticos que o Nginx servirá
+COPY --from=frontend-builder /app/dist ./src/static
+
+# Copia as configurações e o ponto de entrada
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY backend/wsgi.py .
 
-# Copia os artefatos dos stages anteriores
-COPY --from=backend-builder /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
-COPY --from=backend-builder /app/backend/ ./
-COPY --from=backend-builder /app/migrations/ ./migrations/
-COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
+# Define as variáveis de ambiente
+ENV FLASK_APP=src.app
 
-# Expõe a porta 80 do Nginx
 EXPOSE 80
 
-# Comando final simplificado.
-# A migração do DB é responsabilidade do initContainer no Kubernetes.
-# Este comando apenas inicia os dois serviços: Gunicorn em background e Nginx em foreground.
-CMD ["/bin/sh", "-c", "gunicorn --workers 4 --bind 127.0.0.1:5000 'src.app:app' --chdir /app & nginx -g 'daemon off;'"]
+# Define um ENTRYPOINT robusto e um CMD padrão
+ENTRYPOINT ["/bin/sh", "-c"]
+CMD ["gunicorn --workers 4 --bind 127.0.0.1:5000 'src.app:app' --chdir /app & nginx -g 'daemon off;'"]
