@@ -143,13 +143,6 @@ def create_app(test_config=None):
 
         return decorated
 
-    # SOLUÇÃO DEFINITIVA: Adiciona um cabeçalho de segurança que instrui o navegador
-    # a atualizar automaticamente todas as requisições inseguras (http) para seguras (https).
-    @app.after_request
-    def add_security_headers(response):
-        response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
-        return response
-
     @app.route("/health")
     def health_check():
         return jsonify({"status": "ok"}), 200

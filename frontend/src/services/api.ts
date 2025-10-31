@@ -58,11 +58,7 @@ export const uploadStandardAnalysis = async (
 
 export const getReports = async (): Promise<Report[]> => {
   const response = await apiClient.get("/api/v1/reports");
-  // CORREÇÃO DEFINITIVA: Garante que qualquer URL retornada seja HTTPS.
-  return response.data.map((report) => ({
-    ...report,
-    url: report.url.replace(/^http:/, "https"),
-  }));
+  return response.data;
 };
 
 export const login = async (
@@ -89,9 +85,5 @@ export const uploadComparativeAnalysis = async (
       "Content-Type": "multipart/form-data",
     },
   });
-  // CORREÇÃO DEFINITIVA: Garante que a URL de redirecionamento seja HTTPS.
-  return {
-    ...response.data,
-    report_url: response.data.report_url.replace(/^http:/, "https"),
-  };
+  return response.data;
 };

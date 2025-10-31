@@ -7,22 +7,6 @@ import WelcomeEmptyState from "./WelcomeEmptyState";
 import ReportPreviews from "./ReportPreviews";
 import { useDashboard } from "../hooks/useDashboard";
 
-// Função auxiliar para garantir que as URLs usem HTTPS.
-const makeUrlsHttps = (urls: ReportUrls | null): ReportUrls | null => {
-  if (!urls) return null;
-  const newUrls: ReportUrls = {};
-  if (urls.summary) {
-    newUrls.summary = urls.summary.replace(/^http:/, "https");
-  }
-  if (urls.action_plan) {
-    newUrls.action_plan = urls.action_plan.replace(/^http:/, "https");
-  }
-  if (urls.trend) {
-    newUrls.trend = urls.trend.replace(/^http:/, "https");
-  }
-  return newUrls;
-};
-
 const Dashboard = () => {
   const [summaryData, setSummaryData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,8 +21,7 @@ const Dashboard = () => {
       const data = await getDashboardSummary();
       setSummaryData(data);
       if (data.latest_report_urls) {
-        // CORREÇÃO: Garante que as URLs sejam HTTPS antes de usá-las.
-        setReportUrls(makeUrlsHttps(data.latest_report_urls));
+        setReportUrls(data.latest_report_urls);
         setDateRange(data.latest_report_date_range || null);
       }
       if (data.quick_diagnosis_html) {
@@ -61,8 +44,7 @@ const Dashboard = () => {
 
   const handleUploadSuccess = (data: UploadSuccessResponse) => {
     setSummaryData((prev) => ({ ...prev!, kpi_summary: data.kpi_summary }));
-    // CORREÇÃO: Garante que as URLs sejam HTTPS antes de usá-las.
-    setReportUrls(makeUrlsHttps(data.report_urls));
+    setReportUrls(data.report_urls);
     setQuickDiagnosis(data.quick_diagnosis_html);
     setDateRange(data.date_range);
   };
