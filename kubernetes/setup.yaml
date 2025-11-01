@@ -19,7 +19,7 @@ stringData:
   # ATENÇÃO: Estes são placeholders. Os valores reais devem ser gerenciados
   # de forma segura (ex: GitHub Secrets, Vault) e injetados no deploy.
   ADMIN_USER: "admin"
-  ADMIN_PASSWORD: "your-admin-password"
+  ADMIN_PASSWORD: "admin"
   SECRET_KEY: "your-super-long-and-random-jwt-secret-key"
   POSTGRES_USER: "admin"
   POSTGRES_PASSWORD: "your-super-secret-db-password"

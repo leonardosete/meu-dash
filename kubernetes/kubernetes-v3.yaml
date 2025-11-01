@@ -336,7 +336,8 @@ spec:
         - name: FLASK_APP
           value: "src.app:create_app()"
         - name: FRONTEND_BASE_URL
-          value: "https.smart-remedy.devops-master.shop"
+          # CORREÇÃO: Adiciona "https://" para formar uma URL válida.
+          value: "https://smart-remedy.devops-master.shop"
         - name: JWT_EXPIRATION_HOURS
           value: "1"
         - name: POSTGRES_HOST
