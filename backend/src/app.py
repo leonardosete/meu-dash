@@ -11,7 +11,6 @@ from flask import (
     request,
     send_from_directory,
     url_for,
-    render_template,
 )
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -98,7 +97,8 @@ def create_app(test_config=None):
                 "model_filter": lambda tag: True,
             }
         ],
-        "swagger_ui": False,  # A UI continua desabilitada para usarmos a nossa.
+        "swagger_ui": True,  # Habilita a UI nativa do Flasgger
+        "specs_route": "/apidocs/",  # Define a rota para a UI do Swagger
     }
 
     Swagger(app, config=swagger_config)
@@ -152,11 +152,6 @@ def create_app(test_config=None):
         return decorated
 
     # --- ROTAS DA APLICAÇÃO ---
-
-    # Nova rota para servir nossa UI estática do Swagger
-    @app.route("/apidocs/")
-    def serve_swagger_ui():
-        return render_template("swagger_ui.html")
 
     @app.route("/health")
     def health_check():
