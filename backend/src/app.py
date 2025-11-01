@@ -60,8 +60,6 @@ def create_app(test_config=None):
             "description": "Priorização Inteligente de Casos com Foco em Remediação",
             "version": "1.0.0",
         },
-        # As chaves 'host', 'schemes' e 'basePath' são removidas para permitir
-        # que o ProxyFix as determine dinamicamente, evitando conflitos.
         "securityDefinitions": {
             "Bearer": {
                 "type": "apiKey",
@@ -83,8 +81,8 @@ def create_app(test_config=None):
         },
     }
 
-    # Usamos uma configuração explícita para garantir que o `oauth_config`
-    # seja um dicionário vazio, evitando o erro "None is not defined" no JavaScript.
+    # SOLUÇÃO DEFINITIVA: Usa uma configuração explícita para garantir que
+    # nenhum valor 'None' do Python seja renderizado no JavaScript.
     swagger_config = {
         "headers": [],
         "specs": [
@@ -98,7 +96,8 @@ def create_app(test_config=None):
         "static_url_path": "/flasgger_static",
         "swagger_ui": True,
         "specs_route": "/apidocs/",
-        "oauth_config": {},  # Garante que um objeto JS válido seja renderizado
+        "oauth_config": {},  # Garante que um objeto JS {} seja renderizado, não 'None'.
+        "VALIDATOR_URL": None,  # Garante que 'null' seja renderizado, não 'None'.
     }
 
     Swagger(app, template=swagger_template, config=swagger_config)
