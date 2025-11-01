@@ -25,10 +25,9 @@ def create_app(test_config=None):
     """
     from . import models, services
 
-    app = Flask(
-        __name__,
-        template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
-    )
+    # SIMPLIFICAÇÃO: O argumento 'template_folder' foi removido, pois os templates
+    # são carregados diretamente pelos módulos, não pelo motor de renderização do Flask.
+    app = Flask(__name__)
 
     # Adiciona o middleware para corrigir o schema (http/https) atrás de um proxy.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -60,8 +59,6 @@ def create_app(test_config=None):
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
     # --- CONFIGURAÇÃO DO SWAGGER ---
-    # CORREÇÃO DEFINITIVA: O template base é mesclado diretamente na configuração
-    # para garantir que o campo "swagger: 2.0" seja sempre incluído no JSON final.
     swagger_config = {
         "swagger": "2.0",
         "info": {
@@ -97,8 +94,8 @@ def create_app(test_config=None):
                 "model_filter": lambda tag: True,
             }
         ],
-        "swagger_ui": True,  # Habilita a UI nativa do Flasgger
-        "specs_route": "/apidocs/",  # Define a rota para a UI do Swagger
+        "swagger_ui": True,
+        "specs_route": "/apidocs/",
     }
 
     Swagger(app, config=swagger_config)

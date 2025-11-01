@@ -216,7 +216,9 @@ data:
         keepalive_timeout 65;
         server {
             listen 80;
-            location ~ ^/(api|admin|apidocs|flasgger_static|static|reports|docs)/ {
+            # CORREÇÃO: A regra de proxy foi ajustada. O caminho incorreto '/static' foi removido.
+            # Agora, apenas os caminhos que realmente devem ir para o backend são encaminhados.
+            location ~ ^/(api|admin|apidocs|flasgger_static|reports|docs)/ {
                 proxy_pass http://127.0.0.1:5000;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
