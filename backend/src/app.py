@@ -52,7 +52,7 @@ def create_app(test_config=None):
     db.init_app(app)
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
-    # --- CONFIGURAÇÃO DO SWAGGER (SIMPLIFICADA) ---
+    # --- CONFIGURAÇÃO DO SWAGGER (ROBUSTA PARA PROXY) ---
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -60,6 +60,8 @@ def create_app(test_config=None):
             "description": "Priorização Inteligente de Casos com Foco em Remediação",
             "version": "1.0.0",
         },
+        # As chaves 'host', 'schemes' e 'basePath' são removidas para permitir
+        # que o ProxyFix as determine dinamicamente, evitando conflitos.
         "securityDefinitions": {
             "Bearer": {
                 "type": "apiKey",
@@ -80,10 +82,26 @@ def create_app(test_config=None):
             }
         },
     }
-    # A inicialização complexa com 'swagger_config' foi removida.
-    # Voltamos ao método simples que permite ao Flasgger e ao ProxyFix
-    # autodetectar o ambiente corretamente.
-    Swagger(app, template=swagger_template)
+
+    # Usamos uma configuração explícita para garantir que o `oauth_config`
+    # seja um dicionário vazio, evitando o erro "None is not defined" no JavaScript.
+    swagger_config = {
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": "apispec_1",
+                "route": "/apispec_1.json",
+                "rule_filter": lambda rule: True,
+                "model_filter": lambda tag: True,
+            }
+        ],
+        "static_url_path": "/flasgger_static",
+        "swagger_ui": True,
+        "specs_route": "/apidocs/",
+        "oauth_config": {},  # Garante que um objeto JS válido seja renderizado
+    }
+
+    Swagger(app, template=swagger_template, config=swagger_config)
 
     CORS(
         app,
