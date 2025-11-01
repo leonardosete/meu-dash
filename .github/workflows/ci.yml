@@ -4,12 +4,12 @@ name: CI - Build, Test, and Publish
 on:
   # Dispara o workflow em pushes para as branches principais e de refatoração.
   push:
-    # branches:
-    #   - main
+    branches:
+      - main
   # Dispara o workflow em pull requests para a branch main.
-  # pull_request:
-  #   branches:
-  #     - main
+  pull_request:
+    branches:
+      - main
   # Permite a execução manual do workflow a partir da aba "Actions" do GitHub.
   workflow_dispatch:
 
@@ -126,6 +126,4 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:${{ github.sha }}

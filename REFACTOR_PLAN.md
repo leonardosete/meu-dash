@@ -35,6 +35,19 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 
 ### Prioridade 1: Crítico / Alto
 
+#### [ ] 🚀 Implementar Deploy Contínuo com Argo CD (GitOps)
+
+- **Justificativa:** Substituir o processo de deploy manual (`kubectl apply`) por um fluxo GitOps automatizado. Isso aumenta a confiabilidade, a velocidade e a segurança dos deploys, além de criar um histórico auditável de todas as mudanças no ambiente de produção. O Git se torna a única fonte da verdade para o estado do cluster.
+- **Plano de Ação:**
+  - [ ] **Etapa 1: Criar Repositório GitOps:**
+    - [ ] Criar um novo repositório Git (ex: `smart-remedy-gitops`) para hospedar os manifestos Kubernetes.
+    - [ ] Mover os arquivos `setup.yaml` e `kubernetes-v3.yaml` para este novo repositório.
+    - [ ] Excluir o diretório `kubernetes/` do repositório da aplicação (`meu-dash`).
+  - [ ] **Etapa 2: Criar Workflow de CD:**
+    - [ ] Criar um novo workflow (`cd.yml`) no `meu-dash` que, após um build bem-sucedido na `main`, clona o repositório GitOps, atualiza a tag da imagem no `kubernetes-v3.yaml` e faz o push da alteração.
+  - [ ] **Etapa 3: Configurar Argo CD:**
+    - [ ] Criar uma nova `Application` no Argo CD que monitora o repositório GitOps e sincroniza automaticamente as mudanças com o cluster Kubernetes.
+
 #### [ ] 🧠 Validar e Refinar Lógica de Análise de Scoring
 
 - **Justificativa:** A principal funcionalidade de negócio (cálculo do `score_ponderado_final`) passou por múltiplas refatorações. É crucial garantir que o resultado final esteja 100% correto e alinhado com as regras de negócio.
