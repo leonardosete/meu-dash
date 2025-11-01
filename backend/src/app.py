@@ -4,15 +4,7 @@ from functools import wraps
 
 import jwt
 from flasgger import Swagger
-from flask import (
-    Flask,
-    abort,
-    jsonify,
-    request,
-    send_from_directory,
-    url_for,
-    render_template,
-)
+from flask import Flask, abort, jsonify, request, send_from_directory, url_for, render_template
 from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -61,7 +53,9 @@ def create_app(test_config=None):
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
     # --- CONFIGURAÇÃO DO SWAGGER ---
-    swagger_template = {
+    # CORREÇÃO DEFINITIVA: O template base é mesclado diretamente na configuração
+    # para garantir que o campo "swagger: 2.0" seja sempre incluído no JSON final.
+    swagger_config = {
         "swagger": "2.0",
         "info": {
             "title": "SmartRemedy API",
@@ -87,11 +81,6 @@ def create_app(test_config=None):
                 },
             }
         },
-    }
-
-    # A UI do Flasgger está desabilitada. Serviremos nossa própria UI estática.
-    # A chave 'headers' é necessária para evitar um TypeError no 'after_request' do Flasgger.
-    swagger_config = {
         "headers": [],
         "specs": [
             {
@@ -101,10 +90,10 @@ def create_app(test_config=None):
                 "model_filter": lambda tag: True,
             }
         ],
-        "swagger_ui": False,  # Desabilita a UI problemática do Flasgger
+        "swagger_ui": False,  # A UI continua desabilitada para usarmos a nossa.
     }
 
-    Swagger(app, template=swagger_template, config=swagger_config)
+    Swagger(app, config=swagger_config)
 
     CORS(
         app,
