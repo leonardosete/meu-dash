@@ -39,10 +39,11 @@ COPY ./docs ./docs
 COPY backend/wsgi.py .
 
 # Copia os arquivos estáticos do frontend (gerados no estágio 1) para um diretório na imagem final.
+# O initContainer 'frontend-copier' usará este diretório como fonte.
 COPY --from=frontend-builder /app/frontend/dist /app/frontend-dist
 
 # Expõe a porta do Gunicorn
 EXPOSE 5000
 
 # Define o comando padrão para iniciar a API com Gunicorn.
-CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "wsgi:app", "--chdir", "/app"]
+CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "wsgi:app"]
