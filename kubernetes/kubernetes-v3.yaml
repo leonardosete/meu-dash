@@ -108,6 +108,16 @@ spec:
           envFrom:
             - secretRef:
                 name: smart-remedy-secrets # Usa o Secret unificado
+          # CORREÇÃO: Adiciona requests e limits de recursos para o PostgreSQL.
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+              ephemeral-storage: "1Gi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+              ephemeral-storage: "2Gi"
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
@@ -167,6 +177,11 @@ spec:
           requests:
             cpu: "100m"
             memory: "128Mi"
+            ephemeral-storage: "512Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+            ephemeral-storage: "1Gi"
       # 2. Frontend Copier: Copia os arquivos do frontend da imagem para o volume compartilhado.
       - name: frontend-copier
         image: sevenleo/smart-remedy:latest
@@ -175,6 +190,16 @@ spec:
         volumeMounts:
         - name: frontend-dist
           mountPath: /frontend-dist
+        # CORREÇÃO: Adiciona requests e limits para o initContainer.
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi" # CORREÇÃO: Typo '256i' para '64Mi', valor mais apropriado.
+            ephemeral-storage: "256Mi"
+          limits:
+            cpu: "100m"
+            memory: "256Mi"
+            ephemeral-storage: "512Mi"
 
       # --- Contêineres Principais ---
       containers:
@@ -208,9 +233,11 @@ spec:
           requests:
             cpu: "256m"
             memory: "512Mi"
+            ephemeral-storage: "1Gi"
           limits:
             cpu: "512m"
             memory: "1Gi"
+            ephemeral-storage: "2Gi"
         volumeMounts:
         - name: smart-remedy-data
           mountPath: /app/data
@@ -240,9 +267,11 @@ spec:
           requests:
             cpu: "128m"
             memory: "128Mi"
+            ephemeral-storage: "512Mi"
           limits:
             cpu: "256m"
             memory: "256Mi"
+            ephemeral-storage: "1Gi"
 
   volumeClaimTemplates:
   - metadata:
