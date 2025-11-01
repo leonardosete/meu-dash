@@ -381,8 +381,9 @@ spec:
         # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
         # A imagem Nginx já roda como usuário não-root 'nginx'
         securityContext:
-          # Não definimos runAsUser aqui, permitindo que a imagem use seu usuário padrão 'nginx'.
-          runAsNonRoot: true
+          # CORREÇÃO FINAL: Removemos 'runAsNonRoot: true'.
+          # A imagem oficial do Nginx precisa iniciar seu processo mestre como root antes de baixar
+          # os privilégios para os workers. Esta política impedia a inicialização.
           allowPrivilegeEscalation: false
         # --- FIM DA MELHORIA ---
           
