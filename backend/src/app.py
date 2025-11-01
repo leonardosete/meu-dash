@@ -55,7 +55,7 @@ def create_app(test_config=None):
     db.init_app(app)
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
-    # --- CONFIGURAÇÃO EXPLÍCITA E ROBUSTA DO SWAGGER ---
+    # --- CONFIGURAÇÃO DO SWAGGER ---
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -63,9 +63,8 @@ def create_app(test_config=None):
             "description": "Priorização Inteligente de Casos com Foco em Remediação",
             "version": "1.0.0",
         },
-        "host": "smart-remedy.devops-master.shop",
-        "basePath": "/",
-        "schemes": ["https"],
+        # As chaves 'host', 'schemes' e 'basePath' foram removidas para permitir
+        # que o Flasgger e o ProxyFix autodetectem o ambiente corretamente.
         "securityDefinitions": {
             "Bearer": {
                 "type": "apiKey",
@@ -86,11 +85,6 @@ def create_app(test_config=None):
             }
         },
     }
-    # --- CAUSA RAIZ E CORREÇÃO ---
-    # O erro 'None is not defined' ocorre porque o template do Flasgger renderiza
-    # a configuração de OAuth como o valor literal 'None' quando ela não está definida.
-    # A solução é fornecer um dicionário vazio como padrão para a configuração de OAuth,
-    # que será renderizado como '{}' em JavaScript, um valor válido que corrige o erro.
     swagger_config = {
         "headers": [],
         "specs": [
@@ -104,8 +98,9 @@ def create_app(test_config=None):
         "static_url_path": "/flasgger_static",
         "swagger_ui": True,
         "specs_route": "/apidocs/",
-        "uiversion": 3,
-        "oauth_config": {},  # Adiciona um dicionário vazio para a configuração OAuth
+        # A chave 'uiversion' foi removida para usar a versão padrão do Swagger UI,
+        # que é mais compatível com a especificação gerada.
+        "oauth_config": {},
     }
     Swagger(app, template=swagger_template, config=swagger_config)
 
