@@ -143,20 +143,11 @@ spec:
     spec:
       automountServiceAccountToken: false
       
-      # --- MELHORIA DE SEGURANÇA: NÍVEL POD ---
-      # A imagem oficial do Postgres roda com UID/GID 70.
-      # fsGroup: 70 garante que o volume /var/lib/postgresql/data seja gravável pelo grupo 'postgres'.
-      # CORREÇÃO: runAsNonRoot é removido para permitir que o initContainer 'volume-mount-hack' rode como root.
-      # A segurança é mantida pois o contêiner principal do postgres ainda é forçado a rodar como não-root.
+      # --- SIMPLIFICAÇÃO TEMPORÁRIA ---
+      # O securityContext foi removido para permitir que o script de inicialização
+      # da imagem oficial do PostgreSQL gerencie as permissões do volume sem conflitos.
       securityContext:
-        # O processo principal rodará com o UID/GID 70 (usuário 'postgres' da imagem oficial).
-        runAsUser: 70
-        runAsGroup: 70
-        # Garante que o volume seja gravável pelo grupo 70.
-        fsGroup: 70
-        # Política que ajusta as permissões do volume de forma inteligente, evitando erros de 'chmod'.
-        fsGroupChangePolicy: "OnRootMismatch"
-      # --- FIM DA MELHORIA ---
+        fsGroup: 70 # Mantemos apenas o fsGroup para garantir que o volume seja gravável.
 
       containers:
         - name: postgres
