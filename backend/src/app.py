@@ -89,16 +89,15 @@ def create_app(test_config=None):
         "specs": [
             {
                 "endpoint": "apispec_1",
-                "route": "/apispec_1.json",
+                # --- INÍCIO DA CORREÇÃO ---
+                # Move a rota da especificação para dentro do prefixo da documentação.
+                "route": "/apidocs/apispec_1.json",
+                # --- FIM DA CORREÇÃO ---
                 "rule_filter": lambda rule: True,
                 "model_filter": lambda tag: True,
             }
         ],
-        # --- INÍCIO DA CORREÇÃO ---
-        # Define o caminho URL onde os arquivos estáticos do Swagger UI serão servidos.
-        # Isso corrige o problema de não encontrar os arquivos JS/CSS em um ambiente com proxy/ingress.
         "static_url_path": "/flasgger_static",
-        # --- FIM DA CORREÇÃO ---
         "swagger_ui": True,
         "specs_route": "/apidocs/",
     }
