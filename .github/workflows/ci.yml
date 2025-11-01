@@ -91,6 +91,8 @@ jobs:
           TEST_DB_USER: testuser
           TEST_DB_PASSWORD: testpassword
           TEST_DB_NAME: testdb
+          # CORREÇÃO: Adiciona o diretório raiz do backend ao PYTHONPATH.
+          PYTHONPATH: ./backend
         run: pytest
         working-directory: ./backend
 
