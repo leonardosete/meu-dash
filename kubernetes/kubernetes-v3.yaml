@@ -167,13 +167,15 @@ spec:
                 name: smart-remedy-secrets
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+              # CORREÇÃO: Usa um shell para expandir as variáveis de ambiente corretamente.
+              command: ["/bin/sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 2
           livenessProbe:
             exec:
-              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+              # CORREÇÃO: Usa um shell para expandir as variáveis de ambiente corretamente.
+              command: ["/bin/sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 2
