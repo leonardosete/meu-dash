@@ -4,7 +4,15 @@ from functools import wraps
 
 import jwt
 from flasgger import Swagger
-from flask import Flask, abort, jsonify, request, send_from_directory, url_for, render_template
+from flask import (
+    Flask,
+    abort,
+    jsonify,
+    request,
+    send_from_directory,
+    url_for,
+    render_template,
+)
 from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
