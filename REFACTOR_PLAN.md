@@ -48,6 +48,15 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [ ] **Etapa 3: Configurar Argo CD:**
     - [ ] Criar uma nova `Application` no Argo CD que monitora o repositório GitOps e sincroniza automaticamente as mudanças com o cluster Kubernetes.
 
+#### [ ] 🎨 Refatorar Exibição de Relatórios (API-First)
+
+- **Justificativa:** A arquitetura atual, que gera HTML no backend e o exibe em `<iframe>`s no frontend, é lenta, não interativa e acopla as responsabilidades de backend e frontend. A migração para uma abordagem API-First é a melhoria de UX e arquitetura mais impactante a ser feita.
+- **Plano de Ação:**
+  - [ ] **Backend:** Modificar os serviços para, em vez de gerar arquivos `.html`, gerar arquivos `.json` com os dados brutos dos relatórios.
+  - [ ] **Backend:** Criar novos endpoints na API (ex: `/api/v1/reports/<run_id>/summary`) que sirvam esses dados em formato JSON.
+  - [ ] **Frontend:** Remover completamente o uso de `<iframe>`s para a exibição de relatórios.
+  - [ ] **Frontend:** Criar novos componentes React (tabelas, gráficos) que consumam os novos endpoints da API e renderizem os dados de forma nativa e interativa.
+
 #### [ ] 🧠 Validar e Refinar Lógica de Análise de Scoring
 
 - **Justificativa:** A principal funcionalidade de negócio (cálculo do `score_ponderado_final`) passou por múltiplas refatorações. É crucial garantir que o resultado final esteja 100% correto e alinhado com as regras de negócio.
