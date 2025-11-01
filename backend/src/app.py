@@ -89,20 +89,19 @@ def create_app(test_config=None):
         "specs": [
             {
                 "endpoint": "apispec_1",
-                # --- INÍCIO DA CORREÇÃO ---
-                # Move a rota da especificação para dentro do prefixo da documentação.
+                # Garante que a especificação da API seja servida sob o mesmo prefixo da UI do Swagger,
+                # evitando problemas de roteamento com o Ingress.
                 "route": "/apidocs/apispec_1.json",
-                # --- FIM DA CORREÇÃO ---
                 "rule_filter": lambda rule: True,
                 "model_filter": lambda tag: True,
             }
         ],
+        # Define um caminho URL dedicado para os assets estáticos do Flasgger (JS, CSS).
         "static_url_path": "/flasgger_static",
         "swagger_ui": True,
         "specs_route": "/apidocs/",
     }
 
-    # A inicialização do Swagger permanece a mesma. O Flasgger usará a configuração acima.
     Swagger(app, config=swagger_config)
 
     CORS(
