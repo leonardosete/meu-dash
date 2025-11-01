@@ -4,12 +4,12 @@ name: CI - Build, Test, and Publish
 on:
   # Dispara o workflow em pushes para as branches principais e de refatoração.
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
   # Dispara o workflow em pull requests para a branch main.
-  pull_request:
-    branches:
-      - main
+  # pull_request:
+  #   branches:
+  #     - main
   # Permite a execução manual do workflow a partir da aba "Actions" do GitHub.
   workflow_dispatch:
 
@@ -91,10 +91,11 @@ jobs:
           TEST_DB_USER: testuser
           TEST_DB_PASSWORD: testpassword
           TEST_DB_NAME: testdb
-          # CORREÇÃO: Adiciona o diretório raiz do backend ao PYTHONPATH.
+          # CORREÇÃO FINAL: Define o PYTHONPATH para o diretório que contém o módulo 'src'.
+          # Isso permite que o pytest, rodando da raiz, encontre o código da aplicação.
           PYTHONPATH: ./backend
-        run: pytest
-        working-directory: ./backend
+        # CORREÇÃO: Executa o pytest a partir da raiz, especificando o diretório de testes.
+        run: pytest backend/tests
 
       # 5. Validação do Frontend
       - name: Lint Frontend
