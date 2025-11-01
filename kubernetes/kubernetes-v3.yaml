@@ -149,22 +149,14 @@ spec:
       # CORREÇÃO: runAsNonRoot é removido para permitir que o initContainer 'volume-mount-hack' rode como root.
       # A segurança é mantida pois o contêiner principal do postgres ainda é forçado a rodar como não-root.
       securityContext:
+        # O processo principal rodará com o UID/GID 70 (usuário 'postgres' da imagem oficial).
         runAsUser: 70
         runAsGroup: 70
+        # Garante que o volume seja gravável pelo grupo 70.
         fsGroup: 70
+        # Política que ajusta as permissões do volume de forma inteligente, evitando erros de 'chmod'.
+        fsGroupChangePolicy: "OnRootMismatch"
       # --- FIM DA MELHORIA ---
-
-      # CORREÇÃO: Adiciona um initContainer para preparar as permissões do volume.
-      # Isso evita que o script de inicialização do Postgres tente fazer um 'chmod' e falhe.
-      initContainers:
-      - name: volume-mount-hack
-        image: busybox:1.36
-        command: ["sh", "-c", "chmod 700 /var/lib/postgresql/data"]
-        securityContext:
-          runAsUser: 0 # Este initContainer precisa rodar como root para fazer o chmod.
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
 
       containers:
         - name: postgres
