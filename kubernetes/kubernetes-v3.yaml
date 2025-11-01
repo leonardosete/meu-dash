@@ -269,8 +269,18 @@ spec:
       - name: db-migrator
         # CORREÇÃO DE QUALIDADE: Tag imutável e IfNotPresent
         image: sevenleo/smart-remedy:latest
-        imagePullPolicy: Always
-        command: ["flask", "db", "upgrade"]
+        imagePullPolicy: Always        
+        # CORREÇÃO: Adiciona um loop de espera para garantir que o PostgreSQL esteja pronto
+        # antes de tentar executar a migração.
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            until pg_isready -h postgres-service -U $POSTGRES_USER; do
+              echo "Aguardando o PostgreSQL ficar pronto...";
+              sleep 2;
+            done;
+            echo "PostgreSQL pronto. Executando migração...";
+            flask db upgrade;
         env:
         - name: FLASK_APP
           value: "src.app:create_app()"

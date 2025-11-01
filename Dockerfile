@@ -21,7 +21,7 @@ WORKDIR /app
 # ADIÇÃO: Adiciona 'curl' para o HEALTHCHECK
 COPY backend/requirements.txt .
 RUN apk add --no-cache --virtual .build-deps build-base gcc libc-dev postgresql-dev python3-dev && \
-    apk add --no-cache curl && \
+    apk add --no-cache curl postgresql-client && \
     pip install --no-cache-dir -r requirements.txt && \
     apk del .build-deps
 
