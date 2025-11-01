@@ -19,7 +19,7 @@ WORKDIR /app
 
 # Instala dependências de build, pacotes Python e depois limpa.
 COPY backend/requirements.txt .
-RUN apk add --no-cache --virtual .build-deps build-base python3-dev gcc libc-dev && \
+RUN apk add --no-cache --virtual .build-deps build-base gcc libc-dev postgresql-dev python3-dev && \
     pip install --no-cache-dir -r requirements.txt && \
     apk del .build-deps
 

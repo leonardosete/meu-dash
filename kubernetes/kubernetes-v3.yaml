@@ -52,6 +52,70 @@ spec:
       app: smart-remedy
 
 ---
+# --- PostgreSQL Resources ---
+
+# PVC para persistir os dados do PostgreSQL
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: smart-remedy
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# Service para expor o PostgreSQL dentro do cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: smart-remedy
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+
+---
+# Deployment para o contêiner do PostgreSQL
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: smart-remedy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: smart-remedy-secrets # Usa o Secret unificado
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
 # --- StatefulSet: Orquestração dos Pods da aplicação ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -89,7 +153,13 @@ spec:
         command: ["flask", "db", "upgrade"]
         env:
         - name: FLASK_APP
-          value: "wsgi:app"
+          value: "src.app:create_app()"
+        # O initContainer precisa das credenciais do DB para rodar a migração.
+        - name: POSTGRES_HOST
+          value: "postgres-service" # Nome do Service do PostgreSQL
+        envFrom:
+        - secretRef:
+            name: smart-remedy-secrets # Usa o Secret unificado
         volumeMounts:
         - name: smart-remedy-data
           mountPath: /app/data
@@ -112,28 +182,19 @@ spec:
       - name: smart-remedy-api
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
+        # Injeta todas as credenciais a partir do Secret unificado.
+        envFrom:
+        - secretRef:
+            name: smart-remedy-secrets
         env:
-        - name: ADMIN_USER
-          valueFrom:
-            secretKeyRef:
-              name: admin-credentials
-              key: ADMIN_USER
-        - name: ADMIN_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: admin-credentials
-              key: ADMIN_PASSWORD
-        - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: admin-credentials
-              key: SECRET_KEY
         - name: FLASK_APP
-          value: "wsgi:app"
+          value: "src.app:create_app()"
         - name: FRONTEND_BASE_URL
           value: "https://smart-remedy.devops-master.shop"
         - name: JWT_EXPIRATION_HOURS
           value: "1"
+        - name: POSTGRES_HOST
+          value: "postgres-service" # Conecta ao Service do PostgreSQL
         ports:
         - name: gunicorn
           containerPort: 5000

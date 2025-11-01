@@ -43,7 +43,17 @@ def create_app(test_config=None):
         app.config.from_mapping(
             UPLOAD_FOLDER=os.path.join("/app/data", "uploads"),
             REPORTS_FOLDER=os.path.join("/app/data", "reports"),
-            SQLALCHEMY_DATABASE_URI=f"sqlite:///{os.path.join('/app/data', 'meu_dash.db')}",
+            # --- INÍCIO DA MIGRAÇÃO POSTGRESQL ---
+            # A URI de conexão agora é construída dinamicamente a partir de variáveis de ambiente
+            # que serão fornecidas pelo Kubernetes (via Secrets e ConfigMaps).
+            SQLALCHEMY_DATABASE_URI="postgresql://{user}:{password}@{host}:{port}/{db}".format(
+                user=os.getenv("POSTGRES_USER"),
+                password=os.getenv("POSTGRES_PASSWORD"),
+                host=os.getenv("POSTGRES_HOST"),
+                port=os.getenv("POSTGRES_PORT", 5432),
+                db=os.getenv("POSTGRES_DB"),
+            ),
+            # --- FIM DA MIGRAÇÃO POSTGRESQL ---
         )
     else:
         # Carrega a configuração de teste

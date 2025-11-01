@@ -13,6 +13,25 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
 
 ## 2. Tarefas Pendentes por Prioridade
 
+### Prioridade 0: Crítico / Estrutural
+
+#### [x] 🚀 Unificar Workflow de Desenvolvimento para CI/CD-first
+
+- **Justificativa:** Eliminar a dependência do `docker-compose` para o desenvolvimento local e adotar um fluxo de trabalho único, baseado em Git e CI/CD, que espelha o ambiente de produção. Isso reduz a deriva de ambiente ("funciona na minha máquina"), simplifica o onboarding e garante que todo o desenvolvimento seja feito contra uma arquitetura consistente.
+- **Plano de Ação:**
+  - [x] Remover todos os artefatos de desenvolvimento local baseados em `docker-compose` (ex: `docker-compose.yml`, `Dockerfile.dev`).
+  - [x] Remover os comandos obsoletos do `Makefile.mk` que dependiam do `docker-compose`.
+  - [x] Reescrever a documentação de contribuição (`CONTRIBUTING.md`) e o `README.md` para refletir o novo fluxo de trabalho: `codificar -> push -> CI/CD -> validar em K8s`.
+  - [x] Garantir que o pipeline de CI (`.github/workflows/ci.yml`) esteja completo, com testes e build da imagem de produção.
+
+#### [ ] 🚀 Migrar Banco de Dados de SQLite para PostgreSQL
+
+- **Justificativa:** O SQLite é um banco de dados de arquivo único e representa o principal **Ponto Único de Falha (SPOF)** da arquitetura. Ele impede a escalabilidade horizontal (múltiplas réplicas) e não é adequado para um ambiente de produção em Kubernetes. A migração para PostgreSQL é um pré-requisito para alta disponibilidade e resiliência.
+- **Plano de Ação:**
+  - [ ] Migrar a aplicação de SQLite para um banco de dados compatível com múltiplas réplicas (PostgreSQL), um pré-requisito para a escalabilidade real em Kubernetes.
+
+---
+
 ### Prioridade 1: Crítico / Alto
 
 #### [ ] 🧠 Validar e Refinar Lógica de Análise de Scoring

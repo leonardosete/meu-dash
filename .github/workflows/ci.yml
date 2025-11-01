@@ -102,3 +102,5 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:${{ github.sha }}

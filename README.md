@@ -15,31 +15,20 @@ Esta é uma aplicação web que automatiza a análise de alertas de monitorament
 
 ---
 
-### 🚀 Desenvolvimento Local (Getting Started)
+### 🚀 Fluxo de Desenvolvimento (CI/CD-First)
 
-O método recomendado para o desenvolvimento local é usar **Docker Compose**, que orquestra os contêineres do backend e do frontend.
+Este projeto adota uma filosofia **CI/CD-First**, o que significa que o desenvolvimento, teste e build são centralizados no pipeline de CI/CD do GitHub Actions. Não há mais um ambiente de desenvolvimento local completo com `docker-compose`.
 
-1. **Pré-requisitos:** Certifique-se de ter o Docker e o Docker Compose instalados.
+O fluxo de trabalho para contribuir é:
 
-2. **Inicie o Ambiente:**
-   Este comando irá construir as imagens e iniciar os serviços do backend e do frontend.
+1. **Codificar Localmente:** Faça suas alterações no código-fonte.
+2. **Validar Localmente (Opcional):** Use os comandos do `Makefile.mk` (ex: `make check`, `make test`) para validar suas alterações antes do commit.
+3. **Versionar:** Faça o commit e o push para uma nova branch.
+4. **Validação Automática:** O GitHub Actions executará todos os testes e verificações de qualidade.
+5. **Build da Imagem:** Se a validação for bem-sucedida, uma nova imagem Docker será construída e publicada no registry.
+6. **Deploy Manual:** A nova imagem pode ser implantada no ambiente Kubernetes manualmente.
 
-   ```bash
-   make up
-   ```
-
-3. **Prepare o Banco de Dados (Primeira Vez):**
-   Após os contêineres subirem, execute este comando para criar as tabelas no banco de dados.
-
-   ```bash
-   make migrate-docker
-   ```
-
-4. **Acesse os serviços:**
-   - **API do Backend:** `http://127.0.0.1:5001` (ou a porta definida em `BACKEND_PORT` no seu `.env`)
-   - **Aplicação Frontend:** `http://127.0.0.1:5174` (ou a porta definida em `FRONTEND_PORT` no seu `.env`)_
-
-Para parar todo o ambiente, use `make down`.
+Para mais detalhes sobre como contribuir, padrões de código e o processo de Pull Request, consulte o **Guia de Contribuição (`CONTRIBUTING.md`)**.
 
 ---
 
@@ -56,6 +45,7 @@ Para parar todo o ambiente, use `make down`.
   - **Qualidade e Testes:** ESLint / Prettier / Vitest
 - **Infraestrutura:**
   - **Containerização:** Docker / Docker Compose
+  - **Containerização:** Docker
 
 ---
 
