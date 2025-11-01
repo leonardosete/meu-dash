@@ -4,7 +4,7 @@ from functools import wraps
 
 import jwt
 from flasgger import Swagger
-from flask import Flask, abort, jsonify, request, send_from_directory, url_for
+from flask import Flask, abort, jsonify, request, send_from_directory, url_for, render_template
 from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -52,7 +52,7 @@ def create_app(test_config=None):
     db.init_app(app)
     Migrate(app, db, directory=MIGRATIONS_DIR)
 
-    # --- CONFIGURAÇÃO DO SWAGGER (ROBUSTA PARA PROXY) ---
+    # --- CONFIGURAÇÃO DO SWAGGER ---
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -81,10 +81,8 @@ def create_app(test_config=None):
         },
     }
 
-    # SOLUÇÃO DEFINITIVA: Usa uma configuração explícita para garantir que
-    # nenhum valor 'None' do Python seja renderizado no JavaScript.
+    # A UI do Flasgger está desabilitada. Serviremos nossa própria UI estática.
     swagger_config = {
-        "headers": [],
         "specs": [
             {
                 "endpoint": "apispec_1",
@@ -93,11 +91,7 @@ def create_app(test_config=None):
                 "model_filter": lambda tag: True,
             }
         ],
-        "static_url_path": "/flasgger_static",
-        "swagger_ui": True,
-        "specs_route": "/apidocs/",
-        "oauth_config": {},  # Garante que um objeto JS {} seja renderizado, não 'None'.
-        "VALIDATOR_URL": None,  # Garante que 'null' seja renderizado, não 'None'.
+        "swagger_ui": False, # Desabilita a UI problemática do Flasgger
     }
 
     Swagger(app, template=swagger_template, config=swagger_config)
@@ -151,6 +145,12 @@ def create_app(test_config=None):
         return decorated
 
     # --- ROTAS DA APLICAÇÃO ---
+    
+    # Nova rota para servir nossa UI estática do Swagger
+    @app.route('/apidocs/')
+    def serve_swagger_ui():
+        return render_template('swagger_ui.html')
+
     @app.route("/health")
     def health_check():
         """
