@@ -236,9 +236,12 @@ spec:
       # runAsNonRoot: true Garante que a sua imagem (com USER appuser) seja permitida.
       # fsGroup: 1001 (Exemplo) Deve corresponder ao GID do 'appgroup' que você criou no Dockerfile.
       # Isso garante que o volume /app/data seja gravável por esse grupo.
+      # CORREÇÃO: Adiciona runAsUser e runAsGroup para resolver o erro de validação.
       securityContext:
         runAsNonRoot: true
-        fsGroup: 1001 # IMPORTANTE: Verifique o GID do 'appgroup' no Alpine (use 1001 se não souber)
+        runAsUser: 1000
+        runAsGroup: 1001
+        fsGroup: 1001
       # --- FIM DA MELHORIA ---
 
       volumes:
