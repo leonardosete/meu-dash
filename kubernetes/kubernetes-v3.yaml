@@ -146,8 +146,9 @@ spec:
       # --- MELHORIA DE SEGURANÇA: NÍVEL POD ---
       # A imagem oficial do Postgres roda com UID/GID 70.
       # fsGroup: 70 garante que o volume /var/lib/postgresql/data seja gravável pelo grupo 'postgres'.
+      # CORREÇÃO: runAsNonRoot é removido para permitir que o initContainer 'volume-mount-hack' rode como root.
+      # A segurança é mantida pois o contêiner principal do postgres ainda é forçado a rodar como não-root.
       securityContext:
-        runAsNonRoot: true
         runAsUser: 70
         runAsGroup: 70
         fsGroup: 70
