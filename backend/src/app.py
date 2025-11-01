@@ -4,15 +4,7 @@ from functools import wraps
 
 import jwt
 from flasgger import Swagger
-from flask import (
-    Flask,
-    abort,
-    jsonify,
-    request,
-    send_from_directory,
-    url_for,
-    render_template,
-)
+from flask import Flask, abort, jsonify, request, send_from_directory, url_for, render_template
 from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -90,7 +82,9 @@ def create_app(test_config=None):
     }
 
     # A UI do Flasgger está desabilitada. Serviremos nossa própria UI estática.
+    # A chave 'headers' é necessária para evitar um TypeError no 'after_request' do Flasgger.
     swagger_config = {
+        "headers": [],
         "specs": [
             {
                 "endpoint": "apispec_1",
