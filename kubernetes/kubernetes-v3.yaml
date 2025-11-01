@@ -5,19 +5,26 @@ kind: ServiceAccount
 metadata:
   name: smart-remedy-sa
   namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: app-controller
 automountServiceAccountToken: false
 
 ---
-# --- Headless Service: Necessário para o StatefulSet ---
+# --- Headless Service: Necessário para o StatefulSet da App ---
 apiVersion: v1
 kind: Service
 metadata:
   name: smart-remedy-headless
   namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: app
 spec:
   clusterIP: None
   selector:
-    app: smart-remedy
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: app
   ports:
   - port: 80
     targetPort: http
@@ -29,86 +36,147 @@ kind: Service
 metadata:
   name: smart-remedy
   namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: app
 spec:
   type: ClusterIP
   selector:
-    app: smart-remedy
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: app
   ports:
   - name: http
     port: 80
     targetPort: http
 
 ---
-# --- PodDisruptionBudget (PDB): Garante a alta disponibilidade ---
+# --- PodDisruptionBudget (PDB): Garante a alta disponibilidade da App ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: smart-remedy-pdb
   namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: app
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: smart-remedy
+      app.kubernetes.io/name: smart-remedy
+      app.kubernetes.io/component: app
 
 ---
-# --- PostgreSQL Resources ---
+# --- PostgreSQL Resources (Convertido para StatefulSet) ---
 
-# PVC para persistir os dados do PostgreSQL
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-  namespace: smart-remedy
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-
----
-# Service para expor o PostgreSQL dentro do cluster
+# --- Service (ClusterIP): Ponto de acesso estável para a aplicação ---
 apiVersion: v1
 kind: Service
 metadata:
   name: postgres-service
   namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: database
 spec:
+  type: ClusterIP
   selector:
-    app: postgres
+    app.kubernetes.io/name: smart-remedy 
+    app.kubernetes.io/component: database
   ports:
     - protocol: TCP
       port: 5432
       targetPort: 5432
 
 ---
-# Deployment para o contêiner do PostgreSQL
-apiVersion: apps/v1
-kind: Deployment
+# --- Service (Headless): Necessário para o StatefulSet do Postgres ---
+apiVersion: v1
+kind: Service
 metadata:
-  name: postgres-deployment
+  name: postgres-headless
   namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: database
 spec:
-  replicas: 1
+  clusterIP: None 
+  selector:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: database
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+
+---
+# --- PodDisruptionBudget (PDB) para o PostgreSQL ---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: postgres-pdb
+  namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: database
+spec:
+  minAvailable: 1
   selector:
     matchLabels:
-      app: postgres
+      app.kubernetes.io/name: smart-remedy
+      app.kubernetes.io/component: database
+
+---
+# --- StatefulSet para o PostgreSQL ---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: database
+spec:
+  replicas: 1
+  serviceName: "postgres-headless"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: smart-remedy
+      app.kubernetes.io/component: database
+  
   template:
     metadata:
       labels:
-        app: postgres
+        app.kubernetes.io/name: smart-remedy
+        app.kubernetes.io/component: database
     spec:
+      # CORREÇÃO SONARQUBE: Impede a montagem automática do token de SA
+      automountServiceAccountToken: false
       containers:
         - name: postgres
           image: postgres:15-alpine
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
+              name: postgresdb
           envFrom:
             - secretRef:
-                name: smart-remedy-secrets # Usa o Secret unificado
-          # CORREÇÃO: Adiciona requests e limits de recursos para o PostgreSQL.
+                name: smart-remedy-secrets
+          
+          # Probes de saúde para o banco
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+          
+          # Recursos otimizados para cluster pequeno
           resources:
             requests:
               cpu: "250m"
@@ -118,13 +186,25 @@ spec:
               cpu: "500m"
               memory: "1Gi"
               ephemeral-storage: "2Gi"
+          
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
-      volumes:
-        - name: postgres-storage
-          persistentVolumeClaim:
-            claimName: postgres-pvc
+
+  # Template para criar o PVC automaticamente
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+      labels:
+        app.kubernetes.io/name: smart-remedy
+        app.kubernetes.io/component: database
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+      # storageClassName: "standard" # Descomente se precisar
+
 ---
 # --- StatefulSet: Orquestração dos Pods da aplicação ---
 apiVersion: apps/v1
@@ -132,21 +212,25 @@ kind: StatefulSet
 metadata:
   name: smart-remedy
   namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: app
 spec:
   serviceName: "smart-remedy-headless"
   replicas: 1
   selector:
     matchLabels:
-      app: smart-remedy
+      app.kubernetes.io/name: smart-remedy
+      app.kubernetes.io/component: app
   template:
     metadata:
       labels:
-        app: smart-remedy
+        app.kubernetes.io/name: smart-remedy
+        app.kubernetes.io/component: app
     spec:
       serviceAccountName: smart-remedy-sa
       automountServiceAccountToken: false
 
-      # --- Volumes definidos para o Pod ---
       volumes:
       - name: frontend-dist
         emptyDir: {}
@@ -154,7 +238,6 @@ spec:
         configMap:
           name: smart-remedy-nginx-conf
 
-      # --- Init Containers (em uma única lista) ---
       initContainers:
       # 1. DB Migrator: Prepara o banco de dados.
       - name: db-migrator
@@ -164,12 +247,11 @@ spec:
         env:
         - name: FLASK_APP
           value: "src.app:create_app()"
-        # O initContainer precisa das credenciais do DB para rodar a migração.
         - name: POSTGRES_HOST
-          value: "postgres-service" # Nome do Service do PostgreSQL
+          value: "postgres-service"
         envFrom:
         - secretRef:
-            name: smart-remedy-secrets # Usa o Secret unificado
+            name: smart-remedy-secrets
         volumeMounts:
         - name: smart-remedy-data
           mountPath: /app/data
@@ -182,7 +264,7 @@ spec:
             cpu: "200m"
             memory: "256Mi"
             ephemeral-storage: "1Gi"
-      # 2. Frontend Copier: Copia os arquivos do frontend da imagem para o volume compartilhado.
+      # 2. Frontend Copier: Copia os arquivos do frontend.
       - name: frontend-copier
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
@@ -190,24 +272,21 @@ spec:
         volumeMounts:
         - name: frontend-dist
           mountPath: /frontend-dist
-        # CORREÇÃO: Adiciona requests e limits para o initContainer.
         resources:
           requests:
             cpu: "50m"
-            memory: "64Mi" # CORREÇÃO: Typo '256i' para '64Mi', valor mais apropriado.
+            memory: "64Mi"
             ephemeral-storage: "256Mi"
           limits:
             cpu: "100m"
             memory: "256Mi"
             ephemeral-storage: "512Mi"
 
-      # --- Contêineres Principais ---
       containers:
       # --- Contêiner da API (Gunicorn/Flask) ---
       - name: smart-remedy-api
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
-        # Injeta todas as credenciais a partir do Secret unificado.
         envFrom:
         - secretRef:
             name: smart-remedy-secrets
@@ -215,11 +294,11 @@ spec:
         - name: FLASK_APP
           value: "src.app:create_app()"
         - name: FRONTEND_BASE_URL
-          value: "https://smart-remedy.devops-master.shop"
+          value: "https.smart-remedy.devops-master.shop"
         - name: JWT_EXPIRATION_HOURS
           value: "1"
         - name: POSTGRES_HOST
-          value: "postgres-service" # Conecta ao Service do PostgreSQL
+          value: "postgres-service"
         ports:
         - name: gunicorn
           containerPort: 5000
@@ -229,6 +308,13 @@ spec:
             port: 5000
           initialDelaySeconds: 15
           periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        # Recursos otimizados para cluster pequeno
         resources:
           requests:
             cpu: "256m"
@@ -263,6 +349,7 @@ spec:
           httpGet:
             path: /
             port: http
+        # Recursos otimizados para cluster pequeno
         resources:
           requests:
             cpu: "128m"
@@ -273,9 +360,13 @@ spec:
             memory: "256Mi"
             ephemeral-storage: "1Gi"
 
+  # Template para criar o PVC da aplicação
   volumeClaimTemplates:
   - metadata:
       name: smart-remedy-data
+      labels:
+        app.kubernetes.io/name: smart-remedy
+        app.kubernetes.io/component: app
     spec:
       accessModes: [ "ReadWriteOnce" ]
       storageClassName: "standard"
@@ -290,6 +381,9 @@ kind: ConfigMap
 metadata:
   name: smart-remedy-nginx-conf
   namespace: smart-remedy
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: app-config
 data:
   nginx.conf: |
     user nginx;
@@ -306,8 +400,6 @@ data:
         keepalive_timeout 65;
         server {
             listen 80;
-            # CORREÇÃO: A regra de proxy foi ajustada. O caminho incorreto '/static' foi removido.
-            # Agora, apenas os caminhos que realmente devem ir para o backend são encaminhados.
             location ~ ^/(api|admin|apidocs|flasgger_static|reports|docs)/ {
                 proxy_pass http://127.0.0.1:5000;
                 proxy_set_header Host $host;
@@ -332,6 +424,9 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/hsts: "true"
+  labels:
+    app.kubernetes.io/name: smart-remedy
+    app.kubernetes.io/component: ingress
 spec:
   ingressClassName: nginx
   rules:
