@@ -490,7 +490,3 @@ def create_app(test_config=None):
             return jsonify({"error": "Credenciais inválidas."}), 401
 
     return app
-
-
-# Cria a instância da aplicação para ser usada por servidores WSGI como Gunicorn.
-app = create_app()

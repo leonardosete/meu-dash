@@ -18,6 +18,23 @@ jobs:
     name: Build, Test, and Publish
     runs-on: ubuntu-latest
 
+    # CORREÇÃO: Adiciona um contêiner de serviço PostgreSQL para os testes.
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        # Garante que o banco de dados esteja pronto antes de iniciar os testes.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       # 1. Checkout do código: Baixa o código do repositório para o runner.
       - name: Checkout repository
@@ -62,15 +79,20 @@ jobs:
       - name: Lint Backend
         run: ruff check backend
 
-      # - name: Run Backend Security Scan
-      #   run: |
-      #     pip install --upgrade bandit
-      #     bandit -c pyproject.toml -r src -ll -ii
-      #   working-directory: ./backend
+      - name: Run Backend Security Scan
+        run: bandit -c pyproject.toml -r src -ll -ii
+        working-directory: ./backend
 
-      # - name: Run Backend Tests
-      #   run: pytest
-      #   working-directory: ./backend
+      - name: Run Backend Tests
+        env:
+          # CORREÇÃO: Passa as credenciais do banco de teste para o ambiente de teste.
+          TEST_DB_HOST: localhost # O service container é acessível via localhost
+          TEST_DB_PORT: 5432
+          TEST_DB_USER: testuser
+          TEST_DB_PASSWORD: testpassword
+          TEST_DB_NAME: testdb
+        run: pytest
+        working-directory: ./backend
 
       # 5. Validação do Frontend
       - name: Lint Frontend

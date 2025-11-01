@@ -1,5 +1,6 @@
 # Makefile para automação de tarefas comuns no projeto meu-dash
 
+ROOT_DIR := $(shell pwd)
 # Define o interpretador Python a ser usado. Procura por um ambiente virtual.
 PYTHON := $(shell if [ -d ".venv" ]; then echo ".venv/bin/python"; else echo "python3"; fi)
 
@@ -46,7 +47,7 @@ install:
 
 test:
 	@echo ">>> Executando testes do backend com pytest..."
-	@cd backend && $(PYTHON) -m pytest
+	@cd backend && $(ROOT_DIR)/$(PYTHON) -m pytest
 
 format:
 	@echo ">>> Formatando o código com ruff..."
