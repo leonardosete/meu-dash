@@ -230,17 +230,9 @@ spec:
       serviceAccountName: smart-remedy-sa
       automountServiceAccountToken: false
 
-      # --- MELHORIA DE SEGURANÇA: NÍVEL POD ---
-      # runAsNonRoot: true Garante que a sua imagem (com USER appuser) seja permitida.
-      # fsGroup: 1001 (Exemplo) Deve corresponder ao GID do 'appgroup' que você criou no Dockerfile.
-      # Isso garante que o volume /app/data seja gravável por esse grupo.
-      # CORREÇÃO: Adiciona runAsUser e runAsGroup para resolver o erro de validação.
+      # O securityContext de nível de Pod foi removido. A segurança agora é definida por contêiner.
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1001
         fsGroup: 1001
-      # --- FIM DA MELHORIA ---
 
       volumes:
       - name: frontend-dist
@@ -288,6 +280,9 @@ spec:
             ephemeral-storage: "1Gi"
         # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
         securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1001
           allowPrivilegeEscalation: false
           # Este initContainer também roda como 'appuser',
           # O fsGroup do Pod acima dará a ele permissão de escrita.
@@ -313,6 +308,9 @@ spec:
             ephemeral-storage: "512Mi"
         # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
         securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1001
           allowPrivilegeEscalation: false
         # --- FIM DA MELHORIA ---
 
@@ -325,6 +323,9 @@ spec:
         
         # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
         securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1001
           allowPrivilegeEscalation: false
         # --- FIM DA MELHORIA ---
           
@@ -380,6 +381,8 @@ spec:
         # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
         # A imagem Nginx já roda como usuário não-root 'nginx'
         securityContext:
+          # Não definimos runAsUser aqui, permitindo que a imagem use seu usuário padrão 'nginx'.
+          runAsNonRoot: true
           allowPrivilegeEscalation: false
         # --- FIM DA MELHORIA ---
           
