@@ -24,11 +24,12 @@ As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior cla
   - [x] Reescrever a documentação de contribuição (`CONTRIBUTING.md`) e o `README.md` para refletir o novo fluxo de trabalho: `codificar -> push -> CI/CD -> validar em K8s`.
   - [x] Garantir que o pipeline de CI (`.github/workflows/ci.yml`) esteja completo, com testes e build da imagem de produção.
 
-#### [ ] 🚀 Migrar Banco de Dados de SQLite para PostgreSQL
+#### [x] 🚀 Migrar Banco de Dados de SQLite para PostgreSQL
 
 - **Justificativa:** O SQLite é um banco de dados de arquivo único e representa o principal **Ponto Único de Falha (SPOF)** da arquitetura. Ele impede a escalabilidade horizontal (múltiplas réplicas) e não é adequado para um ambiente de produção em Kubernetes. A migração para PostgreSQL é um pré-requisito para alta disponibilidade e resiliência.
 - **Plano de Ação:**
-  - [ ] Migrar a aplicação de SQLite para um banco de dados compatível com múltiplas réplicas (PostgreSQL), um pré-requisito para a escalabilidade real em Kubernetes.
+  - [x] Migrar a aplicação de SQLite para um banco de dados compatível com múltiplas réplicas (PostgreSQL), um pré-requisito para a escalabilidade real em Kubernetes.
+  - [x] Adaptar a suíte de testes (Pytest) para rodar contra um banco de dados PostgreSQL no pipeline de CI.
 
 ---
 
