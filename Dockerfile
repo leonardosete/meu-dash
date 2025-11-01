@@ -18,32 +18,34 @@ FROM python:3.14-alpine
 WORKDIR /app
 
 # Instala dependências de build, pacotes Python e depois limpa.
+# ADIÇÃO: Adiciona 'curl' para o HEALTHCHECK
 COPY backend/requirements.txt .
 RUN apk add --no-cache --virtual .build-deps build-base gcc libc-dev postgresql-dev python3-dev && \
+    apk add --no-cache curl && \
     pip install --no-cache-dir -r requirements.txt && \
     apk del .build-deps
 
-# Copia o código-fonte do backend
+# ... (todos os seus comandos COPY) ...
 COPY ./backend/src ./src
-
-# Copia o diretório de migrações do banco de dados.
 COPY ./backend/migrations ./migrations
-
-# Copia os templates HTML necessários para a geração de relatórios.
 COPY ./backend/templates /app/templates
-
-# Copia a documentação estática.
 COPY ./docs ./docs
-
-# Copia o ponto de entrada do WSGI
 COPY backend/wsgi.py .
-
-# Copia os arquivos estáticos do frontend (gerados no estágio 1) para um diretório na imagem final.
-# O initContainer 'frontend-copier' usará este diretório como fonte.
 COPY --from=frontend-builder /app/frontend/dist /app/frontend-dist
 
-# Expõe a porta do Gunicorn
+# --- MELHORIA DE SEGURANÇA ---
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && chown -R appuser:appgroup /app
+USER appuser
+# --- FIM DA MELHORIA ---
+
+# Expõe a porta 5000
 EXPOSE 5000
 
-# Define o comando padrão para iniciar a API com Gunicorn.
+# --- MELHORIA DE QUALIDADE: HEALTHCHECK ---
+# Verifica a saúde da aplicação internamente
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://127.0.0.1:5000/health || exit 1
+# --- FIM DA MELHORIA ---
+
+# Comando final
 CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "wsgi:app"]

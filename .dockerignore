@@ -1,0 +1,27 @@
+# Ignorar arquivos do Docker
+Dockerfile
+.dockerignore
+
+# Ignorar arquivos do Git
+.git
+.gitignore
+
+# Ignorar arquivos do Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Ignorar arquivos do Node.js
+frontend/node_modules/
+frontend/npm-debug.log
+frontend/.next/
+frontend/dist/ # (Opcional, se você quiser garantir que só o build multi-estágio o crie)
+
+# Ignorar arquivos do VSCode
+.vscode/
+
+# Ignorar arquivos de ambiente locais
+.env
+*.env.local

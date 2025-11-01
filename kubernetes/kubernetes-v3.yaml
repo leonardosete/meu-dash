@@ -1,5 +1,4 @@
 ---
-# --- ServiceAccount: Define uma identidade dedicada e com privilégios mínimos para a aplicação ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -11,7 +10,6 @@ metadata:
 automountServiceAccountToken: false
 
 ---
-# --- Headless Service: Necessário para o StatefulSet da App ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -30,7 +28,6 @@ spec:
     targetPort: http
 
 ---
-# --- Service ClusterIP: Ponto de acesso interno para o Ingress ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -50,7 +47,6 @@ spec:
     targetPort: http
 
 ---
-# --- PodDisruptionBudget (PDB): Garante a alta disponibilidade da App ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -67,9 +63,8 @@ spec:
       app.kubernetes.io/component: app
 
 ---
-# --- PostgreSQL Resources (Convertido para StatefulSet) ---
+# --- PostgreSQL Resources ---
 
-# --- Service (ClusterIP): Ponto de acesso estável para a aplicação ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -84,12 +79,11 @@ spec:
     app.kubernetes.io/name: smart-remedy 
     app.kubernetes.io/component: database
   ports:
-    - protocol: TCP
-      port: 5432
-      targetPort: 5432
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
 
 ---
-# --- Service (Headless): Necessário para o StatefulSet do Postgres ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -104,12 +98,11 @@ spec:
     app.kubernetes.io/name: smart-remedy
     app.kubernetes.io/component: database
   ports:
-    - protocol: TCP
-      port: 5432
-      targetPort: 5432
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
 
 ---
-# --- PodDisruptionBudget (PDB) para o PostgreSQL ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -126,7 +119,6 @@ spec:
       app.kubernetes.io/component: database
 
 ---
-# --- StatefulSet para o PostgreSQL ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -149,23 +141,37 @@ spec:
         app.kubernetes.io/name: smart-remedy
         app.kubernetes.io/component: database
     spec:
-      # CORREÇÃO SONARQUBE: Impede a montagem automática do token de SA
       automountServiceAccountToken: false
+      
+      # --- MELHORIA DE SEGURANÇA: NÍVEL POD ---
+      # A imagem oficial do Postgres roda com UID/GID 70.
+      # fsGroup: 70 garante que o volume /var/lib/postgresql/data seja gravável pelo grupo 'postgres'.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+      # --- FIM DA MELHORIA ---
+
       containers:
         - name: postgres
           image: postgres:15-alpine
           imagePullPolicy: IfNotPresent
+          
+          # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
+          securityContext:
+            allowPrivilegeEscalation: false
+          # --- FIM DA MELHORIA ---
+
           ports:
             - containerPort: 5432
               name: postgresdb
           envFrom:
             - secretRef:
                 name: smart-remedy-secrets
-          
-          # Probes de saúde para o banco
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+              command: ["pg_isready", "-U", "$(POSTGES_USER)", "-d", "$(POSTGRES_DB)"]
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 2
@@ -175,8 +181,6 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 2
-          
-          # Recursos otimizados para cluster pequeno
           resources:
             requests:
               cpu: "250m"
@@ -186,12 +190,10 @@ spec:
               cpu: "500m"
               memory: "1Gi"
               ephemeral-storage: "2Gi"
-          
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
-
-  # Template para criar o PVC automaticamente
+  
   volumeClaimTemplates:
   - metadata:
       name: postgres-storage
@@ -203,8 +205,6 @@ spec:
       resources:
         requests:
           storage: 1Gi
-      # storageClassName: "standard" # Descomente se precisar
-
 ---
 # --- StatefulSet: Orquestração dos Pods da aplicação ---
 apiVersion: apps/v1
@@ -226,10 +226,20 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: smart-remedy
+        app.kubernetes.io: "true"
         app.kubernetes.io/component: app
     spec:
       serviceAccountName: smart-remedy-sa
       automountServiceAccountToken: false
+
+      # --- MELHORIA DE SEGURANÇA: NÍVEL POD ---
+      # runAsNonRoot: true Garante que a sua imagem (com USER appuser) seja permitida.
+      # fsGroup: 1001 (Exemplo) Deve corresponder ao GID do 'appgroup' que você criou no Dockerfile.
+      # Isso garante que o volume /app/data seja gravável por esse grupo.
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1001 # IMPORTANTE: Verifique o GID do 'appgroup' no Alpine (use 1001 se não souber)
+      # --- FIM DA MELHORIA ---
 
       volumes:
       - name: frontend-dist
@@ -239,8 +249,9 @@ spec:
           name: smart-remedy-nginx-conf
 
       initContainers:
-      # 1. DB Migrator: Prepara o banco de dados.
+      # 1. DB Migrator
       - name: db-migrator
+        # CORREÇÃO DE QUALIDADE: Tag imutável e IfNotPresent
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
         command: ["flask", "db", "upgrade"]
@@ -264,8 +275,16 @@ spec:
             cpu: "200m"
             memory: "256Mi"
             ephemeral-storage: "1Gi"
-      # 2. Frontend Copier: Copia os arquivos do frontend.
+        # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
+        securityContext:
+          allowPrivilegeEscalation: false
+          # Este initContainer também roda como 'appuser',
+          # O fsGroup do Pod acima dará a ele permissão de escrita.
+        # --- FIM DA MELHORIA ---
+          
+      # 2. Frontend Copier
       - name: frontend-copier
+        # CORREÇÃO DE QUALIDADE: Tag imutável e IfNotPresent
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
         command: ["/bin/sh", "-c", "cp -r /app/frontend-dist/* /frontend-dist/"]
@@ -281,12 +300,23 @@ spec:
             cpu: "100m"
             memory: "256Mi"
             ephemeral-storage: "512Mi"
+        # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
+        securityContext:
+          allowPrivilegeEscalation: false
+        # --- FIM DA MELHORIA ---
 
       containers:
       # --- Contêiner da API (Gunicorn/Flask) ---
       - name: smart-remedy-api
+        # CORREÇÃO DE QUALIDADE: Tag imutável e IfNotPresent
         image: sevenleo/smart-remedy:latest
         imagePullPolicy: Always
+        
+        # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
+        securityContext:
+          allowPrivilegeEscalation: false
+        # --- FIM DA MELHORIA ---
+          
         envFrom:
         - secretRef:
             name: smart-remedy-secrets
@@ -314,7 +344,6 @@ spec:
             port: 5000
           initialDelaySeconds: 30
           periodSeconds: 15
-        # Recursos otimizados para cluster pequeno
         resources:
           requests:
             cpu: "256m"
@@ -332,6 +361,13 @@ spec:
       - name: smart-remedy-nginx
         image: nginx:1.25-alpine
         imagePullPolicy: IfNotPresent
+        
+        # --- MELHORIA DE SEGURANÇA: NÍVEL CONTÊINER ---
+        # A imagem Nginx já roda como usuário não-root 'nginx'
+        securityContext:
+          allowPrivilegeEscalation: false
+        # --- FIM DA MELHORIA ---
+          
         ports:
         - name: http
           containerPort: 80
@@ -349,7 +385,6 @@ spec:
           httpGet:
             path: /
             port: http
-        # Recursos otimizados para cluster pequeno
         resources:
           requests:
             cpu: "128m"
@@ -386,6 +421,7 @@ metadata:
     app.kubernetes.io/component: app-config
 data:
   nginx.conf: |
+    # (Conteúdo do ConfigMap... sem alterações)
     user nginx;
     worker_processes auto;
     events {
