@@ -94,10 +94,16 @@ def create_app(test_config=None):
                 "model_filter": lambda tag: True,
             }
         ],
+        # --- INÍCIO DA CORREÇÃO ---
+        # Define o caminho URL onde os arquivos estáticos do Swagger UI serão servidos.
+        # Isso corrige o problema de não encontrar os arquivos JS/CSS em um ambiente com proxy/ingress.
+        "static_url_path": "/flasgger_static",
+        # --- FIM DA CORREÇÃO ---
         "swagger_ui": True,
         "specs_route": "/apidocs/",
     }
 
+    # A inicialização do Swagger permanece a mesma. O Flasgger usará a configuração acima.
     Swagger(app, config=swagger_config)
 
     CORS(
