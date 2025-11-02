@@ -1008,3 +1008,23 @@ body.light-mode .preview-card {
   width: 20px;
   height: 20px;
 }
+
+/* --- CORREÇÃO: REGRAS DE RESPONSIVIDADE --- */
+
+/* Para telas com largura máxima de 1024px (tablets e celulares) */
+@media (max-width: 1024px) {
+  .layout-wrapper {
+    /* Altera o layout de lado a lado para empilhado */
+    flex-direction: column;
+    height: auto; /* Permite que o conteúdo cresça verticalmente */
+    gap: 15px;
+  }
+
+  .sidebar-column {
+    /* A sidebar agora ocupa a largura total e tem uma altura fixa */
+    max-width: 100%;
+    height: auto;
+    flex-direction: row; /* Itens da sidebar ficam lado a lado */
+    justify-content: space-around; /* Espaça os itens da sidebar */
+  }
+}
