@@ -239,14 +239,14 @@ def test_submit_feedback_success(client, monkeypatch):
         "title": "Test Bug Report",
         "description": "This is a test bug description",
         "email": "test@example.com",
-        "context": "Test context information"
+        "context": "Test context information",
     }
 
     # Mock da resposta da API do GitHub
     mock_github_response = {
         "html_url": "https://github.com/test_owner/test_repo/issues/123",
         "number": 123,
-        "title": "[BUG] Test Bug Report"
+        "title": "[BUG] Test Bug Report",
     }
 
     with patch("src.app.requests.post") as mock_post:
@@ -255,9 +255,7 @@ def test_submit_feedback_success(client, monkeypatch):
 
         # ACT: Envia o feedback
         response = client.post(
-            "/api/v1/feedback",
-            json=feedback_data,
-            content_type="application/json"
+            "/api/v1/feedback", json=feedback_data, content_type="application/json"
         )
 
         # ASSERT
@@ -265,12 +263,18 @@ def test_submit_feedback_success(client, monkeypatch):
         json_data = response.get_json()
         assert json_data["success"] is True
         assert "issue_url" in json_data
-        assert json_data["issue_url"] == "https://github.com/test_owner/test_repo/issues/123"
+        assert (
+            json_data["issue_url"]
+            == "https://github.com/test_owner/test_repo/issues/123"
+        )
 
         # Verifica se a API do GitHub foi chamada corretamente
         mock_post.assert_called_once()
         call_args = mock_post.call_args
-        assert call_args[0][0] == "https://api.github.com/repos/test_owner/test_repo/issues"
+        assert (
+            call_args[0][0]
+            == "https://api.github.com/repos/test_owner/test_repo/issues"
+        )
 
         # Verifica os dados enviados
         request_data = call_args[1]["json"]
@@ -291,14 +295,12 @@ def test_submit_feedback_missing_required_fields(client):
     # Testa dados incompletos
     incomplete_data = {
         "type": "bug",
-        "title": "Test Title"
+        "title": "Test Title",
         # description está faltando
     }
 
     response = client.post(
-        "/api/v1/feedback",
-        json=incomplete_data,
-        content_type="application/json"
+        "/api/v1/feedback", json=incomplete_data, content_type="application/json"
     )
 
     assert response.status_code == 400
@@ -313,13 +315,11 @@ def test_submit_feedback_invalid_type(client):
     invalid_data = {
         "type": "invalid_type",
         "title": "Test Title",
-        "description": "Test description"
+        "description": "Test description",
     }
 
     response = client.post(
-        "/api/v1/feedback",
-        json=invalid_data,
-        content_type="application/json"
+        "/api/v1/feedback", json=invalid_data, content_type="application/json"
     )
 
     assert response.status_code == 400
@@ -337,7 +337,7 @@ def test_submit_feedback_github_error(client, monkeypatch):
     feedback_data = {
         "type": "suggestion",
         "title": "Test Suggestion",
-        "description": "Test description"
+        "description": "Test description",
     }
 
     with patch("src.app.requests.post") as mock_post:
@@ -346,9 +346,7 @@ def test_submit_feedback_github_error(client, monkeypatch):
 
         # ACT: Envia o feedback
         response = client.post(
-            "/api/v1/feedback",
-            json=feedback_data,
-            content_type="application/json"
+            "/api/v1/feedback", json=feedback_data, content_type="application/json"
         )
 
         # ASSERT
@@ -364,13 +362,11 @@ def test_submit_feedback_no_github_token(client):
     feedback_data = {
         "type": "feature",
         "title": "Test Feature",
-        "description": "Test description"
+        "description": "Test description",
     }
 
     response = client.post(
-        "/api/v1/feedback",
-        json=feedback_data,
-        content_type="application/json"
+        "/api/v1/feedback", json=feedback_data, content_type="application/json"
     )
 
     assert response.status_code == 503
