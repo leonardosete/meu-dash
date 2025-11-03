@@ -161,7 +161,7 @@ const Sidebar: React.FC = () => {
             onClick={() => setIsFeedbackModalOpen(true)}
             title=""
           >
-            <MessageSquare size={16} />
+            <MessageSquare />
             <span>Feedback</span>
             <div className="side-card-tooltip">
               <h3>Enviar Feedback</h3>

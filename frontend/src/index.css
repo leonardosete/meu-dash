@@ -1331,8 +1331,8 @@ body.light-mode .preview-card {
 }
 
 .feedback-button svg {
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
 }
 
@@ -1392,7 +1392,7 @@ body.light-mode .preview-card {
 .feedback-button .side-card-tooltip p {
   margin: 0;
   font-size: 0.85em;
-  opacity: 0.8;
+  color: var(--text-secondary-color);
 }
 
 /* No modo sidebar recolhido, o botão fica menor */
