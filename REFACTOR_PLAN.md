@@ -1,177 +1,99 @@
-# ✅ Plano de Ação: Fase 3 - Finalização e Limpeza
+# ✅ Plano de Ação: Roadmap Prioritário (Seção Atual)
 
-**Última Atualização:** 2025-10-28
-**Arquiteto de Refatoração:** Gemini Code Assist
-
-## 1. Resumo do Estado Atual
-
-A refatoração principal para uma arquitetura desacoplada (API Flask + SPA React) foi concluída. O projeto está na **Fase 3: Finalização e Limpeza**, com foco em robustecer a segurança, a lógica de negócio e a documentação.
-
-As fases 0, 1 e 2 estão arquivadas e foram removidas deste plano para maior clareza.
+**Nota:** O conteúdo histórico (seções 1–4 e histórico da Fase 3) foi movido para `OLD_REFACTOR_PLAN.md` para manter este arquivo focado nas prioridades atuais. Consulte `OLD_REFACTOR_PLAN.md` para o histórico completo.
 
 ---
 
-## 2. Tarefas Pendentes por Prioridade
+## 0. Prioridade Imediata: Mecanismo de Feedback de Usuário
 
-### Prioridade 0: Crítico / Estrutural
+Objetivo: permitir que usuários (mantedores e utilizadores da ferramenta) enviem feedback direto sobre a aplicação através de GitHub Issues — sugestões de melhoria, solicitações de novas features, reports de bugs e pedidos de remoção de funcionalidades — de forma simples, audível e moderável.
 
-#### [x] 🚀 Unificar Workflow de Desenvolvimento para CI/CD-first
+Por que é prioritário: feedback direto de usuários guiará decisões de produto e permitirá priorizar correções/itens de valor real antes de grandes mudanças infra-estruturais. Além disso, ajuda a reduzir ruído de requisições internas e fornece evidências qualitativas sobre impacto das alterações.
 
-- **Justificativa:** Eliminar a dependência do `docker-compose` para o desenvolvimento local e adotar um fluxo de trabalho único, baseado em Git e CI/CD, que espelha o ambiente de produção. Isso reduz a deriva de ambiente ("funciona na minha máquina"), simplifica o onboarding e garante que todo o desenvolvimento seja feito contra uma arquitetura consistente.
-- **Plano de Ação:**
-  - [x] Remover todos os artefatos de desenvolvimento local baseados em `docker-compose` (ex: `docker-compose.yml`, `Dockerfile.dev`).
-  - [x] Remover os comandos obsoletos do `Makefile.mk` que dependiam do `docker-compose`.
-  - [x] Reescrever a documentação de contribuição (`CONTRIBUTING.md`) e o `README.md` para refletir o novo fluxo de trabalho: `codificar -> push -> CI/CD -> validar em K8s`.
-  - [x] Garantir que o pipeline de CI (`.github/workflows/ci.yml`) esteja completo, com testes e build da imagem de produção.
+Decisão de Arquitetura: após análise em `docs/FEEDBACK_PLAN.md`, decidiu-se usar GitHub Issues como backend de persistência devido aos benefícios imediatos (triagem via labels, discussões threaded, notificações) sem necessidade de infra adicional.
 
-#### [x] 🚀 Migrar Banco de Dados de SQLite para PostgreSQL
+Tarefas de Implementação:
 
-- **Justificativa:** O SQLite é um banco de dados de arquivo único e representa o principal **Ponto Único de Falha (SPOF)** da arquitetura. Ele impede a escalabilidade horizontal (múltiplas réplicas) e não é adequado para um ambiente de produção em Kubernetes. A migração para PostgreSQL é um pré-requisito para alta disponibilidade e resiliência.
-- **Plano de Ação:**
-  - [x] Migrar a aplicação de SQLite para um banco de dados compatível com múltiplas réplicas (PostgreSQL), um pré-requisito para a escalabilidade real em Kubernetes.
-  - [x] Adaptar a suíte de testes (Pytest) para rodar contra um banco de dados PostgreSQL no pipeline de CI.
+- [ ] Criar token do GitHub com permissão de criação de issues (escopo mínimo necessário).
+- [ ] Implementar endpoint backend (POST /api/v1/feedback) que use GitHub REST API para criar issues:
+  - Campos: tipo (label), título, descrição, email (opcional), contexto.
+  - Validação de payload e rate limiting básico.
+  - Retornar link da issue criada na resposta.
+- [ ] Criar componente React para o modal de feedback:
+  - Botão discreto que abre o modal.
+  - Campos essenciais com validação.
+  - Preview do conteúdo antes de enviar.
+  - Confirmação com link para a issue criada.
+- [ ] Configurar labels e templates de issue no repositório:
+  - Labels para tipos de feedback (bug, feature, etc.).
+  - Template básico para padronizar o formato.
+  - Documentar processo de triagem no README.
 
----
+Ligação: ver `docs/FEEDBACK_PLAN.md` para análise completa e detalhes da decisão de usar GitHub Issues.
 
-### Prioridade 1: Crítico / Alto
-
-#### [ ] 🚀 Implementar Deploy Contínuo com Argo CD (GitOps)
-
-- **Justificativa:** Substituir o processo de deploy manual (`kubectl apply`) por um fluxo GitOps automatizado. Isso aumenta a confiabilidade, a velocidade e a segurança dos deploys, além de criar um histórico auditável de todas as mudanças no ambiente de produção. O Git se torna a única fonte da verdade para o estado do cluster.
-- **Plano de Ação:**
-  - [ ] **Etapa 1: Criar Repositório GitOps:**
-    - [ ] Criar um novo repositório Git (ex: `smart-remedy-gitops`) para hospedar os manifestos Kubernetes.
-    - [ ] Mover os arquivos `setup.yaml` e `kubernetes-v3.yaml` para este novo repositório.
-    - [ ] Excluir o diretório `kubernetes/` do repositório da aplicação (`meu-dash`).
-  - [ ] **Etapa 2: Criar Workflow de CD:**
-    - [ ] Criar um novo workflow (`cd.yml`) no `meu-dash` que, após um build bem-sucedido na `main`, clona o repositório GitOps, atualiza a tag da imagem no `kubernetes-v3.yaml` e faz o push da alteração.
-  - [ ] **Etapa 3: Configurar Argo CD:**
-    - [ ] Criar uma nova `Application` no Argo CD que monitora o repositório GitOps e sincroniza automaticamente as mudanças com o cluster Kubernetes.
-
-#### [ ] 🎨 Refatorar Exibição de Relatórios (API-First)
-
-- **Justificativa:** A arquitetura atual, que gera HTML no backend e o exibe em `<iframe>`s no frontend, é lenta, não interativa e acopla as responsabilidades de backend e frontend. A migração para uma abordagem API-First é a melhoria de UX e arquitetura mais impactante a ser feita.
-- **Plano de Ação:**
-  - [ ] **Backend:** Modificar os serviços para, em vez de gerar arquivos `.html`, gerar arquivos `.json` com os dados brutos dos relatórios.
-  - [ ] **Backend:** Criar novos endpoints na API (ex: `/api/v1/reports/<run_id>/summary`) que sirvam esses dados em formato JSON.
-  - [ ] **Frontend:** Remover completamente o uso de `<iframe>`s para a exibição de relatórios.
-  - [ ] **Frontend:** Criar novos componentes React (tabelas, gráficos) que consumam os novos endpoints da API e renderizem os dados de forma nativa e interativa.
-
-#### [ ] 🧠 Validar e Refinar Lógica de Análise de Scoring
-
-- **Justificativa:** A principal funcionalidade de negócio (cálculo do `score_ponderado_final`) passou por múltiplas refatorações. É crucial garantir que o resultado final esteja 100% correto e alinhado com as regras de negócio.
-- **Plano de Ação:**
-  - [x] **Revisão de Código:** Analisar detalhadamente os scripts `analisar_alertas.py` e `analise_tendencia.py` em busca de "code smells", inconsistências ou bugs na lógica de cálculo.
-  - [x] **Melhorar Docstrings:** Garantir que todas as funções críticas em `analisar_alertas.py` tenham docstrings claras.
-  - [x] **Validação de Integração E2E (Geral):** Realizar um teste de ponta a ponta com um arquivo CSV complexo para validar a integração do sistema.
-  - [x] **Validação de Regressão (Cenários Específicos):** Executar testes E2E com múltiplos arquivos CSV, cada um focado em uma regra de negócio específica.
-    - [x] Cenário: Instabilidade Crônica
-    - [x] Cenário: Sucesso Parcial (Closed Skipped, Canceled)
-    - [x] Cenário: Falha Persistente
-    - [x] Cenário: Sucesso Estabilizado
-  - [ ] **Validação de Negócio (Golden File):** Validar o resultado da análise de um arquivo CSV de produção contra o resultado esperado, definido pelo especialista de negócio.
 
 ---
 
-### Prioridade 2: Alto
+## 5. Novas Prioridades e Roadmap (decisão do mantenedor)
 
-#### [ ] 📄 Revisar e Atualizar Documentação Gerencial (`doc_gerencial.html`)
+O mantenedor decidiu priorizar uma transição para um ambiente de produção baseado em AKS (Azure Kubernetes Service), pipelines no Azure DevOps e empacotamento com Helm. Abaixo estão as tarefas consolidadas, com prioridades e passos acionáveis. Mantivemos o histórico anterior intacto — esta seção documenta o que falta entregar segundo as decisões mais recentes.
 
-- **Justificativa:** Este documento é a "página de venda" da ferramenta para stakeholders. Ele precisa refletir com precisão a inteligência e o valor da versão atual do sistema.
-- **Plano de Ação:**
-  - [ ] Reestruturar a seção "Classificação da Análise" para incluir o 4º pilar: "Pontos de Atenção".
-  - [ ] Revisar e refinar a explicação do "Score Ponderado" para incluir o `fator_ineficiencia_task` e os novos status (`Canceled`, `Closed Skipped`).
-  - [ ] Garantir que a linguagem seja clara, focada em valor de negócio e que todos os exemplos estejam alinhados com a lógica atual.
-  - [ ] Refinar o conteúdo a partir da seção "Usando o Dashboard para Decisões" em diante, garantindo clareza e precisão.
+Prioridade Alta
 
-#### [ ] 💬 Revisar Mensagens do "Diagnóstico Rápido"
+- [ ] Migrar infra/CI para AKS + Azure DevOps + Helm
+  - Justificativa: ambiente de produção alvo será AKS; pipelines e registry serão do Azure (não usaremos Docker Hub). Isto exige atualização do processo de build/publish e dos manifests para Helm charts.
+  - Plano de Ação:
+    - [ ] Criar Helm chart (chart base) para a aplicação (`charts/smart-remedy`) que contenha templates para Deployment, Service, Ingress, ConfigMap e Secrets (valores parametrizáveis).
+    - [ ] Converter `kubernetes-v3.yaml` em chart/values e mover privilégios sensíveis para valores externos (SecretScope no Azure).
+    - [ ] Criar pipeline de CI/CD no Azure DevOps (yaml) que: build da imagem, push para Azure Container Registry (ACR), package do chart com tag apropriada e/publicação do chart (opcional) ou atualização do repositório GitOps.
+    - [ ] Atualizar registros e documentação de deploy para apontar para ACR e Azure DevOps. Validar autenticação e permissões (Service Principal/Managed Identity).
+    - [ ] Testar deploy em ambiente de stage AKS com Helm (helm upgrade --install) e validar probes/healthchecks.
 
-- **Justificativa:** As mensagens do "Diagnóstico Rápido" são a primeira e mais importante interpretação da ferramenta para o usuário. Elas precisam ser 100% coerentes com a lógica de negócio e claras para o gestor.
-- **Plano de Ação:**
-  - [ ] Revisar cada um dos cenários de diagnóstico (`_determine_verdict` em `analise_tendencia.py`).
-  - [ ] Garantir que a linguagem seja precisa, concisa e transmita o insight correto.
-  - [ ] Verificar se os emojis e a classe CSS (`highlight-success`, `highlight-danger`, etc.) estão alinhados com a mensagem.
+Prioridade Alta (parte de infraestrutura)
 
-### Prioridade 3: Médio
+- [ ] Ajustar configuração de Ingress e rede para AKS
+  - Justificativa: o Ingress atual pode precisar de adaptação para o controlador usado no AKS (NGINX Ingress Controller, Application Gateway Ingress Controller, etc.) e políticas de TLS/HTTPS específicas do cloud.
+  - Plano de Ação:
+    - [ ] Identificar qual Ingress Controller será usado em AKS (recomendar NGINX ou AGIC conforme infra).
+    - [ ] Converter regras de Ingress do chart para suportar anotações específicas do controller (TLS, redirect, HSTS, rewrites, pathType).
+    - [ ] Validar integração com certificação (KeyVault/Cert Manager ou Azure-managed certs).
 
-#### [ ] 🚀 Finalizar Pipeline de CI/CD
+Prioridade Alta (deploy/registry)
 
-- **Justificativa:** O pipeline atual (`.github/workflows/ci.yml`) já valida o backend e o frontend, mas não constrói a imagem Docker de produção final, criando um processo de deploy manual.
-- **Plano de Ação:**
-  - [ ] **Modificar Build do Docker:** Alterar a etapa de build para usar o `Dockerfile` multi-estágio de produção, que constrói o frontend e o backend em uma única imagem.
-  - [ ] **Publicar Imagem:** Garantir que a imagem final seja publicada no Docker Hub (ou outro registry) com as tags corretas.
+- [ ] Ajustar pipeline e registry — ACR + autenticação
+  - Plano de Ação:
+    - [ ] Substituir etapa de push para Docker Hub por push para Azure Container Registry (ACR) no pipeline.
+    - [ ] Configurar service connection no Azure DevOps (Service Principal) com permissões de push/pull no ACR.
+    - [ ] Garantir que imagens geradas usem tags semânticas e as mesmas tags sejam referenciadas pelos charts/values.
 
-#### [ ] 📚 Revisar e Atualizar Documentação para o Usuário Final (Seção "Conceitos")
+Prioridade Média/Alta
 
-- **Justificativa:** A seção "Conceitos" no dashboard (`resumo_geral.html`) serve como a documentação "viva" para o usuário. Ela precisa refletir 100% a lógica de negócio final e estável.
-- **Plano de Ação:**
-  - [ ] Revisar todas as tabelas de pesos e multiplicadores em `gerador_html.py` para garantir que correspondam aos valores em `constants.py`.
-  - [ ] Ajustar os textos e exemplos para que sejam claros, simples e precisos.
+- [ ] Desacoplar totalmente a geração de HTML do backend (mover para API-First)
+  - Justificativa: reduzir acoplamento e permitir que o frontend seja responsável pela renderização, além de permitir consumo por outras ferramentas.
+  - Plano de Ação (sugestão de fases):
+    1. **API-First mínima:** adicionar endpoints JSON que sirvam os dados necessários para gerar os dashboards principais (KPIs, listas, trend summaries). Não remover ainda a geração de HTML; oferecer ambas durante migração.
+    2. **Frontend/Renderer:** criar novos componentes React que consumam os endpoints e renderizem os dashboards (substituir `<iframe>`s progressivamente).
+    3. **Limpeza:** quando cobertura e parity funcional forem confirmadas, remover geradores HTML e templates backend usados apenas para visualização.
+  - Observação: alguns artefatos (textos conceituais, explicações, guias) podem precisar ser portados para conteúdo dinâmico (CMS leve ou arquivos markdown servidos pelo frontend).
 
-### Prioridade 4: Baixo (Melhoria de UX)
+Prioridade Média
 
-#### [ ] ✨ Ajuste de UX: Trocar Ícone do Card "Pontos de Atenção"
+- [ ] Atualizar `doc_gerencial.html` (documentação gerencial)
+  - Justificativa: o conteúdo atual ainda não expressa a mensagem desejada ao público gerencial; será a etapa final de polimento.
+  - Plano de Ação:
+    - [ ] Rescrever seções chave (Desafio, Proposta de Valor, Como Usar) para foco em benefícios mensuráveis.
+    - [ ] Atualizar exemplos e capturas de tela para refletir a UI atual.
+    - [ ] Aprovação final com stakeholder antes de publicar.
 
-- **Justificativa:** O ícone atual '⚠️' pode ser confundido com "Instabilidade Crônica". Um ícone de ferramenta '🛠️' comunicaria melhor a ideia de "automação que precisa de ajuste".
-- **Plano de Ação:**
-  - [ ] Modificar o `gerador_html.py` para substituir o ícone no card de "Pontos de Atenção".
+Prioridade Baixa (posterior)
 
----
+- [ ] Unificar script externo de preparação de CSV na aplicação
+  - Justificativa: atualmente existe um script Python externo que prepara o CSV de entrada; unificá-lo permitirá um fluxo integrado e reduzirá passos manuais.
+  - Plano de Ação:
+    - [ ] Analisar o script externo e suas dependências; criar um módulo reutilizável no `backend/src/utils` (ex: `preparer.py`).
+    - [ ] Expor uma rota que execute a preparação (ou integrar ao pipeline de upload) e gerar o CSV que o pipeline de análise consome.
+    - [ ] Atualizar testes e documentação para refletir o novo fluxo.
 
-## 3. Tarefas Concluídas (Histórico da Fase 3)
+Observação final
 
-A lista abaixo resume as principais tarefas que já foram concluídas nesta fase, conforme registrado no `DIARIO_DE_BORDO.md`.
-
-### [x] ️ Implementar Validação de Schema de Entrada (Porteiro de Dados)
-
-- **Resultado:** A função `carregar_dados` agora valida estritamente o schema do CSV na entrada, rejeitando arquivos inválidos e garantindo a integridade dos dados.
-
-#### [x] 🔐 Proteger Todos os Endpoints da API com Autenticação
-
-- **Resultado:** Todos os endpoints que disparam ações (`upload`, `compare`, `delete`) foram protegidos com o decorador `@token_required`. A UI foi ajustada para refletir o estado de autenticação.
-
-#### [x] 📚 Criar Documentação da API com Flasgger
-
-- **Resultado:** Todos os endpoints da API foram documentados com Flasgger, gerando uma UI do Swagger (`/apidocs`) interativa. O `README.md` foi atualizado para apontar para esta nova documentação.
-
-#### [x] 🧹 Limpeza e Organização da Documentação
-
-- **Resultado:** O `ARCHITECTURE.md` foi atualizado, links quebrados no `README.md` e `CONTRIBUTING.md` foram corrigidos, e foi criado o `guia.md` para centralizar a navegação.
-
-#### [x] 🐞 Correções de Bugs e Refatorações Diversas
-
-- **Resultado:** Resolvidos inúmeros bugs e débitos técnicos identificados pelo SonarQube e durante a depuração, incluindo: problemas de I/O no Docker, links de retorno quebrados nos relatórios, bugs de interatividade e reatividade na UI, entre outros.
-
-#### [x] 🔬 Robustecer e Organizar Testes do Backend
-
-- **Justificativa:** Os testes são nossa rede de segurança. Eles precisam estar bem organizados e cobrir toda a lógica de negócio para permitir futuras refatorações com confiança.
-- **Plano de Ação:**
-  - [x] **Refatorar Estrutura:** Mover a configuração do Pytest do `pyproject.toml` da raiz para um novo arquivo `backend/pyproject.toml`, isolando o ambiente de teste.
-  - [x] **Revisar Cobertura:** Analisar os testes existentes (ex: `test_analise_scoring.py`) para garantir que eles validam os cenários corretos da lógica de scoring.
-  - [x] **Separar Responsabilidades:** Garantir que não haja "lixo" de teste no código da aplicação e que os testes estejam focados em validar uma única funcionalidade por vez.
-- **Resultado:** A estrutura de testes foi isolada, o `Makefile.mk` foi corrigido, e os testes de scoring foram refatorados para maior cobertura e clareza. Bugs na lógica de negócio foram encontrados e corrigidos graças a essa robustez.
-
-#### [x] ⚙️ Consolidar Ferramentas de Qualidade
-
-- **Resultado:** A configuração da ferramenta `black` foi removida do `pyproject.toml`, padronizando o uso do `Ruff` para formatação e linting.
-
----
-
-## 4. Decisões Estratégicas e Débitos Técnicos Conhecidos
-
-- **Geração de HTML no Backend:** Decidimos **manter** a lógica de geração de relatórios HTML no backend por enquanto. A tarefa "Remover Código Morto" (`templates/`) foi reavaliada e está incorreta, pois este código está em uso. A migração dessa lógica para o frontend é uma refatoração futura, a ser planejada em uma "Fase 4".
-
----
-
-## 🚀 Plano de Ação: Fase 4 - Evolução e Novas Features (Backlog)
-
-### Prioridade Alta
-
-#### [ ] 🧠 Implementar Persistência de Estado para Remediação Manual
-
-- **Justificativa:** Atualmente, a análise é "stateless". Para evitar que a equipe precise reavaliar manualmente o mesmo caso a cada nova análise, é necessário um mecanismo para persistir a decisão de `manual_remediation_expected`.
-- **Plano de Ação:**
-  - [ ] **Definir Arquitetura:** Criar um ADR (Architecture Decision Record) para decidir a melhor abordagem de persistência (ex: banco de dados SQLite, arquivo de estado JSON).
-  - [ ] **Implementar Lógica de Persistência:** Adicionar a lógica no backend para salvar e consultar o estado de um caso.
-  - [ ] **Ajustar Geração de Relatórios:** Modificar o `analisar_alertas.py` para considerar o estado persistido ao gerar o `atuar.csv`.
-  - [ ] **Ajustar UI (se necessário):** Avaliar se a interface do frontend precisa de alguma modificação para suportar este fluxo.
+Estas novas prioridades refletem a decisão estratégica de mover para AKS/Azure e empacotar com Helm, além de priorizar a separação da apresentação (frontend) e lógica (backend). Sugiro que a equipe trate o bloco "AKS + Azure DevOps + Helm" como o próximo epic de entrega (Prioridade Alta) e que as tarefas de desacoplamento (API-First) sejam a penúltima etapa antes da limpeza final da documentação gerencial.

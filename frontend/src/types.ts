@@ -52,3 +52,17 @@ export interface LoginCredentials {
   username?: string;
   password?: string;
 }
+
+export interface FeedbackData {
+  type: "bug" | "feature" | "suggestion" | "other";
+  title: string;
+  description: string;
+  email?: string;
+  context?: string;
+}
+
+export interface FeedbackResponse {
+  success: boolean;
+  message: string;
+  issue_url: string;
+}

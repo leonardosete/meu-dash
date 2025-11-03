@@ -4,6 +4,8 @@ import {
   LoginCredentials,
   Report,
   UploadSuccessResponse,
+  FeedbackData,
+  FeedbackResponse,
 } from "../types";
 
 export const API_BASE_URL = "";
@@ -85,5 +87,12 @@ export const uploadComparativeAnalysis = async (
       "Content-Type": "multipart/form-data",
     },
   });
+  return response.data;
+};
+
+export const submitFeedback = async (
+  feedbackData: FeedbackData,
+): Promise<FeedbackResponse> => {
+  const response = await apiClient.post("/api/v1/feedback", feedbackData);
   return response.data;
 };

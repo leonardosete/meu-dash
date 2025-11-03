@@ -9,6 +9,7 @@ pandas
 psycopg2-binary
 PyJWT
 pytest
+requests
 ruff
 Werkzeug
 flasgger==0.9.7.1

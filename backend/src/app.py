@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 import jwt
+import requests
 from flasgger import Swagger
 from flask import (
     Flask,
@@ -481,5 +482,121 @@ def create_app(test_config=None):
             return jsonify({"access_token": access_token})
         else:
             return jsonify({"error": "Credenciais inválidas."}), 401
+
+    @app.route("/api/v1/feedback", methods=["POST"])
+    def submit_feedback():
+        """
+        Submete feedback do usuário criando uma issue no GitHub.
+        ---
+        tags:
+          - Feedback
+        consumes:
+          - application/json
+        parameters:
+          - name: body
+            in: body
+            required: true
+            schema:
+              type: object
+              required:
+                - type
+                - title
+                - description
+              properties:
+                type:
+                  type: string
+                  enum: [bug, feature, suggestion, other]
+                  description: Tipo do feedback
+                title:
+                  type: string
+                  description: Título do feedback
+                description:
+                  type: string
+                  description: Descrição detalhada do feedback
+                email:
+                  type: string
+                  description: Email opcional do usuário
+                context:
+                  type: string
+                  description: Contexto adicional (ex: nome do relatório, arquivo CSV)
+        responses:
+          201:
+            description: Feedback enviado com sucesso.
+          400:
+            description: Dados inválidos.
+          500:
+            description: Erro interno do servidor.
+        """
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({"error": "Dados JSON são obrigatórios."}), 400
+
+            # Validação dos campos obrigatórios
+            required_fields = ["type", "title", "description"]
+            for field in required_fields:
+                if field not in data or not data[field].strip():
+                    return jsonify({"error": f"Campo '{field}' é obrigatório."}), 400
+
+            feedback_type = data["type"]
+            title = data["title"].strip()
+            description = data["description"].strip()
+            email = data.get("email", "").strip()
+            context = data.get("context", "").strip()
+
+            # Validação do tipo
+            valid_types = ["bug", "feature", "suggestion", "other"]
+            if feedback_type not in valid_types:
+                return jsonify({"error": f"Tipo deve ser um dos seguintes: {', '.join(valid_types)}"}), 400
+
+            # Validação básica de email se fornecido
+            if email and "@" not in email:
+                return jsonify({"error": "Email inválido."}), 400
+
+            # Construir o corpo da issue
+            issue_body = f"**Tipo:** {feedback_type}\n\n**Descrição:**\n{description}"
+            if email:
+                issue_body += f"\n\n**Email:** {email}"
+            if context:
+                issue_body += f"\n\n**Contexto:**\n{context}"
+
+            # Configurar headers para GitHub API
+            github_token = os.getenv("GITHUB_TOKEN")
+            if not github_token:
+                return jsonify({"error": "Serviço de feedback temporariamente indisponível."}), 503
+
+            headers = {
+                "Authorization": f"token {github_token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+
+            # Dados da issue
+            issue_data = {
+                "title": f"[{feedback_type.upper()}] {title}",
+                "body": issue_body,
+                "labels": [feedback_type]
+            }
+
+            # Fazer a requisição para criar a issue
+            repo_owner = os.getenv("GITHUB_REPO_OWNER", "leonardosete")
+            repo_name = os.getenv("GITHUB_REPO_NAME", "meu-dash")
+
+            api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
+            response = requests.post(api_url, json=issue_data, headers=headers)
+
+            if response.status_code == 201:
+                issue_data = response.json()
+                return jsonify({
+                    "success": True,
+                    "message": "Feedback enviado com sucesso!",
+                    "issue_url": issue_data["html_url"]
+                }), 201
+            else:
+                app.logger.error(f"GitHub API error: {response.status_code} - {response.text}")
+                return jsonify({"error": "Erro ao enviar feedback. Tente novamente mais tarde."}), 500
+
+        except Exception as e:
+            app.logger.error(f"Feedback submission error: {str(e)}")
+            return jsonify({"error": "Erro interno do servidor."}), 500
 
     return app

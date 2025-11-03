@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   PieChart,
@@ -7,11 +7,13 @@ import {
   LayoutDashboard,
   LogOut,
   FilePlus2,
+  MessageSquare,
 } from "lucide-react";
 import { API_BASE_URL } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
 import { useDashboard } from "../hooks/useDashboard";
 import ThemeToggle from "./ThemeToggle";
+import FeedbackModal from "./FeedbackModal";
 
 interface SideCardProps {
   to?: string;
@@ -85,6 +87,7 @@ const Sidebar: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
   const { reportUrls, setReportUrls } = useDashboard();
   const navigate = useNavigate();
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -152,12 +155,24 @@ const Sidebar: React.FC = () => {
             color="var(--danger-color)"
           />
         )}
+        <button
+          className="feedback-button"
+          onClick={() => setIsFeedbackModalOpen(true)}
+          title="Enviar Feedback"
+        >
+          <MessageSquare size={16} />
+          <span>Feedback</span>
+        </button>
         <ThemeToggle />
         <div className="sidebar-version">
           v{import.meta.env.VITE_APP_VERSION}
         </div>
       </div>
     </aside>
+    <FeedbackModal
+      isOpen={isFeedbackModalOpen}
+      onClose={() => setIsFeedbackModalOpen(false)}
+    />
   );
 };
 
