@@ -159,10 +159,14 @@ const Sidebar: React.FC = () => {
           <button
             className="feedback-button"
             onClick={() => setIsFeedbackModalOpen(true)}
-            title="Enviar Feedback"
+            title=""
           >
             <MessageSquare size={16} />
             <span>Feedback</span>
+            <div className="side-card-tooltip">
+              <h3>Enviar Feedback</h3>
+              <p>Compartilhe sugestões, reporte bugs ou peça melhorias.</p>
+            </div>
           </button>
           <ThemeToggle />
           <div className="sidebar-version">

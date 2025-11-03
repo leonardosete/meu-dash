@@ -1320,6 +1320,7 @@ body.light-mode .preview-card {
   max-width: 140px; /* Largura reduzida para caber na sidebar */
   justify-content: center;
   margin: 0 auto; /* Centraliza o botão */
+  position: relative; /* Necessário para o posicionamento do tooltip */
 }
 
 .feedback-button:hover {
@@ -1339,6 +1340,59 @@ body.light-mode .preview-card {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Tooltip do botão de feedback */
+.feedback-button .side-card-tooltip {
+  position: absolute;
+  left: calc(100% + 15px);
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  white-space: nowrap;
+
+  /* Escondido por padrão */
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease-in-out,
+    visibility 0.2s ease-in-out;
+  pointer-events: none;
+}
+
+/* Seta padrão apontando para the esquerda */
+.feedback-button .side-card-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent var(--bg-color) transparent transparent;
+}
+
+.feedback-button:hover .side-card-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.feedback-button .side-card-tooltip h3 {
+  margin: 0 0 4px 0;
+  color: var(--primary-text-color);
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.feedback-button .side-card-tooltip p {
+  margin: 0;
+  font-size: 0.85em;
+  opacity: 0.8;
 }
 
 /* No modo sidebar recolhido, o botão fica menor */
