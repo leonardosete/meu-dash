@@ -143,6 +143,7 @@ Para que a análise seja executada corretamente, o arquivo `.csv` enviado deve c
 6. 🗂️ **Histórico de Análises**: Mantém um histórico de todas as análises geradas, permitindo acesso rápido aos relatórios padrão e comparativos anteriores.
 7. 🗑️ **Gerenciamento de Relatórios**: Permite a exclusão de relatórios individuais diretamente pela interface de histórico, liberando espaço e mantendo o ambiente organizado.
 8. 🧠 **Navegação Contextual Inteligente**: O dashboard de KPIs centraliza os links de ação para o Relatório Completo, Plano de Ação e Análise Comparativa, permitindo que o usuário navegue diretamente do insight para a ação com um único clique.
+9. 💬 **Sistema de Feedback**: Permite que usuários enviem feedback diretamente pela interface, criando automaticamente issues estruturadas no GitHub com templates específicos para bugs, sugestões, novas funcionalidades e outros tipos de feedback.
 
 ---
 

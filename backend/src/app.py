@@ -557,14 +557,142 @@ def create_app(test_config=None):
             if email and "@" not in email:
                 return jsonify({"error": "Email inválido."}), 400
 
-            # Construir o corpo da issue
-            issue_body = f"**Tipo:** {feedback_type}\n\n**Descrição:**\n{description}"
-            if email:
-                issue_body += f"\n\n**Email:** {email}"
-            if context:
-                issue_body += f"\n\n**Contexto:**\n{context}"
+            # Templates para cada tipo de feedback
+            bug_template = """### 🐛 Detalhes do Bug
+- **Passos para reproduzir:**
+  1.
+  2.
+  3.
 
-            # Configurar headers para GitHub API
+- **Comportamento esperado:**
+
+- **Comportamento atual:**
+
+- **Ambiente:**
+  - Navegador:
+  - Sistema Operacional:
+  - Versão da aplicação:
+
+### 📊 Dados relacionados
+- Arquivo CSV utilizado:
+- Relatório gerado:
+- Outros detalhes:
+
+---
+
+## ✅ Checklist de Resolução
+- [ ] Bug reproduzido
+- [ ] Causa identificada
+- [ ] Correção implementada
+- [ ] Testes realizados
+- [ ] Documentação atualizada"""
+
+            feature_template = """### ✨ Detalhes da Nova Funcionalidade
+- **Objetivo:**
+
+- **Benefícios esperados:**
+
+- **Público-alvo:**
+
+- **Estimativa de complexidade:** (Baixa/Média/Alta)
+
+### 📋 Requisitos Funcionais
+- [ ]
+- [ ]
+- [ ]
+
+### 📋 Requisitos Não-Funcionais
+- [ ]
+- [ ]
+
+---
+
+## ✅ Checklist de Implementação
+- [ ] Análise de viabilidade concluída
+- [ ] Design/protótipo aprovado
+- [ ] Desenvolvimento concluído
+- [ ] Testes realizados
+- [ ] Documentação atualizada
+- [ ] Usuários notificados"""
+
+            suggestion_template = """### 💡 Detalhes da Sugestão
+- **Problema que resolve:**
+
+- **Solução proposta:**
+
+- **Alternativas consideradas:**
+
+- **Impacto estimado:** (Baixo/Médio/Alto)
+
+---
+
+## ✅ Checklist de Avaliação
+- [ ] Sugestão analisada pela equipe
+- [ ] Viabilidade técnica avaliada
+- [ ] Prioridade definida
+- [ ] Decisão tomada (aprovada/rejeitada)
+- [ ] Feedback dado ao usuário"""
+
+            other_template = """### ❓ Outros - Detalhes
+- **Categoria específica:**
+
+- **Urgência:** (Baixa/Média/Alta)
+
+- **Informações adicionais:**
+
+---
+
+## ✅ Checklist de Tratamento
+- [ ] Solicitação analisada
+- [ ] Ação apropriada tomada
+- [ ] Usuário informado sobre o andamento"""
+
+            # Selecionar template baseado no tipo
+            type_specific_content = ""
+            if feedback_type == "bug":
+                type_specific_content = bug_template
+            elif feedback_type == "feature":
+                type_specific_content = feature_template
+            elif feedback_type == "suggestion":
+                type_specific_content = suggestion_template
+            elif feedback_type == "other":
+                type_specific_content = other_template
+
+            # Construir o corpo da issue com template estruturado
+            issue_body = f"""## 📋 Feedback - {feedback_type.title()}
+
+### ℹ️ Informações Gerais
+- **Tipo:** {feedback_type.title()}
+- **Data/Hora:** {datetime.now().strftime("%d/%m/%Y %H:%M")}
+{f"- **Email:** {email}" if email else ""}
+
+---
+
+### 📝 Descrição Detalhada
+{description}
+
+---
+
+### 🎯 Contexto Adicional
+{context if context else "*Nenhum contexto adicional fornecido*"}
+
+---
+
+### ✅ Critérios de Aceitação
+**Para que este feedback seja considerado resolvido:**
+
+{type_specific_content}
+
+---
+
+### 📞 Contato
+{f"**Email para contato:** {email}" if email else "*Email não fornecido*"}
+
+### 🏷️ Labels
+`{feedback_type}`, `user-feedback`, `pending-review`
+
+---
+*Feedback enviado automaticamente pelo sistema SmartRemedy*"""  # Configurar headers para GitHub API
             github_token = os.getenv("GITHUB_TOKEN")
             if not github_token:
                 return jsonify(

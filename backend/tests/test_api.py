@@ -221,3 +221,158 @@ def test_compare_files_success(client, monkeypatch):
         json_data = response.get_json()
         assert json_data["success"] is True
         assert "report_url" in json_data
+
+
+def test_submit_feedback_success(client, monkeypatch):
+    """
+    Valida o endpoint POST /api/v1/feedback em caso de sucesso.
+
+    Verifica se uma issue é criada no GitHub com os dados corretos.
+    """
+    # ARRANGE: Configura as variáveis de ambiente necessárias
+    monkeypatch.setenv("GITHUB_TOKEN", "fake_token")
+    monkeypatch.setenv("GITHUB_REPO_OWNER", "test_owner")
+    monkeypatch.setenv("GITHUB_REPO_NAME", "test_repo")
+
+    feedback_data = {
+        "type": "bug",
+        "title": "Test Bug Report",
+        "description": "This is a test bug description",
+        "email": "test@example.com",
+        "context": "Test context information"
+    }
+
+    # Mock da resposta da API do GitHub
+    mock_github_response = {
+        "html_url": "https://github.com/test_owner/test_repo/issues/123",
+        "number": 123,
+        "title": "[BUG] Test Bug Report"
+    }
+
+    with patch("src.app.requests.post") as mock_post:
+        mock_post.return_value.status_code = 201
+        mock_post.return_value.json.return_value = mock_github_response
+
+        # ACT: Envia o feedback
+        response = client.post(
+            "/api/v1/feedback",
+            json=feedback_data,
+            content_type="application/json"
+        )
+
+        # ASSERT
+        assert response.status_code == 201
+        json_data = response.get_json()
+        assert json_data["success"] is True
+        assert "issue_url" in json_data
+        assert json_data["issue_url"] == "https://github.com/test_owner/test_repo/issues/123"
+
+        # Verifica se a API do GitHub foi chamada corretamente
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        assert call_args[0][0] == "https://api.github.com/repos/test_owner/test_repo/issues"
+
+        # Verifica os dados enviados
+        request_data = call_args[1]["json"]
+        assert "[BUG] Test Bug Report" in request_data["title"]
+        assert "bug" in request_data["labels"]
+        assert "## 📋 Feedback - Bug" in request_data["body"]
+        assert "This is a test bug description" in request_data["body"]
+        assert "test@example.com" in request_data["body"]
+        assert "Test context information" in request_data["body"]
+        assert "### 🐛 Detalhes do Bug" in request_data["body"]
+        assert "user-feedback" in request_data["body"]
+
+
+def test_submit_feedback_missing_required_fields(client):
+    """
+    Valida que o endpoint POST /api/v1/feedback retorna 400 para campos obrigatórios ausentes.
+    """
+    # Testa dados incompletos
+    incomplete_data = {
+        "type": "bug",
+        "title": "Test Title"
+        # description está faltando
+    }
+
+    response = client.post(
+        "/api/v1/feedback",
+        json=incomplete_data,
+        content_type="application/json"
+    )
+
+    assert response.status_code == 400
+    json_data = response.get_json()
+    assert "obrigatório" in json_data["error"]
+
+
+def test_submit_feedback_invalid_type(client):
+    """
+    Valida que o endpoint POST /api/v1/feedback retorna 400 para tipo inválido.
+    """
+    invalid_data = {
+        "type": "invalid_type",
+        "title": "Test Title",
+        "description": "Test description"
+    }
+
+    response = client.post(
+        "/api/v1/feedback",
+        json=invalid_data,
+        content_type="application/json"
+    )
+
+    assert response.status_code == 400
+    json_data = response.get_json()
+    assert "deve ser um dos seguintes" in json_data["error"]
+
+
+def test_submit_feedback_github_error(client, monkeypatch):
+    """
+    Valida o comportamento quando a API do GitHub retorna erro.
+    """
+    # ARRANGE: Configura as variáveis de ambiente
+    monkeypatch.setenv("GITHUB_TOKEN", "fake_token")
+
+    feedback_data = {
+        "type": "suggestion",
+        "title": "Test Suggestion",
+        "description": "Test description"
+    }
+
+    with patch("src.app.requests.post") as mock_post:
+        mock_post.return_value.status_code = 422  # Validation error
+        mock_post.return_value.text = "Validation Failed"
+
+        # ACT: Envia o feedback
+        response = client.post(
+            "/api/v1/feedback",
+            json=feedback_data,
+            content_type="application/json"
+        )
+
+        # ASSERT
+        assert response.status_code == 500
+        json_data = response.get_json()
+        assert "Erro ao enviar feedback" in json_data["error"]
+
+
+def test_submit_feedback_no_github_token(client):
+    """
+    Valida o comportamento quando GITHUB_TOKEN não está configurado.
+    """
+    feedback_data = {
+        "type": "feature",
+        "title": "Test Feature",
+        "description": "Test description"
+    }
+
+    response = client.post(
+        "/api/v1/feedback",
+        json=feedback_data,
+        content_type="application/json"
+    )
+
+    assert response.status_code == 503
+    json_data = response.get_json()
+    assert "temporariamente indisponível" in json_data["error"]

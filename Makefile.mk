@@ -54,8 +54,10 @@ setup-all: setup install-frontend
 	@echo ">>> Ambiente completo configurado! Use 'make check-all' para validar tudo."
 
 test:
-	@echo ">>> Executando testes do backend com pytest..."
+	@echo ">>> Executando testes do backend..."
 	@cd backend && $(ROOT_DIR)/$(PYTHON) -m pytest
+	@echo ">>> Executando testes do frontend..."
+	@cd frontend && npm run test
 
 format:
 	@echo ">>> Formatando o código com ruff..."

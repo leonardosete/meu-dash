@@ -44,7 +44,17 @@ Embora o `docker-compose` não seja mais usado para rodar a aplicação, você a
 
 ## 🔑 Configurando Segredos para Produção (Kubernetes)
 
-Em um ambiente de produção, os segredos (como `ADMIN_USER`, `ADMIN_PASSWORD`, `SECRET_KEY`) **NUNCA** devem ser armazenados no código-fonte. Eles devem ser gerenciados através de **Kubernetes Secrets**.
+Em um ambiente de produção, os segredos (como `ADMIN_USER`, `ADMIN_PASSWORD`, `SECRET_KEY`, `GITHUB_TOKEN`) **NUNCA** devem ser armazenados no código-fonte. Eles devem ser gerenciados através de **Kubernetes Secrets**.
+
+### Sistema de Feedback
+
+O sistema de feedback permite que usuários enviem sugestões, relatem bugs ou solicitem novas funcionalidades diretamente pela interface. As issues são criadas automaticamente no GitHub com templates estruturados.
+
+**Variáveis de ambiente necessárias:**
+
+- `GITHUB_TOKEN`: Token do GitHub com permissões para criar issues (veja `criar-gh-token.md`)
+- `GITHUB_REPO_OWNER`: Proprietário do repositório (padrão: `leonardosete`)
+- `GITHUB_REPO_NAME`: Nome do repositório (padrão: `meu-dash`)
 
 ## Passo 1: Criação Manual do Secret (se necessário)
 
