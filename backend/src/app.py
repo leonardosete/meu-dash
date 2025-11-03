@@ -547,7 +547,11 @@ def create_app(test_config=None):
             # Validação do tipo
             valid_types = ["bug", "feature", "suggestion", "other"]
             if feedback_type not in valid_types:
-                return jsonify({"error": f"Tipo deve ser um dos seguintes: {', '.join(valid_types)}"}), 400
+                return jsonify(
+                    {
+                        "error": f"Tipo deve ser um dos seguintes: {', '.join(valid_types)}"
+                    }
+                ), 400
 
             # Validação básica de email se fornecido
             if email and "@" not in email:
@@ -563,18 +567,20 @@ def create_app(test_config=None):
             # Configurar headers para GitHub API
             github_token = os.getenv("GITHUB_TOKEN")
             if not github_token:
-                return jsonify({"error": "Serviço de feedback temporariamente indisponível."}), 503
+                return jsonify(
+                    {"error": "Serviço de feedback temporariamente indisponível."}
+                ), 503
 
             headers = {
                 "Authorization": f"token {github_token}",
-                "Accept": "application/vnd.github.v3+json"
+                "Accept": "application/vnd.github.v3+json",
             }
 
             # Dados da issue
             issue_data = {
                 "title": f"[{feedback_type.upper()}] {title}",
                 "body": issue_body,
-                "labels": [feedback_type]
+                "labels": [feedback_type],
             }
 
             # Fazer a requisição para criar a issue
@@ -586,14 +592,20 @@ def create_app(test_config=None):
 
             if response.status_code == 201:
                 issue_data = response.json()
-                return jsonify({
-                    "success": True,
-                    "message": "Feedback enviado com sucesso!",
-                    "issue_url": issue_data["html_url"]
-                }), 201
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": "Feedback enviado com sucesso!",
+                        "issue_url": issue_data["html_url"],
+                    }
+                ), 201
             else:
-                app.logger.error(f"GitHub API error: {response.status_code} - {response.text}")
-                return jsonify({"error": "Erro ao enviar feedback. Tente novamente mais tarde."}), 500
+                app.logger.error(
+                    f"GitHub API error: {response.status_code} - {response.text}"
+                )
+                return jsonify(
+                    {"error": "Erro ao enviar feedback. Tente novamente mais tarde."}
+                ), 500
 
         except Exception as e:
             app.logger.error(f"Feedback submission error: {str(e)}")
