@@ -9,7 +9,7 @@ DOCKER_IMAGE_NAME := meu-dash
 DOCKER_IMAGE_TAG := latest
 DOCKER_PROD_IMAGE_NAME := sevenleo/smart-plan
 
-.PHONY: help install setup setup-frontend run test test-backend-docker format lint check clean distclean docker-build docker-run docker-prune validate validate-all-docker validate-clean-docker up down migrate-docker lint-backend-docker format-backend-docker check-backend-docker lint-frontend-docker format-frontend-docker test-frontend-docker format-all-docker publish-prod test-e2e-docker test-e2e-prod
+.PHONY: help install install-frontend setup setup-all run test test-backend-docker format lint check clean distclean docker-build docker-run docker-prune validate validate-all-docker validate-clean-docker up down migrate-docker lint-backend-docker format-backend-docker check-backend-docker lint-frontend-docker format-frontend-docker test-frontend-docker format-all-docker publish-prod test-e2e-docker test-e2e-prod
 help:
 	@echo "Comandos disponíveis:"
 	@echo ""
@@ -17,10 +17,13 @@ help:
 	@echo "  make publish-prod   - Constrói e publica a imagem de produção para o Docker Hub."
 	@echo ""
 	@echo "--- ✅ Validação e Qualidade de Código (Local) ---"
-	@echo "  make check          - Roda todas as verificações: formatação, linting e segurança (para CI)."
-	@echo "  make format         - Formata o código com 'ruff format'."
-	@echo "  make lint           - Executa o linter 'ruff check --fix' para corrigir erros."
-	@echo "  make security-scan  - Roda a verificação de segurança com 'bandit'."
+	@echo "  make check          - Roda todas as verificações do backend: formatação, linting e segurança."
+	@echo "  make check-all      - Roda TODAS as verificações: backend + frontend (recomendado antes de commit)."
+	@echo "  make format         - Formata o código backend com 'ruff format'."
+	@echo "  make lint           - Executa o linter backend 'ruff check --fix' para corrigir erros."
+	@echo "  make security-scan  - Roda a verificação de segurança backend com 'bandit'."
+	@echo "  make lint-frontend  - Executa ESLint no frontend para detectar erros JSX/React."
+	@echo "  make test-frontend  - Executa testes do frontend."
 	@echo "  make test           - Executa os testes do backend com pytest."
 	@echo ""
 	@echo "--- 🧹 Limpeza ---"
@@ -30,7 +33,9 @@ help:
 	@echo ""
 	@echo "--- 📦 Gerenciamento de Dependências (Local) ---"
 	@echo "  make install        - Instala as dependências do requirements.txt localmente."
+	@echo "  make install-frontend - Instala as dependências do frontend (npm install)."
 	@echo "  make setup          - Cria o ambiente virtual e instala as dependências do backend."
+	@echo "  make setup-all      - Configura TODO o ambiente: backend + frontend (recomendado para setup inicial)."
 
 # Cria o ambiente virtual e instala as dependências nele.
 setup:
@@ -41,9 +46,12 @@ setup:
 	# dentro do ambiente virtual, evitando o erro 'externally-managed-environment' (PEP 668).
 	@.venv/bin/python -m pip install --upgrade pip -r backend/requirements.txt
 
-install:
-	@echo ">>> Instalando dependências de requirements.txt..."
-	@$(PYTHON) -m pip install -r backend/requirements.txt
+install-frontend:
+	@echo ">>> Instalando dependências do frontend..."
+	@cd frontend && npm install
+
+setup-all: setup install-frontend
+	@echo ">>> Ambiente completo configurado! Use 'make check-all' para validar tudo."
 
 test:
 	@echo ">>> Executando testes do backend com pytest..."
@@ -67,6 +75,32 @@ check:
 	@echo ">>> Verificando código com ruff check..."
 	@$(PYTHON) -m ruff check backend
 	@$(MAKE) security-scan
+
+# Validação do Frontend
+lint-frontend:
+	@echo ">>> Executando ESLint no frontend..."
+	@cd frontend && npm run lint
+
+format-frontend:
+	@echo ">>> Formatando frontend..."
+	@cd frontend && npm run format
+
+test-frontend:
+	@echo ">>> Executando testes do frontend..."
+	@cd frontend && npm run test
+
+# Validação completa (backend + frontend)
+check-all:
+	@echo ">>> Verificando dependências do frontend..."
+	@if [ ! -d "frontend/node_modules" ]; then \
+		echo ">>> Dependências do frontend não encontradas. Instalando..."; \
+		$(MAKE) install-frontend; \
+	fi
+	@echo ">>> Verificando backend..."
+	@$(MAKE) check
+	@echo ">>> Verificando frontend..."
+	@$(MAKE) lint-frontend
+	@$(MAKE) test-frontend
 
 clean:
 	@echo ">>> Removendo caches e arquivos temporários..."
