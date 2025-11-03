@@ -1,6 +1,6 @@
 import React from "react";
 import { ReportUrls } from "../types";
-import { ExternalLink, FileText, BarChart3, TrendingUp } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 interface ReportPreviewsProps {
   urls: ReportUrls;
@@ -39,16 +39,9 @@ const ReportPreviews: React.FC<ReportPreviewsProps> = ({
                 <ExternalLink size={18} />
               </a>
             </div>
-            <div className="preview-card-body">
-              <FileText size={64} strokeWidth={1} />
-              <a
-                href={urls.summary}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="preview-button"
-              >
-                Abrir Relatório
-              </a>
+            {/* Iframe Wrapper */}
+            <div className="iframe-wrapper">
+              <iframe src={urls.summary} title="Relatório Completo" />
             </div>
           </div>
         )}
@@ -66,16 +59,9 @@ const ReportPreviews: React.FC<ReportPreviewsProps> = ({
                 <ExternalLink size={18} />
               </a>
             </div>
-            <div className="preview-card-body">
-              <BarChart3 size={64} strokeWidth={1} />
-              <a
-                href={urls.action_plan}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="preview-button"
-              >
-                Abrir Plano de Ação
-              </a>
+            {/* Iframe Wrapper */}
+            <div className="iframe-wrapper">
+              <iframe src={urls.action_plan} title="Plano de Ação" />
             </div>
           </div>
         )}
@@ -93,16 +79,9 @@ const ReportPreviews: React.FC<ReportPreviewsProps> = ({
                 <ExternalLink size={18} />
               </a>
             </div>
-            <div className="preview-card-body">
-              <TrendingUp size={64} strokeWidth={1} />
-              <a
-                href={urls.trend}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="preview-button"
-              >
-                Abrir Análise
-              </a>
+            {/* Iframe Wrapper */}
+            <div className="iframe-wrapper">
+              <iframe src={urls.trend} title="Análise Comparativa" />
             </div>
           </div>
         )}

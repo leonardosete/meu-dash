@@ -198,7 +198,6 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=latest_files["run_folder"],
                     filename=latest_files["summary"],
-                    _external=True,
                 )
             }
             if latest_files.get("action_plan"):
@@ -206,14 +205,12 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=latest_files["run_folder"],
                     filename=latest_files["action_plan"],
-                    _external=True,
                 )
             if latest_files.get("trend"):
                 urls["trend"] = url_for(
                     "serve_report",
                     run_folder=latest_files["trend_run_folder"],
                     filename=latest_files["trend"],
-                    _external=True,
                 )
             summary_data["latest_report_urls"] = urls
         for trend in summary_data["trend_history"]:
@@ -264,7 +261,6 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["summary_report_filename"],
-                    _external=True,
                 )
             }
             if result.get("action_plan_filename"):
@@ -272,14 +268,12 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["action_plan_filename"],
-                    _external=True,
                 )
             if result.get("trend_report_filename"):
                 report_urls["trend"] = url_for(
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["trend_report_filename"],
-                    _external=True,
                 )
             new_kpi_summary = (
                 services.calculate_kpi_summary(result["json_summary_path"])
@@ -341,7 +335,6 @@ def create_app(test_config=None):
                     "serve_report",
                     run_folder=result["run_folder"],
                     filename=result["report_filename"],
-                    _external=True,
                 )
                 return jsonify({"success": True, "report_url": report_url})
             return (
