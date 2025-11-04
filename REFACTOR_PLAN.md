@@ -26,7 +26,6 @@ Objetivo: permitir que usuários (mantedores e utilizadores da ferramenta) envie
 
 Sistema totalmente funcional permite que usuários enviem feedback diretamente pela interface, criando automaticamente issues estruturadas no GitHub com templates específicos e labels apropriadas.
 
-
 ---
 
 ## 5. Novas Prioridades e Roadmap (decisão do mantenedor)

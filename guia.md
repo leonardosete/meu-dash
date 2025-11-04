@@ -1,6 +1,6 @@
-# 🗺️ Guia de Navegação do Projeto `meu-dash`
+# 🗺️ Guia de Navegação do Projeto `smart-remedy`
 
-Este documento serve como um mapa central para a documentação do projeto `meu-dash`. Ele foi criado para ajudar você a navegar pelos diversos arquivos `.md` e entender onde encontrar as informações relevantes para cada fase ou aspecto do projeto.
+Este documento serve como um mapa central para a documentação do projeto `smart-remedy`. Ele foi criado para ajudar você a navegar pelos diversos arquivos `.md` e entender onde encontrar as informações relevantes para cada fase ou aspecto do projeto.
 
 Nosso objetivo é transformar a complexidade em clareza, permitindo que você atue de forma mais granular e eficiente.
 
@@ -8,7 +8,7 @@ Nosso objetivo é transformar a complexidade em clareza, permitindo que você at
 
 ## 🚀 Visão Geral do Projeto
 
-O `meu-dash` é uma aplicação web que automatiza a análise de alertas de monitoramento, agrupando-os em "Casos" e calculando um "Score de Prioridade Ponderado". Ele é composto por um backend em Python (Flask) e um frontend em React (SPA), comunicando-se via API RESTful.
+O `smart-remedy` é uma aplicação web que automatiza a análise de alertas de monitoramento, agrupando-os em "Casos" e calculando um "Score de Prioridade Ponderado". Ele é composto por um backend em Python (Flask) e um frontend em React (SPA), comunicando-se via API RESTful.
 
 Para uma introdução rápida e o propósito de negócio, consulte:
 

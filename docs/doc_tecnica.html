@@ -156,8 +156,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>📄 Documentação Técnica - meu-dash</h1>
-        <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados, lógica de análise e guia de desenvolvimento do projeto <code>meu-dash</code>.</p>
+        <h1>📄 Documentação Técnica - smart-remedy</h1>
+        <p>Este documento fornece uma visão detalhada da arquitetura, fluxo de dados, lógica de análise e guia de desenvolvimento do projeto <code>smart-remedy</code>.</p>
 
         <section id="arquitetura">
             <h2>1. Arquitetura e Componentes</h2>
@@ -176,7 +176,7 @@
                 <p>O diagrama abaixo representa a arquitetura de componentes (baseado no modelo C4 - Nível 2), ilustrando as principais responsabilidades e interações dentro do sistema.</p>
                 <div class="mermaid">
 graph TB
-    subgraph "Sistema meu-dash"
+    subgraph "Sistema smart-remedy"
         subgraph "Camada de Apresentação"; A["app.py<br><b>(Flask Controller)</b><br>Recebe uploads, gerencia rotas HTTP."]; end
         subgraph "Camada de Serviço"; B["services.py<br><b>(Orquestrador)</b><br>Coordena a lógica de negócio."]; end
         subgraph "Camada de Análise"; C["analisar_alertas.py<br><b>(Motor de Análise)</b><br>Calcula scores e agrupa casos."]; D["analise_tendencia.py<br><b>(Motor de Tendência)</b><br>Compara relatórios."]; end
@@ -265,7 +265,7 @@ sequenceDiagram
                 <p>O projeto utiliza um <code>Makefile</code> para automatizar as tarefas comuns. Para configurar e executar a aplicação pela primeira vez, use um único comando. Para mais detalhes, consulte a seção "Guia de Contribuição" abaixo.</p>
                 <pre><code># 1. Crie um ambiente virtual e ative-o
 git clone &lt;URL_DO_REPOSITORIO&gt;
-cd meu-dash
+cd smart-remedy
 
 # 2. Configure o ambiente e inicie a aplicação
 # Este comando único cuida de tudo: ambiente virtual, dependências,
@@ -331,7 +331,7 @@ docker run -p 8000:8000 -v ./data:/app/data -e ADMIN_TOKEN="seu-token" smart-rem
                 <p>O projeto utiliza um <code>Makefile</code> para automatizar todo o processo de configuração. Para preparar seu ambiente, siga os passos:</p>
                 <pre><code># 1. Clone o repositório
 git clone &lt;URL_DO_REPOSITORIO&gt;
-cd meu-dash
+cd smart-remedy
 
 # 2. Execute o setup completo e inicie a aplicação
 make setup-and-run</code></pre>

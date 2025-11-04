@@ -1,12 +1,12 @@
-# 📄 Dossiê do Projeto: meu-dash
+# 📄 Dossiê do Projeto: smart-remedy
 
-Este documento serve como um sumário técnico e de negócio completo do projeto `meu-dash`, projetado para contextualizar rapidamente qualquer desenvolvedor, arquiteto ou agente de IA.
+Este documento serve como um sumário técnico e de negócio completo do projeto `smart-remedy`, projetado para contextualizar rapidamente qualquer desenvolvedor, arquiteto ou agente de IA.
 
 ---
 
 ## 1. Propósito e Valor de Negócio
 
-A aplicação `meu-dash` é uma ferramenta web de análise prescritiva que transforma dados brutos de alertas de monitoramento em um plano de ação priorizado. Seu objetivo principal é quebrar o ciclo de operações reativas ("apagar incêndios"), permitindo que as equipes de infraestrutura foquem na causa raiz dos problemas mais críticos.
+A aplicação `smart-remedy` é uma ferramenta web de análise prescritiva que transforma dados brutos de alertas de monitoramento em um plano de ação priorizado. Seu objetivo principal é quebrar o ciclo de operações reativas ("apagar incêndios"), permitindo que as equipes de infraestrutura foquem na causa raiz dos problemas mais críticos.
 
 O valor de negócio reside na otimização do tempo das equipes, na melhoria proativa da estabilidade dos serviços e na redução do "ruído" operacional gerado por alertas recorrentes.
 

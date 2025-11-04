@@ -1,5 +1,5 @@
 <!-- .github/copilot-instructions.md - orientações para agentes AI que trabalham neste repositório -->
-# Instruções rápidas para Copilot / agentes AI — meu-dash
+# Instruções rápidas para Copilot / agentes AI — smart-remedy
 
 Público-alvo: agentes automatizados (estilo Copilot) que vão criar, modificar ou revisar código neste repositório.
 

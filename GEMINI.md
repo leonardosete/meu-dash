@@ -43,7 +43,7 @@ Para cada instrução, você seguirá este ciclo:
 
 Enquanto executa suas tarefas, você deve aderir a todos os princípios de qualidade (formatação, `diffs`, justificativas, etc.) e ao workflow de desenvolvimento definidos anteriormente.
 
-## 4. Contexto do Projeto: `meu-dash`
+## 4. Contexto do Projeto: `smart-remedy`
 
 Esta seção contém o conhecimento essencial sobre a arquitetura e os objetivos do projeto.
 
