@@ -71,6 +71,21 @@ def create_app(test_config=None):
 
     # --- CONFIGURAÇÃO DO SWAGGER ---
     swagger_config = {
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": "apispec_1",
+                "route": "/apidocs/apispec_1.json",
+                "rule_filter": lambda rule: True,
+                "model_filter": lambda tag: True,
+            }
+        ],
+        "static_url_path": "/flasgger_static",
+        "swagger_ui": True,
+        "specs_route": "/apidocs/",
+    }
+
+    swagger_template = {
         "swagger": "2.0",
         "info": {
             "title": "SmartRemedy API",
@@ -96,24 +111,9 @@ def create_app(test_config=None):
                 },
             }
         },
-        "headers": [],
-        "specs": [
-            {
-                "endpoint": "apispec_1",
-                # Garante que a especificação da API seja servida sob o mesmo prefixo da UI do Swagger,
-                # evitando problemas de roteamento com o Ingress.
-                "route": "/apidocs/apispec_1.json",
-                "rule_filter": lambda rule: True,
-                "model_filter": lambda tag: True,
-            }
-        ],
-        # Define um caminho URL dedicado para os assets estáticos do Flasgger (JS, CSS).
-        "static_url_path": "/flasgger_static",
-        "swagger_ui": True,
-        "specs_route": "/apidocs/",
     }
 
-    Swagger(app, config=swagger_config)
+    Swagger(app, config=swagger_config, template=swagger_template)
 
     CORS(
         app,
