@@ -519,7 +519,7 @@ def create_app(test_config=None):
                   description: Email opcional do usuário
                 context:
                   type: string
-                  description: Contexto adicional (ex: nome do relatório, arquivo CSV)
+                  description: "Contexto adicional (ex: nome do relatório, arquivo CSV)"
         responses:
           201:
             description: Feedback enviado com sucesso.
