@@ -98,28 +98,25 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
             <div className="upload-form-card">
               <h3>Análise Padrão</h3>
               <p className="form-description">
-                Processe o arquivo de dados mais recente. O sistema o comparará
-                com a última análise registrada no histórico para gerar um
-                relatório completo e a análise de tendência contínua.
+                Faça upload do arquivo CSV mais recente para gerar relatório automático comparado com a última análise do histórico.
               </p>
               <form onSubmit={handlePadraoSubmit}>
                 {standardError && (
                   <div className="error-message">{standardError}</div>
                 )}
-                <label htmlFor="file_recente" className="form-label">
-                  Selecione o arquivo de dados mais recente:
-                </label>
-                <FileInput
-                  id="file_recente"
-                  name="file_recente"
-                  onFileChange={setPadraoFile}
-                  isMultiple={false}
-                />
+                <div style={{ marginBottom: "15px" }}>
+                  <FileInput
+                    id="file_recente"
+                    name="file_recente"
+                    onFileChange={setPadraoFile}
+                    isMultiple={false}
+                  />
+                </div>
                 <button type="submit" disabled={isLoading}>
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    "Analisar e Comparar com Histórico"
+                    "Analisar"
                   )}
                 </button>
               </form>
@@ -129,41 +126,33 @@ const UploadForms: React.FC<UploadFormsProps> = ({ onUploadSuccess }) => {
             <div className="upload-form-card">
               <h3>Análise Comparativa</h3>
               <p className="form-description">
-                Compare dois arquivos de dados específicos para gerar um
-                relatório de tendência sob demanda. Ideal para análises pontuais
-                e investigativas entre períodos não sequenciais.
+                Compare dois arquivos CSV específicos para análise de tendência entre períodos selecionados.
               </p>
               <form onSubmit={handleComparativaSubmit}>
                 {comparativeError && (
                   <div className="error-message">{comparativeError}</div>
                 )}
-                <label htmlFor="file_antigo" className="form-label">
-                  Selecione o arquivo de dados mais antigo (base):
-                </label>
-                <FileInput
-                  id="file_antigo"
-                  name="file_antigo"
-                  onFileChange={setFileAntigo}
-                  isMultiple={false}
-                />
-                <label
-                  htmlFor="file_recente_comp"
-                  className="form-label"
-                  style={{ marginTop: "15px" }}
-                >
-                  Selecione o arquivo de dados mais recente:
-                </label>
-                <FileInput
-                  id="file_recente_comp"
-                  name="file_recente_comp"
-                  onFileChange={setFileRecente}
-                  isMultiple={false}
-                />
+                <div style={{ marginBottom: "15px" }}>
+                  <FileInput
+                    id="file_antigo"
+                    name="file_antigo"
+                    onFileChange={setFileAntigo}
+                    isMultiple={false}
+                  />
+                </div>
+                <div style={{ marginBottom: "15px", marginTop: "15px" }}>
+                  <FileInput
+                    id="file_recente_comp"
+                    name="file_recente_comp"
+                    onFileChange={setFileRecente}
+                    isMultiple={false}
+                  />
+                </div>
                 <button type="submit" disabled={isLoading}>
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    "Comparar Arquivos"
+                    "Analisar"
                   )}
                 </button>
               </form>

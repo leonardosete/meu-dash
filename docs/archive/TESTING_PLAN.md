@@ -15,7 +15,7 @@ Este documento descreve os cenários de teste para validar a nova experiência d
 | :--- | :--- | :--- | :--- |
 | 1 | Acessar a página principal. | A página carrega com a aba "Análise Padrão" ativa por padrão. | `[x]` |
 | 2 | Arrastar e soltar (ou selecionar) um arquivo `.csv` no campo de upload da aba "Análise Padrão". | O nome do arquivo aparece, e o texto "Clique ou arraste..." desaparece. | `[x]` |
-| 3 | Clicar no botão "Analisar e Comparar com Histórico". | O botão fica desabilitado com o texto "Processando...". | `[x]` |
+| 3 | Clicar no botão "Analisar". | O botão fica desabilitado com o texto "Processando...". | `[x]` |
 | 4 | Aguardar o processamento. | Uma notificação "toast" de sucesso aparece no canto da tela. O botão volta ao estado normal. | `[x]` |
 | 5 | Observar o dashboard de KPIs. | O dashboard de KPIs no topo da página é recenteizado com os novos valores da análise recém-concluída. | `[x]` |
 | 6 | Clicar na "orelha" de link no card de KPI "Sucesso da Automação". | O relatório completo (`resumo_geral.html`) da nova análise é aberto em uma nova aba do navegador. | `[x]` |
@@ -32,7 +32,7 @@ Este documento descreve os cenários de teste para validar a nova experiência d
 | 1 | Acessar a página principal. | A página carrega normalmente. | `[x]` |
 | 2 | Clicar na aba "Comparação Direta". | O conteúdo da aba muda, exibindo um único campo de upload múltiplo. | `[x]` |
 | 3 | Selecionar dois arquivos `.csv` nos respectivos campos de upload. | Os nomes dos arquivos aparecem corretamente em cada campo. | `[x]` |
-| 4 | Clicar no botão "Comparar Arquivos". | O botão fica desabilitado com o texto "Comparando...". A página é redirecionada para o relatório de tendência (`comparativo_periodos.html`) após o processamento. | `[x]` |
+| 4 | Clicar no botão "Analisar". | O botão fica desabilitado com o texto "Comparando...". A página é redirecionada para o relatório de tendência (`comparativo_periodos.html`) após o processamento. | `[x]` |
 | 5 | Verificar o relatório de tendência. | O relatório gerado contém a comparação dos dois arquivos selecionados, e não do histórico automático. | `[x]` |
 
 ---
