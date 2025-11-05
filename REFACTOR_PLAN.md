@@ -95,6 +95,12 @@ Prioridade Baixa (posterior)
     - [ ] Analisar o script externo e suas dependências; criar um módulo reutilizável no `backend/src/utils` (ex: `preparer.py`).
     - [ ] Expor uma rota que execute a preparação (ou integrar ao pipeline de upload) e gerar o CSV que o pipeline de análise consome.
     - [ ] Atualizar testes e documentação para refletir o novo fluxo.
+- [ ] Revisar dependências de colunas legadas do schema CSV
+  - Justificativa: o backend aceita ~21 colunas únicas, mas parte delas (ex.: `tasks_count`, `tasks_numbers`, `state`, `sys_id`) não é consumida nos relatórios atuais. Validar se podemos flexibilizar o porteiro para reduzir atrito na ingestão.
+  - Plano de Ação:
+    - [ ] Mapear usos efetivos das colunas no backend (`constants.py`, `analisar_alertas.py`, `gerador_paginas.py`) e documentar o conjunto mínimo.
+    - [ ] Ajustar `ESSENTIAL_COLS` e a validação em `carregar_dados` para tratar colunas legadas como opcionais, mantendo retrocompatibilidade.
+    - [ ] Atualizar README/docs e adicionar teste de ingestão cobrindo CSV sem as colunas opcionais.
 
 Observação final
 
