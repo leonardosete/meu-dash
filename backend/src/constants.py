@@ -155,3 +155,6 @@ MAX_REPORTS_HISTORY = 60
 
 # Limite de alertas para um caso ser considerado de instabilidade crônica.
 LIMIAR_ALERTAS_RECORRENTES = 5
+
+# Janela máxima, em horas, para caracterizar instabilidade crônica baseada em sucessos recorrentes.
+JANELA_INSTABILIDADE_HORAS = 2

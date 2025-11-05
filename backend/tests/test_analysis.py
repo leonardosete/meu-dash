@@ -193,8 +193,15 @@ def test_adicionar_acao_sugerida():
                 "Closed",
             ],  # Instabilidade Crônica
             ["No Task Found"],  # Falha Persistente (No Task Found)
+            [
+                "Closed",
+                "Closed",
+                "Closed",
+                "Closed",
+                "Closed",
+            ],  # Sucessos frequentes fora da janela -> continua como sucesso
         ],
-        "alert_count": [2, 2, 2, 2, 2, 0, 6, 1],
+        "alert_count": [2, 2, 2, 2, 2, 0, 6, 1, 5],
         # Adiciona a coluna 'last_tasks_status' que agora é necessária pela função
         COL_LAST_TASK_STATUS: [
             "Closed",
@@ -205,7 +212,34 @@ def test_adicionar_acao_sugerida():
             NO_STATUS,
             "Closed",
             "No Task Found",
+            "Closed",
         ],
+        "first_event": pd.to_datetime(
+            [
+                "2023-01-01 08:00",
+                "2023-01-01 09:00",
+                "2023-01-02 08:00",
+                "2023-01-03 08:00",
+                "2023-01-04 08:00",
+                None,
+                "2023-01-06 10:00",
+                "2023-01-07 08:00",
+                "2023-01-08 08:00",
+            ]
+        ),
+        "last_event": pd.to_datetime(
+            [
+                "2023-01-02 08:00",
+                "2023-01-01 12:00",
+                "2023-01-02 12:00",
+                "2023-01-05 08:00",
+                "2023-01-04 10:00",
+                None,
+                "2023-01-06 11:30",
+                "2023-01-07 08:30",
+                "2023-01-08 13:30",
+            ]
+        ),
     }
     df = pd.DataFrame(data)
     df = adicionar_acao_sugerida(df)
@@ -219,4 +253,5 @@ def test_adicionar_acao_sugerida():
         ACAO_STATUS_AUSENTE,
         ACAO_INSTABILIDADE_CRONICA,
         ACAO_FALHA_PERSISTENTE,
+        ACAO_SEMPRE_OK,
     ]

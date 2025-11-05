@@ -1,4 +1,5 @@
-import { render } from "@testing-library/react";
+/// <reference types="@testing-library/jest-dom" />
+import { render, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import App from "./App";
 
@@ -22,9 +23,13 @@ vi.mock("./services/api", () => ({
 }));
 
 describe("App", () => {
-  it("renders the main app container without crashing", () => {
+  it("renders o container principal sem travar", async () => {
     const { container } = render(<App />);
-    const appContainer = container.querySelector(".app-container");
-    expect(appContainer).toBeInTheDocument();
+
+    await waitFor(() => {
+      const appContainer = container.querySelector(".app-container");
+      expect(appContainer).not.toBeNull();
+      expect(appContainer as HTMLElement).toBeInTheDocument();
+    });
   });
 });

@@ -27,6 +27,7 @@ from .constants import (
     ESSENTIAL_COLS,
     GROUP_COLS,
     LIMIAR_ALERTAS_RECORRENTES,
+    JANELA_INSTABILIDADE_HORAS,
     LOG_INVALIDOS_FILENAME,
     NO_STATUS,
     PRIORITY_GROUP_WEIGHTS,
@@ -221,6 +222,23 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
         lambda c: bool(c)
         and any(s not in ANY_SUCCESS_STATUSES and s != NO_STATUS for s in c)
     )
+    # Conta quantas execuções "Closed" ocorreram na cronologia para identificar sucessos plenos repetidos
+    closed_success_count = df["status_chronology"].apply(
+        lambda c: sum(1 for s in (c if isinstance(c, (list, tuple)) else []) if s == "Closed")
+    )
+
+    # Verifica se o volume mínimo de sucessos plenos foi atingido
+    has_closed_volume = closed_success_count >= LIMIAR_ALERTAS_RECORRENTES
+
+    # Calcula se os eventos ocorreram dentro da janela temporal configurada
+    within_instability_window = pd.Series(False, index=df.index, dtype=bool)
+    if {"first_event", "last_event"}.issubset(df.columns):
+        first_event = pd.to_datetime(df["first_event"], errors="coerce")
+        last_event = pd.to_datetime(df["last_event"], errors="coerce")
+        delta_hours = (last_event - first_event).dt.total_seconds() / 3600
+        within_instability_window = (
+            delta_hours <= float(JANELA_INSTABILIDADE_HORAS)
+        ).fillna(False)
 
     # Árvore de decisão hierárquica e definitiva, reconstruída para clareza e correção.
     conditions = [
@@ -229,8 +247,9 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
         # PRIORIDADE 1: Se a tarefa não foi encontrada, é uma falha de remediação.
         last_status == "No Task Found",
         # PRIORIDADE 2: Casos crônicos, mesmo que sejam "sucesso pleno", devem ser tratados como instabilidade.
-        (df["alert_count"] >= LIMIAR_ALERTAS_RECORRENTES)
-        & last_status.isin(ANY_SUCCESS_STATUSES),
+        has_closed_volume
+        & within_instability_window
+        & last_status.isin(SUCCESS_STATUSES),
         # PRIORIDADE 3: Último status NÃO é sucesso pleno, mas já teve sucesso E falha no passado -> INTERMITENTE
         (~last_status.isin(SUCCESS_STATUSES)) & has_success & has_failure_in_history,
         # PRIORIDADE 4: Último status é SUCESSO PLENO, mas já teve falha no passado -> ESTABILIZADA
