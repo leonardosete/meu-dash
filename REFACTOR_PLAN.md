@@ -60,6 +60,15 @@ Prioridade Alta (deploy/registry)
     - [ ] Configurar service connection no Azure DevOps (Service Principal) com permissões de push/pull no ACR.
     - [ ] Garantir que imagens geradas usem tags semânticas e as mesmas tags sejam referenciadas pelos charts/values.
 
+Prioridade Alta (documentação)
+
+- [ ] Atualizar `doc_gerencial.html` (documentação gerencial) - **ATUAR AGORA**
+  - Justificativa: o conteúdo atual ainda não expressa a mensagem desejada ao público gerencial; vamos atuar nela agora antes de continuar outros desenvolvimentos.
+  - Plano de Ação:
+    - [ ] Rescrever seções chave (Desafio, Proposta de Valor, Como Usar) para foco em benefícios mensuráveis.
+    - [ ] Atualizar exemplos e capturas de tela para refletir a UI atual.
+    - [ ] Aprovação final com stakeholder antes de publicar.
+
 Prioridade Média/Alta
 
 - [ ] Desacoplar totalmente a geração de HTML do backend (mover para API-First)
@@ -69,15 +78,6 @@ Prioridade Média/Alta
     2. **Frontend/Renderer:** criar novos componentes React que consumam os endpoints e renderizem os dashboards (substituir `<iframe>`s progressivamente).
     3. **Limpeza:** quando cobertura e parity funcional forem confirmadas, remover geradores HTML e templates backend usados apenas para visualização.
   - Observação: alguns artefatos (textos conceituais, explicações, guias) podem precisar ser portados para conteúdo dinâmico (CMS leve ou arquivos markdown servidos pelo frontend).
-
-Prioridade Média
-
-- [ ] Atualizar `doc_gerencial.html` (documentação gerencial)
-  - Justificativa: o conteúdo atual ainda não expressa a mensagem desejada ao público gerencial; será a etapa final de polimento.
-  - Plano de Ação:
-    - [ ] Rescrever seções chave (Desafio, Proposta de Valor, Como Usar) para foco em benefícios mensuráveis.
-    - [ ] Atualizar exemplos e capturas de tela para refletir a UI atual.
-    - [ ] Aprovação final com stakeholder antes de publicar.
 
 Prioridade Baixa (posterior)
 
