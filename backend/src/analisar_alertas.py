@@ -224,7 +224,9 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     )
     # Conta quantas execuções "Closed" ocorreram na cronologia para identificar sucessos plenos repetidos
     closed_success_count = df["status_chronology"].apply(
-        lambda c: sum(1 for s in (c if isinstance(c, (list, tuple)) else []) if s == "Closed")
+        lambda c: sum(
+            1 for s in (c if isinstance(c, (list, tuple)) else []) if s == "Closed"
+        )
     )
 
     # Verifica se o volume mínimo de sucessos plenos foi atingido
