@@ -26,17 +26,6 @@
             background-color: var(--bg-color);
             margin: 0; padding: 0;
         }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            font-weight: 600;
-            color: var(--accent-color);
-            font-size: 1.1em;
-            text-decoration: none;
-        }
-        .back-link:hover {
-            text-decoration: underline;
-        }
         .container {
             max-width: 900px;
             margin: 40px auto;
@@ -476,27 +465,5 @@
             </div>
         </section>
     </div>
-    <script>
-        // Script para corrigir o link "Voltar para a Página Inicial"
-        document.addEventListener('DOMContentLoaded', () => {
-            const backLink = document.querySelector('.back-link');
-            if (backLink) {
-                const currentHostname = globalThis.location.hostname;
-                let targetUrl = '';
-
-                // Ambiente de desenvolvimento local
-                if (currentHostname === '127.0.0.1' || currentHostname === 'localhost') {
-                    targetUrl = 'http://127.0.0.1:5174/';
-                // Ambiente de produção (GitHub Pages)
-                } else if (currentHostname === 'leonardosete.github.io') {
-                    targetUrl = 'https://leonardosete.github.io/meu-dash/';
-                }
-                
-                if (targetUrl) {
-                    backLink.href = targetUrl;
-                }
-            }
-        });
-    </script>
 </body>
 </html>
