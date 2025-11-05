@@ -235,6 +235,8 @@
                     <div class="mt-15" style="font-size: 0.9em; color: var(--text-secondary-color);">
                         <strong>Tipos incluídos:</strong><br>
                         • Revisar causa raiz (recorrente)
+                        <br><br>
+                        <strong>Critério atual:</strong> mínimo de 5 execuções com status <code>Closed</code> concentradas em até 2 horas (parâmetro <code>JANELA_INSTABILIDADE_HORAS</code>). Fora dessa janela, o caso permanece como "Sucesso da Automação".
                     </div>
                 </div>
                 <div class="card kpi-card">
@@ -312,6 +314,9 @@
 
                 <div class="highlight highlight-success">
                     <strong>🏆 Excelência Operacional Atingida:</strong> O melhor cenário possível. Indica que todos os Casos que exigiam ação foram resolvidos e nenhum novo surgiu.
+                </div>
+                <div class="highlight highlight-success">
+                    <strong>🏆 Excelência Operacional Mantida:</strong> Nenhum Caso exigia ação e nada novo apareceu nos períodos comparados. Indica estabilidade sustentada.
                 </div>
                 <div class="highlight highlight-success">
                     <strong>✅ Evolução Positiva:</strong> O número total de Casos que exigem ação reduziu. A operação está se tornando mais estável.
