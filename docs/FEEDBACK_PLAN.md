@@ -4,9 +4,11 @@ Data: 2025-11-03
 
 Resumo
 ------
+
 Este documento descreve opções de implementação, desafios, riscos e passos recomendados para introduzir um mecanismo de feedback direto dos usuários na aplicação.
 
 1) Objetivo / contrato mínimo
+
 - Campos mínimos do payload:
   - type: "bug" | "feature" | "suggestion" | "other"
   - message: string (obrigatório)
@@ -16,6 +18,7 @@ Este documento descreve opções de implementação, desafios, riscos e passos r
   - tags: optional array[string]
 
 2) Opções de arquitetura (prós/cons)
+
 - Persistir em banco de dados interno (Postgres)
   - Prós: histórico completo, consultas e relatório internos, integração com triagem; controle total.
   - Contras: necessidade de modelagem, migração, UI de administração, custo operacional.
@@ -29,6 +32,7 @@ Este documento descreve opções de implementação, desafios, riscos e passos r
   - Contras: custo, vendor lock-in, compliance/privacidade.
 
 3) Desafios e preocupações importantes
+
 - Privacidade / Dados Pessoais
   - Feedback pode conter PII (screenshots, nomes, trechos do CSV). Necessário definir redaction rules e um mecanismo para avisar/consentir o usuário.
 
@@ -45,6 +49,7 @@ Este documento descreve opções de implementação, desafios, riscos e passos r
   - Se base de usuários multilíngue, prover campo de idioma ou detectar automaticamente; priorizar mensagens em pt-BR inicialmente.
 
 4) Requisitos técnicos mínimos (MVP)
+
 - Backend: novo endpoint POST /api/v1/feedback
   - Validate payload, strip/normalize content, persist to `feedback` table or forward to triage (ex: GitHub issue via token) depending on chosen option.
 
@@ -55,16 +60,19 @@ Este documento descreve opções de implementação, desafios, riscos e passos r
 - Admin/triage: webhook to Slack or create GitHub issue for first iteration; dashboard optional later.
 
 5) Plano de implementação recomendado (curto prazo)
+
 - Fase 0 (Design rápido): definir contrato e exemplos de payload (1 day)
 - Fase 1 (MVP rápido): implementar POST endpoint que cria uma GitHub Issue (or send to Slack) — evita necessidade de DB e UI de admin (2-3 days)
 - Fase 2: Persistência em Postgres + painel de triagem básico (web) + proteção (rate-limit, CAPTCHA) (3-5 days)
 - Fase 3: aprimorar com ML/Triagem automática, tags, relatórios e integrações (opcional)
 
 6) Estimativa de esforço (grosso)
+
 - MVP (Fase 0 + Fase 1): 2–4 dias de esforço de desenvolvimento (backend + pequena UI + infra de webhook). Requer token para GitHub or Slack.
 - Persistência + painel: +3–5 dias.
 
 7) Riscos e mitigação
+
 - Risco: vazamento de dados sensíveis no feedback (screenshots/textos com PII).
   - Mitigação: aviso de consentimento no formulário; validação automática e remover attachments; opção de anonimato.
 
@@ -72,6 +80,7 @@ Este documento descreve opções de implementação, desafios, riscos e passos r
   - Mitigação: rate-limit por IP/user, CAPTCHA, e e-mail opt-in verification.
 
 8) Próximos passos imediatos (recomendado)
+
 - Confirmar que o mantenedor aprova o contrato mínimo (campos e anonimato).
 - Decidir destino inicial do feedback (GitHub Issue vs Slack vs DB).
 - Eu posso: 1) criar o endpoint backend mínimo + rota, e 2) adicionar um modal simples no frontend para envio — ou, se preferir, primeiro só encaminhar para Slack/GitHub para validar o fluxo com o mínimo de infra.
