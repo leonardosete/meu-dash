@@ -34,13 +34,14 @@ O mantenedor decidiu priorizar uma transição para um ambiente de produção ba
 
 Prioridade Alta
 
-- [ ] Refinar detecção de "Instabilidade Crônica" no backend (urgente)
+- [x] Refinar detecção de "Instabilidade Crônica" no backend (urgente)
   - Justificativa: a regra atual considera apenas volume (≥5 alertas) e pode classificar incorretamente casos de sucesso parcial como instabilidade; precisamos adicionar janela temporal curta e contar somente execuções `Closed`.
   - Plano de Ação:
-    - [ ] Definir constante global `JANELA_INSTABILIDADE_HORAS` no backend para parametrizar a janela temporal (inicialmente 2 horas).
-    - [ ] Atualizar a árvore de decisão em `backend/src/analisar_alertas.py` para exigir simultaneamente: `last_tasks_status == "Closed"`, pelo menos 5 execuções `Closed` e diferença `last_event - first_event` dentro da janela configurável.
-    - [ ] Ajustar testes unitários para cobrir cenários dentro/fora da janela e validar a nova regra.
-    - [ ] Revisar relatórios para garantir que a categoria reflita apenas casos realmente recorrentes em curto intervalo.
+    - [x] Definir constante global `JANELA_INSTABILIDADE_HORAS` no backend para parametrizar a janela temporal (inicialmente 2 horas).
+    - [x] Atualizar a árvore de decisão em `backend/src/analisar_alertas.py` para exigir simultaneamente: `last_tasks_status == "Closed"`, pelo menos 5 execuções `Closed` e diferença `last_event - first_event` dentro da janela configurável.
+    - [x] Ajustar testes unitários para cobrir cenários dentro/fora da janela e validar a nova regra.
+    - [x] Revisar relatórios para garantir que a categoria reflita apenas casos realmente recorrentes em curto intervalo.
+    - [x] Adicionar artefatos de teste dedicados (`test_cenario_instabilidade_cronica.csv` e variante fora da janela) e validar no ambiente publicado.
 - [ ] Migrar infra/CI para AKS + Azure DevOps + Helm
   - Justificativa: ambiente de produção alvo será AKS; pipelines e registry serão do Azure (não usaremos Docker Hub). Isto exige atualização do processo de build/publish e dos manifests para Helm charts.
   - Plano de Ação:

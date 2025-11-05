@@ -82,6 +82,12 @@ def load_summary_from_json(filepath: str):
 
 def _determine_verdict(kpis):
     """Determina o veredito geral e a classe CSS com base nos KPIs."""
+    # Nenhum caso em nenhum dos períodos: destaca estabilidade plena.
+    if kpis["total_p1"] == 0 and kpis["total_p2"] == 0:
+        return (
+            "🏆 <strong>Excelência Operacional Mantida:</strong> Nenhum Caso exigia ação e nada novo surgiu. Mantenha as rotinas preventivas para preservar esse resultado.",
+            "highlight-success",
+        )
     if kpis["total_p1"] == 0 and kpis["total_p2"] > 0:
         return (
             "⚠️ <strong>Primeira Regressão:</strong> A operação, que estava estável, registrou o surgimento de novos problemas. É um ponto de atenção crítico para evitar a degradação do serviço.",
