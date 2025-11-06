@@ -230,9 +230,12 @@ def test_submit_feedback_success(client, monkeypatch):
     Verifica se uma issue é criada no GitHub com os dados corretos.
     """
     # ARRANGE: Configura as variáveis de ambiente necessárias
-    monkeypatch.setenv("GITHUB_TOKEN", "fake_token")
     monkeypatch.setenv("GITHUB_REPO_OWNER", "test_owner")
     monkeypatch.setenv("GITHUB_REPO_NAME", "test_repo")
+    monkeypatch.setattr(
+        "src.github_app.provider.get_installation_token",
+        lambda: "fake_installation_token",
+    )
 
     feedback_data = {
         "type": "bug",
@@ -332,7 +335,10 @@ def test_submit_feedback_github_error(client, monkeypatch):
     Valida o comportamento quando a API do GitHub retorna erro.
     """
     # ARRANGE: Configura as variáveis de ambiente
-    monkeypatch.setenv("GITHUB_TOKEN", "fake_token")
+    monkeypatch.setattr(
+        "src.github_app.provider.get_installation_token",
+        lambda: "fake_installation_token",
+    )
 
     feedback_data = {
         "type": "suggestion",
@@ -355,7 +361,7 @@ def test_submit_feedback_github_error(client, monkeypatch):
         assert "Erro ao enviar feedback" in json_data["error"]
 
 
-def test_submit_feedback_no_github_token(client):
+def test_submit_feedback_no_github_token(client, monkeypatch):
     """
     Valida o comportamento quando GITHUB_TOKEN não está configurado.
     """
@@ -365,10 +371,15 @@ def test_submit_feedback_no_github_token(client):
         "description": "Test description",
     }
 
+    monkeypatch.setattr(
+        "src.github_app.provider.get_installation_token",
+        lambda: None,
+    )
+
     response = client.post(
         "/api/v1/feedback", json=feedback_data, content_type="application/json"
     )
 
     assert response.status_code == 503
     json_data = response.get_json()
-    assert "temporariamente indisponível" in json_data["error"]
+    assert "Serviço de feedback indisponível" in json_data["error"]
