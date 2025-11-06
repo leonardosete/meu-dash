@@ -488,7 +488,14 @@ def renderizar_resumo_executivo(
         else "color: var(--accent-color);"
     )
     tooltip_parcial_text = "Casos onde a automação foi executada, mas não concluída (ex: 'Skipped', 'Canceled'). Oportunidades para refinar a automação."
-    parcial_status_icon_html = f"""<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;"><span style="font-size: 1.5em;">⚠️</span><div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_parcial_text)}</div></div>"""
+    parcial_icon = "⚠️" if grupos_sucesso_parcial > 0 else "✅"
+    parcial_icon_class = "flashing-icon" if grupos_sucesso_parcial > 0 else ""
+    parcial_status_icon_html = (
+        f'<div class="tooltip-container" style="position: absolute; top: 15px; left: 15px;">'
+        f'<span class="{parcial_icon_class}" style="font-size: 1.5em;">{parcial_icon}</span>'
+        f'<div class="tooltip-content" style="width: 280px; left: 0; margin-left: 0;">{escape(tooltip_parcial_text)}</div>'
+        "</div>"
+    )
 
     body_content += f"""
     <div class="card kpi-card {parcial_card_class}">
