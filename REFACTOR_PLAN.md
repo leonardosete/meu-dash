@@ -77,6 +77,17 @@ Prioridade Alta (documentação)
     - [ ] Atualizar exemplos e capturas de tela para refletir a UI atual.
     - [ ] Aprovação final com stakeholder antes de publicar.
 
+Prioridade Alta (segurança)
+
+- [ ] Migrar o mecanismo de feedback para GitHub App
+  - Justificativa: o fluxo atual usa um Personal Access Token com permissões amplas. GitHub App permite escopo mínimo, tokens rotativos e auditoria melhor, alinhando com hardening antes do deploy em AKS.
+  - Plano de Ação:
+    - [ ] Criar GitHub App dedicado (permissão Issues read/write) e instalar no repositório `leonardosete/meu-dash`.
+    - [ ] Armazenar segredos (`GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`) em segredo Kubernetes e `.env` local para desenvolvimento.
+    - [ ] Implementar helper backend para gerar token de instalação on-demand e substituir uso de `GITHUB_TOKEN` na rota `/api/v1/feedback`.
+    - [ ] Atualizar documentação (`criar-gh-token.md`, `CONTRIBUTING.md`) para refletir o novo fluxo e remover dependência de PAT.
+    - [ ] Validar criação de issue real via POST e ajustar mensagens de erro/logs.
+
 Prioridade Média/Alta
 
 - [ ] Desacoplar totalmente a geração de HTML do backend (mover para API-First)

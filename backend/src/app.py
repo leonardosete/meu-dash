@@ -18,6 +18,7 @@ from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import db
+from .github_app import provider as github_app_provider
 
 
 def create_app(test_config=None):
@@ -694,15 +695,21 @@ def create_app(test_config=None):
 
 ---
 *Feedback enviado automaticamente pelo sistema SmartRemedy*"""  # Configurar headers para GitHub API
-            github_token = os.getenv("GITHUB_TOKEN")
-            if not github_token:
+            installation_token = github_app_provider.get_installation_token()
+            if not installation_token:
                 return jsonify(
-                    {"error": "Serviço de feedback temporariamente indisponível."}
+                    {
+                        "error": (
+                            "Serviço de feedback indisponível: integração com GitHub App "
+                            "não configurada ou token não pôde ser gerado."
+                        )
+                    }
                 ), 503
 
             headers = {
-                "Authorization": f"token {github_token}",
-                "Accept": "application/vnd.github.v3+json",
+                "Authorization": f"Bearer {installation_token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
             }
 
             # Dados da issue

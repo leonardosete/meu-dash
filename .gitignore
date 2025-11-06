@@ -249,3 +249,6 @@ CERT
 .env-criar-secrets
 # secret k8s
 kubernetes/secrets.local.yaml
+
+# PEM
+*.pem
