@@ -31,6 +31,30 @@
 
 > **Lembrete:** `kubernetes/secrets.local.yaml` não é versionado. Antes de configurar AKS/Azure DevOps, gerar os Secrets oficiais (KeyVault/Secrets do cluster) com `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID` e `GITHUB_APP_PRIVATE_KEY` — **não esquecer** de migrar esses valores para o ambiente gerenciado.
 
+### 2.3 Validação `_determine_verdict` (✅ Concluído)
+
+- Suíte dedicada `backend/tests/test_analise_tendencia_verdict.py` criada com cenários parametrizados cobrindo todos os caminhos do `_determine_verdict`.
+- Pipeline manual validado via `pytest backend/tests/test_analise_tendencia_verdict.py`; integração automática no `make check` segue avaliação futura junto à equipe.
+
+Cenários a validar (todos com dicionário base de KPIs + overrides específicos):
+
+1. `total_p1=0`, `total_p2=0` → Excelência Operacional Mantida (`highlight-success`).
+2. `total_p1=0`, `total_p2>0` → Primeira Regressão (`highlight-warning`).
+3. `total_p1>0`, `total_p2=0` → Excelência Operacional Atingida (`highlight-success`).
+4. `total_p2>total_p1` → Regressão (`highlight-danger`).
+5. `resolved>0` e `new/resolved>0.75` (com `improvement_rate=100`) → Alta Eficácia | Baixa Estabilidade (`highlight-warning`).
+6. `total_p2<total_p1` → Evolução Positiva (`highlight-success`).
+7. `total_p1==total_p2` e `resolved==0` → Estagnação por Inércia (`highlight-warning`).
+8. Cenário residual (ex.: `total_p1==total_p2`, `resolved>0`, `new` proporcional) → Estabilidade Neutra (`highlight-info`).
+
+### 2.4 Hardening da Suíte de Testes (✅ Concluído)
+
+- [x] `test_analise_scoring.py`: adicionar caso com `alert_count = 0` para validar comportamento de borda do logaritmo.
+- [x] `test_analysis.py`: remover uso de `sys.path.insert` adotando import padrão e garantir execução a partir da raiz (`pytest backend/tests`).
+- [x] `test_api.py`: criar cenário “dashboard vazio” (sem `Report`) e adicionar asserção dos argumentos de `process_direct_comparison` para monitorar contrato.
+- [x] `test_services.py`: resetar mocks profundamente nos ciclos multi-estágios, adicionar caso negativo de arquivo não mais recente e remover `print()` residuais.
+- [x] Revisar fixtures compartilhadas entre `test_analise_scoring.py` e `test_analysis.py`, documentando a complementaridade para evitar cenários artificiais.
+
 ## 3. Documentação & Comunicação
 
 ### 3.1 Doc Gerencial (Prioridade Alta)

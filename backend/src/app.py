@@ -724,7 +724,10 @@ def create_app(test_config=None):
             repo_name = os.getenv("GITHUB_REPO_NAME", "meu-dash")
 
             api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
-            response = requests.post(api_url, json=issue_data, headers=headers)
+            # Define timeout to avoid hanging when GitHub API is slow/unreachable
+            response = requests.post(
+                api_url, json=issue_data, headers=headers, timeout=10
+            )
 
             if response.status_code == 201:
                 issue_data = response.json()

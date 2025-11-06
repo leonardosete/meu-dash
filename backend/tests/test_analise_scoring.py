@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import pytest
-from src.analisar_alertas import analisar_grupos
+from src.analisar_alertas import analisar_grupos, _calcular_fatores_de_ponderacao
 from src.constants import (
     TASK_STATUS_WEIGHTS,
     ACAO_WEIGHTS,
@@ -25,7 +25,7 @@ def calcular_score_esperado(
 
 @pytest.fixture
 def sample_data():
-    """Fixture com dados de teste abrangendo múltiplos cenários."""
+    """Fixture com dados de teste abrangendo múltiplos cenários plausíveis."""
     return {
         "assignment_group": [
             "SQUAD_A",
@@ -160,3 +160,19 @@ def test_score_ponderado_final(sample_data, problem_id, score_base, alert_count)
 
     # Compara o resultado real com o esperado
     assert round(result["score_ponderado_final"], 2) == round(score_esperado, 2)
+
+
+def test_factor_volume_handles_zero_alerts():
+    """Garante que o cálculo de fator de volume tolere grupos sem alertas contabilizados."""
+    df = pd.DataFrame(
+        {
+            "acao_sugerida": [ACAO_SEMPRE_OK],
+            "status_chronology": [["Closed"]],
+            "alert_count": [0],
+        }
+    )
+
+    enriched = _calcular_fatores_de_ponderacao(df.copy())
+
+    # `alert_count=0` deve ser tratado como 1 no logaritmo para evitar -inf.
+    assert enriched.loc[0, "fator_volume"] == pytest.approx(1.0)

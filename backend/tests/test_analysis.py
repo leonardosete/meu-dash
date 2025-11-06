@@ -1,9 +1,6 @@
 import pandas as pd
 import pytest
-import sys
-import os
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.analisar_alertas import analisar_grupos, adicionar_acao_sugerida
 from src.constants import (
     COL_TASKS_STATUS,
@@ -24,7 +21,7 @@ from src.constants import (
 
 @pytest.fixture
 def sample_dataframe():
-    """Cria um DataFrame de exemplo para os testes."""
+    """Cria um DataFrame coerente com o domínio, complementar ao usado em test_analise_scoring."""
     data = {
         "cmdb_ci": [
             "server1",

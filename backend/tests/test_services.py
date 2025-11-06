@@ -12,15 +12,15 @@ from src import services
 def mock_dependencies():
     """Cria mocks para as dependências externas do serviço."""
     mock_db = MagicMock()
-    mock_Report = MagicMock()
-    mock_TrendAnalysis = MagicMock()  # Mock para o novo modelo
+    report_model_mock = MagicMock()
+    trend_model_mock = MagicMock()  # Mock para o novo modelo
     mock_file = MagicMock()
     mock_file.filename = "test.csv"
 
     return {
         "db": mock_db,
-        "Report": mock_Report,
-        "TrendAnalysis": mock_TrendAnalysis,  # Adiciona ao dicionário
+        "Report": report_model_mock,
+        "TrendAnalysis": trend_model_mock,  # Adiciona ao dicionário
         "file_recente": mock_file,
     }
 
@@ -61,8 +61,8 @@ def test_process_upload_and_generate_reports(
     mock_new_report = mock_dependencies["Report"].return_value
     mock_new_report.id = 2
 
-    mock_Report_from_fixture = mock_dependencies["Report"]
-    mock_Report_from_fixture.query.order_by.return_value.first.return_value = (
+    report_model_from_fixture = mock_dependencies["Report"]
+    report_model_from_fixture.query.order_by.return_value.first.return_value = (
         mock_last_report
     )
 
@@ -127,6 +127,64 @@ def test_process_upload_and_generate_reports(
 @patch("src.services.analisar_arquivo_csv")
 @patch("src.services.gerador_paginas")
 @patch("src.services.context_builder")
+@patch("src.services.get_date_range_from_file", return_value="04/01/2025 a 04/01/2025")
+def test_process_upload_skips_trend_for_non_recent_file(
+    _mock_get_date,
+    mock_context_builder,
+    mock_gerador_paginas,
+    mock_analisar_csv,
+    mock_gerar_tendencia,
+    mock_path_exists,
+    tmp_path,
+    mock_dependencies,
+):
+    """Valida que uploads não mais recentes retornam apenas o aviso de tendência pulada."""
+
+    upload_folder = tmp_path / "uploads"
+    reports_folder = tmp_path / "reports"
+    upload_folder.mkdir()
+    reports_folder.mkdir()
+
+    mock_db = mock_dependencies["db"]
+    report_model = mock_dependencies["Report"]
+    trend_model = mock_dependencies["TrendAnalysis"]
+
+    previous_report = MagicMock(
+        id=99,
+        original_filename="file_prev.csv",
+        json_summary_path="fake/path/prev_summary.json",
+        date_range="05/01/2025 a 05/01/2025",
+    )
+    report_model.query.order_by.return_value.first.return_value = previous_report
+    trend_model.query.order_by.return_value.first.return_value = None
+
+    mock_analisar_csv.return_value = {
+        "summary": MagicMock(),
+        "df_atuacao": MagicMock(),
+        "num_logs_invalidos": 0,
+        "json_path": "fake/path/new_summary.json",
+    }
+
+    result = services.process_upload_and_generate_reports(
+        **mock_dependencies,
+        upload_folder=str(upload_folder),
+        reports_folder=str(reports_folder),
+    )
+
+    assert result == {
+        "warning": "Análise de tendência pulada: o arquivo enviado não é mais recente. Para comparar arquivos específicos, use a aba 'Comparação Direta'."
+    }
+    mock_gerar_tendencia.assert_not_called()
+    mock_context_builder.build_dashboard_context.assert_not_called()
+    mock_gerador_paginas.gerar_ecossistema_de_relatorios.assert_not_called()
+    mock_db.session.add.assert_not_called()
+
+
+@patch("src.services.os.path.exists", return_value=True)
+@patch("src.services.gerar_analise_comparativa")
+@patch("src.services.analisar_arquivo_csv")
+@patch("src.services.gerador_paginas")
+@patch("src.services.context_builder")
 def test_process_upload_for_continuous_trend_analysis(
     mock_context_builder,
     mock_gerador_paginas,
@@ -150,8 +208,8 @@ def test_process_upload_for_continuous_trend_analysis(
     reports_folder.mkdir()
 
     mock_db = mock_dependencies["db"]
-    MockReport = mock_dependencies["Report"]
-    MockTrendAnalysis = mock_dependencies["TrendAnalysis"]
+    report_model = mock_dependencies["Report"]
+    trend_model = mock_dependencies["TrendAnalysis"]
 
     # Simula o retorno da análise de CSV
     mock_analisar_csv.return_value = {
@@ -165,18 +223,17 @@ def test_process_upload_for_continuous_trend_analysis(
     mock_gerar_tendencia.return_value = (None, "<html></html>")
 
     # --- 1. PRIMEIRO UPLOAD (ARQUIVO A) ---
-    print("--- Testando Upload A ---")
     # Simula DB vazio
-    MockReport.query.order_by.return_value.first.return_value = None
-    MockTrendAnalysis.query.order_by.return_value.first.return_value = None
+    report_model.query.order_by.return_value.first.return_value = None
+    trend_model.query.order_by.return_value.first.return_value = None
     # Mock para o novo objeto Report que será criado
-    report_A = MagicMock(
+    report_a = MagicMock(
         id=1,
         original_filename="file_A.csv",
         json_summary_path="path/A.json",
         date_range="01/01/2025 a 01/01/2025",
     )
-    MockReport.return_value = report_A
+    report_model.return_value = report_a
     # Mock para a função get_date_range
     with patch(
         "src.services.get_date_range_from_file", return_value="01/01/2025 a 01/01/2025"
@@ -190,28 +247,28 @@ def test_process_upload_for_continuous_trend_analysis(
     # Assert A: Nenhuma tendência deve ser gerada
     mock_gerar_tendencia.assert_not_called()
     assert mock_db.session.add.call_count == 1  # Apenas o Report A
-    mock_db.session.add.assert_called_with(report_A)
+    mock_db.session.add.assert_called_with(report_a)
     mock_db.session.commit.assert_called_once()
 
     # --- 2. SEGUNDO UPLOAD (ARQUIVO B) ---
-    print("--- Testando Upload B ---")
     # Resetar mocks de chamada
     mock_gerar_tendencia.reset_mock()
     mock_db.reset_mock()
+    mock_db.session.reset_mock()
     # Simula que o Report A é o mais recente, mas ainda não há TrendAnalysis
-    MockReport.query.order_by.return_value.first.return_value = report_A
-    MockTrendAnalysis.query.order_by.return_value.first.return_value = None
+    report_model.query.order_by.return_value.first.return_value = report_a
+    trend_model.query.order_by.return_value.first.return_value = None
     # Mock para o novo objeto Report B
-    report_B = MagicMock(
+    report_b = MagicMock(
         id=2,
         original_filename="file_B.csv",
         json_summary_path="path/B.json",
         date_range="02/01/2025 a 02/01/2025",
     )
-    MockReport.return_value = report_B
+    report_model.return_value = report_b
     # Mock para a nova TrendAnalysis
-    trend_B_vs_A = MagicMock(current_report=report_B)
-    MockTrendAnalysis.return_value = trend_B_vs_A
+    trend_b_vs_a = MagicMock(current_report=report_b)
+    trend_model.return_value = trend_b_vs_a
 
     with patch(
         "src.services.get_date_range_from_file", return_value="02/01/2025 a 02/01/2025"
@@ -229,12 +286,12 @@ def test_process_upload_for_continuous_trend_analysis(
     from unittest.mock import ANY
 
     mock_gerar_tendencia.assert_called_with(
-        json_anterior=report_A.json_summary_path,
+        json_anterior=report_a.json_summary_path,
         json_recente=mock_analisar_csv.return_value["json_path"],
-        csv_anterior_name=report_A.original_filename,
+        csv_anterior_name=report_a.original_filename,
         csv_recente_name=mock_dependencies["file_recente"].filename,
         output_path=ANY,
-        date_range_anterior=report_A.date_range,
+        date_range_anterior=report_a.date_range,
         date_range_recente="02/01/2025 a 02/01/2025",
         frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
         run_folder=ANY,
@@ -242,26 +299,26 @@ def test_process_upload_for_continuous_trend_analysis(
     )
     # Verifica se o Report B e a Trend B vs A foram salvos
     assert mock_db.session.add.call_count == 2
-    assert trend_B_vs_A.current_report_id == 2
+    assert trend_b_vs_a.current_report_id == 2
 
     # --- 3. TERCEIRO UPLOAD (ARQUIVO C) ---
-    print("--- Testando Upload C ---")
     # Resetar mocks de chamada
     mock_gerar_tendencia.reset_mock()
     mock_db.reset_mock()
+    mock_db.session.reset_mock()
     # Simula que a última TrendAnalysis é a B vs A. O sistema deve usar `trend_B_vs_A.current_report` (que é o report_B)
-    MockTrendAnalysis.query.order_by.return_value.first.return_value = trend_B_vs_A
+    trend_model.query.order_by.return_value.first.return_value = trend_b_vs_a
     # Mock para o novo objeto Report C
-    report_C = MagicMock(
+    report_c = MagicMock(
         id=3,
         original_filename="file_C.csv",
         json_summary_path="path/C.json",
         date_range="03/01/2025 a 03/01/2025",
     )
-    MockReport.return_value = report_C
+    report_model.return_value = report_c
     # Mock para a nova TrendAnalysis
-    trend_C_vs_B = MagicMock()
-    MockTrendAnalysis.return_value = trend_C_vs_B
+    trend_c_vs_b = MagicMock()
+    trend_model.return_value = trend_c_vs_b
 
     with patch(
         "src.services.get_date_range_from_file", return_value="03/01/2025 a 03/01/2025"
@@ -276,19 +333,19 @@ def test_process_upload_for_continuous_trend_analysis(
     mock_gerar_tendencia.assert_called_once()
     # Verifica se a comparação usou o JSON do relatório B
     mock_gerar_tendencia.assert_called_with(
-        json_anterior=report_B.json_summary_path,
+        json_anterior=report_b.json_summary_path,
         json_recente=mock_analisar_csv.return_value["json_path"],
-        csv_anterior_name=report_B.original_filename,
+        csv_anterior_name=report_b.original_filename,
         csv_recente_name=mock_dependencies["file_recente"].filename,
         output_path=ANY,
-        date_range_anterior=report_B.date_range,
+        date_range_anterior=report_b.date_range,
         date_range_recente="03/01/2025 a 03/01/2025",
         frontend_url=os.getenv("FRONTEND_BASE_URL", "/"),
         run_folder=ANY,
         base_url=ANY,
     )
     assert mock_db.session.add.call_count == 2
-    assert trend_C_vs_B.current_report_id == 3
+    assert trend_c_vs_b.current_report_id == 3
 
 
 @patch("src.services.shutil.rmtree")
@@ -326,26 +383,24 @@ def test_enforce_report_limit_deletes_oldest(
 
     # 3. Configurar os mocks do banco de dados
     mock_db = mock_dependencies["db"]
-    mock_Report = mock_dependencies["Report"]
+    report_model_mock = mock_dependencies["Report"]
 
     # Simular que o DB tem 8 relatórios
-    mock_Report.query.count.return_value = total_reports_to_create
+    report_model_mock.query.count.return_value = total_reports_to_create
 
     # Simular que a query pelos mais antigos retorna os 3 primeiros
     oldest_reports_to_return = mock_reports[:reports_to_delete_count]
-    mock_Report.query.order_by.return_value.limit.return_value.all.return_value = (
-        oldest_reports_to_return
-    )
+    report_model_mock.query.order_by.return_value.limit.return_value.all.return_value = oldest_reports_to_return
 
     # Act
-    services._enforce_report_limit(mock_db, mock_Report)
+    services._enforce_report_limit(mock_db, report_model_mock)
 
     # Assert
     # 1. Verifica se a contagem foi feita
-    mock_Report.query.count.assert_called_once()
+    report_model_mock.query.count.assert_called_once()
 
     # 2. Verifica se a query para encontrar os mais antigos foi feita corretamente
-    mock_Report.query.order_by.return_value.limit.assert_called_with(
+    report_model_mock.query.order_by.return_value.limit.assert_called_with(
         reports_to_delete_count
     )
 
@@ -442,18 +497,18 @@ def test_delete_report_and_artifacts_success(
     """
     # Arrange
     mock_db = mock_dependencies["db"]
-    MockReport = mock_dependencies["Report"]
+    report_model = mock_dependencies["Report"]
 
     mock_report_instance = MagicMock()
     mock_report_instance.report_path = "/fake/dir/report.html"
     mock_db.session.get.return_value = mock_report_instance
 
     # Act
-    result = services.delete_report_and_artifacts(1, mock_db, MockReport)
+    result = services.delete_report_and_artifacts(1, mock_db, report_model)
 
     # Assert
     assert result is True
-    mock_db.session.get.assert_called_once_with(MockReport, 1)
+    mock_db.session.get.assert_called_once_with(report_model, 1)
     mock_isdir.assert_called_once_with("/fake/dir")
     mock_rmtree.assert_called_once_with("/fake/dir")
     mock_db.session.delete.assert_called_once_with(mock_report_instance)
@@ -464,10 +519,10 @@ def test_delete_report_and_artifacts_success(
 def test_delete_report_and_artifacts_not_found(mock_dependencies):
     """Testa se a função retorna False se o relatório não for encontrado."""
     mock_db = mock_dependencies["db"]
-    MockReport = mock_dependencies["Report"]
+    report_model = mock_dependencies["Report"]
     mock_db.session.get.return_value = None
 
-    result = services.delete_report_and_artifacts(999, mock_db, MockReport)
+    result = services.delete_report_and_artifacts(999, mock_db, report_model)
 
     assert result is False
     mock_db.session.delete.assert_not_called()
@@ -481,11 +536,11 @@ def test_delete_report_and_artifacts_exception(
 ):
     """Testa se a função faz rollback em caso de exceção."""
     mock_db = mock_dependencies["db"]
-    MockReport = mock_dependencies["Report"]
+    report_model = mock_dependencies["Report"]
     mock_report_instance = MagicMock()
     mock_db.session.get.return_value = mock_report_instance
 
-    result = services.delete_report_and_artifacts(1, mock_db, MockReport)
+    result = services.delete_report_and_artifacts(1, mock_db, report_model)
 
     assert result is False
     mock_db.session.delete.assert_not_called()

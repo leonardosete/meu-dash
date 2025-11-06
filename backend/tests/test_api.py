@@ -38,6 +38,18 @@ def test_get_dashboard_summary(client):
     assert isinstance(data["trend_history"], list)
 
 
+def test_get_dashboard_summary_without_reports(client):
+    """Garante comportamento estável quando não há relatórios cadastrados."""
+    response = client.get("/api/v1/dashboard-summary")
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["kpi_summary"] is None
+    assert payload["latest_report_files"] is None
+    assert payload["trend_history"] == []
+    assert "latest_report_urls" not in payload
+
+
 def test_get_reports(client):
     """
     Valida o endpoint GET /api/v1/reports.
@@ -221,6 +233,13 @@ def test_compare_files_success(client, monkeypatch):
         json_data = response.get_json()
         assert json_data["success"] is True
         assert "report_url" in json_data
+
+    # Garante que a camada de serviço recebeu os arquivos esperados.
+    mock_service.assert_called_once()
+    called_kwargs = mock_service.call_args.kwargs
+    assert len(called_kwargs["files"]) == 2
+    assert called_kwargs["files"][0].filename == "file1.csv"
+    assert called_kwargs["files"][1].filename == "file2.csv"
 
 
 def test_submit_feedback_success(client, monkeypatch):
