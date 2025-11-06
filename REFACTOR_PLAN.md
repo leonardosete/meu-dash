@@ -1,118 +1,127 @@
-# ✅ Plano de Ação: Roadmap Prioritário (Seção Atual)
+# Plano de Ação Prioritário
 
-**Nota:** O conteúdo histórico (seções 1–4 e histórico da Fase 3) foi movido para `OLD_REFACTOR_PLAN.md` para manter este arquivo focado nas prioridades atuais. Consulte `OLD_REFACTOR_PLAN.md` para o histórico completo.
+> Histórico das fases anteriores permanece em `OLD_REFACTOR_PLAN.md`. Este arquivo lista apenas o estado atual das prioridades.
 
----
+## 1. Painéis Concluídos
 
-## ✅ 0. Prioridade Imediata: Mecanismo de Feedback de Usuário
+### 1.1 Feedback de Usuário (✅ Concluído)
 
-**STATUS: CONCLUÍDO** ✅
+- Backend `POST /api/v1/feedback` com validação e integração GitHub App
+- `FeedbackModal` no frontend com formulário e preview
+- Tipos TypeScript (`FeedbackData`) e testes backend cobrindo 5 cenários
+- Labels criadas no GitHub e issues de teste validadas
+- Guias atualizados (`docs/FEEDBACK_PLAN.md`, README) e PAT removido
+- Fluxo validado em produção: issue #13 aberta automaticamente via GitHub App
 
-Objetivo: permitir que usuários (mantedores e utilizadores da ferramenta) enviem feedback direto sobre a aplicação através de GitHub Issues — sugestões de melhoria, solicitações de novas features, reports de bugs e pedidos de remoção de funcionalidades — de forma simples, audível e moderável.
+## 2. Backend & Segurança
 
-### ✅ **Implementação Completa**
+### 2.1 Instabilidade Crônica (✅ Concluído)
 
-- ✅ Endpoint backend (`POST /api/v1/feedback`) com validação e GitHub API integration
-- ✅ Componente React `FeedbackModal` com formulário e preview
-- ✅ Tipos TypeScript (`FeedbackData`) definidos
-- ✅ Testes backend completos (5 cenários de teste)
-- ✅ Labels do GitHub configuradas (bug, feature, other, suggestion)
-- ✅ Issues de teste criadas e validadas com labels corretas
-- ✅ Documentação técnica em `docs/FEEDBACK_PLAN.md`
-- ✅ README atualizado com menção ao sistema de feedback
-- ✅ Token do GitHub criado e funcional
+- Janela temporal parametrizada (`JANELA_INSTABILIDADE_HORAS`)
+- Árvores de decisão e testes ajustados para eventos `Closed`
+- Artefatos de teste dedicados adicionados
 
-### 🎯 **Resultado**
+### 2.2 GitHub App (✅ Concluído)
 
-Sistema totalmente funcional permite que usuários enviem feedback diretamente pela interface, criando automaticamente issues estruturadas no GitHub com templates específicos e labels apropriadas.
+- Helper `backend/src/github_app.py` com cache de tokens de instalação
+- Rota `/api/v1/feedback` usa `Authorization: Bearer <installation_token>`
+- Dependência `PyJWT[crypto]` adicionada para suportar RS256
+- `criar-gh-token.md` reescrito com o fluxo de GitHub App
+- GitHub App dedicado criado e instalado no repositório `leonardosete/meu-dash` — fluxo validado em produção (issue #13 criada automaticamente via GitHub App)
 
----
+> **Lembrete:** `kubernetes/secrets.local.yaml` não é versionado. Antes de configurar AKS/Azure DevOps, gerar os Secrets oficiais (KeyVault/Secrets do cluster) com `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID` e `GITHUB_APP_PRIVATE_KEY` — **não esquecer** de migrar esses valores para o ambiente gerenciado.
 
-## 5. Novas Prioridades e Roadmap (decisão do mantenedor)
+## 3. Documentação & Comunicação
 
-O mantenedor decidiu priorizar uma transição para um ambiente de produção baseado em AKS (Azure Kubernetes Service), pipelines no Azure DevOps e empacotamento com Helm. Abaixo estão as tarefas consolidadas, com prioridades e passos acionáveis. Mantivemos o histórico anterior intacto — esta seção documenta o que falta entregar segundo as decisões mais recentes.
+### 3.1 Doc Gerencial (Prioridade Alta)
 
-Prioridade Alta
+- Reescrever seções “Desafio”, “Proposta de Valor”, “Como Usar”
+- Atualizar screenshots e aprovar conteúdo com stakeholder
 
-- [x] Refinar detecção de "Instabilidade Crônica" no backend (urgente)
-  - Justificativa: a regra atual considera apenas volume (≥5 alertas) e pode classificar incorretamente casos de sucesso parcial como instabilidade; precisamos adicionar janela temporal curta e contar somente execuções `Closed`.
-  - Plano de Ação:
-    - [x] Definir constante global `JANELA_INSTABILIDADE_HORAS` no backend para parametrizar a janela temporal (inicialmente 2 horas).
-    - [x] Atualizar a árvore de decisão em `backend/src/analisar_alertas.py` para exigir simultaneamente: `last_tasks_status == "Closed"`, pelo menos 5 execuções `Closed` e diferença `last_event - first_event` dentro da janela configurável.
-    - [x] Ajustar testes unitários para cobrir cenários dentro/fora da janela e validar a nova regra.
-    - [x] Revisar relatórios para garantir que a categoria reflita apenas casos realmente recorrentes em curto intervalo.
-    - [x] Adicionar artefatos de teste dedicados (`test_cenario_instabilidade_cronica.csv` e variante fora da janela) e validar no ambiente publicado.
-- [ ] Migrar infra/CI para AKS + Azure DevOps + Helm
-  - Justificativa: ambiente de produção alvo será AKS; pipelines e registry serão do Azure (não usaremos Docker Hub). Isto exige atualização do processo de build/publish e dos manifests para Helm charts.
-  - Plano de Ação:
-    - [ ] Criar Helm chart (chart base) para a aplicação (`charts/smart-remedy`) que contenha templates para Deployment, Service, Ingress, ConfigMap e Secrets (valores parametrizáveis).
-    - [ ] Converter `kubernetes-v3.yaml` em chart/values e mover privilégios sensíveis para valores externos (SecretScope no Azure).
-    - [ ] Criar pipeline de CI/CD no Azure DevOps (yaml) que: build da imagem, push para Azure Container Registry (ACR), package do chart com tag apropriada e/publicação do chart (opcional) ou atualização do repositório GitOps.
-    - [ ] Atualizar registros e documentação de deploy para apontar para ACR e Azure DevOps. Validar autenticação e permissões (Service Principal/Managed Identity).
-    - [ ] Testar deploy em ambiente de stage AKS com Helm (helm upgrade --install) e validar probes/healthchecks.
+## 4. AKS, Azure DevOps & Helm
 
-Prioridade Alta (parte de infraestrutura)
+### 4.1 Helm Chart (Alta)
 
-- [ ] Ajustar configuração de Ingress e rede para AKS
-  - Justificativa: o Ingress atual pode precisar de adaptação para o controlador usado no AKS (NGINX Ingress Controller, Application Gateway Ingress Controller, etc.) e políticas de TLS/HTTPS específicas do cloud.
-  - Plano de Ação:
-    - [ ] Identificar qual Ingress Controller será usado em AKS (recomendar NGINX ou AGIC conforme infra).
-    - [ ] Converter regras de Ingress do chart para suportar anotações específicas do controller (TLS, redirect, HSTS, rewrites, pathType).
-    - [ ] Validar integração com certificação (KeyVault/Cert Manager ou Azure-managed certs).
+- Criar chart `charts/smart-remedy` (Deployment, Service, Ingress, ConfigMap, Secrets parametrizados)
+- Converter `kubernetes-v3.yaml` em templates e `values.yaml`
+- Externalizar Secrets para KeyVault/Azure Secrets (sem `secrets.local.yaml`)
 
-Prioridade Alta (deploy/registry)
+### 4.2 Pipeline Azure DevOps (Alta)
 
-- [ ] Ajustar pipeline e registry — ACR + autenticação
-  - Plano de Ação:
-    - [ ] Substituir etapa de push para Docker Hub por push para Azure Container Registry (ACR) no pipeline.
-    - [ ] Configurar service connection no Azure DevOps (Service Principal) com permissões de push/pull no ACR.
-    - [ ] Garantir que imagens geradas usem tags semânticas e as mesmas tags sejam referenciadas pelos charts/values.
+- Pipeline YAML: build da imagem, push para ACR, package chart e deploy (helm upgrade)
+- Configurar Service Connection (Service Principal) com push/pull no ACR
+- Padronizar tags semânticas entre imagem e chart
 
-Prioridade Alta (documentação)
+### 4.3 Ingress & Rede (Alta)
 
-- [ ] Atualizar `doc_gerencial.html` (documentação gerencial) - **ATUAR AGORA**
-  - Justificativa: o conteúdo atual ainda não expressa a mensagem desejada ao público gerencial; vamos atuar nela agora antes de continuar outros desenvolvimentos.
-  - Plano de Ação:
-    - [ ] Rescrever seções chave (Desafio, Proposta de Valor, Como Usar) para foco em benefícios mensuráveis.
-    - [ ] Atualizar exemplos e capturas de tela para refletir a UI atual.
-    - [ ] Aprovação final com stakeholder antes de publicar.
+- Definir controlador (NGINX/AGIC) para AKS
+- Adaptar templates do chart para anotações específicas (TLS, redirects, pathType)
+- Integrar com certificados (Cert-Manager ou Azure-managed)
 
-Prioridade Alta (segurança)
+### 4.4 Checklist Pré-AKS/Azure DevOps
 
-- [ ] Migrar o mecanismo de feedback para GitHub App
-  - Justificativa: o fluxo atual usa um Personal Access Token com permissões amplas. GitHub App permite escopo mínimo, tokens rotativos e auditoria melhor, alinhando com hardening antes do deploy em AKS.
-  - Plano de Ação:
-    - [ ] Criar GitHub App dedicado (permissão Issues read/write) e instalar no repositório `leonardosete/meu-dash`.
-    - [ ] Armazenar segredos (`GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`) em segredo Kubernetes e `.env` local para desenvolvimento.
-    - [ ] Implementar helper backend para gerar token de instalação on-demand e substituir uso de `GITHUB_TOKEN` na rota `/api/v1/feedback`.
-    - [ ] Atualizar documentação (`criar-gh-token.md`, `CONTRIBUTING.md`) para refletir o novo fluxo e remover dependência de PAT.
-    - [ ] Validar criação de issue real via POST e ajustar mensagens de erro/logs.
+- [ ] Substituir `secrets.local.yaml` por Secrets próprios do cluster/KeyVault
+- [ ] Validar que o GitHub App está configurado com App ID, Installation ID e chave no ambiente gerenciado
+- [ ] Confirmar que `PyJWT[crypto]` está instalado na imagem utilizada pelo pipeline
+- [ ] Documentar nos valores do Helm a expectativa de variáveis (`GITHUB_APP_*`)
 
-Prioridade Média/Alta
 
-- [ ] Desacoplar totalmente a geração de HTML do backend (mover para API-First)
-  - Justificativa: reduzir acoplamento e permitir que o frontend seja responsável pela renderização, além de permitir consumo por outras ferramentas.
-  - Plano de Ação (sugestão de fases):
-    1. **API-First mínima:** adicionar endpoints JSON que sirvam os dados necessários para gerar os dashboards principais (KPIs, listas, trend summaries). Não remover ainda a geração de HTML; oferecer ambas durante migração.
-    2. **Frontend/Renderer:** criar novos componentes React que consumam os endpoints e renderizem os dashboards (substituir `<iframe>`s progressivamente).
-    3. **Limpeza:** quando cobertura e parity funcional forem confirmadas, remover geradores HTML e templates backend usados apenas para visualização.
-  - Observação: alguns artefatos (textos conceituais, explicações, guias) podem precisar ser portados para conteúdo dinâmico (CMS leve ou arquivos markdown servidos pelo frontend).
+### 4.5 Segurança (Alta)
 
-Prioridade Baixa (posterior)
+- Armazenamento seguro da chave privada
+	- Não versionar a chave privada do GitHub App (não incluir PEM em `values.yaml` ou no repositório).
+	- Em AKS, usar o mecanismo de Secrets do cluster ou Azure Key Vault. Exemplo (dev/local):
 
-- [ ] Unificar script externo de preparação de CSV na aplicação
-  - Justificativa: atualmente existe um script Python externo que prepara o CSV de entrada; unificá-lo permitirá um fluxo integrado e reduzirá passos manuais.
-  - Plano de Ação:
-    - [ ] Analisar o script externo e suas dependências; criar um módulo reutilizável no `backend/src/utils` (ex: `preparer.py`).
-    - [ ] Expor uma rota que execute a preparação (ou integrar ao pipeline de upload) e gerar o CSV que o pipeline de análise consome.
-    - [ ] Atualizar testes e documentação para refletir o novo fluxo.
-- [ ] Revisar dependências de colunas legadas do schema CSV
-  - Justificativa: o backend aceita ~21 colunas únicas, mas parte delas (ex.: `tasks_count`, `tasks_numbers`, `state`, `sys_id`) não é consumida nos relatórios atuais. Validar se podemos flexibilizar o porteiro para reduzir atrito na ingestão.
-  - Plano de Ação:
-    - [ ] Mapear usos efetivos das colunas no backend (`constants.py`, `analisar_alertas.py`, `gerador_paginas.py`) e documentar o conjunto mínimo.
-    - [ ] Ajustar `ESSENTIAL_COLS` e a validação em `carregar_dados` para tratar colunas legadas como opcionais, mantendo retrocompatibilidade.
-    - [ ] Atualizar README/docs e adicionar teste de ingestão cobrindo CSV sem as colunas opcionais.
+		```bash
+		kubectl create secret generic github-app-key \
+			--from-file=private-key.pem=/path/to/private-key.pem \
+			--namespace=seu-namespace
+		```
 
-Observação final
+	- Garantir RBAC/ACLs restritos ao Secret e acesso apenas às ServiceAccounts necessárias.
 
-Estas novas prioridades refletem a decisão estratégica de mover para AKS/Azure e empacotar com Helm, além de priorizar a separação da apresentação (frontend) e lógica (backend). Sugiro que a equipe trate o bloco "AKS + Azure DevOps + Helm" como o próximo epic de entrega (Prioridade Alta) e que as tarefas de desacoplamento (API-First) sejam a penúltima etapa antes da limpeza final da documentação gerencial.
+- Minimizar permissões do GitHub App
+	- Conceder apenas scopes estritamente necessários (por ex.: Issues read/write) e limitar a instalação a repositórios específicos — não usar "All repositories" se não for necessário.
+
+- Dependências crypto e imagens de CI/runtime
+	- Confirmar `PyJWT[crypto]` e `cryptography` em `backend/requirements.txt` e que a imagem Docker usada no pipeline contém essas dependências.
+	- Evitar versões antigas/não suportadas do `cryptography` (siga políticas de segurança da base de imagens).
+
+- Rotação e recuperação
+	- Planejar rotação periódica da chave privada e o procedimento de deploy da nova chave (incluindo revogação da anterior no GitHub App se aplicável).
+	- Documentar passo a passo para recuperação em caso de comprometimento.
+
+- Auditoria e monitoramento
+	- Logar eventos relevantes: geração de JWT, solicitações de token de instalação, chamadas de API significativas e falhas de autenticação.
+	- Criar alertas para padrões anômalos (picos de geração de tokens, falhas repetidas, uso fora do horário esperado).
+
+- Verificações rápidas recomendadas
+	- Verificar `backend/requirements.txt` para `PyJWT[crypto]` e `cryptography`.
+	- Escanear o repositório para arquivos PEM/strings que pareçam chaves privadas (evitar commits acidentais).
+	- Incluir instruções de deploy seguro no Helm `values` docs (documentar que a chave deve vir de um Secret/KeyVault, não inline).
+
+
+## 5. Frontend & API-First
+
+### 5.1 Desacoplamento HTML (Média/Alta)
+
+1. API-First mínima (endpoints JSON cobrindo dashboards)
+2. Componentes React consumindo os novos endpoints
+3. Remoção dos geradores HTML após paridade total
+
+## 6. Backlog Futuro (Baixa)
+
+### 6.1 Script de Preparação CSV
+
+- Unificar script externo em utilitário interno e expor rota/fluxo integrado
+
+### 6.2 Revisão de Colunas do CSV
+
+- Mapear colunas realmente usadas
+- Ajustar validação para tornar campos legados opcionais
+- Atualizar documentação e testes de ingestão
+
+### 7. Observações Finais
+
+- Foco imediato: concluir documentação gerencial e iniciar o épico “AKS + Azure DevOps + Helm”
+- Em paralelo, garantir que a migração GitHub App permaneça configurada em todos os ambientes (lembrar do Secret fora do repo)
