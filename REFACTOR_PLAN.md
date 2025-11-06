@@ -65,41 +65,39 @@
 - [ ] Confirmar que `PyJWT[crypto]` está instalado na imagem utilizada pelo pipeline
 - [ ] Documentar nos valores do Helm a expectativa de variáveis (`GITHUB_APP_*`)
 
-
 ### 4.5 Segurança (Alta)
 
 - Armazenamento seguro da chave privada
-	- Não versionar a chave privada do GitHub App (não incluir PEM em `values.yaml` ou no repositório).
-	- Em AKS, usar o mecanismo de Secrets do cluster ou Azure Key Vault. Exemplo (dev/local):
+  - Não versionar a chave privada do GitHub App (não incluir PEM em `values.yaml` ou no repositório).
+  - Em AKS, usar o mecanismo de Secrets do cluster ou Azure Key Vault. Exemplo (dev/local):
 
-		```bash
-		kubectl create secret generic github-app-key \
-			--from-file=private-key.pem=/path/to/private-key.pem \
-			--namespace=seu-namespace
-		```
+  ```bash
+  kubectl create secret generic github-app-key \
+   --from-file=private-key.pem=/path/to/private-key.pem \
+   --namespace=seu-namespace
+  ```
 
-	- Garantir RBAC/ACLs restritos ao Secret e acesso apenas às ServiceAccounts necessárias.
+  - Garantir RBAC/ACLs restritos ao Secret e acesso apenas às ServiceAccounts necessárias.
 
 - Minimizar permissões do GitHub App
-	- Conceder apenas scopes estritamente necessários (por ex.: Issues read/write) e limitar a instalação a repositórios específicos — não usar "All repositories" se não for necessário.
+  - Conceder apenas scopes estritamente necessários (por ex.: Issues read/write) e limitar a instalação a repositórios específicos — não usar "All repositories" se não for necessário.
 
 - Dependências crypto e imagens de CI/runtime
-	- Confirmar `PyJWT[crypto]` e `cryptography` em `backend/requirements.txt` e que a imagem Docker usada no pipeline contém essas dependências.
-	- Evitar versões antigas/não suportadas do `cryptography` (siga políticas de segurança da base de imagens).
+  - Confirmar `PyJWT[crypto]` e `cryptography` em `backend/requirements.txt` e que a imagem Docker usada no pipeline contém essas dependências.
+  - Evitar versões antigas/não suportadas do `cryptography` (siga políticas de segurança da base de imagens).
 
 - Rotação e recuperação
-	- Planejar rotação periódica da chave privada e o procedimento de deploy da nova chave (incluindo revogação da anterior no GitHub App se aplicável).
-	- Documentar passo a passo para recuperação em caso de comprometimento.
+  - Planejar rotação periódica da chave privada e o procedimento de deploy da nova chave (incluindo revogação da anterior no GitHub App se aplicável).
+  - Documentar passo a passo para recuperação em caso de comprometimento.
 
 - Auditoria e monitoramento
-	- Logar eventos relevantes: geração de JWT, solicitações de token de instalação, chamadas de API significativas e falhas de autenticação.
-	- Criar alertas para padrões anômalos (picos de geração de tokens, falhas repetidas, uso fora do horário esperado).
+  - Logar eventos relevantes: geração de JWT, solicitações de token de instalação, chamadas de API significativas e falhas de autenticação.
+  - Criar alertas para padrões anômalos (picos de geração de tokens, falhas repetidas, uso fora do horário esperado).
 
 - Verificações rápidas recomendadas
-	- Verificar `backend/requirements.txt` para `PyJWT[crypto]` e `cryptography`.
-	- Escanear o repositório para arquivos PEM/strings que pareçam chaves privadas (evitar commits acidentais).
-	- Incluir instruções de deploy seguro no Helm `values` docs (documentar que a chave deve vir de um Secret/KeyVault, não inline).
-
+  - Verificar `backend/requirements.txt` para `PyJWT[crypto]` e `cryptography`.
+  - Escanear o repositório para arquivos PEM/strings que pareçam chaves privadas (evitar commits acidentais).
+  - Incluir instruções de deploy seguro no Helm `values` docs (documentar que a chave deve vir de um Secret/KeyVault, não inline).
 
 ## 5. Frontend & API-First
 
