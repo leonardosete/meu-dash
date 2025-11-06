@@ -7,7 +7,7 @@ gunicorn
 numpy
 pandas
 psycopg2-binary
-PyJWT
+PyJWT[crypto]
 pytest
 requests
 ruff
