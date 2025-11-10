@@ -3,17 +3,16 @@
 name: "CodeQL Advanced"
 
 on:
-  # DESATIVADO: CodeQL não está disponível em repositórios privados sem licença Advanced Security
-  if: false
-  # Dispara o workflow em pushes ou pull requests para as branches principais,
-  # garantindo análise contínua em cada alteração.
-  push:
+#  # Dispara o workflow em pushes ou pull requests para as branches principais,
+#  # garantindo análise contínua em cada alteração.
+#  push:
 #    branches: [ "main", "develop" ]
-  pull_request:
+pull_request:
+  branches: [ "main", "develop" ]
     branches: [ "main", "develop" ]
-  # Agenda uma varredura semanal para detectar vulnerabilidades de forma proativa.
-  schedule:
-    - cron: '43 22 * * 1'
+#  # Agenda uma varredura semanal para detectar vulnerabilidades de forma proativa.
+#  schedule:
+#    - cron: '43 22 * * 1'
 
 jobs:
   # Job principal que executa a análise do CodeQL para cada linguagem da matriz.
