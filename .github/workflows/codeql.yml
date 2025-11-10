@@ -3,6 +3,8 @@
 name: "CodeQL Advanced"
 
 on:
+  # DESATIVADO: CodeQL não está disponível em repositórios privados sem licença Advanced Security
+  if: false
   # Dispara o workflow em pushes ou pull requests para as branches principais,
   # garantindo análise contínua em cada alteração.
   push:
