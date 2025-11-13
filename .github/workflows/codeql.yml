@@ -5,14 +5,14 @@ name: "CodeQL Advanced"
 on:
 #  # Dispara o workflow em pushes ou pull requests para as branches principais,
 #  # garantindo análise contínua em cada alteração.
-#  push:
-#    branches: [ "main", "develop" ]
+ push:
+   branches: [ "main", "develop" ]
 pull_request:
   branches: [ "main", "develop" ]
     branches: [ "main", "develop" ]
 #  # Agenda uma varredura semanal para detectar vulnerabilidades de forma proativa.
-#  schedule:
-#    - cron: '43 22 * * 1'
+ schedule:
+   - cron: '43 22 * * 1'
 
 jobs:
   # Job principal que executa a análise do CodeQL para cada linguagem da matriz.
