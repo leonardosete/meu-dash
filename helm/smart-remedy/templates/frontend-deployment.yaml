@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.frontend.name }}
+  namespace: {{ .Values.frontend.namespace }}
+  labels:
+    app: {{ .Values.frontend.labels.app }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.frontend.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.frontend.labels.app }}
+    spec:
+      automountServiceAccountToken: false
+      volumes:
+        - name: frontend-dist
+          emptyDir: {}
+        - name: nginx-config
+          configMap:
+            name: "{{ .Values.frontend.name }}-nginx-conf"
+      initContainers:
+        - name: frontend-copier
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh","-c","cp -r /app/frontend-dist/* /frontend-dist/ || true"]
+          volumeMounts:
+            - name: frontend-dist
+              mountPath: /frontend-dist
+      containers:
+        - name: nginx
+          image: {{ .Values.nginx.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: {{ .Values.frontend.service.targetPort }}
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: frontend-dist
+              mountPath: /var/www/html
+          resources:
+            requests:
+              cpu: {{ .Values.frontend.resources.requests.cpu }}
+              memory: {{ .Values.frontend.resources.requests.memory }}
+              ephemeral-storage: {{ .Values.frontend.resources.requests.ephemeralStorage }}
+            limits:
+              cpu: {{ .Values.frontend.resources.limits.cpu }}
+              memory: {{ .Values.frontend.resources.limits.memory }}
+              ephemeral-storage: {{ .Values.frontend.resources.limits.ephemeralStorage }}

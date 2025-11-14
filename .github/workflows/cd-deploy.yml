@@ -10,8 +10,11 @@ jobs:
     runs-on: self-hosted
     env:
       IMAGE_REPO: sevenleo/smart-remedy
-      NAMESPACE: smart-remedy
-      APP_NAME: smart-remedy
+      RELEASE_NAME: smart-remedy
+      CHART_PATH: helm/smart-remedy
+      FRONTEND_NAMESPACE: smart-remedy-frontend
+      BACKEND_NAMESPACE: smart-remedy-backend
+      BACKEND_DEPLOYMENT: smart-remedy-api
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       ADMIN_USER: ${{ secrets.ADMIN_USER }}
@@ -32,14 +35,19 @@ jobs:
         run: |
           command -v kubectl || { curl -sLO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"; chmod +x kubectl && sudo mv kubectl /usr/local/bin/; }
 
-      - name: 🚀 Cria namespace (idempotente)
+      - name: �️ Instala Helm (fallback)
         run: |
-          kubectl get ns "$NAMESPACE" 2>/dev/null || kubectl create ns "$NAMESPACE"
+          command -v helm || { curl -sSL https://get.helm.sh/helm-v3.15.2-linux-amd64.tar.gz -o helm.tar.gz; tar -xzf helm.tar.gz; sudo mv linux-amd64/helm /usr/local/bin/helm; rm -rf linux-amd64 helm.tar.gz; }
+
+      - name: �🚀 Cria namespaces (idempotente)
+        run: |
+          kubectl get ns "$FRONTEND_NAMESPACE" 2>/dev/null || kubectl create ns "$FRONTEND_NAMESPACE"
+          kubectl get ns "$BACKEND_NAMESPACE" 2>/dev/null || kubectl create ns "$BACKEND_NAMESPACE"
 
       - name: 🔐 (Re)cria secret de runtime (smart-remedy-secrets)
         run: |
-          kubectl -n "$NAMESPACE" delete secret smart-remedy-secrets 2>/dev/null || true
-          CMD=(kubectl -n "$NAMESPACE" create secret generic smart-remedy-secrets \
+          kubectl -n "$BACKEND_NAMESPACE" delete secret smart-remedy-secrets 2>/dev/null || true
+          CMD=(kubectl -n "$BACKEND_NAMESPACE" create secret generic smart-remedy-secrets \
             --from-literal=SECRET_KEY="$SECRET_KEY" \
             --from-literal=DATABASE_URL="$DATABASE_URL")
           if [[ -n "$ADMIN_USER" ]]; then
@@ -50,11 +58,18 @@ jobs:
           fi
           "${CMD[@]}"
 
-      - name: 📄 Aplica manifest stateless
+      - name: 📄 Aplica chart Helm
         run: |
-          sed "s#__IMAGE__#$IMAGE_REPO:${{ github.sha }}#g" kubernetes/stateless/app-deployment.yaml | kubectl apply -f -
+          helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
+            --namespace "$FRONTEND_NAMESPACE" \
+            --set image.repository="$IMAGE_REPO" \
+            --set image.tag="${{ github.sha }}" \
+            --set frontend.namespace="$FRONTEND_NAMESPACE" \
+            --set backend.namespace="$BACKEND_NAMESPACE" \
+            --set backend.secretName="smart-remedy-secrets"
 
       - name: 🔎 Status pós-deploy
         run: |
-          kubectl -n "$NAMESPACE" get deploy,po,svc,ingress
-          kubectl -n "$NAMESPACE" rollout status deploy "$APP_NAME" --timeout=120s || true
+          kubectl -n "$FRONTEND_NAMESPACE" get deploy,po,svc,ingress
+          kubectl -n "$BACKEND_NAMESPACE" get deploy,po,svc
+          kubectl -n "$BACKEND_NAMESPACE" rollout status deploy "$BACKEND_DEPLOYMENT" --timeout=120s || true

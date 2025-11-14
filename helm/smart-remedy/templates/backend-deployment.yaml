@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "smart-remedy.backendFullname" . }}
+  namespace: {{ .Values.backend.namespace }}
+  labels:
+    app: {{ .Values.backend.labels.app }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.backend.labels.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.backend.labels.app }}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: FLASK_APP
+              value: "src.app:create_app()"
+          envFrom:
+            - secretRef:
+                name: {{ .Values.backend.secretName }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.backend.service.targetPort }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.backend.service.targetPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.backend.service.targetPort }}
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: {{ .Values.backend.resources.requests.cpu }}
+              memory: {{ .Values.backend.resources.requests.memory }}
+              ephemeral-storage: {{ .Values.backend.resources.requests.ephemeralStorage }}
+            limits:
+              cpu: {{ .Values.backend.resources.limits.cpu }}
+              memory: {{ .Values.backend.resources.limits.memory }}
+              ephemeral-storage: {{ .Values.backend.resources.limits.ephemeralStorage }}

@@ -1,0 +1,9 @@
+{{- if .Values.backend.createNamespace -}}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.backend.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+{{- end -}}

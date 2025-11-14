@@ -1,0 +1,55 @@
+image:
+  repository: sevenleo/smart-remedy
+  tag: latest
+  pullPolicy: IfNotPresent
+
+backend:
+  createNamespace: false
+  namespace: smart-remedy-backend
+  name: smart-remedy-api
+  labels:
+    app: smart-remedy-api
+  secretName: smart-remedy-secrets
+  service:
+    name: smart-remedy-api
+    port: 5000
+    targetPort: 5000
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "256Mi"
+      ephemeralStorage: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "768Mi"
+      ephemeralStorage: "1Gi"
+  replicaCount: 1
+
+frontend:
+  createNamespace: false
+  namespace: smart-remedy-frontend
+  name: smart-remedy-frontend
+  labels:
+    app: smart-remedy-frontend
+  service:
+    name: smart-remedy-frontend
+    port: 80
+    targetPort: 80
+  ingress:
+    enabled: true
+    className: nginx
+    host: smart-remedy.devops-master.shop
+    forceSSLRedirect: true
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+      ephemeralStorage: "256Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+      ephemeralStorage: "512Mi"
+  replicaCount: 1
+
+nginx:
+  image: nginx:1.27-alpine
