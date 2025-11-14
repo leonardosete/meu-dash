@@ -136,7 +136,7 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: 5000
+      targetPort: http
   type: ClusterIP
 ---
 apiVersion: networking.k8s.io/v1
