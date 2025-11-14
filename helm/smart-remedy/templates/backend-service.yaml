@@ -6,6 +6,9 @@ metadata:
   namespace: {{ .Values.backend.namespace }}
   labels:
     app: {{ .Values.backend.labels.app }}
+    app.kubernetes.io/name: {{ .Values.backend.name }}
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/version: {{ .Values.app.version | quote }}
 spec:
   selector:
     app: {{ .Values.backend.labels.app }}

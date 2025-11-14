@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
@@ -17,10 +18,11 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import db
-from .github_app import provider as github_app_provider
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+
+from . import db
+from .github_app import provider as github_app_provider
 
 
 def create_app(test_config=None):
@@ -41,6 +43,7 @@ def create_app(test_config=None):
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key-that-should-be-changed"),
     )
+    app.config["APP_VERSION"] = os.getenv("APP_VERSION", "dev")
 
     if test_config is None:
         # Configuração de produção/desenvolvimento
@@ -172,13 +175,16 @@ def create_app(test_config=None):
     # --- ROTAS DA APLICAÇÃO ---
 
     def _collect_readiness_checks():
-        checks = {"database": False}
+        checks = {}
         status_code = 200
         try:
+            start = time.perf_counter()
             db.session.execute(text("SELECT 1"))
-            checks["database"] = True
+            latency_ms = round((time.perf_counter() - start) * 1000, 2)
+            checks["database"] = {"status": "up", "latency_ms": latency_ms}
         except SQLAlchemyError:
             status_code = 503
+            checks["database"] = {"status": "down"}
             app.logger.exception("Database readiness check failed")
             db.session.rollback()
         finally:
@@ -190,6 +196,7 @@ def create_app(test_config=None):
         """Endpoint simples para verificação de liveness."""
         payload = {
             "status": "alive",
+            "version": app.config.get("APP_VERSION", "dev"),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         return jsonify(payload), 200
@@ -201,6 +208,7 @@ def create_app(test_config=None):
         payload = {
             "status": "ok" if status_code == 200 else "degraded",
             "checks": checks,
+            "version": app.config.get("APP_VERSION", "dev"),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         return jsonify(payload), status_code
@@ -213,6 +221,7 @@ def create_app(test_config=None):
             "status": "ok" if status_code == 200 else "degraded",
             "alive": True,
             "checks": checks,
+            "version": app.config.get("APP_VERSION", "dev"),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         return jsonify(payload), status_code

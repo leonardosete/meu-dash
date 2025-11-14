@@ -7,6 +7,9 @@ metadata:
   namespace: {{ .Values.frontend.namespace }}
   labels:
     app: {{ .Values.frontend.labels.app }}
+    app.kubernetes.io/name: {{ .Values.frontend.name }}
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/version: {{ .Values.app.version | quote }}
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: '{{ ternary "true" "false" .Values.frontend.ingress.forceSSLRedirect }}'
 spec:

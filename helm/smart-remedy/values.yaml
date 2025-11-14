@@ -1,3 +1,6 @@
+app:
+  version: "0.2.0"
+
 image:
   repository: sevenleo/smart-remedy
   tag: latest

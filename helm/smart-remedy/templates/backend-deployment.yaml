@@ -6,6 +6,9 @@ metadata:
   namespace: {{ .Values.backend.namespace }}
   labels:
     app: {{ .Values.backend.labels.app }}
+    app.kubernetes.io/name: {{ .Values.backend.name }}
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/version: {{ .Values.app.version | quote }}
 spec:
   replicas: {{ .Values.backend.replicaCount }}
   selector:
@@ -15,6 +18,9 @@ spec:
     metadata:
       labels:
         app: {{ .Values.backend.labels.app }}
+        app.kubernetes.io/name: {{ .Values.backend.name }}
+        app.kubernetes.io/component: backend
+        app.kubernetes.io/version: {{ .Values.app.version | quote }}
     spec:
       automountServiceAccountToken: false
       containers:
@@ -24,6 +30,8 @@ spec:
           env:
             - name: FLASK_APP
               value: "src.app:create_app()"
+            - name: APP_VERSION
+              value: {{ .Values.app.version | quote }}
           envFrom:
             - secretRef:
                 name: {{ .Values.backend.secretName }}
