@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentação Técnica - SmartRemedy</title>
+    <title>Documentação Gerencial - SmartRemedy</title>
     <style>
         /* --- TEMA CORPORATIVO --- */
         :root {
@@ -25,17 +25,6 @@
             color: var(--text-color);
             background-color: var(--bg-color);
             margin: 0; padding: 0;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            font-weight: 600;
-            color: var(--accent-color);
-            font-size: 1.1em;
-            text-decoration: none;
-        }
-        .back-link:hover {
-            text-decoration: underline;
         }
         .container {
             max-width: 900px;
@@ -157,85 +146,116 @@
 <body>
     <div class="container">
         <h1>SmartRemedy</h1>
-        <p>Análise Inteligente de Remediações</p>
+    <p>Análise Inteligente de Self-Healing</p>
 
         <section id="proposito" class="text-secondary">
             <div class="card">
-                <h3>O Desafio: A Lacuna entre Dados Descritivos e Inteligência Acionável</h3>
+                <h3>Oportunidade: Clareza Operacional e Planos de Ação</h3>
                 <p class="highlight highlight-danger text-secondary">
-                    Atualmente, os dashboards do Power BI fornecem excelente visão e histórico de um alto volume de dados à respeito dos Alertas da Companhia. Promovendo o conhecimento da saúde da operação e insumos para atuar junto aos times. Dado breve contexto, o objetivo deste projeto é, <strong>complementar</strong> um ponto específico onde o Power BI não aborda, talvez por falta de <strong>mecânismos</strong> que o fornecessem tais dados. Sendo, à respeito da real presença e efetividade das Remediações (Self-Healing). Os dashs cobrem de forma simplista o tema, consumindo apenas a informação <strong>"com_remediacao"</strong> - Deixando 2 pontos cruciais em aberto:
+                    Os dashboards do Power BI continuam sendo a espinha dorsal para acompanhar volumes, severidades e histórico dos alertas. Ainda assim, existe um ponto cego relevante: a <strong>presença</strong> e a <strong>eficácia</strong> da automação de self-healing. Neste documento, usamos a terminologia padronizada a seguir: <strong>automação</strong> refere-se ao fluxo de self-healing implementado pela equipe, enquanto <strong>task de automação (REMXXXXX)</strong> designa o registro no ServiceNow que executa a correção. O indicador <strong>"com_remediacao"</strong>, por ser binário, apenas confirma se encontramos sucesso comprovado e deixa duas perguntas cruciais sem resposta confiável:
                 </p>
                 <div class="highlight highlight-danger mt-15">
-                    <span><strong>1. Garantia da Remediação Ativa:</strong> a informação "com_remediacao" obtida, não garante que a métrica monitorada realmente teve "Tarefa de Correção" => Service Now ativa. E sim que, em dado momento a squad solicitou que fosse ativado uma remediação para essa métrica - Não há validação se a cada novo alerta, gerou-se um REMXXXXX atrelado ao AlertXXXXX (Service Now).</span><br><br>
-                    <strong>2. Status da Remediação:</strong> Mesmo se acaso uma remediação foi executada, os dashboards atuais <strong>não</strong> conhecem seu resultado. Uma remediação que falhou é tratada da mesma forma que uma que funcionou, simplesmente porque o único balizador que o dashboard possui é <strong>"com_remediacao" = "Sim|Não"</strong>. No cenário descrito, ambos possuem remediação, mas é ocultado uma possível ineficiência do self-healing ou até mesmo, deixando de evidenciar um problema maior.
+                    <p class="text-secondary"><strong>Pergunta 1 — O que o "Sim" realmente garante?</strong></p>
+                    <p class="mt-15 text-secondary">Confirma que existe ao menos uma task de automação (REMXXXXX) encerrada em <code>Closed</code> ou <code>Closed Skipped</code> no ServiceNow, sinalizando automação ativa e sucesso naquele disparo. O que permanece sem resposta:</p>
+                    <ul style="list-style-type: '•'; margin-top: 10px; padding-left: 20px;">
+                        <li><strong>Recorrência:</strong> foi um acerto isolado ou a automação se mantém estável ao longo do tempo?</li>
+                        <li><strong>Dependência humana:</strong> o sucesso só acontece porque alguém precisa finalizar manualmente o fluxo (<code>Closed Skipped</code>)?</li>
+                        <li><strong>Histórico recente:</strong> houve falhas antes desse sucesso que o indicador deixou de mostrar?</li>
+                    </ul>
+                    <p class="mt-25 text-secondary"><strong>Pergunta 2 — O que está escondido por trás do "Não"?</strong></p>
+                    <p class="mt-15 text-secondary">O binário concentra cenários distintos em um único rótulo. Continuam invisíveis:</p>
+                    <ul style="list-style-type: '•'; margin-top: 10px; padding-left: 20px;">
+                        <li><strong>Ausência total de automação:</strong> nenhuma task de automação foi aberta (<code>No Task Found</code>).</li>
+                        <li><strong>Falhas com causa conhecida:</strong> a task foi aberta, mas terminou em <code>Canceled</code> ou <code>Closed Incomplete</code>.</li>
+                        <li><strong>Intermitência:</strong> a automação alterna entre sucesso e falha em janelas próximas, e o binário mostra apenas o último resultado.</li>
+                    </ul>
+                </div>
+                <p class="highlight highlight-danger text-secondary mt-15">
+                    Essas lacunas táticas se somam a desafios operacionais que atrasam decisões e obscurecem prioridades:
+                </p>
+                <div class="highlight highlight-danger mt-15">
+                    <span><strong>3. De alertas para Casos:</strong> Tratar disparos isolados mantém a equipe presa a sintomas. Precisamos consolidar alertas irmãos em <strong>Casos</strong> gerenciáveis para atacar causa raiz.</span><br><br>
+                    <strong>4. Priorização orientada a impacto:</strong> Severidade e criticidade são importantes, mas insuficientes. É necessário ponderar eficiência da automação, volume gerado e ruído operacional para saber onde cada squad deve atuar primeiro.<br><br>
+                    <strong>5. Planejamento objetivo e recorrente:</strong> Relatórios manuais consomem horas toda semana. O time precisa receber listas priorizadas de próximos passos com base em dados confiáveis, e não reconstruir planilhas do zero.
                 </div>
                 <div class="highlight highlight-danger text-secondary">
-                    <p>Então atualmente, somos incapazes de responder de forma prática e rápida à questões como:</p>
+                    <span>Enquanto permanecermos apenas com o binário, perguntas estratégicas continuam difíceis de responder com rapidez:</span>
                     <ul style="list-style-type: '•'; margin-top: 15px; padding-left: 20px;">
-                        <li><strong>Onde as remediações não estão atuando como planejado?</strong></li>
-                        <li><strong>Temos intermitência nas remediações?</strong></li>
-                        <li><strong>O alerta possui remediação, mas ela falhou ou não?</strong></li>
+                        <li><strong>A automação foi acionada e concluiu com sucesso pleno ou precisou de apoio humano?</strong></li>
+                        <li><strong>Quando vemos "Não", estamos diante de ausência total de automação ou de falhas recorrentes?</strong></li>
+                        <li><strong>A mesma métrica apresenta histórico de intermitência entre sucessos e falhas?</strong></li>
+                        <li><strong>Os alertas repetidos já estão agrupados em um Caso com responsável claro?</strong></li>
+                        <li><strong>Estamos priorizando os Casos que mais drenam tempo da operação?</strong></li>
                     </ul>
                 </div>
-                <h3>A Solução: Uma Camada de Inteligência Diagnóstica</h3>
+                <h3>Proposta: Uma Camada de Inteligência Diagnóstica</h3>
                 <div class="highlight highlight-success">
-                    <p class="text-secondary">O <strong>SmartRemedy</strong> foi criado para preencher exatamente essa lacuna. Ele visa <strong>complementar</strong>, os dados do Power BI - atuando como um cérebro analítico que mede a eficácia do nosso processo de <strong>Self-Healing</strong>.</p>
-                    <p class="text-secondary">Enquanto o fluxo padrão (Dynatrace → ServiceNow → Job de Correção) visa evitar que o alerta chegue ao NOC, nossa ferramenta responde à pergunta crítica: <strong>"E quando o job falha?"</strong></p>
-                    <p class="text-secondary">O SmartRemedy entra em ação exatamente nesse ponto, realizando um diagnóstico automatizado para:</p>
+                    <p class="text-secondary">O <strong>SmartRemedy</strong> nasce para cobrir esse vazio: ele <strong>complementa</strong> o ecossistema atual trazendo visibilidade objetiva sobre a eficácia do processo de <strong>self-healing</strong>.</p>
+                    <p class="text-secondary">No fluxo ideal (Dynatrace → ServiceNow → tarefa de correção) o alerta nunca deveria chegar ao NOC. A pergunta crítica é: <strong>o que acontece quando a tarefa não roda, falha ou exige intervenção manual?</strong></p>
+                    <p class="text-secondary">A resposta vem de um diagnóstico automatizado que:</p>
                     <ul class="mt-15 mb-20">
-                        <li><strong>1. Medir a Eficiência:</strong> Analisamos o resultado real da tarefa de automação, diferenciando sucessos plenos, sucessos parciais ('Closed', 'Closed Skipped/Canceled') e falhas ('Closed Incomplete'). Isso revela a verdadeira eficiência do processo.</li>
-                        <li><strong>2. Validar a Execução:</strong> Em vez de confiar em dados declarados, trazemos <strong>certeza</strong> sobre o que foi ou não executado, identificando onde a automação nem sequer foi acionada.</li>
-                        <li><strong>3. Priorizar por Impacto Real:</strong> Com base em dados e um conjunto robusto de lógica do SmartRemedy, aplicamos o <strong>score ponderado</strong> que gera relatórios visando direcionar o esforço das equipes para os problemas que, se resolvidos, <strong>garantem a promessa de agilidade, confiabilidade e disponibilidade</strong> do processo de Self-Healing.</li>
-
+                        <li><strong>1. Mensura o resultado real:</strong> separa sucessos plenos (<code>Closed</code>) dos sucessos com apoio humano (<code>Closed Skipped</code>), das falhas (<code>Closed Incomplete</code> / <code>Canceled</code>) e das ausências de disparo (<code>No Task Found</code>).</li>
+                        <li><strong>2. Documenta a execução:</strong> cruza alertas e tasks de automação para apontar, com evidências, onde a automação atuou, onde falhou e onde nunca foi disparada.</li>
+                        <li><strong>3. Prioriza com base em impacto:</strong> usa um <strong>score ponderado</strong> que combina risco, eficiência e volume para gerar listas de ação por squad.</li>
                     </ul>
-                    <p class="text-secondary">Em resumo, ele transforma a visão descritiva em um <strong>diagnóstico acionável</strong>, permitindo que a equipe de Automações, receba de forma automatizada um de plano de ação sugerido - já priorizado. Reduzindo e/ou até eliminando os esforços manuais de coleta, análise e priorização de cada alerta.</p>
+                    <p class="text-secondary">Em suma, transforma uma visão descritiva em <strong>plano de ação</strong>: entrega recomendações priorizadas, reduz o trabalho manual e encurta o tempo entre detectar um problema e corrigi-lo.</p>
+                    <p class="text-secondary" style="margin-top: 10px; font-size: 0.95em;">
+                        <em>Nota:</em> As seções seguintes detalham os componentes da solução — categorias, Casos, lógica de priorização, relatórios e fluxo de dados — que sustentam esse diagnóstico.</p>
                 </div>
             </div>
 
         </section>
         <section id="interpretacao" class="text-secondary">
-            <h2>Classificação da Análise: As 8 Ações Sugeridas e suas Categorias</h2>
-            <p>A ferramenta classifica os problemas em três categorias principais, baseadas em 8 tipos específicos de ações sugeridas, permitindo uma visão detalhada da saúde da automação.</p>
+            <h2>Categorias de Ações Sugeridas</h2>
+            <p>A ferramenta organiza os problemas em quatro categorias. Cada uma agrupa tipos de ações sugeridas e facilita entender onde focar primeiro.</p>
+            <div class="highlight highlight-info" style="margin-top: 10px;">
+                <strong>Status interpretados das tasks de automação (ServiceNow):</strong>
+                <span style="display:block; margin-top:6px; font-size:0.95em;">
+                    ✅ Closed / Closed Skipped (sucesso) | ❌ Closed Incomplete / 🚫 Canceled (falha) | ❓ No Task Found (sem automação)
+                </span>
+            </div>
 
             <div class="grid-container">
                 <div class="card kpi-card">
                     <div class="kpi-value" style="color: var(--danger-color);">🔥</div>
                     <h3 class="no-border mt-15 text-secondary">Categoria 1: Foco de Atuação</h3>
-                    <p>Casos onde a automação falhou, é inexistente ou apresenta problemas críticos. Estes são os principais drenos de tempo da equipe e o ponto de partida para melhorias de alto impacto.</p>
+                    <p>Casos em que a automação falhou, não existe ou apresenta problemas críticos. São os principais drenos de tempo da equipe e o ponto de partida para melhorias de alto impacto.</p>
                     <div class="mt-15" style="font-size: 0.9em; color: var(--text-secondary-color);">
                         <strong>Tipos incluídos:</strong><br>
-                        • Intermitente na remediação<br>
-                        • Falha persistente (sem sucesso)<br>
-                        • Status de remediação ausente<br>
-                        • Remediação inconsistente
+                        • Intermitência da automação<br>
+                        • Falha persistente da automação<br>
+                        • Status da automação ausente<br>
+                        • Automação inconsistente
                     </div>
                 </div>
                 <div class="card kpi-card">
                     <div class="kpi-value" style="color: var(--warning-color);">⚠️</div>
                     <h3 class="no-border mt-15 text-secondary">Categoria 2: Instabilidade Crônica</h3>
-                    <p>Casos que, mesmo sendo remediados, ocorrem com alta frequência. Sinaliza que a causa raiz do problema persiste, exigindo uma investigação mais profunda.</p>
+                    <p>Casos que, mesmo contando com automação bem-sucedida, ocorrem com alta frequência. Indicam que a causa raiz persiste e pedem investigação mais profunda.</p>
                     <div class="mt-15" style="font-size: 0.9em; color: var(--text-secondary-color);">
                         <strong>Tipos incluídos:</strong><br>
                         • Revisar causa raiz (recorrente)
+                        <br><br>
+                        <strong>Critério atual:</strong> mínimo de 5 execuções com status <code>Closed</code> concentradas em até 2 horas (parâmetro <code>JANELA_INSTABILIDADE_HORAS</code>). Fora dessa janela, o caso permanece como "Sucesso da Automação".
                     </div>
                 </div>
                 <div class="card kpi-card">
                     <div class="kpi-value" style="color: var(--info-color);">🛠️</div>
                     <h3 class="no-border mt-15 text-secondary">Categoria 3: Pontos de Atenção</h3>
-                    <p>Casos onde a automação foi executada, mas não concluiu com 100% de eficácia (ex: 'Skipped', 'Canceled'). São oportunidades de baixo esforço para refinar e melhorar a robustez da automação.</p>
+                    <p>Casos em que a automação concluiu com status <code>Closed Skipped</code>. Para o indicador <strong>com_remediacao</strong> isso conta como sucesso, mas acompanhamos de perto porque o fluxo ainda depende de ação humana (o coletor entrega evidências para a squad finalizar).</p>
                     <div class="mt-15" style="font-size: 0.9em; color: var(--text-secondary-color);">
                         <strong>Tipos incluídos:</strong><br>
-                        • Revisar automação (sucesso parcial)
+                        • Revisar automação (sucesso com apoio humano)
                     </div>
                 </div>
                 <div class="card kpi-card">
                     <div class="kpi-value" style="color: var(--success-color);">✅</div>
                     <h3 class="no-border mt-15 text-secondary">Categoria 4: Sucesso da Automação</h3>
-                    <p>Casos que a automação tratou com sucesso pleno, com ou sem histórico de falhas anteriores. Fornece o contexto do que está funcionando bem e valida o trabalho da equipe.</p>
+                    <p>Casos tratados com sucesso pleno, com ou sem histórico de falhas. Mostram o que está funcionando bem e validam o trabalho da equipe.</p>
                     <div class="mt-15" style="font-size: 0.9em; color: var(--text-secondary-color);">
                         <strong>Tipos incluídos:</strong><br>
-                        • Remediação automática funcional<br>
-                        • Remediação estabilizada
+                        • Automação funcional<br>
+                        • Automação estabilizada
                     </div>
                 </div>
             </div>
@@ -244,56 +264,59 @@
         <section id="decisoes" class="text-secondary">
             <h2>Usando o Dashboard para Decisões</h2>
             
-            <h3>Do Ruído à Causa Raiz: Por que focamos em "Casos"</h3>
+            <h3>Do ruído à causa raiz: por que focamos em Casos</h3>
             <div class="card">
-                <p class="text-secondary">A ferramenta abandona a análise de alertas individuais (o sintoma) para focar em <strong>"Casos"</strong> (o problema único). Um Caso consolida todos os alertas da mesma natureza (mesmo problema, mesmo recurso) em um item gerenciável.</p>
-                <p class="text-secondary">Em vez de se perder em "100 alertas de disco cheio", a equipe gerencia <strong>"1 Caso de disco cheio"</strong>, direcionando o esforço para a criação ou melhoria da automação que trata esse problema específico.</p>
+                <p class="text-secondary">A ferramenta troca a visão de alertas individuais (sintomas) por <strong>Casos</strong> (problemas únicos). Um Caso consolida todos os alertas da mesma natureza (mesmo problema, mesmo recurso) em um item gerenciável.</p>
+                <p class="text-secondary">Em vez de lidar com "100 alertas de disco cheio", a equipe gerencia <strong>um Caso de disco cheio</strong>, direcionando o esforço para criar ou melhorar a automação que trata esse problema.</p>
                 <div class="highlight highlight-info">
                     <strong>Atributos de Agrupamento:</strong> assignment_group, short_description, node, cmdb_ci, cmdb_ci.sys_class_name, source, metric_name
                     <br><small>Agrupamento inteligente garante consistência e reprodutibilidade</small>
                 </div>
             </div>
 
-            <h3>Como os Casos são Priorizados?</h3>
+            <h3>Como os Casos são priorizados?</h3>
             <div class="card">
-                <p class="text-secondary">A prioridade de um Caso é definida por um <strong>Score Ponderado</strong>. Ele calcula o impacto real de um problema através de três pilares que respondem a perguntas-chave sobre o problema:</p>
+                <p class="text-secondary">A prioridade de um Caso é definida por um <strong>score ponderado</strong> que calcula o impacto real do problema a partir de três pilares:</p>
                 <ul style="list-style-type: '→'; line-height: 1.8;">
                     <li>
-                        <strong>Pilar 1 - Risco Operacional:</strong><br>
-                        <small style="margin-left: 15px;">Qual o risco para a operação? Combina severidade e prioridade do alerta (ex: Crítico + Urgente = score máximo).</small>
+                        <strong>Pilar 1 — Risco operacional:</strong><br>
+                        <small style="margin-left: 15px;">Combina severidade e prioridade do alerta (ex.: Crítico + Urgente = score máximo).</small>
                     </li>
                     <li>
-                        <strong>Pilar 2 - Eficiência da Automação:</strong><br>
-                        <small style="margin-left: 15px;">Nossa automação está sendo eficiente? Penaliza casos com falhas ('Closed Incomplete', 'Closed Skipped') ou ausência de remediação.</small>
+                        <strong>Pilar 2 — Eficiência da automação:</strong><br>
+                        <small style="margin-left: 15px;">Penaliza Casos com falhas (<code>Closed Incomplete</code>, <code>Canceled</code>) ou ausência de automação. Casos que terminam em <code>Closed Skipped</code> têm um ajuste menor, sinalizando dependência residual de atuação humana.</small>
                     </li>
                     <li>
-                        <strong>Pilar 3 - Impacto Operacional:</strong><br>
-                        <small style="margin-left: 15px;">Qual o impacto operacional? Penaliza o "ruído" gerado pelo volume de alertas usando fórmula logarítmica (1 + ln(N)).</small>
+                        <strong>Pilar 3 — Impacto operacional:</strong><br>
+                        <small style="margin-left: 15px;">Penaliza o ruído gerado pelo volume de alertas usando fórmula logarítmica (1 + ln(N)).</small>
                     </li>
                 </ul>                
-                <p class="text-secondary">O Score Final é calculado como: <code>(Pilar 1 × Pilar 2 × Pilar 3)</code>. Casos com scores mais altos são os mais críticos e devem ser o foco principal da equipe. Para facilitar o entendimento, o próprio dashboard principal contém uma seção "Conceitos" que detalha essa lógica.</p>
+                <p class="text-secondary">O score final é: <code>(Pilar 1 × Pilar 2 × Pilar 3)</code>. Scores mais altos indicam maior criticidade e devem ser o foco principal. A seção "Conceitos" do dashboard detalha a fórmula.</p>
             </div>
             
-            <h3>Medindo a Evolução: Análise Padrão vs. Comparativa</h3>
+            <h3>Medindo a evolução: Análise Padrão vs. Comparativa</h3>
             <div class="card">
-                <p class="text-secondary">A ferramenta oferece duas formas de análise, cada uma com um propósito estratégico distinto, refletindo as abas "Análise Padrão" e "Análise Comparativa" na interface da aplicação.</p>
+                <p class="text-secondary">A ferramenta oferece duas formas de análise, refletidas nas abas "Análise Padrão" e "Análise Comparativa" da aplicação.</p>
                 
                 <h4 class="mt-25 dashed-border-bottom">Análise Padrão (Acompanhamento Contínuo)</h4>
-                <p class="text-secondary">Este é o fluxo principal. Ao processar um único arquivo, o sistema gera o dashboard completo e, automaticamente, um <strong>relatório comparativo</strong> com o período anterior, permitindo o acompanhamento da evolução dos Casos. Ele responde a perguntas como:</p>
+                <p class="text-secondary">Fluxo principal. Ao processar um único arquivo, o sistema gera o dashboard completo e, automaticamente, um <strong>relatório comparativo</strong> com o período anterior, permitindo acompanhar a evolução dos Casos. Ele responde a perguntas como:</p>
                 <ul style="list-style-type: '•';">
-                    <li>Quantos Casos com problemas nas remediações foram resolvidos? (<strong>Taxa de Resolução</strong>)</li>
+                    <li>Quantos Casos com problemas na automação foram resolvidos? (<strong>Taxa de Resolução</strong>)</li>
                     <li>Quantos Casos novos surgiram e exigem atenção? (<strong>Taxa de Novos Problemas</strong>)</li>
                     <li>Quais problemas são "crônicos" e persistem ao longo do tempo?</li>
                 </ul>
 
                 <h4 class="mt-25 dashed-border-bottom">Análise Comparativa (Investigação Pontual)</h4>
-                <p class="text-secondary">Esta função permite uma comparação direta entre quaisquer dois arquivos <code>.csv</code> de alertas escolhidos pelo usuário. Ela gera <strong>apenas o relatório comparativo</strong> e é ideal para investigações específicas, como: "A nova remediação que a Squad A implantou na terça-feira foi eficaz?", "Tivemos uma crise na quinta-feira. Quais falhas de automação surgiram nesse dia em comparação com um dia normal?", ou "O problema crônico de 'disco cheio no sistema Y', que foi tratado no mês passado, voltou a aparecer esta semana?".</p>
+                <p class="text-secondary">Compara diretamente dois arquivos <code>.csv</code> de alertas escolhidos pelo usuário. Gera <strong>apenas o relatório comparativo</strong> e é ideal para perguntas como: "A automação implantada na terça funcionou?", "Na crise de quinta, que falhas surgiram em relação a um dia normal?", ou "O problema crônico de disco cheio voltou esta semana?".</p>
 
                 <h3 class="mt-30">Diagnóstico Rápido</h3>
-                <p class="text-secondary">O principal diferencial dos relatórios gerados nas análises comparativas é o <strong>"Diagnóstico Rápido"</strong>, posicionado no topo da página. Ele aplica um conjunto de regras de análise para interpretar os dados e fornecer um veredito claro e acionável sobre o cenário recente. Os possíveis cenários são:</p>
+                <p class="text-secondary">O principal diferencial das análises comparativas é o <strong>Diagnóstico Rápido</strong>, no topo do relatório. Ele aplica regras claras para interpretar os dados e entregar um veredito acionável. Os cenários possíveis são:</p>
 
                 <div class="highlight highlight-success">
                     <strong>🏆 Excelência Operacional Atingida:</strong> O melhor cenário possível. Indica que todos os Casos que exigiam ação foram resolvidos e nenhum novo surgiu.
+                </div>
+                <div class="highlight highlight-success">
+                    <strong>🏆 Excelência Operacional Mantida:</strong> Nenhum Caso exigia ação e nada novo apareceu nos períodos comparados. Indica estabilidade sustentada.
                 </div>
                 <div class="highlight highlight-success">
                     <strong>✅ Evolução Positiva:</strong> O número total de Casos que exigem ação reduziu. A operação está se tornando mais estável.
@@ -315,13 +338,13 @@
                 </div>
 
                 <div class="highlight highlight-success">
-                    <strong>Como Ler Este Relatório (Guia Rápido):</strong> Este relatório foi desenhado seguindo o princípio da "pirâmide invertida".
+                    <strong>Como ler este relatório (guia rápido):</strong> O relatório segue o princípio da "pirâmide invertida".
                     <ol>
-                        <li><strong>Leia o Diagnóstico Rápido primeiro.</strong> Em menos de 10 segundos, você saberá o status da operação (melhorou, piorou, estagnou) e qual a principal equipe para acionar.</li>
-                        <li><strong>Use os links de ação.</strong> O diagnóstico oferece links diretos para os planos de ação pré-filtrados, permitindo um direcionamento imediato e baseado em dados.</li>
-                        <li><strong>Analise os detalhes (se necessário).</strong> Os gráficos e tabelas abaixo do diagnóstico servem como a evidência que suporta a conclusão, permitindo uma análise mais profunda Caso seja necessário.</li>
+                        <li><strong>Leia o Diagnóstico Rápido primeiro.</strong> Em menos de 10 segundos, você verá o status da operação (melhorou, piorou, estagnou) e a principal equipe a acionar.</li>
+                        <li><strong>Use os links de ação.</strong> O diagnóstico oferece links diretos para planos de ação pré‑filtrados, permitindo direcionamento imediato e baseado em dados.</li>
+                        <li><strong>Analise os detalhes (se necessário).</strong> Os gráficos e tabelas abaixo sustentam a conclusão e permitem análise mais profunda, se preciso.</li>
                     </ol>
-                    Use a <strong>Taxa de Resolução</strong> como o principal KPI para medir a eficácia das equipes na solução de problemas de causa raiz.
+                    Use a <strong>Taxa de Resolução</strong> como principal KPI para medir a eficácia das equipes na solução de problemas de causa raiz.
                 </div>
             </div>
         </section>
@@ -333,23 +356,23 @@
                     <div class="flow-step">
                         <div class="icon">📤</div>
                         <h4>1. Upload</h4>
-                        <p class="text-secondary">O processo se inicia com o upload de um arquivo <code>.csv</code> de alertas, que já é um extrato pré-refinado de dados. Nossa ferramenta aplica a camada final de análise e inteligência sobre esses dados.</p>
+                        <p class="text-secondary">O processo começa com o upload de um arquivo <code>.csv</code> de alertas, um extrato já pré‑refinado de dados. A ferramenta aplica a camada final de análise e inteligência sobre esse conteúdo.</p>
                     </div>
                     <div class="flow-step">
                         <div class="icon">⚙️</div>
                         <h4>2. Análise e Comparação</h4>
-                        <p class="text-secondary">A camada de serviço orquestra o processo, invocando os motores de análise para agrupar alertas em "Casos", calcular o Score de Prioridade e, se aplicável, comparar os dados atuais com o histórico para gerar a análise comparativa.</p>
+                        <p class="text-secondary">A camada de serviço orquestra o processo: agrupa alertas em Casos, calcula o score de prioridade e, quando aplicável, compara com o histórico para gerar a análise comparativa.</p>
                     </div>
                     <div class="flow-step">
                         <div class="icon">📊</div>
                         <h4>3. Visualização</h4>
-                        <p class="text-secondary">A ferramenta gera um ecossistema de relatórios, incluindo dashboards interativos e planos de ação priorizados para cada equipe, que são disponibilizados na aplicação web.</p>
+                        <p class="text-secondary">A ferramenta gera relatórios, incluindo dashboards interativos e planos de ação priorizados por equipe, disponíveis na aplicação web.</p>
                     </div>
                 </div>
 
-        <h3>Gerenciamento do Histórico</h3>
+        <h3>Gerenciamento do histórico</h3>
         <div class="card highlight highlight-info">
-            <p>Além do fluxo de geração, a aplicação permite o gerenciamento ativo do histórico. Na página de "Histórico de Relatórios", usuários com perfil de administrador podem excluir análises antigas ou irrelevantes. Esta funcionalidade é protegida para evitar exclusões acidentais e garantir a integridade dos dados históricos.</p>
+            <p>Além da geração de relatórios, a aplicação permite gerenciar o histórico. Na página "Histórico de Relatórios", administradores podem excluir análises antigas ou irrelevantes. A funcionalidade é protegida para evitar exclusões acidentais e preservar a integridade do histórico.</p>
         </div>
             </div>
         </section>
@@ -359,15 +382,15 @@
             
             <h3>Premissas Fundamentais</h3>
             <div class="card">
-                <p class="text-secondary"><strong>Para funcionamento correto, o sistema requer:</strong></p>
+                <p class="text-secondary"><strong>Para funcionar corretamente, o sistema requer:</strong></p>
                 <div class="highlight highlight-info">
-                    <strong>Schema CSV Estrito:</strong> 25 colunas obrigatórias com nomes exatos (sys_created_on, assignment_group, short_description, severity, etc.). Dados ausentes ou mal formatados resultam em falha de processamento.
+                    <strong>Schema CSV estrito:</strong> 25 colunas obrigatórias com nomes exatos (sys_created_on, assignment_group, short_description, severity, etc.). Dados ausentes ou mal formatados resultam em falha de processamento.
                 </div>
                 <div class="highlight highlight-info">
-                    <strong>Qualidade dos Dados de Entrada:</strong> A precisão da análise depende diretamente da qualidade dos dados do ServiceNow. Status incorretos de tickets impactam diretamente as métricas de sucesso da automação.
+                    <strong>Qualidade dos dados de entrada:</strong> A precisão da análise depende diretamente da qualidade dos dados do ServiceNow. Status incorretos de tickets impactam as métricas de sucesso da automação.
                 </div>
                 <div class="highlight highlight-info">
-                    <strong>Consistência Temporal:</strong> Comparações entre períodos assumem que os dados representam intervalos cronológicos consecutivos e não sobrepostos.
+                    <strong>Consistência temporal:</strong> Comparações entre períodos assumem intervalos cronológicos consecutivos e não sobrepostos.
                 </div>
             </div>
 
@@ -376,20 +399,20 @@
                 <p class="text-secondary"><strong>Restrições que afetam o escopo de análise:</strong></p>
                 <ul style="list-style-type: '⚠️'; line-height: 1.8;">
                     <li>
-                        <strong>Processamento Síncrono:</strong><br>
-                        <small style="margin-left: 15px;">Análises complexas podem levar vários minutos. Não adequado para processamento em tempo real.</small>
+                        <strong>Processamento síncrono:</strong><br>
+                        <small style="margin-left: 15px;">Análises complexas podem levar alguns minutos. Não é adequado para tempo real.</small>
                     </li>
                     <li>
-                        <strong>Dependência de Dados Externos:</strong><br>
-                        <small style="margin-left: 15px;">Análise limitada aos dados disponíveis no CSV. Não acessa ServiceNow diretamente.</small>
+                        <strong>Dependência de dados externos:</strong><br>
+                        <small style="margin-left: 15px;">Análise limitada aos dados disponíveis no CSV. Não acessa o ServiceNow diretamente.</small>
                     </li>
                     <li>
-                        <strong>Agrupamento Inteligente:</strong><br>
-                        <small style="margin-left: 15px;">Lógica de agrupamento pode gerar falsos positivos/negativos se os dados de entrada tiverem inconsistências.</small>
+                        <strong>Agrupamento inteligente:</strong><br>
+                        <small style="margin-left: 15px;">A lógica de agrupamento pode gerar falsos positivos/negativos quando há inconsistências nos dados de entrada.</small>
                     </li>
                     <li>
-                        <strong>Comparação Limitada:</strong><br>
-                        <small style="margin-left: 15px;">Análise temporal compara apenas dois períodos por vez. Análises de longo prazo requerem processamento manual.</small>
+                        <strong>Comparação limitada:</strong><br>
+                        <small style="margin-left: 15px;">A análise temporal compara apenas dois períodos por vez. Análises de longo prazo exigem processamento manual.</small>
                     </li>
                 </ul>
             </div>
@@ -398,11 +421,11 @@
             <div class="card highlight highlight-warning">
                 <p class="text-secondary"><strong>Limites claros do escopo técnico:</strong></p>
                 <ul>
-                    <li><strong>❌ Não substitui dashboards operacionais:</strong> Complementa, não substitui, ferramentas como ServiceNow dashboards</li>
-                    <li><strong>❌ Não implementa automações:</strong> Apenas analisa eficácia das automações existentes</li>
-                    <li><strong>❌ Não corrige dados ruins:</strong> Análise reflete a qualidade dos dados de entrada</li>
-                    <li><strong>❌ Não é tempo real:</strong> Processamento batch de dados históricos</li>
-                    <li><strong>❌ Não usa IA/ML:</strong> Regras claras e lógicas pré-definidas</li>
+                    <li><strong>❌ Não substitui dashboards operacionais:</strong> Complementa, não substitui, dashboards do Power BI</li>
+                    <li><strong>❌ Não implementa automações:</strong> Apenas analisa a eficácia das automações existentes</li>
+                    <li><strong>❌ Não corrige dados ruins:</strong> A análise reflete a qualidade dos dados de entrada</li>
+                    <li><strong>❌ Não é tempo real:</strong> Processamento em batch de dados históricos</li>
+                    <li><strong>❌ Não usa IA/ML:</strong> Regras claras e lógicas pré‑definidas</li>
                 </ul>
             </div>
         </section>
@@ -411,24 +434,24 @@
             <h2>Resumo Executivo para Gestores de Infraestrutura</h2>
             
             <div class="card">
-                <h3>O Que Você Precisa Saber em 3 Minutos</h3>
+                <h3>O que você precisa saber em 3 minutos</h3>
                 
                 <div class="highlight highlight-success">
-                    <strong>🎯 O Que Faz:</strong> Analisa CSVs de alertas do ServiceNow para medir objetivamente se seus sistemas de auto-reparo estão funcionando, identificando falhas ocultas e oportunidades de melhoria.
+                    <strong>🎯 O que faz:</strong> Analisa CSVs de alertas do ServiceNow para medir objetivamente se os sistemas de self-healing estão funcionando, identificando falhas ocultas e oportunidades de melhoria.
                 </div>
 
                 <div class="highlight highlight-info">
-                    <strong>📊 O Que Entrega:</strong>
+                    <strong>📊 O que entrega:</strong>
                     <ul>
-                        <li><strong>Métricas Claras:</strong> Percentual de sucesso dos sistemas automáticos, tipos de problemas, lista priorizada</li>
-                        <li><strong>Comparação no Tempo:</strong> Mostra se está melhorando ou piorando ao longo do tempo</li>
-                        <li><strong>Planos Práticos:</strong> Relatórios por equipe com próximos passos claros</li>
-                        <li><strong>Diagnóstico Rápido:</strong> Resumo automático da situação em 5 categorias simples</li>
+                        <li><strong>Métricas claras:</strong> Percentual de sucesso da automação, tipos de problemas, lista priorizada</li>
+                        <li><strong>Comparação no tempo:</strong> Mostra se está melhorando ou piorando</li>
+                        <li><strong>Planos práticos:</strong> Relatórios por equipe com próximos passos claros</li>
+                        <li><strong>Diagnóstico rápido:</strong> Resumo automático em categorias simples</li>
                     </ul>
                 </div>
 
                 <div class="highlight highlight-warning">
-                    <strong>⚠️ Premissas Críticas:</strong>
+                    <strong>⚠️ Premissas críticas:</strong>
                     <ul>
                         <li>CSV deve seguir schema exato (25+ colunas obrigatórias)</li>
                         <li>Qualidade da análise depende da qualidade dos dados do ServiceNow</li>
@@ -438,42 +461,20 @@
                 </div>
 
                 <div class="highlight highlight-success">
-                    <strong>🚀 Como Usar na Prática:</strong>
+                    <strong>🚀 Como usar na prática:</strong>
                     <ol>
-                        <li><strong>Envie Dados Regularmente:</strong> Faça upload semanal/mensal do CSV de alertas</li>
-                        <li><strong>Leia o Diagnóstico Primeiro:</strong> Comece sempre pelo "Diagnóstico Rápido"</li>
-                        <li><strong>Acompanhe a Taxa de Sucesso:</strong> Mantenha acima de 70%</li>
-                        <li><strong>Siga os Planos de Ação:</strong> Use os relatórios por equipe para direcionar melhorias</li>
+                        <li><strong>Envie dados regularmente:</strong> Faça upload semanal/mensal do CSV de alertas</li>
+                        <li><strong>Leia o diagnóstico primeiro:</strong> Comece sempre pelo "Diagnóstico Rápido"</li>
+                        <li><strong>Acompanhe a taxa de sucesso:</strong> Busque manter acima de 70%</li>
+                        <li><strong>Siga os planos de ação:</strong> Use os relatórios por equipe para direcionar melhorias</li>
                     </ol>
                 </div>
 
                 <div class="highlight highlight-info">
-                    <strong>💡 Valor Real:</strong> Substitui achismos por números concretos, permitindo decisões embasadas sobre onde investir em automação e identificar gaps operacionais.
+                    <strong>💡 Valor real:</strong> Substitui achismos por números concretos, permitindo decisões embasadas sobre onde investir em automação e onde existem gaps operacionais.
                 </div>
             </div>
         </section>
     </div>
-    <script>
-        // Script para corrigir o link "Voltar para a Página Inicial"
-        document.addEventListener('DOMContentLoaded', () => {
-            const backLink = document.querySelector('.back-link');
-            if (backLink) {
-                const currentHostname = globalThis.location.hostname;
-                let targetUrl = '';
-
-                // Ambiente de desenvolvimento local
-                if (currentHostname === '127.0.0.1' || currentHostname === 'localhost') {
-                    targetUrl = 'http://127.0.0.1:5174/';
-                // Ambiente de produção (GitHub Pages)
-                } else if (currentHostname === 'leonardosete.github.io') {
-                    targetUrl = 'https://leonardosete.github.io/meu-dash/';
-                }
-                
-                if (targetUrl) {
-                    backLink.href = targetUrl;
-                }
-            }
-        });
-    </script>
 </body>
 </html>

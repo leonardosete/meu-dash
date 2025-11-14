@@ -195,7 +195,7 @@ def _render_conceitos_section() -> str:
                         <table class="sub-table"><thead><tr><th>Resultado da Automação</th><th>Multiplicador</th></tr></thead><tbody><tr><td>Falha Persistente (nunca funcionou)</td><td style="color: var(--danger-color);">x 1.5</td></tr><tr><td>Intermitente (falha às vezes)</td><td style="color: var(--warning-color);">x 1.2</td></tr><tr><td>Status Ausente / Inconsistente</td><td style="color: var(--warning-color);">x 1.1</td></tr><tr><td>Funcionou no final (Estabilizada / Sempre OK)</td><td>x 1.0</td></tr></tbody></table>
                         <h5 style="color: var(--text-color); margin-top: 15px; margin-bottom: 5px;">Pilar 2.1: Multiplicador de Ineficiência de Tasks</h5>
                         <div style="padding-bottom: 10px; color: var(--text-secondary-color);">Adiciona uma penalidade extra com base no status de fechamento das tarefas de automação, refletindo a eficiência do processo.</div>
-                        <table class="sub-table"><thead><tr><th>Status da Task de Automação</th><th>Multiplicador</th></tr></thead><tbody><tr><td>Closed Incomplete</td><td style="color: var(--danger-color);">x 1.5</td></tr><tr><td>Closed Skipped</td><td style="color: var(--warning-color);">x 1.2</td></tr><tr><td>Outros (ex: Closed, Canceled)</td><td>x 1.0</td></tr></tbody></table>
+                        <table class="sub-table"><thead><tr><th>Status da Task de Automação</th><th>Multiplicador</th></tr></thead><tbody><tr><td>Closed Incomplete / Canceled</td><td style="color: var(--danger-color);">x 1.5</td></tr><tr><td>Closed Skipped</td><td style="color: var(--warning-color);">x 1.2</td></tr><tr><td>Closed</td><td>x 1.0</td></tr></tbody></table>
                         <h4 style="color: var(--text-color); margin-top: 20px; margin-bottom: 5px; border-top: 1px solid var(--border-color); padding-top: 15px;">Pilar 3: Multiplicador de Impacto</h4>
                         <div style="padding-bottom: 10px; color: var(--text-secondary-color);">
                         Penaliza o "ruído" operacional gerado pelo volume de alertas de um mesmo caso. O cálculo utiliza a fórmula matemática <code>1 + ln(N)</code>, onde <code>ln</code> é o <strong>logaritmo natural</strong> e <code>N</code> é o número de alertas. Essa abordagem garante que o impacto do ruído seja significativo no início, mas cresça de forma controlada para volumes muito altos.
@@ -216,7 +216,7 @@ def _render_conceitos_section() -> str:
                 <div class="content" style="display: none; padding-left: 28px;">
                     <div style="padding: 15px 0 15px 15px; border-left: 2px solid var(--accent-color); color: var(--text-secondary-color);">
                         <p>A análise da remediação vai além de simplesmente verificar se uma automação foi executada. O sistema analisa o <strong>status de fechamento</strong> da tarefa de automação (coluna <code>tasks_status</code>) para avaliar sua <strong>eficácia</strong>.</p>
-                        <p style="margin-top: 10px;">Status como <strong>"Closed"</strong> são considerados sucesso, enquanto status como <strong>"Closed Incomplete"</strong> ou <strong>"Closed Skipped"</strong> são tratados como falhas ou sucessos parciais. Essa distinção é fundamental para o cálculo do "Multiplicador de Ineficiência", que penaliza casos onde a automação não foi totalmente eficaz.</p>
+                        <p style="margin-top: 10px;">Status como <strong>"Closed"</strong> representam sucesso pleno da automação. <strong>"Closed Skipped"</strong> indica que o fluxo atuou como coletor e desviou para ação humana (sucesso parcial). Já <strong>"Closed Incomplete"</strong> e <strong>"Canceled"</strong> são falhas de execução e elevam o multiplicador de ineficiência.</p>
                         
                         <div style="background-color: #fffbe6; border-left: 5px solid #ffe58f; padding: 15px 20px; margin-top: 15px; color: #665424;">
                             <strong>Próximos Passos:</strong> A análise atual já é um grande avanço. O próximo nível de profundidade, conforme planejado, envolve um trabalho conjunto com o time de Automação para entender o significado detalhado de outros status de fechamento e, possivelmente, analisar os logs internos das tarefas para uma avaliação de eficácia ainda mais precisa.
@@ -487,7 +487,7 @@ def renderizar_resumo_executivo(
         if grupos_sucesso_parcial > 0
         else "color: var(--accent-color);"
     )
-    tooltip_parcial_text = "Casos onde a automação foi executada, mas não concluída (ex: 'Skipped', 'Canceled'). Oportunidades para refinar a automação."
+    tooltip_parcial_text = "Casos em que a automação executou apenas o coletor ('Closed Skipped'). Oportunidades de ajuste rápido para automatizar o restante do fluxo."
     parcial_icon = "⚠️" if grupos_sucesso_parcial > 0 else "✅"
     parcial_icon_class = "flashing-icon" if grupos_sucesso_parcial > 0 else ""
     parcial_status_icon_html = (

@@ -66,12 +66,26 @@ ACAO_WEIGHTS = {
 # Pesos para o cálculo do Score de Ineficiência com base nos status das tasks
 TASK_STATUS_WEIGHTS = {
     "Closed Incomplete": 1.5,
+    "Canceled": 1.5,
     "Closed Skipped": 1.2,
-    # Adicionado para tratar "Canceled" como um sucesso parcial com a mesma penalidade.
-    "Canceled": 1.2,
     # Status que não indicam ineficiência têm peso 1.0 (não penalizam)
     "default": 1.0,
 }
+
+# Status de remediação (mantidos como strings explícitas para compatibilidade com datasets legados)
+REM_STATUS_SUCCESS = "Closed"
+REM_STATUS_PARTIAL = "Closed Skipped"
+REM_STATUS_FAILURE_INCOMPLETE = "Closed Incomplete"
+REM_STATUS_FAILURE_CANCELED = "Canceled"
+REM_STATUS_NO_TASK = "No Task Found"
+
+REM_STATUS_SUCCESS_SET = {REM_STATUS_SUCCESS}
+REM_STATUS_PARTIAL_SET = {REM_STATUS_PARTIAL}
+REM_STATUS_FAILURE_SET = {
+    REM_STATUS_FAILURE_INCOMPLETE,
+    REM_STATUS_FAILURE_CANCELED,
+}
+REM_STATUS_POSITIVE_SET = REM_STATUS_SUCCESS_SET | REM_STATUS_PARTIAL_SET
 
 # Nomes de colunas do DataFrame
 COL_CREATED_ON = "sys_created_on"

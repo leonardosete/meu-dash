@@ -38,6 +38,12 @@ from .constants import (
     TASK_STATUS_WEIGHTS,
     STATUS_OK,
     UNKNOWN,
+    REM_STATUS_FAILURE_SET,
+    REM_STATUS_NO_TASK,
+    REM_STATUS_PARTIAL_SET,
+    REM_STATUS_POSITIVE_SET,
+    REM_STATUS_SUCCESS,
+    REM_STATUS_SUCCESS_SET,
 )
 
 logger = logging.getLogger(__name__)
@@ -206,9 +212,10 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
         df["acao_sugerida"] = ACAO_STATUS_AUSENTE
         return df
 
-    SUCCESS_STATUSES = {"Closed"}
-    PARTIAL_SUCCESS_STATUSES = {"Closed Skipped", "Canceled"}
-    ANY_SUCCESS_STATUSES = SUCCESS_STATUSES.union(PARTIAL_SUCCESS_STATUSES)
+    SUCCESS_STATUSES = REM_STATUS_SUCCESS_SET
+    PARTIAL_SUCCESS_STATUSES = REM_STATUS_PARTIAL_SET
+    FAILURE_STATUSES = REM_STATUS_FAILURE_SET
+    ANY_SUCCESS_STATUSES = REM_STATUS_POSITIVE_SET
 
     last_status = df[COL_LAST_TASK_STATUS].fillna(NO_STATUS)
     has_success = df["status_chronology"].apply(
@@ -220,12 +227,22 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
     # Nova variável para detectar histórico de falhas (qualquer status que não seja de sucesso)
     has_failure_in_history = df["status_chronology"].apply(
         lambda c: bool(c)
-        and any(s not in ANY_SUCCESS_STATUSES and s != NO_STATUS for s in c)
+        and any(
+            (status in FAILURE_STATUSES)
+            or (
+                status not in ANY_SUCCESS_STATUSES
+                and status not in FAILURE_STATUSES
+                and status != NO_STATUS
+            )
+            for status in c
+        )
     )
     # Conta quantas execuções "Closed" ocorreram na cronologia para identificar sucessos plenos repetidos
     closed_success_count = df["status_chronology"].apply(
         lambda c: sum(
-            1 for s in (c if isinstance(c, (list, tuple)) else []) if s == "Closed"
+            1
+            for s in (c if isinstance(c, (list, tuple)) else [])
+            if s == REM_STATUS_SUCCESS
         )
     )
 
@@ -247,7 +264,7 @@ def adicionar_acao_sugerida(df: pd.DataFrame) -> pd.DataFrame:
         # PRIORIDADE 0: Se o status for nulo ou a cronologia vazia, é um problema de coleta de dados.
         (last_status == NO_STATUS) | has_only_no_status,
         # PRIORIDADE 1: Se a tarefa não foi encontrada, é uma falha de remediação.
-        last_status == "No Task Found",
+        last_status == REM_STATUS_NO_TASK,
         # PRIORIDADE 2: Casos crônicos, mesmo que sejam "sucesso pleno", devem ser tratados como instabilidade.
         has_closed_volume
         & within_instability_window

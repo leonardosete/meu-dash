@@ -9,6 +9,7 @@ from src.constants import (
     ACAO_SEMPRE_OK,
     ACAO_INTERMITENTE,
     ACAO_STATUS_AUSENTE,
+    ACAO_FALHA_PERSISTENTE,
 )
 
 
@@ -73,7 +74,7 @@ def sample_data():
         ],
         # Cenários de tasks_status:
         # P1: Grupo com histórico de falha (Closed Incomplete) e sucesso (Closed).
-        # P2: Grupo com histórico de falha (Closed Incomplete) e sucesso parcial (Canceled).
+        # P2: Grupo com histórico de falha (status Canceled).
         # P3: Sucesso limpo.
         # P4: Status nulo/vazio (deve usar default).
         # P5: Sucesso parcial (Closed Skipped).
@@ -95,10 +96,7 @@ def sample_data():
     "problem_id, expected_factor",
     [
         ("P1", TASK_STATUS_WEIGHTS.get("Closed Incomplete")),  # Pior caso na cronologia
-        (
-            "P2",
-            TASK_STATUS_WEIGHTS.get("Canceled"),
-        ),  # O status do último alerta é Canceled
+        ("P2", TASK_STATUS_WEIGHTS.get("Canceled")),  # Falha (Canceled)
         ("P3", TASK_STATUS_WEIGHTS.get("default")),  # Sucesso limpo
         ("P4", TASK_STATUS_WEIGHTS.get("default")),  # Status nulo
         ("P5", TASK_STATUS_WEIGHTS.get("Closed Skipped")),  # Sucesso parcial
@@ -116,9 +114,8 @@ def test_fator_ineficiencia_task(sample_data, problem_id, expected_factor):
     "problem_id, expected_acao",
     [
         ("P1", ACAO_INTERMITENTE),  # Falhou e depois sucesso
-        # Cenário P2 é um único alerta com status "Canceled" e sem histórico de falha.
-        # A ação correta é Sucesso Parcial.
-        ("P2", ACAO_SUCESSO_PARCIAL),
+        # Cenário P2 é um único alerta com status "Canceled" (falha).
+        ("P2", ACAO_FALHA_PERSISTENTE),
         ("P3", ACAO_SEMPRE_OK),  # Sempre sucesso
         ("P4", ACAO_STATUS_AUSENTE),  # Status nulo
         ("P5", ACAO_SUCESSO_PARCIAL),  # Sucesso parcial (skipped)

@@ -1,469 +1,627 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<!-- 
+    ANÁLISE DE MUDANÇAS (ATIVANDO LIGHT/DARK MODE):
+    1.  Tailwind Config: Adicionado `darkMode: 'class'`.
+    2.  HTML: Adicionado 'class="dark"' ao <html> para manter o dark mode como padrão inicial.
+    3.  Body: Adicionado 'bg-slate-100 text-gray-700' (light mode) e 'dark:bg-black dark:text-gray-300' (dark mode).
+    4.  Navbar: Adicionado botão de toggle Sol/Lua.
+    5.  Estilos: Aplicados prefixos 'dark:' em todos os elementos (cards, texto, bordas) para 
+        suportar os dois modos.
+        -   Light Mode Cards: bg-white, border-gray-200
+        -   Dark Mode Cards: bg-gray-900, border-gray-800
+    6.  JavaScript: Adicionada a lógica 'theme-toggle' para salvar no localStorage e
+        alternar a classe 'dark' no <html>.
+    7.  CORREÇÃO DE BUG: Corrigido o link quebrado do CDN do Tailwind.
+--><!-- A classe 'dark' é o padrão. O JS pode removê-la se o localStorage for 'light' --><html lang="pt-BR" class="scroll-smooth dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentação Gerencial - SmartRemedy</title>
+    <title>SmartRemedy - Análise Inteligente de Self-Healing</title>
+    
+    <!-- Tailwind CSS CDN (CORRIGIDO) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configuração do Tailwind --><script>
+      tailwind.config = {
+        // ATIVANDO DARK MODE VIA CLASSE
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              slate: {
+                850: '#1e293b', 
+              },
+              gray: {
+                950: '#0c0c0c', // Um cinza quase preto
+              }
+            }
+          },
+        },
+      }
+    </script>
+    
+    <!-- Google Font (Inter) --><link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        /* --- TEMA CORPORATIVO --- */
-        :root {
-            --bg-color: #f8f9fa;
-            --card-color: #ffffff;
-            --text-color: #212529;
-            --text-secondary-color: #6c757d;
-            --border-color: #dee2e6;
-            --accent-color: #0056b3;
-            --success-color: #1cc88a;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --info-color: #17a2b8;
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
+        /* Define a fonte Inter como padrão */
         body {
-            font-family: var(--font-family);
-            line-height: 1.7;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            margin: 0; padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-        h1, h2, h3, h4 {
-            color: var(--text-color);
-            font-weight: 600;
-            text-align: center;
-            padding-bottom: 10px;
-        }
-        h1 { 
-            font-size: 2.2em; 
-            margin-bottom: 20px; 
-            border-bottom: 1px solid var(--border-color); 
-            color: var(--text-color);
-        }
-        h2 { 
-            font-size: 1.7em; 
-            margin-top: 50px; 
-            border-bottom: 1px solid var(--border-color);
-        }
-        h3 { 
-            font-size: 1.3em; 
-            margin-top: 40px; 
-            color: var(--text-color); /* h3 por padrão não tem borda */
-        }
-        p { color: var(--text-color); } /* Cor principal por padrão */
-        h1 + p {
-            text-align: center;
-        }
-        a { color: var(--accent-color); text-decoration: none; font-weight: normal; }
-        a:hover { text-decoration: underline; }
-        ul, ol { padding-left: 30px; }
-        li { margin-bottom: 10px; }
-        .card {
-            background: var(--card-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 30px;
-            margin: 25px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .kpi-card {
-            text-align: center;
-            padding: 20px;
-        }
-        .kpi-value {
-            font-size: 2.5em;
-            font-weight: 600;
-            margin: 0;
-        }
-        .kpi-label {
-            font-size: 1em;
-            color: var(--text-secondary-color);
-            margin-top: 5px;
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 25px;
-        }
-        .highlight {
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 5px solid;
-        }
-        .highlight-success { background-color: rgba(28, 200, 138, 0.1); border-left: 5px solid var(--success-color); }
-        .highlight-danger { background-color: rgba(231, 74, 59, 0.1); border-left: 5px solid var(--danger-color); }
-        .highlight-warning { background-color: rgba(246, 194, 62, 0.1); border-left: 5px solid var(--warning-color); }
-        .highlight-info { background-color: rgba(23, 162, 184, 0.1); border-left: 5px solid var(--info-color); }
         
-        .flow-diagram {
-            display: flex;
-            justify-content: space-around;
-            list-style: none;
-            padding: 0;
-            text-align: center;
-            gap: 15px;
+        /* Classe para o link de navegação ativo (yellow-400) */
+        .nav-link-active {
+            color: #facc15; /* yellow-400 */
+            font-weight: 600;
         }
-        .flow-diagram .flow-step {
-            flex: 1;
-            padding: 10px;
-            position: relative;
-        }
-        .flow-diagram .flow-step:not(:last-child)::after {
-            content: '→';
-            position: absolute;
-            right: -12px;
-            top: 40%;
-            transform: translateY(-50%);
-            font-size: 2em;
-            color: var(--accent-color);
-        }
-        .flow-diagram .icon {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            display: block;
-        }
-        /* --- CLASSES UTILITÁRIAS --- */
-        .no-border {
-            border: none;
-        }
-        .mt-15 { margin-top: 15px; }
-        .mt-25 { margin-top: 25px; }
-        .mt-30 { margin-top: 30px; }
-        .mb-20 { margin-bottom: 20px; }
-        .dashed-border-bottom {
-            border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 5px;
-        }
-        .text-secondary {
-            color: var(--text-secondary-color);
+
+        /* Offset para a rolagem por âncora por causa da nav fixa */
+        section[id] {
+            scroll-margin-top: 80px; 
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>SmartRemedy</h1>
-        <p>Análise Inteligente de Remediações</p>
+<!-- MUDANÇA VISUAL: Fundo 'bg-slate-100' (light) e 'bg-black' (dark) --><body class="bg-slate-100 text-gray-700 transition-colors duration-300 dark:bg-black dark:text-gray-300">
 
-        <section id="proposito" class="text-secondary">
-            <div class="card">
-                <h3>Oportunidade: Clareza Operacional e Planos de Ação</h3>
-                <p class="highlight highlight-danger text-secondary">
-                    Os dashboards do Power BI entregam boa visão histórica dos alertas e ajudam a acompanhar a saúde da operação. Este projeto busca <strong>complementar</strong> esse ecossistema em um ponto específico que hoje não é coberto: a <strong>presença</strong> e a <strong>eficácia</strong> das remediações (self-healing). O indicador <strong>"com_remediacao"</strong> é binário e deixa duas questões essenciais em aberto:
-                </p>
-                <div class="highlight highlight-danger mt-15">
-                    <span><strong>1. Remediação realmente ativa:</strong> "com_remediacao" sinaliza intenção, não execução. Não há garantia de que cada alerta gerou uma tarefa de correção (ticket) no <strong>ServiceNow</strong>.</span><br><br>
-                    <strong>2. Resultado da remediação:</strong> Sem distinguir sucesso, sucesso parcial ou falha, ineficiências ficam ocultas. Tratar tudo como "Sim/Não" impede ação dirigida.
+    <!-- ===== Barra de Navegação ===== --><!-- MUDANÇA VISUAL: 'bg-white' (light) e 'bg-black' (dark) --><nav class="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-md dark:border-gray-800 dark:bg-black">
+        <div class="container mx-auto px-6">
+            <div class="flex h-20 items-center justify-between">
+                <!-- MUDANÇA VISUAL: 'text-black' (light) e 'text-white' (dark) --><a href="#" class="text-2xl font-bold text-black dark:text-white">SmartRemedy</a>
+                
+                <!-- Links (Desktop) --><div class="flex items-center space-x-6">
+                    <div class="hidden space-x-6 md:flex">
+                        <!-- MUDANÇA VISUAL: 'text-gray-600' (light) e 'text-gray-400' (dark) --><a href="#proposito" class="nav-link text-gray-600 hover:text-yellow-400 dark:text-gray-400">Propósito</a>
+                        <a href="#interpretacao" class="nav-link text-gray-600 hover:text-yellow-400 dark:text-gray-400">Categorias</a>
+                        <a href="#decisoes" class="nav-link text-gray-600 hover:text-yellow-400 dark:text-gray-400">Decisões</a>
+                        <a href="#fluxo" class="nav-link text-gray-600 hover:text-yellow-400 dark:text-gray-400">Fluxo</a>
+                        <a href="#limitacoes" class="nav-link text-gray-600 hover:text-yellow-400 dark:text-gray-400">Limitações</a>
+                        <a href="#resumo-executivo" class="nav-link text-gray-600 hover:text-yellow-400 dark:text-gray-400">Resumo</a>
+                    </div>
+                    
+                    <!-- BOTÃO DE TOGGLE (NOVO) -->
+                    <button id="theme-toggle" class="rounded-full p-2 text-gray-600 hover:bg-gray-100 hover:text-yellow-400 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-yellow-400">
+                        <!-- Ícone Sol (Light Mode) -->
+                        <svg id="theme-toggle-light-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="hidden h-6 w-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 1v2" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v2" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4.22 4.22l1.42 1.42" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M18.36 18.36l1.42 1.42" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M1 12h2" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12h2" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4.22 19.78l1.42-1.42" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M18.36 5.64l1.42-1.42" />
+                        </svg>
+                        <!-- Ícone Lua (Dark Mode) -->
+                        <svg id="theme-toggle-dark-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="hidden h-6 w-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                        </svg>
+                    </button>
+                
+                    <!-- Botão Hamburger (Mobile) --><button id="menu-btn" class="text-gray-600 hover:text-yellow-400 dark:text-gray-400 dark:hover:text-yellow-400 md:hidden" aria-label="Abrir menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                    </button>
                 </div>
-                <p class="highlight highlight-danger text-secondary mt-15">
-                    Além disso, há lacunas de gestão que ampliam o ruído e atrasam decisões:
-                </p>
-                <div class="highlight highlight-danger mt-15">
-                    <span><strong>3. De alertas para casos:</strong> Tratar alertas isoladamente dilui foco. É necessário consolidar sintomas semelhantes em <strong>Casos</strong> únicos e gerenciáveis.</span><br><br>
-                    <strong>4. Priorização por impacto real:</strong> Severidade e criticidade são necessárias, porém insuficientes. É preciso considerar eficiência da automação e impacto operacional (volume/ruído).<br><br>
-                    <strong>5. Planejamento objetivo:</strong> Relatórios manuais consomem tempo e favorecem reação. É desejável obter listas priorizadas de próximos passos para cada equipe.
+            </div>
+            
+            <!-- Menu Mobile --><!-- MUDANÇA VISUAL: 'bg-white' (light) e 'bg-black' (dark) --><div id="mobile-menu" class="hidden border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-black md:hidden">
+                <div class="flex flex-col space-y-4 pb-6 pt-2">
+                    <a href="#proposito" class="mobile-nav-link block rounded-md px-3 py-2 text-base text-gray-600 hover:bg-gray-100 hover:text-yellow-400 dark:text-gray-400 dark:hover:bg-gray-900">Propósito</a>
+                    <a href="#interpretacao" class="mobile-nav-link block rounded-md px-3 py-2 text-base text-gray-600 hover:bg-gray-100 hover:text-yellow-400 dark:text-gray-400 dark:hover:bg-gray-900">Categorias</a>
+                    <a href="#decisoes" class="mobile-nav-link block rounded-md px-3 py-2 text-base text-gray-600 hover:bg-gray-100 hover:text-yellow-400 dark:text-gray-400 dark:hover:bg-gray-900">Decisões</a>
+                    <a href="#fluxo" class="mobile-nav-link block rounded-md px-3 py-2 text-base text-gray-600 hover:bg-gray-100 hover:text-yellow-400 dark:text-gray-400 dark:hover:bg-gray-900">Fluxo</a>
+                    <a href="#limitacoes" class="mobile-nav-link block rounded-md px-3 py-2 text-base text-gray-600 hover:bg-gray-100 hover:text-yellow-400 dark:text-gray-400 dark:hover:bg-gray-900">Limitações</a>
+                    <a href="#resumo-executivo" class="mobile-nav-link block rounded-md px-3 py-2 text-base text-gray-600 hover:bg-gray-100 hover:text-yellow-400 dark:text-gray-400 dark:hover:bg-gray-900">Resumo</a>
                 </div>
-                <div class="highlight highlight-danger text-secondary">
-                    <span>Com o cenário atual, perguntas simples são difíceis de responder com rapidez:</span>
-                    <ul style="list-style-type: '•'; margin-top: 15px; padding-left: 20px;">
-                        <li><strong>A remediação foi de fato acionada para este alerta?</strong></li>
-                        <li><strong>Qual foi o resultado: sucesso, parcial ou falha?</strong></li>
-                        <li><strong>Há intermitência ou padrão de falha na remediação?</strong></li>
-                        <li><strong>Os alertas similares estão consolidados em um Caso?</strong></li>
-                        <li><strong>Estamos priorizando o que mais impacta a operação?</strong></li>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== Seção Hero ===== --><!-- MUDANÇA VISUAL: 'bg-white' (light) e 'bg-black' (dark) --><header class="border-b border-gray-200 bg-white pt-24 pb-16 dark:border-gray-800 dark:bg-black">
+        <div class="container mx-auto px-6 text-center">
+            <!-- MUDANÇA VISUAL: Cor 'yellow-400' (mantida em ambos os modos) --><h1 class="text-5xl font-extrabold text-yellow-400 md:text-6xl">SmartRemedy</h1>
+            <p class="mt-4 text-2xl text-gray-600 dark:text-gray-400">Análise Inteligente de Self-Healing</p>
+        </div>
+    </header>
+
+    <!-- ===== Conteúdo Principal ===== --><main class="container mx-auto px-6 py-16">
+
+        <!-- ===== Seção: Propósito ===== --><section id="proposito" class="my-16">
+            <div class="mx-auto max-w-4xl">
+                <!-- MUDANÇA VISUAL: Cor 'yellow-400' (mantida em ambos os modos) --><h2 class="mb-6 text-center text-3xl font-bold text-yellow-400">Oportunidade: Clareza Operacional e Planos de Ação</h2>
+                
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="rounded-lg border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <p>Os dashboards do Power BI continuam sendo a espinha dorsal para acompanhar volumes, severidades e histórico dos alertas. No entando, podemos explorar e melhorar ainda mais nossas análaxes e ações, por exemplo no contexto de Self-Healing.</p>
+                    <p class="mt-4">Atualmente no Power BI, a informação que trata sobre esse tema é a <strong>"com_remediacao"</strong> fornecida pelo ITOM. Que nos informa quando um alerta teve ou não uma remediação executada.
+                    <p>No entanto, dois pontos permanecem em aberto:</p>
+
+                    <!-- MUDANÇA VISUAL: Caixa aninhada 'bg-gray-50' (light) e 'bg-gray-900' (dark) --><div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <p class="font-semibold text-gray-900 dark:text-gray-100"><strong>Ponto 1 — O que garante "com_remediacao: sim"?</strong></p>
+                        <p class="mt-2">Confirma que o alerta teve ao menos uma Tarefa de correção executada <strong>(presença de remediação)</strong> com sucesso registrado no ServiceNow <strong>(eficácia)</strong>.</p>
+                        <p><strong>O que não responde:</strong></p>
+                        <ul class="mt-3 list-disc space-y-1 pl-6">
+                            <li><strong>Dependência:</strong> remediação atuou 100% sozinha ou pessoa interviu no fluxo? - (<code>Closed Skipped</code>)</li>
+                            <li><strong>Recorrência:</strong> remediação executada com frequência ou caso isolado?</li>
+                            <li><strong>Histórico:</strong> dentro do alerta, houveram falhas antes do sucesso?</li>
+                        </ul>
+                    </div>
+
+                    <!-- MUDANÇA VISUAL: Caixa aninhada 'bg-gray-50' (light) e 'bg-gray-900' (dark) --><div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <p class="font-semibold text-gray-900 dark:text-gray-100"><strong>Ponto 2 — E o que está por trás de "com_remediacao: não"?</strong></p>
+                        <p class="mt-2"><strong>Cenários distintos ocultos num mesmo status:</strong></p>
+                        <ul class="mt-3 list-disc space-y-1 pl-6">
+                            <li><strong>Ausência de remediação:</strong> Não foi criada ou não executou?</li>
+                            <li><strong>Falhas com causa conhecida:</strong> Remediação executada, mas terminou em <code>Canceled</code> ou <code>Closed Incomplete.</code></li>
+                            <li><strong>Ambos rotulados como "com_remediacao: não" </strong> - mas, necessitam de abordagens diferentes e isso não fica claro da forma que apresentamos atualmente.</li>
+                        </ul>
+                    </div>
+
+                    <!-- MUDANÇA VISUAL: Caixa de definição 'bg-gray-50' (light) e 'bg-gray-900' (dark) --><div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <dl>
+                            <dt class="font-semibold text-blue-600 dark:text-blue-400">Remediação</dt>
+                            <dd class="mt-1 mb-2">Automação criada para tratar um alerta - Self-Healing.</dd>
+                            <dt class="font-semibold text-blue-600 dark:text-blue-400">Tarefa de correção (REMXXXXX)</dt>
+                            <dd class="mt-1">Registro no ServiceNow sobre a execução da remediação.</dd>
+                        </dl>
+                    </div>
+
+                </div>
+
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <p>Essas lacunas táticas se somam a desafios operacionais que atrasam decisões e obscurecem prioridades:</p>
+                    <div class="mt-4 space-y-3">
+                        <div><strong>3. De alertas para Casos:</strong> Tratar disparos isolados mantém a equipe presa a sintomas. Precisamos consolidar alertas irmãos em <strong>Casos</strong> gerenciáveis para atacar causa raiz.</div>
+                        <div><strong>4. Priorização orientada a impacto:</strong> Severidade e criticidade são importantes, mas insuficientes. É necessário ponderar eficiência da automação, volume gerado e ruído operacional para saber onde cada squad deve atuar primeiro.</div>
+                        <div><strong>5. Planejamento objetivo e recorrente:</strong> Relatórios manuais consomem horas toda semana. O time precisa receber listas priorizadas de próximos passos com base em dados confiáveis, e não reconstruir planilhas do zero.</div>
+                    </div>
+                </div>
+
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="mt-6 rounded-lg border border-gray-200 bg-white p-8 shadow-xl dark:border-gray-800 dark:bg-gray-900">
+                    <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">Enquanto permanecermos apenas com o binário, perguntas estratégicas continuam difíceis de responder com rapidez:</p>
+                    <ul class="mt-4 list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
+                        <li><strong>A automação foi acionada e concluiu com sucesso pleno ou precisou de apoio humano?</strong></li>
+                        <li><strong>Quando vemos "Não", estamos diante de ausência total de automação ou de falhas recorrentes?</strong></li>
+                        <li><strong>A mesma métrica apresenta histórico de intermitência entre sucessos e falhas?</strong></li>
+                        <li><strong>Os alertas repetidos já estão agrupados em um Caso com responsável claro?</strong></li>
+                        <li><strong>Estamos priorizando os Casos que mais drenam tempo da operação?</strong></li>
                     </ul>
                 </div>
-                <h3>Proposta: Uma Camada de Inteligência Diagnóstica</h3>
-                <div class="highlight highlight-success">
-                    <p class="text-secondary">O <strong>SmartRemedy</strong> foi criado para preencher essa lacuna. Ele <strong>complementa</strong> os dados do Power BI medindo, de forma objetiva, a eficácia do processo de <strong>self-healing</strong>.</p>
-                    <p class="text-secondary">No fluxo padrão (Dynatrace → ServiceNow → tarefa de correção), buscamos impedir que o alerta chegue ao NOC. A pergunta crítica é: <strong>e quando a tarefa falha ou nem é executada?</strong></p>
-                    <p class="text-secondary">O SmartRemedy atua exatamente aí, produzindo um diagnóstico automatizado para:</p>
-                    <ul class="mt-15 mb-20">
-                        <li><strong>1. Medir a eficácia:</strong> Diferenciar sucesso, sucesso parcial (ex.: 'Closed', 'Closed Skipped/Canceled') e falha (ex.: 'Closed Incomplete').</li>
-                        <li><strong>2. Validar a execução:</strong> Confirmar, com evidências, o que foi ou não disparado no ServiceNow.</li>
-                        <li><strong>3. Priorizar por impacto real:</strong> Aplicar um <strong>score ponderado</strong> que direciona o esforço para os Casos que mais movem a agulha na operação.</li>
+
+                <!-- MUDANÇA VISUAL: Cor 'yellow-400' (mantida em ambos os modos) --><h2 class="mb-6 mt-16 text-center text-3xl font-bold text-yellow-400">Proposta: Uma Camada de Inteligência Diagnóstica</h2>
+                
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="rounded-lg border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <p>O <strong>SmartRemedy</strong> nasce para cobrir esse vazio: ele <strong>complementa</strong> o ecossistema atual trazendo visibilidade objetiva sobre a eficácia do processo de <strong>self-healing</strong>.</p>
+                    <p class="mt-3">No fluxo ideal (Dynatrace → ServiceNow → tarefa de correção) o alerta nunca deveria chegar ao NOC. A pergunta crítica é: <strong>o que acontece quando a tarefa não roda, falha ou exige intervenção manual?</strong></p>
+                    <p class="mt-3">A resposta vem de um diagnóstico automatizado que:</p>
+                    <ul class="mt-4 list-decimal space-y-2 pl-6 font-medium">
+                        <li><strong>1. Mensura o resultado real:</strong> separa sucessos plenos (<code>Closed</code>) dos sucessos com apoio humano (<code>Closed Skipped</code>), das falhas (<code>Closed Incomplete</code> / <code>Canceled</code>) e das ausências de disparo (<code>No Task Found</code>).</li>
+                        <li><strong>2. Documenta a execução:</strong> cruza alertas e tasks de automação para apontar, com evidências, onde a automação atuou, onde falhou e onde nunca foi disparada.</li>
+                        <li><strong>3. Prioriza com base em impacto:</strong> usa um <strong>score ponderado</strong> que combina risco, eficiência e volume para gerar listas de ação por squad.</li>
                     </ul>
-                    <p class="text-secondary">Em resumo, transforma uma visão descritiva em <strong>ação</strong>: gera <strong>planos de ação priorizados por equipe</strong> e reduz o trabalho manual de coleta, análise e priorização.</p>
-                    <p class="text-secondary" style="margin-top: 10px; font-size: 0.95em;">
-                        <em>Nota:</em> As seções a seguir fazem parte da proposta e detalham a própria ferramenta: seus componentes, lógica de priorização e artefatos gerados (categorias, casos, relatórios e fluxo de dados).
+                    <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                        <em>Nota:</em> As seções seguintes detalham os componentes da solução — categorias, Casos, lógica de priorização, relatórios e fluxo de dados — que sustentam esse diagnóstico.
                     </p>
                 </div>
             </div>
-
         </section>
-        <section id="interpretacao" class="text-secondary">
-            <h2>Categorias de Ações Sugeridas</h2>
-            <p>A ferramenta organiza os problemas em quatro categorias. Cada uma agrupa tipos de ações sugeridas e facilita entender onde focar primeiro.</p>
-            <div class="highlight highlight-info" style="margin-top: 10px;">
-                <strong>Status interpretados das tasks (ServiceNow):</strong>
-                <span style="display:block; margin-top:6px; font-size:0.95em;">
-                    ✅ Closed (sucesso) • ❌ Closed Incomplete (falha) • ⏭️ Closed Skipped / 🚫 Canceled (sucesso parcial) • ❓ No Task Found (nenhuma tarefa foi gerada para o alerta)
+
+        <!-- ===== Seção: Categorias ===== --><section id="interpretacao" class="my-16">
+            <!-- MUDANÇA VISUAL: Cor 'yellow-400' (mantida em ambos os modos) --><h2 class="mb-4 text-center text-3xl font-bold text-yellow-400">Categorias de Ações Sugeridas</h2>
+            <p class="mx-auto mb-8 max-w-3xl text-center text-lg text-gray-600 dark:text-gray-400">A ferramenta organiza os problemas em quatro categorias. Cada uma agrupa tipos de ações sugeridas e facilita entender onde focar primeiro.</p>
+            
+            <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="mb-8 mx-auto max-w-2xl rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-800 dark:bg-gray-900">
+                <strong class="text-gray-800 dark:text-gray-300">Status interpretados das tasks de automação (ServiceNow):</strong>
+                <span class="mt-1 block text-sm text-gray-600 dark:text-gray-400">
+                    ✅ Closed / Closed Skipped (sucesso) | ❌ Closed Incomplete / 🚫 Canceled (falha) | ❓ No Task Found (sem automação)
                 </span>
             </div>
 
-            <div class="grid-container">
-                <div class="card kpi-card">
-                    <div class="kpi-value" style="color: var(--danger-color);">🔥</div>
-                    <h3 class="no-border mt-15 text-secondary">Categoria 1: Foco de Atuação</h3>
-                    <p>Casos em que a automação falhou, não existe ou apresenta problemas críticos. São os principais drenos de tempo da equipe e o ponto de partida para melhorias de alto impacto.</p>
-                    <div class="mt-15" style="font-size: 0.9em; color: var(--text-secondary-color);">
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <div class="text-5xl">🔥</div>
+                    <h3 class="mt-4 text-xl font-semibold text-red-500">Categoria 1: Foco de Atuação</h3>
+                    <p class="mt-2 flex-grow text-gray-600 dark:text-gray-400">Casos em que a automação falhou, não existe ou apresenta problemas críticos. São os principais drenos de tempo da equipe e o ponto de partida para melhorias de alto impacto.</p>
+                    <div class="mt-4 rounded-md bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         <strong>Tipos incluídos:</strong><br>
-                        • Intermitente na remediação<br>
-                        • Falha persistente (sem sucesso)<br>
-                        • Status de remediação ausente<br>
-                        • Remediação inconsistente
+                        • Intermitência da automação<br>
+                        • Falha persistente da automação<br>
+                        • Status da automação ausente<br>
+                        • Automação inconsistente
                     </div>
                 </div>
-                <div class="card kpi-card">
-                    <div class="kpi-value" style="color: var(--warning-color);">⚠️</div>
-                    <h3 class="no-border mt-15 text-secondary">Categoria 2: Instabilidade Crônica</h3>
-                    <p>Casos que, mesmo remediados, ocorrem com alta frequência. Indicam que a causa raiz persiste e pedem investigação mais profunda.</p>
-                    <div class="mt-15" style="font-size: 0.9em; color: var(--text-secondary-color);">
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <div class="text-5xl">⚠️</div>
+                    <h3 class="mt-4 text-xl font-semibold text-yellow-500">Categoria 2: Instabilidade Crônica</h3>
+                    <p class="mt-2 flex-grow text-gray-600 dark:text-gray-400">Casos que, mesmo contando com automação bem-sucedida, ocorrem com alta frequência. Indicam que a causa raiz persiste e pedem investigação mais profunda.</p>
+                    <div class="mt-4 rounded-md bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         <strong>Tipos incluídos:</strong><br>
                         • Revisar causa raiz (recorrente)
                         <br><br>
                         <strong>Critério atual:</strong> mínimo de 5 execuções com status <code>Closed</code> concentradas em até 2 horas (parâmetro <code>JANELA_INSTABILIDADE_HORAS</code>). Fora dessa janela, o caso permanece como "Sucesso da Automação".
                     </div>
                 </div>
-                <div class="card kpi-card">
-                    <div class="kpi-value" style="color: var(--info-color);">🛠️</div>
-                    <h3 class="no-border mt-15 text-secondary">Categoria 3: Pontos de Atenção</h3>
-                    <p>Casos em que a automação foi executada, mas não concluiu com 100% de eficácia (ex.: 'Skipped', 'Canceled'). Oportunidades de baixo esforço para aumentar a robustez.</p>
-                    <div class="mt-15" style="font-size: 0.9em; color: var(--text-secondary-color);">
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <div class="text-5xl">🛠️</div>
+                    <h3 class="mt-4 text-xl font-semibold text-blue-500">Categoria 3: Pontos de Atenção</h3>
+                    <p class="mt-2 flex-grow text-gray-600 dark:text-gray-400">Casos em que a automação concluiu com status <code>Closed Skipped</code>. Para o indicador <strong>com_remediacao</strong> isso conta como sucesso, mas acompanhamos de perto because o fluxo ainda depende de ação humana (o coletor entrega evidências para a squad finalizar).</p>
+                    <div class="mt-4 rounded-md bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         <strong>Tipos incluídos:</strong><br>
-                        • Revisar automação (sucesso parcial)
+                        • Revisar automação (sucesso com apoio humano)
                     </div>
                 </div>
-                <div class="card kpi-card">
-                    <div class="kpi-value" style="color: var(--success-color);">✅</div>
-                    <h3 class="no-border mt-15 text-secondary">Categoria 4: Sucesso da Automação</h3>
-                    <p>Casos tratados com sucesso pleno, com ou sem histórico de falhas. Mostram o que está funcionando bem e validam o trabalho da equipe.</p>
-                    <div class="mt-15" style="font-size: 0.9em; color: var(--text-secondary-color);">
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <div class="text-5xl">✅</div>
+                    <h3 class="mt-4 text-xl font-semibold text-green-500">Categoria 4: Sucesso da Automação</h3>
+                    <p class="mt-2 flex-grow text-gray-600 dark:text-gray-400">Casos tratados com sucesso pleno, com ou sem histórico de falhas. Mostram o que está funcionando bem e validam o trabalho da equipe.</p>
+                    <div class="mt-4 rounded-md bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         <strong>Tipos incluídos:</strong><br>
-                        • Remediação automática funcional<br>
-                        • Remediação estabilizada
+                        • Automação funcional<br>
+                        • Automação estabilizada
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="decisoes" class="text-secondary">
-            <h2>Usando o Dashboard para Decisões</h2>
+        <!-- ===== Seção: Decisões ===== --><section id="decisoes" class="my-16">
+            <!-- MUDANÇA VISUAL: Cor 'yellow-400' (mantida em ambos os modos) --><h2 class="mb-8 text-center text-3xl font-bold text-yellow-400">Usando o Dashboard para Decisões</h2>
             
-            <h3>Do ruído à causa raiz: por que focamos em Casos</h3>
-            <div class="card">
-                <p class="text-secondary">A ferramenta troca a visão de alertas individuais (sintomas) por <strong>Casos</strong> (problemas únicos). Um Caso consolida todos os alertas da mesma natureza (mesmo problema, mesmo recurso) em um item gerenciável.</p>
-                <p class="text-secondary">Em vez de lidar com "100 alertas de disco cheio", a equipe gerencia <strong>um Caso de disco cheio</strong>, direcionando o esforço para criar ou melhorar a automação que trata esse problema.</p>
-                <div class="highlight highlight-info">
-                    <strong>Atributos de Agrupamento:</strong> assignment_group, short_description, node, cmdb_ci, cmdb_ci.sys_class_name, source, metric_name
-                    <br><small>Agrupamento inteligente garante consistência e reprodutibilidade</small>
+            <div class="space-y-8">
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="rounded-xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">Do ruído à causa raiz: por que focamos em Casos</h3>
+                    <p class="mt-4 text-gray-600 dark:text-gray-400">A ferramenta troca a visão de alertas individuais (sintomas) por <strong>Casos</strong> (problemas únicos). Um Caso consolida todos os alertas da mesma natureza (mesmo problema, mesmo recurso) em um item gerenciável.</p>
+                    <p class="mt-3 text-gray-600 dark:text-gray-400">Em vez de lidar com "100 alertas de disco cheio", a equipe gerencia <strong>um Caso de disco cheio</strong>, direcionando o esforço para criar ou melhorar a automação que trata esse problema.</p>
+                    <!-- MUDANÇA VISUAL: Caixa de definição 'bg-gray-50' (light) e 'bg-gray-900' (dark) --><div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                        <strong class="text-blue-600 dark:text-blue-400">Atributos de Agrupamento:</strong> assignment_group, short_description, node, cmdb_ci, cmdb_ci.sys_class_name, source, metric_name
+                        <br><small>Agrupamento inteligente garante consistência e reprodutibilidade</small>
+                    </div>
+                </div>
+
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="rounded-xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">Como os Casos são priorizados?</h3>
+                    <p class="mt-4 text-gray-600 dark:text-gray-400">A prioridade de um Caso é definida por um <strong>score ponderado</strong> que calcula o impacto real do problema a partir de três pilares:</p>
+                    <ul class="mt-5 space-y-4">
+                        <li>
+                            <strong class="block text-gray-800 dark:text-gray-200">Pilar 1 — Risco operacional:</strong>
+                            <small class="block text-gray-600 dark:text-gray-400">Combina severidade e prioridade do alerta (ex.: Crítico + Urgente = score máximo).</small>
+                        </li>
+                        <li>
+                            <strong class="block text-gray-800 dark:text-gray-200">Pilar 2 — Eficiência da automação:</strong>
+                            <small class="block text-gray-600 dark:text-gray-400">Penaliza Casos com falhas (<code>Closed Incomplete</code>, <code>Canceled</code>) ou ausência de automação. Casos que terminam em <code>Closed Skipped</code> têm um ajuste menor, sinalizando dependência residual de atuação humana.</small>
+                        </li>
+                        <li>
+                            <strong class="block text-gray-800 dark:text-gray-200">Pilar 3 — Impacto operacional:</strong>
+                            <small class="block text-gray-600 dark:text-gray-400">Penaliza o ruído gerado pelo volume de alertas usando fórmula logarítmica (1 + ln(N)).</small>
+                        </li>
+                    </ul>
+                    <p class="mt-4 font-medium text-gray-800 dark:text-gray-200">O score final é: <code>(Pilar 1 × Pilar 2 × Pilar 3)</code>. Scores mais altos indicam maior criticidade e devem ser o foco principal. A seção "Conceitos" do dashboard detalha a fórmula.</p>
+                </div>
+
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="rounded-xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">Medindo a evolução: Análise Padrão vs. Comparativa</h3>
+                    <p class="mt-4 text-gray-600 dark:text-gray-400">A ferramenta oferece duas formas de análise, refletidas nas abas "Análise Padrão" e "Análise Comparativa" da aplicação.</p>
+                    
+                    <div class="mt-6">
+                        <h4 class="border-b border-gray-200 pb-2 text-xl font-semibold text-gray-800 dark:border-gray-700 dark:text-gray-100">Análise Padrão (Acompanhamento Contínuo)</h4>
+                        <p class="mt-3 text-gray-600 dark:text-gray-400">Fluxo principal. Ao processar um único arquivo, o sistema gera o dashboard completo e, automatically, um <strong>relatório comparativo</strong> com o período anterior, permitindo acompanhar a evolução dos Casos. Ele responde a perguntas como:</p>
+                        <ul class="mt-3 list-disc space-y-1 pl-6 text-gray-600 dark:text-gray-400">
+                            <li>Quantos Casos com problemas na automação foram resolvidos? (<strong>Taxa de Resolução</strong>)</li>
+                            <li>Quantos Casos novos surgiram e exigem atenção? (<strong>Taxa de Novos Problemas</strong>)</li>
+                            <li>Quais problemas são "crônicos" e persistem ao longo do tempo?</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-8">
+                        <h4 class="border-b border-gray-200 pb-2 text-xl font-semibold text-gray-800 dark:border-gray-700 dark:text-gray-100">Análise Comparativa (Investigação Pontual)</h4>
+                        <p class="mt-3 text-gray-600 dark:text-gray-400">Compara diretamente dois arquivos <code>.csv</code> de alertas escolhidos pelo usuário. Gera <strong>apenas o relatório comparativo</strong> e é ideal para perguntas como: "A automação implantada na terça funcionou?", "Na crise de quinta, que falhas surgiram em relação a um dia normal?", ou "O problema crônico de disco cheio voltou esta semana?".</p>
+                    </div>
+                </div>
+
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="rounded-xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">Diagnóstico Rápido</h3>
+                    <p class="mt-4 text-gray-600 dark:text-gray-400">O principal diferencial das análises comparativas é o <strong>Diagnóstico Rápido</strong>, no topo do relatório. Ele aplica regras claras para interpretar os dados e entregar um veredito acionável. Os cenários possíveis são:</p>
+                    
+                    <div class="mt-6 space-y-3">
+                        <!-- MUDANÇA VISUAL: Blocos de diagnóstico 'bg-gray-50' (light) e 'bg-gray-900' (dark) --><div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <span class="mt-1 text-green-400">🏆</span>
+                            <div class="flex-1 text-sm text-gray-700 dark:text-gray-300"><strong>Excelência Operacional Atingida:</strong> O melhor cenário possível. Indica que todos os Casos que exigiam ação foram resolvidos e nenhum novo surgiu.</div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <span class="mt-1 text-green-400">🏆</span>
+                            <div class="flex-1 text-sm text-gray-700 dark:text-gray-300"><strong>Excelência Operacional Mantida:</strong> Nenhum Caso exigia ação e nada novo apareceu nos períodos comparados. Indica estabilidade sustentada.</div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <span class="mt-1 text-green-400">✅</span>
+                            <div class="flex-1 text-sm text-gray-700 dark:text-gray-300"><strong>Evolução Positiva:</strong> O número total de Casos que exigem ação reduziu. A operação está se tornando mais estável.</div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <span class="mt-1 text-blue-400">➖</span>
+                            <div class="flex-1 text-sm text-gray-700 dark:text-gray-300"><strong>Estabilidade Neutra:</strong> O número de Casos permaneceu o mesmo, com uma troca equilibrada entre problems resolvidos e novos.</div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <span class="mt-1 text-yellow-400">⚠️</span>
+                            <div class="flex-1 text-sm text-gray-700 dark:text-gray-300"><strong>Primeira Regressão:</strong> Um ponto de atenção crítico. A operação estava estável (sem Casos) e agora registrou o surgimento de novos problemas.</div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <span class="mt-1 text-yellow-400">⚠️</span>
+                            <div class="flex-1 text-sm text-gray-700 dark:text-gray-300"><strong>Alta Eficácia, Baixa Estabilidade:</strong> A equipe resolveu muitos problemas antigos, mas um volume quase igual de novos problemas surgiu (churn alto). Indica um ciclo reativo de "apagar incêndios".</div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <span class="mt-1 text-yellow-400">⚠️</span>
+                            <div class="flex-1 text-sm text-gray-700 dark:text-gray-300"><strong>Estagnação por Inércia:</strong> O número de Casos não mudou because os problemas antigos não foram resolvidos. Indica falta de ação ou dificuldade na resolução.</div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+                            <span class="mt-1 text-red-400">❌</span>
+                            <div class="flex-1 text-sm text-gray-700 dark:text-gray-300"><strong>Regressão:</strong> O pior cenário. O número total de Casos que exigem ação aumentou, indicando uma piora na saúde operacional.</div>
+                        </div>
+                    </div>
+
+                    <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-md dark:border-gray-800 dark:bg-gray-900">
+                        <strong>Como ler este relatório (guia rápido):</strong> O relatório segue o princípio da "pirâmide invertida".
+                        <ol class="mt-3 list-decimal space-y-2 pl-6">
+                            <li><strong>Leia o Diagnóstico Rápido primeiro.</strong> Em menos de 10 segundos, você verá o status da operação (melhorou, piorou, estagnou) e a principal equipe a acionar.</li>
+                            <li><strong>Use os links de ação.</strong> O diagnóstico oferece links diretos para planos de ação pré‑filtrados, permitindo direcionamento imediato e baseado em dados.</li>
+                            <li><strong>Analise os detalhes (se necessário).</strong> Os gráficos e tabelas abaixo sustentam a conclusão e permitem análise mais profunda, se preciso.</li>
+                        </ol>
+                        <p class="mt-3">Use a <strong>Taxa de Resolução</strong> como principal KPI para medir a eficácia das equipes na solução de problemas de causa raiz.</p>
+                    </div>
                 </div>
             </div>
-
-            <h3>Como os Casos são priorizados?</h3>
-            <div class="card">
-                <p class="text-secondary">A prioridade de um Caso é definida por um <strong>score ponderado</strong> que calcula o impacto real do problema a partir de três pilares:</p>
-                <ul style="list-style-type: '→'; line-height: 1.8;">
-                    <li>
-                        <strong>Pilar 1 — Risco operacional:</strong><br>
-                        <small style="margin-left: 15px;">Combina severidade e prioridade do alerta (ex.: Crítico + Urgente = score máximo).</small>
-                    </li>
-                    <li>
-                        <strong>Pilar 2 — Eficiência da automação:</strong><br>
-                        <small style="margin-left: 15px;">Penaliza Casos com falhas ('Closed Incomplete', 'Closed Skipped') ou ausência de remediação.</small>
-                    </li>
-                    <li>
-                        <strong>Pilar 3 — Impacto operacional:</strong><br>
-                        <small style="margin-left: 15px;">Penaliza o ruído gerado pelo volume de alertas usando fórmula logarítmica (1 + ln(N)).</small>
-                    </li>
-                </ul>                
-                <p class="text-secondary">O score final é: <code>(Pilar 1 × Pilar 2 × Pilar 3)</code>. Scores mais altos indicam maior criticidade e devem ser o foco principal. A seção "Conceitos" do dashboard detalha a fórmula.</p>
-            </div>
+        </section>
+        
+        <!-- ===== Seção: Fluxo ===== --><section id="fluxo" class="my-16">
+            <!-- MUDANÇA VISUAL: Cor 'yellow-400' (mantida em ambos os modos) --><h2 class="mb-8 text-center text-3xl font-bold text-yellow-400">Fluxo de Dados Simplificado</h2>
             
-            <h3>Medindo a evolução: Análise Padrão vs. Comparativa</h3>
-            <div class="card">
-                <p class="text-secondary">A ferramenta oferece duas formas de análise, refletidas nas abas "Análise Padrão" e "Análise Comparativa" da aplicação.</p>
+            <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="rounded-xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <!-- Etapa 1 --><div class="text-center">
+                        <div class="text-6xl">📤</div>
+                        <h4 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">1. Upload</h4>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">O processo começa com o upload de um arquivo <code>.csv</code> de alertas, um extrato já pré‑refinado de dados. A ferramenta aplica a camada final de análise e inteligência sobre esse conteúdo.</p>
+                    </div>
+                    <!-- Etapa 2 --><div class="text-center">
+                        <div class="text-6xl">⚙️</div>
+                        <h4 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">2. Análise e Comparação</h4>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">A camada de serviço orquestra o processo: agrupa alertas em Casos, calcula o score de prioridade e, quando aplicável, compara com o histórico para gerar a análise comparativa.</p>
+                    </div>
+                    <!-- Etapa 3 --><div class="text-center">
+                        <div class="text-6xl">📊</div>
+                        <h4 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">3. Visualização</h4>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">A ferramenta gera relatórios, including dashboards interativos e planos de ação priorizados por equipe, disponíveis na aplicação web.</p>
+                    </div>
+                </div>
+
+                <h3 class="mb-4 mt-10 border-t border-gray-200 pt-8 text-2xl font-semibold text-gray-900 dark:border-gray-700 dark:text-white">Gerenciamento do histórico</h3>
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="rounded-lg border border-gray-200 bg-white p-6 shadow-md dark:border-gray-800 dark:bg-gray-900">
+                    <p>Além da geração de relatórios, a aplicação permite gerenciar o histórico. Na página "Histórico de Relatórios", administradores podem excluir análises antigas ou irrelevantes. A funcionalidade é protegida para evitar exclusões acidentais e preservar a integridade do histórico.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ===== Seção: Limitações ===== --><section id="limitacoes" class="my-16">
+            <!-- MUDANÇA VISUAL: Cor 'yellow-400' (mantida em ambos os modos) --><h2 class="mb-8 text-center text-3xl font-bold text-yellow-400">Limitações Técnicas e Premissas do Sistema</h2>
+            
+            <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Premissas Fundamentais</h3>
+                    <p class="mt-3 text-gray-600 dark:text-gray-400">Para funcionar corretamente, o sistema requer:</p>
+                    <div class="mt-4 flex-grow space-y-3">
+                        <!-- MUDANÇA VISUAL: Caixas de definição 'bg-gray-50' (light) e 'bg-gray-900' (dark) --><div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-800 dark:bg-gray-900">
+                            <strong class="text-blue-600 dark:text-blue-400">Schema CSV estrito:</strong> 25 colunas obrigatórias com nomes exatos (sys_created_on, assignment_group, short_description, severity, etc.). Dados ausentes ou mal formatados resultam em falha de processamento.
+                        </div>
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-800 dark:bg-gray-900">
+                            <strong class="text-blue-600 dark:text-blue-400">Qualidade dos dados de entrada:</strong> A precisão da análise depende diretamente da qualidade dos dados do ServiceNow. Status incorretos de tickets impactam as métricas de sucesso da automação.
+                        </div>
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-800 dark:bg-gray-900">
+                            <strong class="text-blue-600 dark:text-blue-400">Consistência temporal:</strong> Comparações entre períodos assumem intervalos cronológicos consecutivos e não sobrepostos.
+                        </div>
+                    </div>
+                </div>
                 
-                <h4 class="mt-25 dashed-border-bottom">Análise Padrão (Acompanhamento Contínuo)</h4>
-                <p class="text-secondary">Fluxo principal. Ao processar um único arquivo, o sistema gera o dashboard completo e, automaticamente, um <strong>relatório comparativo</strong> com o período anterior, permitindo acompanhar a evolução dos Casos. Ele responde a perguntas como:</p>
-                <ul style="list-style-type: '•';">
-                    <li>Quantos Casos com problemas nas remediações foram resolvidos? (<strong>Taxa de Resolução</strong>)</li>
-                    <li>Quantos Casos novos surgiram e exigem atenção? (<strong>Taxa de Novos Problemas</strong>)</li>
-                    <li>Quais problemas são "crônicos" e persistem ao longo do tempo?</li>
-                </ul>
-
-                <h4 class="mt-25 dashed-border-bottom">Análise Comparativa (Investigação Pontual)</h4>
-                <p class="text-secondary">Compara diretamente dois arquivos <code>.csv</code> de alertas escolhidos pelo usuário. Gera <strong>apenas o relatório comparativo</strong> e é ideal para perguntas como: "A remediação implantada na terça funcionou?", "Na crise de quinta, que falhas surgiram em relação a um dia normal?", ou "O problema crônico de disco cheio voltou esta semana?".</p>
-
-                <h3 class="mt-30">Diagnóstico Rápido</h3>
-                <p class="text-secondary">O principal diferencial das análises comparativas é o <strong>Diagnóstico Rápido</strong>, no topo do relatório. Ele aplica regras claras para interpretar os dados e entregar um veredito acionável. Os cenários possíveis são:</p>
-
-                <div class="highlight highlight-success">
-                    <strong>🏆 Excelência Operacional Atingida:</strong> O melhor cenário possível. Indica que todos os Casos que exigiam ação foram resolvidos e nenhum novo surgiu.
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Limitações Técnicas Conhecidas</h3>
+                    <p class="mt-3 text-gray-600 dark:text-gray-400">Restrições que afetam o escopo de análise:</p>
+                    <ul class="mt-4 flex-grow list-inside list-['⚠️'] space-y-3">
+                        <li>
+                            <strong class="text-gray-800 dark:text-gray-200">Processamento síncrono:</strong><br>
+                            <small class="text-gray-600 dark:text-gray-400">Análises complexas podem levar alguns minutos. Não é adequado para tempo real.</small>
+                        </li>
+                        <li>
+                            <strong class="text-gray-800 dark:text-gray-200">Dependência de dados externos:</strong><br>
+                            <small class="text-gray-600 dark:text-gray-400">Análise limitada aos dados disponíveis no CSV. Não acessa o ServiceNow directly.</small>
+                        </li>
+                        <li>
+                            <strong class="text-gray-800 dark:text-gray-200">Agrupamento inteligente:</strong><br>
+                            <small class="text-gray-600 dark:text-gray-400">A lógica de agrupamento pode gerar falsos positivos/negativos quando há inconsistências nos dados de entrada.</small>
+                        </li>
+                        <li>
+                            <strong class="text-gray-800 dark:text-gray-200">Comparação limitada:</strong><br>
+                            <small class="text-gray-600 dark:text-gray-400">A análise temporal compara apenas dois períodos por vez. Análises de longo prazo exigem processamento manual.</small>
+                        </li>
+                    </ul>
                 </div>
-                <div class="highlight highlight-success">
-                    <strong>🏆 Excelência Operacional Mantida:</strong> Nenhum Caso exigia ação e nada novo apareceu nos períodos comparados. Indica estabilidade sustentada.
-                </div>
-                <div class="highlight highlight-success">
-                    <strong>✅ Evolução Positiva:</strong> O número total de Casos que exigem ação reduziu. A operação está se tornando mais estável.
-                </div>
-                <div class="highlight highlight-info">
-                    <strong>➖ Estabilidade Neutra:</strong> O número de Casos permaneceu o mesmo, com uma troca equilibrada entre problemas resolvidos e novos.
-                </div>
-                <div class="highlight highlight-warning">
-                    <strong>⚠️ Primeira Regressão:</strong> Um ponto de atenção crítico. A operação estava estável (sem Casos) e agora registrou o surgimento de novos problemas.
-                </div>
-                <div class="highlight highlight-warning">
-                    <strong>⚠️ Alta Eficácia, Baixa Estabilidade:</strong> A equipe resolveu muitos problemas antigos, mas um volume quase igual de novos problemas surgiu (churn alto). Indica um ciclo reativo de "apagar incêndios".
-                </div>
-                <div class="highlight highlight-warning">
-                    <strong>⚠️ Estagnação por Inércia:</strong> O número de Casos não mudou porque os problemas antigos não foram resolvidos. Indica falta de ação ou dificuldade na resolução.
-                </div>
-                <div class="highlight highlight-danger">
-                    <strong>❌ Regressão:</strong> O pior cenário. O número total de Casos que exigem ação aumentou, indicando uma piora na saúde operacional.
-                </div>
-
-                <div class="highlight highlight-success">
-                    <strong>Como ler este relatório (guia rápido):</strong> O relatório segue o princípio da "pirâmide invertida".
-                    <ol>
-                        <li><strong>Leia o Diagnóstico Rápido primeiro.</strong> Em menos de 10 segundos, você verá o status da operação (melhorou, piorou, estagnou) e a principal equipe a acionar.</li>
-                        <li><strong>Use os links de ação.</strong> O diagnóstico oferece links diretos para planos de ação pré‑filtrados, permitindo direcionamento imediato e baseado em dados.</li>
-                        <li><strong>Analise os detalhes (se necessário).</strong> Os gráficos e tabelas abaixo sustentam a conclusão e permitem análise mais profunda, se preciso.</li>
-                    </ol>
-                    Use a <strong>Taxa de Resolução</strong> como principal KPI para medir a eficácia das equipes na solução de problemas de causa raiz.
+                
+                <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="rounded-xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                    <h3 class="text-xl font-semibold text-yellow-400">O Que a Ferramenta NÃO Faz</h3>
+                    <p class="mt-3 text-gray-600 dark:text-gray-400">Limites claros do escopo técnico:</p>
+                    <ul class="mt-4 space-y-2 text-gray-700 dark:text-gray-300">
+                        <li><strong class="text-red-400">❌</strong> Não substitui dashboards operacionais: Complementa, não substitui, dashboards do Power BI</li>
+                        <li><strong class="text-red-400">❌</strong> Não implementa automações: Apenas analisa a eficácia das automações existentes</li>
+                        <li><strong class="text-red-400">❌</strong> Não corrige dados ruins: A análise reflete a qualidade dos dados de entrada</li>
+                        <li><strong class="text-red-400">❌</strong> Não é tempo real: Processamento em batch de dados históricos</li>
+                        <li><strong class="text-red-400">❌</strong> Não usa IA/ML: Regras claras e lógicas pré‑definidas</li>
+                    </ul>
                 </div>
             </div>
         </section>
 
-        <section id="fluxo" class="text-secondary">
-            <h2>Fluxo de Dados Simplificado</h2>
-            <div class="card">
-                <div class="flow-diagram">
-                    <div class="flow-step">
-                        <div class="icon">📤</div>
-                        <h4>1. Upload</h4>
-                        <p class="text-secondary">O processo começa com o upload de um arquivo <code>.csv</code> de alertas, um extrato já pré‑refinado de dados. A ferramenta aplica a camada final de análise e inteligência sobre esse conteúdo.</p>
+        <!-- ===== Seção: Resumo Executivo ===== --><section id="resumo-executivo" class="my-16">
+            <!-- MUDANÇA VISUAL: Cor 'yellow-400' (mantida em ambos os modos) --><h2 class="mb-8 text-center text-3xl font-bold text-yellow-400">Resumo Executivo para Gestores</h2>
+            
+            <!-- MUDANÇA VISUAL: Card 'bg-white' (light) e 'bg-gray-900' (dark) --><div class="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                <h3 class="text-center text-2xl font-semibold text-gray-900 dark:text-white">O que você precisa saber em 3 minutos</h3>
+                
+                <div class="mt-8 space-y-4">
+                    <!-- MUDANÇA VISUAL: Blocos de resumo 'bg-gray-50' (light) e 'bg-gray-900' (dark) --><div class="rounded-lg border border-gray-200 bg-gray-50 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                        <strong class="text-lg text-green-600 dark:text-green-400">🎯 O que faz:</strong>
+                        <p class="mt-1 text-gray-700 dark:text-gray-300">Analisa CSVs de alertas do ServiceNow para medir objetivamente se os sistemas de self-healing estão funcionando, identificando falhas ocultas e oportunidades de melhoria.</p>
                     </div>
-                    <div class="flow-step">
-                        <div class="icon">⚙️</div>
-                        <h4>2. Análise e Comparação</h4>
-                        <p class="text-secondary">A camada de serviço orquestra o processo: agrupa alertas em Casos, calcula o score de prioridade e, quando aplicável, compara com o histórico para gerar a análise comparativa.</p>
+
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                        <strong class="text-lg text-blue-600 dark:text-blue-400">📊 O que entrega:</strong>
+                        <ul class="mt-2 list-disc space-y-1 pl-6 text-gray-700 dark:text-gray-300">
+                            <li><strong>Métricas claras:</strong> Percentual de sucesso da automação, tipos de problemas, lista priorizada</li>
+                            <li><strong>Comparação no tempo:</strong> Mostra se está melhorando ou piorando</li>
+                            <li><strong>Planos práticos:</strong> Relatórios por equipe com próximos passos claros</li>
+                            <li><strong>Diagnóstico rápido:</strong> Resumo automático em categorias simples</li>
+                        </ul>
                     </div>
-                    <div class="flow-step">
-                        <div class="icon">📊</div>
-                        <h4>3. Visualização</h4>
-                        <p class="text-secondary">A ferramenta gera relatórios, incluindo dashboards interativos e planos de ação priorizados por equipe, disponíveis na aplicação web.</p>
+
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                        <strong class="text-lg text-yellow-600 dark:text-yellow-400">⚠️ Premissas críticas:</strong>
+                        <ul class="mt-2 list-disc space-y-1 pl-6 text-gray-700 dark:text-gray-300">
+                            <li>CSV deve seguir schema exato (25+ colunas obrigatórias)</li>
+                            <li>Qualidade da análise depende da qualidade dos dados do ServiceNow</li>
+                            <li>Processamento batch (não tempo real)</li>
+                            <li>Regras claras e consistentes (sem IA/ML)</li>
+                        </ul>
+                    </div>
+
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                        <strong class="text-lg text-green-600 dark:text-green-400">🚀 Como usar na prática:</strong>
+                        <ol class="mt-2 list-decimal space-y-1 pl-6 text-gray-700 dark:text-gray-300">
+                            <li><strong>Envie dados regularmente:</strong> Faça upload semanal/mensal do CSV de alertas</li>
+                            <li><strong>Leia o diagnóstico primeiro:</strong> Comece sempre pelo "Diagnóstico Rápido"</li>
+                            <li><strong>Acompanhe a taxa de sucesso:</strong> Busque manter acima de 70%</li>
+                            <li><strong>Siga os planos de ação:</strong> Use os relatórios por equipe para direcionar melhorias</li>
+                        </ol>
+                    </div>
+
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                        <strong class="text-lg text-blue-600 dark:text-blue-400">💡 Valor real:</strong>
+                        <p class="mt-1 text-gray-700 dark:text-gray-300">Substitui achismos por números concretos, permitindo decisões embasadas sobre onde investir em automação e onde existem gaps operacionais.</p>
                     </div>
                 </div>
+            </div>
+        </section>
 
-        <h3>Gerenciamento do histórico</h3>
-        <div class="card highlight highlight-info">
-            <p>Além da geração de relatórios, a aplicação permite gerenciar o histórico. Na página "Histórico de Relatórios", administradores podem excluir análises antigas ou irrelevantes. A funcionalidade é protegida para evitar exclusões acidentais e preservar a integridade do histórico.</p>
+    </main>
+
+    <!-- ===== Footer ===== --><!-- MUDANÇA VISUAL: 'bg-white' (light) e 'bg-black' (dark) --><footer class="mt-16 border-t border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-black">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-gray-500 dark:text-gray-400">&copy; 2025 SmartRemedy. Todos os direitos reservados.</p>
         </div>
-            </div>
-        </section>
+    </footer>
 
-        <section id="limitacoes" class="text-secondary">
-            <h2>Limitações Técnicas e Premissas do Sistema</h2>
+    <!-- ===== JavaScript ===== --><script>
+        document.addEventListener('DOMContentLoaded', function () {
             
-            <h3>Premissas Fundamentais</h3>
-            <div class="card">
-                <p class="text-secondary"><strong>Para funcionar corretamente, o sistema requer:</strong></p>
-                <div class="highlight highlight-info">
-                    <strong>Schema CSV estrito:</strong> 25 colunas obrigatórias com nomes exatos (sys_created_on, assignment_group, short_description, severity, etc.). Dados ausentes ou mal formatados resultam em falha de processamento.
-                </div>
-                <div class="highlight highlight-info">
-                    <strong>Qualidade dos dados de entrada:</strong> A precisão da análise depende diretamente da qualidade dos dados do ServiceNow. Status incorretos de tickets impactam as métricas de sucesso da automação.
-                </div>
-                <div class="highlight highlight-info">
-                    <strong>Consistência temporal:</strong> Comparações entre períodos assumem intervalos cronológicos consecutivos e não sobrepostos.
-                </div>
-            </div>
+            // --- Toggle Menu Mobile ---
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
 
-            <h3>Limitações Técnicas Conhecidas</h3>
-            <div class="card">
-                <p class="text-secondary"><strong>Restrições que afetam o escopo de análise:</strong></p>
-                <ul style="list-style-type: '⚠️'; line-height: 1.8;">
-                    <li>
-                        <strong>Processamento síncrono:</strong><br>
-                        <small style="margin-left: 15px;">Análises complexas podem levar alguns minutos. Não é adequado para tempo real.</small>
-                    </li>
-                    <li>
-                        <strong>Dependência de dados externos:</strong><br>
-                        <small style="margin-left: 15px;">Análise limitada aos dados disponíveis no CSV. Não acessa o ServiceNow diretamente.</small>
-                    </li>
-                    <li>
-                        <strong>Agrupamento inteligente:</strong><br>
-                        <small style="margin-left: 15px;">A lógica de agrupamento pode gerar falsos positivos/negativos quando há inconsistências nos dados de entrada.</small>
-                    </li>
-                    <li>
-                        <strong>Comparação limitada:</strong><br>
-                        <small style="margin-left: 15px;">A análise temporal compara apenas dois períodos por vez. Análises de longo prazo exigem processamento manual.</small>
-                    </li>
-                </ul>
-            </div>
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
 
-            <h3>O Que a Ferramenta NÃO Faz</h3>
-            <div class="card highlight highlight-warning">
-                <p class="text-secondary"><strong>Limites claros do escopo técnico:</strong></p>
-                <ul>
-                    <li><strong>❌ Não substitui dashboards operacionais:</strong> Complementa, não substitui, dashboards do Power BI</li>
-                    <li><strong>❌ Não implementa automações:</strong> Apenas analisa a eficácia das automações existentes</li>
-                    <li><strong>❌ Não corrige dados ruins:</strong> A análise reflete a qualidade dos dados de entrada</li>
-                    <li><strong>❌ Não é tempo real:</strong> Processamento em batch de dados históricos</li>
-                    <li><strong>❌ Não usa IA/ML:</strong> Regras claras e lógicas pré‑definidas</li>
-                </ul>
-            </div>
-        </section>
+            // Fecha o menu mobile ao clicar em um link
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                });
+            });
 
-        <section id="resumo-executivo" class="text-secondary">
-            <h2>Resumo Executivo para Gestores de Infraestrutura</h2>
-            
-            <div class="card">
-                <h3>O que você precisa saber em 3 minutos</h3>
+            // --- Highlight do Link de Navegação Ativo na Rolagem (LÓGICA OTIMIZADA) ---
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNavLinksAll = document.querySelectorAll('.mobile-nav-link'); 
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.4 // 40% da seção deve estar visível
+            };
+
+            let currentActiveId = ''; // Armazena o ID ativo
+
+            const observer = new IntersectionObserver((entries) => {
                 
-                <div class="highlight highlight-success">
-                    <strong>🎯 O que faz:</strong> Analisa CSVs de alertas do ServiceNow para medir objetivamente se os sistemas de self-healing estão funcionando, identificando falhas ocultas e oportunidades de melhoria.
-                </div>
+                // Itera para encontrar o último que está visível
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        currentActiveId = entry.target.getAttribute('id');
+                    }
+                });
 
-                <div class="highlight highlight-info">
-                    <strong>📊 O que entrega:</strong>
-                    <ul>
-                        <li><strong>Métricas claras:</strong> Percentual de sucesso da automação, tipos de problemas, lista priorizada</li>
-                        <li><strong>Comparação no tempo:</strong> Mostra se está melhorando ou piorando</li>
-                        <li><strong>Planos práticos:</strong> Relatórios por equipe com próximos passos claros</li>
-                        <li><strong>Diagnóstico rápido:</strong> Resumo automático em categorias simples</li>
-                    </ul>
-                </div>
+                // Atualiza a classe ativa para todos os links
+                const allLinks = [...navLinks, ...mobileNavLinksAll];
+                allLinks.forEach(link => {
+                    link.classList.remove('nav-link-active');
+                    // Verifica se o href do link termina com o ID (mais robusto)
+                    if (link.getAttribute('href') === `#${currentActiveId}`) {
+                        link.classList.add('nav-link-active');
+                    }
+                });
 
-                <div class="highlight highlight-warning">
-                    <strong>⚠️ Premissas críticas:</strong>
-                    <ul>
-                        <li>CSV deve seguir schema exato (25+ colunas obrigatórias)</li>
-                        <li>Qualidade da análise depende da qualidade dos dados do ServiceNow</li>
-                        <li>Processamento batch (não tempo real)</li>
-                        <li>Regras claras e consistentes (sem IA/ML)</li>
-                    </ul>
-                </div>
+            }, observerOptions);
 
-                <div class="highlight highlight-success">
-                    <strong>🚀 Como usar na prática:</strong>
-                    <ol>
-                        <li><strong>Envie dados regularmente:</strong> Faça upload semanal/mensal do CSV de alertas</li>
-                        <li><strong>Leia o diagnóstico primeiro:</strong> Comece sempre pelo "Diagnóstico Rápido"</li>
-                        <li><strong>Acompanhe a taxa de sucesso:</strong> Busque manter acima de 70%</li>
-                        <li><strong>Siga os planos de ação:</strong> Use os relatórios por equipe para direcionar melhorias</li>
-                    </ol>
-                </div>
+            // Observa todas as seções
+            sections.forEach(section => {
+                observer.observe(section);
+            });
 
-                <div class="highlight highlight-info">
-                    <strong>💡 Valor real:</strong> Substitui achismos por números concretos, permitindo decisões embasadas sobre onde investir em automação e onde existem gaps operacionais.
-                </div>
-            </div>
-        </section>
-    </div>
+
+            // --- LÓGICA DO DARK MODE (NOVO) ---
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const lightIcon = document.getElementById('theme-toggle-light-icon');
+            const darkIcon = document.getElementById('theme-toggle-dark-icon');
+            const htmlElement = document.documentElement;
+
+            // Função para aplicar o tema e atualizar o ícone
+            function setAppTheme(theme) {
+                if (theme === 'dark') {
+                    htmlElement.classList.add('dark');
+                    lightIcon.classList.add('hidden');
+                    darkIcon.classList.remove('hidden');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    htmlElement.classList.remove('dark');
+                    lightIcon.classList.remove('hidden');
+                    darkIcon.classList.add('hidden');
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+
+            // Verifica o tema salvo no localStorage ou a preferência do sistema
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            // Define o tema inicial
+            if (savedTheme) {
+                setAppTheme(savedTheme);
+            } else if (prefersDark) {
+                setAppTheme('dark'); // Padrão do sistema é dark
+            } else {
+                setAppTheme('dark'); // Padrão do site é dark se nada for definido
+            }
+
+            // Adiciona o evento de clique ao botão
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = htmlElement.classList.contains('dark') ? 'dark' : 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                setAppTheme(newTheme);
+            });
+
+        });
+    </script>
+
 </body>
 </html>
