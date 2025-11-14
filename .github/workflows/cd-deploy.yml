@@ -20,19 +20,7 @@ jobs:
       - name: 📦 Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
-      - name: 🐳 Login Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: 🔨 Build image
-        run: |
-          docker build -t "$IMAGE_REPO:${{ github.sha }}" -t "$IMAGE_REPO:latest" .
-
-      - name: 📤 Push image
-        run: |
-          docker push "$IMAGE_REPO:${{ github.sha }}"
-          docker push "$IMAGE_REPO:latest"
-
-      - name: 📌 Define KUBECONFIG (runner já está na VPS)
+      - name:  Define KUBECONFIG (runner já está na VPS)
         run: echo "KUBECONFIG=/root/.kube/config" >> $GITHUB_ENV
 
       - name: 🛠️ Instala kubectl (fallback)
