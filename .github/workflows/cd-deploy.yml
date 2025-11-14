@@ -1,0 +1,67 @@
+name: cd-deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    env:
+      IMAGE_REPO: sevenleo/smart-remedy
+      NAMESPACE: smart-remedy
+      APP_NAME: smart-remedy
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ADMIN_USER: ${{ secrets.ADMIN_USER }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐳 Login Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: 🔨 Build image
+        run: |
+          docker build -t "$IMAGE_REPO:${{ github.sha }}" -t "$IMAGE_REPO:latest" .
+
+      - name: 📤 Push image
+        run: |
+          docker push "$IMAGE_REPO:${{ github.sha }}"
+          docker push "$IMAGE_REPO:latest"
+
+      - name: 📌 Define KUBECONFIG (runner já está na VPS)
+        run: echo "KUBECONFIG=/root/.kube/config" >> $GITHUB_ENV
+
+      - name: 🛠️ Instala kubectl (fallback)
+        run: |
+          command -v kubectl || { curl -sLO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"; chmod +x kubectl && sudo mv kubectl /usr/local/bin/; }
+
+      - name: 🚀 Cria namespace (idempotente)
+        run: |
+          kubectl get ns "$NAMESPACE" 2>/dev/null || kubectl create ns "$NAMESPACE"
+
+      - name: 🔐 (Re)cria secret de runtime (smart-remedy-secrets)
+        run: |
+          kubectl -n "$NAMESPACE" delete secret smart-remedy-secrets 2>/dev/null || true
+          CMD=(kubectl -n "$NAMESPACE" create secret generic smart-remedy-secrets \
+            --from-literal=SECRET_KEY="$SECRET_KEY" \
+            --from-literal=DATABASE_URL="$DATABASE_URL")
+          if [[ -n "$ADMIN_USER" ]]; then
+            CMD+=(--from-literal=ADMIN_USER="$ADMIN_USER")
+          fi
+          if [[ -n "$ADMIN_PASSWORD" ]]; then
+            CMD+=(--from-literal=ADMIN_PASSWORD="$ADMIN_PASSWORD")
+          fi
+          "${CMD[@]}"
+
+      - name: 📄 Aplica manifest stateless
+        run: |
+          sed "s#__IMAGE__#$IMAGE_REPO:${{ github.sha }}#g" kubernetes/stateless/app-deployment.yaml | kubectl apply -f -
+
+      - name: 🔎 Status pós-deploy
+        run: |
+          kubectl -n "$NAMESPACE" get deploy,po,svc,ingress
+          kubectl -n "$NAMESPACE" rollout status deploy "$APP_NAME" --timeout=120s || true
