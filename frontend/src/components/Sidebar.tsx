@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   PieChart,
@@ -88,6 +88,38 @@ const Sidebar: React.FC = () => {
   const { reportUrls, setReportUrls } = useDashboard();
   const navigate = useNavigate();
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState<string | null>(
+    (import.meta.env.VITE_APP_VERSION || "").trim() || null,
+  );
+
+  useEffect(() => {
+    if (appVersion) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchVersion = async () => {
+      try {
+        const response = await fetch("/health", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+        const payload = await response.json();
+        if (isMounted && payload?.version) {
+          setAppVersion(String(payload.version));
+        }
+      } catch (error) {
+        console.warn("Não foi possível obter a versão da API:", error);
+      }
+    };
+
+    fetchVersion();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [appVersion]);
 
   const handleLogout = () => {
     logout();
@@ -144,6 +176,9 @@ const Sidebar: React.FC = () => {
             description="Navegue e teste os endpoints (Swagger)."
             color="#38bdf8"
           />
+          {appVersion && (
+            <div className="sidebar-version-label">v{appVersion}</div>
+          )}
         </div>
 
         <div className="sidebar-footer">
@@ -169,9 +204,6 @@ const Sidebar: React.FC = () => {
             </div>
           </button>
           <ThemeToggle />
-          <div className="sidebar-version">
-            v{import.meta.env.VITE_APP_VERSION}
-          </div>
         </div>
       </aside>
       <FeedbackModal

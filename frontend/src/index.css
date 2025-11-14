@@ -86,19 +86,20 @@ body {
   transition: all 0.3s ease-in-out;
 }
 
-.app-footer {
-  margin-top: auto;
-  padding: 12px 20px;
+
+.sidebar-version-label {
+  margin: 10px 0 0;
   font-size: 0.85rem;
+  text-align: center;
   color: rgba(224, 224, 224, 0.7);
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 
-body.light-mode .app-footer {
+body.light-mode .sidebar-version-label {
   color: rgba(74, 74, 74, 0.75);
+}
+
+.layout-wrapper.sidebar-collapsed .sidebar-version-label {
+  font-size: 0.75rem;
 }
 
 .sidebar-column {
@@ -297,10 +298,6 @@ button.side-card {
 
 .layout-wrapper.sidebar-collapsed .sidebar-footer {
   align-items: center;
-}
-
-.layout-wrapper.sidebar-collapsed .sidebar-version {
-  display: none;
 }
 
 /* --- ESTILOS DO DASHBOARD DE KPI (ATUALIZADOS) --- */
