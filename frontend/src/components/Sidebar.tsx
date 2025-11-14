@@ -93,10 +93,6 @@ const Sidebar: React.FC = () => {
   );
 
   useEffect(() => {
-    if (appVersion) {
-      return;
-    }
-
     let isMounted = true;
 
     const fetchVersion = async () => {
@@ -119,7 +115,7 @@ const Sidebar: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [appVersion]);
+  }, []);
 
   const handleLogout = () => {
     logout();
