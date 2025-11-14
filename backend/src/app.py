@@ -19,6 +19,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import db
 from .github_app import provider as github_app_provider
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 
 def create_app(test_config=None):
@@ -169,18 +171,51 @@ def create_app(test_config=None):
 
     # --- ROTAS DA APLICAÇÃO ---
 
+    def _collect_readiness_checks():
+        checks = {"database": False}
+        status_code = 200
+        try:
+            db.session.execute(text("SELECT 1"))
+            checks["database"] = True
+        except SQLAlchemyError:
+            status_code = 503
+            app.logger.exception("Database readiness check failed")
+            db.session.rollback()
+        finally:
+            db.session.close()
+        return checks, status_code
+
+    @app.route("/health/live")
+    def health_live():
+        """Endpoint simples para verificação de liveness."""
+        payload = {
+            "status": "alive",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        return jsonify(payload), 200
+
+    @app.route("/health/ready")
+    def health_ready():
+        """Endpoint de readiness que valida dependências críticas."""
+        checks, status_code = _collect_readiness_checks()
+        payload = {
+            "status": "ok" if status_code == 200 else "degraded",
+            "checks": checks,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        return jsonify(payload), status_code
+
     @app.route("/health")
     def health_check():
-        """
-        Verifica a saúde da aplicação.
-        ---
-        tags:
-          - Health
-        responses:
-          200:
-            description: A aplicação está funcionando.
-        """
-        return jsonify({"status": "ok"}), 200
+        """Mantém o endpoint legado agregando os resultados de readiness."""
+        checks, status_code = _collect_readiness_checks()
+        payload = {
+            "status": "ok" if status_code == 200 else "degraded",
+            "alive": True,
+            "checks": checks,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        return jsonify(payload), status_code
 
     @app.route("/api/v1/dashboard-summary")
     def get_dashboard_summary():
