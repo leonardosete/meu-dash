@@ -20,6 +20,11 @@ jobs:
       - name: 📦 Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
+      - name: 🔍 Validar segredos obrigatórios
+        run: |
+          [[ -n "$SECRET_KEY" && "$SECRET_KEY" != "None" ]] || { echo "SECRET_KEY ausente ou inválido nos segredos do repositório"; exit 1; }
+          [[ -n "$DATABASE_URL" && "$DATABASE_URL" != "None" ]] || { echo "DATABASE_URL ausente ou inválido nos segredos do repositório"; exit 1; }
+
       - name:  Define KUBECONFIG (runner já está na VPS)
         run: echo "KUBECONFIG=/root/.kube/config" >> $GITHUB_ENV
 
