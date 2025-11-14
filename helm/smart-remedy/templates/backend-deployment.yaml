@@ -23,13 +23,48 @@ spec:
         app.kubernetes.io/version: {{ .Values.app.version | quote }}
     spec:
       automountServiceAccountToken: false
+{{- if .Values.backend.migration.enabled }}
+      initContainers:
+        - name: db-migrator
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              set -e;
+              ATTEMPTS={{ .Values.backend.migration.maxAttempts }};
+              for i in $(seq 1 ${ATTEMPTS}); do
+                echo "[migrate] Tentativa ${i}/${ATTEMPTS}: flask db upgrade";
+                if flask db upgrade; then
+                  echo "[migrate] Sucesso";
+                  exit 0;
+                fi;
+                echo "[migrate] Aguardando {{ .Values.backend.migration.sleepSeconds }}s antes de tentar novamente...";
+                sleep {{ .Values.backend.migration.sleepSeconds }};
+              done;
+              echo "[migrate] Falhou após múltiplas tentativas";
+              exit 1;
+          env:
+            - name: FLASK_APP
+              value: {{ .Values.backend.flaskApp | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.backend.secretName }}
+          resources:
+            requests:
+              cpu: {{ .Values.backend.migration.resources.requests.cpu }}
+              memory: {{ .Values.backend.migration.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.backend.migration.resources.limits.cpu }}
+              memory: {{ .Values.backend.migration.resources.limits.memory }}
+{{- end }}
       containers:
         - name: api
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: FLASK_APP
-              value: "src.app:create_app()"
+              value: {{ .Values.backend.flaskApp | quote }}
             - name: APP_VERSION
               value: {{ .Values.app.version | quote }}
           envFrom:

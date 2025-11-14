@@ -13,6 +13,7 @@ backend:
   labels:
     app: smart-remedy-api
   secretName: smart-remedy-secrets
+  flaskApp: "src.app:create_app()"
   service:
     name: smart-remedy-api
     port: 5000
@@ -27,6 +28,17 @@ backend:
       memory: "768Mi"
       ephemeralStorage: "1Gi"
   replicaCount: 1
+  migration:
+    enabled: true
+    maxAttempts: 20
+    sleepSeconds: 3
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
 
 frontend:
   createNamespace: false
