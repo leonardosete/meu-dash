@@ -10,6 +10,41 @@ import {
 
 export const API_BASE_URL = "";
 
+const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
+
+const ensureLeadingSlash = (path: string) =>
+  path.startsWith("/") ? path : `/${path}`;
+
+export const resolveApiUrl = (path: string): string => {
+  if (!path) {
+    return path;
+  }
+
+  if (ABSOLUTE_URL_REGEX.test(path)) {
+    return path;
+  }
+
+  const normalizedPath = ensureLeadingSlash(path);
+
+  if (API_BASE_URL) {
+    return new URL(normalizedPath, API_BASE_URL).toString();
+  }
+
+  const globalLocation = (globalThis as typeof globalThis & {
+    location?: Location;
+  }).location;
+
+  if (globalLocation?.origin) {
+    return new URL(normalizedPath, globalLocation.origin).toString();
+  }
+
+  const fallbackBase =
+    (import.meta.env?.VITE_TEST_BASE_URL as string | undefined) ||
+    "http://localhost";
+
+  return new URL(normalizedPath, fallbackBase).toString();
+};
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -31,9 +66,9 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    if (error.response?.status === 401) {
       localStorage.removeItem("meu_dash_auth_token");
-      window.dispatchEvent(new Event("auth-error"));
+      globalThis.dispatchEvent?.(new Event("auth-error"));
     }
     throw error;
   },

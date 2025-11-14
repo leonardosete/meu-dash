@@ -21,6 +21,13 @@ class Report(db.Model):
     report_path = db.Column(db.String(512), nullable=False, unique=True)
     json_summary_path = db.Column(db.String(512), nullable=False, unique=True)
     date_range = db.Column(db.String(100), nullable=True)
+    bundle = db.relationship(
+        "ReportBundle",
+        back_populates="report",
+        uselist=False,
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
 
     # Relacionamento em cascata: ao excluir um Report, as TrendAnalysis associadas são excluídas.
     trend_analyses_as_previous = db.relationship(
@@ -53,3 +60,25 @@ class TrendAnalysis(db.Model):
         db.Integer, db.ForeignKey("report.id"), nullable=False, unique=True
     )
     trend_report_path = db.Column(db.String(512), nullable=False, unique=True)
+
+
+class ReportBundle(db.Model):
+    """Armazena os artefatos gerados para um relatório em formato compactado."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    report_id = db.Column(
+        db.Integer,
+        db.ForeignKey("report.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    run_folder = db.Column(db.String(255), unique=True, nullable=False)
+    bundle = db.Column(db.LargeBinary, nullable=False)
+    created_at = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+    report = db.relationship(
+        "Report",
+        back_populates="bundle",
+        uselist=False,
+    )

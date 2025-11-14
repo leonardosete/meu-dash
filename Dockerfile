@@ -3,6 +3,9 @@
 # --- Estágio 1: Build do Frontend ---
 FROM node:20-alpine AS frontend-builder
 
+ARG APP_VERSION=dev
+ENV VITE_APP_VERSION="${APP_VERSION}"
+
 WORKDIR /app/frontend
 
 COPY frontend/package*.json ./
@@ -14,6 +17,9 @@ RUN npm run build
 
 # --- Estágio 2: Aplicação Final (Python Backend + Frontend Assets) ---
 FROM python:3.14-alpine
+
+ARG APP_VERSION=dev
+ENV APP_VERSION="${APP_VERSION}"
 
 WORKDIR /app
 

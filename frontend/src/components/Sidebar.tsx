@@ -9,7 +9,7 @@ import {
   FilePlus2,
   MessageSquare,
 } from "lucide-react";
-import { API_BASE_URL } from "../services/api";
+import { resolveApiUrl } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
 import { useDashboard } from "../hooks/useDashboard";
 import ThemeToggle from "./ThemeToggle";
@@ -58,11 +58,7 @@ const SideCard: React.FC<SideCardProps> = ({
   }
 
   if (isExternal) {
-    const externalUrl = to
-      ? API_BASE_URL
-        ? new URL(to, API_BASE_URL).href
-        : to
-      : "#";
+    const externalUrl = to ? resolveApiUrl(to) : "#";
     return (
       <a
         href={externalUrl}
@@ -88,16 +84,16 @@ const Sidebar: React.FC = () => {
   const { reportUrls, setReportUrls } = useDashboard();
   const navigate = useNavigate();
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
-  const [appVersion, setAppVersion] = useState<string | null>(
-    (import.meta.env.VITE_APP_VERSION || "").trim() || null,
-  );
+  const [appVersion, setAppVersion] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchVersion = async () => {
       try {
-        const response = await fetch("/health", { cache: "no-store" });
+        const response = await fetch(resolveApiUrl("/health"), {
+          cache: "no-store",
+        });
         if (!response.ok) {
           return;
         }

@@ -8,6 +8,7 @@ import App from "./App";
 // para garantir que os componentes que dependem delas não quebrem.
 vi.mock("./services/api", () => ({
   API_BASE_URL: "", // Fornece a constante que estava faltando
+  resolveApiUrl: (path: string) => path,
   getDashboardSummary: vi.fn(() =>
     Promise.resolve({
       kpi_summary: null,

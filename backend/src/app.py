@@ -238,7 +238,9 @@ def create_app(test_config=None):
             description: Resumo dos dados do dashboard retornado com sucesso.
         """
         summary_data = services.get_dashboard_summary_data(
-            db=db, Report=models.Report, TrendAnalysis=models.TrendAnalysis
+            models.Report,
+            models.TrendAnalysis,
+            app.config["REPORTS_FOLDER"],
         )
         latest_files = summary_data.get("latest_report_files")
         if latest_files:
@@ -300,8 +302,8 @@ def create_app(test_config=None):
                 upload_folder=app.config["UPLOAD_FOLDER"],
                 reports_folder=app.config["REPORTS_FOLDER"],
                 db=db,
-                Report=models.Report,
-                TrendAnalysis=models.TrendAnalysis,
+                report_model=models.Report,
+                trend_model=models.TrendAnalysis,
             )
             if result and result.get("warning"):
                 return jsonify({"error": result["warning"]}), 400
@@ -396,10 +398,25 @@ def create_app(test_config=None):
             return jsonify({"error": f"Erro inesperado: {str(e)}"}), 500
 
     def secure_send_from_directory(base_directory, path):
-        requested_path = os.path.normpath(os.path.join(base_directory, path))
+        normalized_relative = os.path.normpath(path)
+        if normalized_relative.startswith(".."):
+            abort(404)
+
+        path_parts = normalized_relative.split(os.sep)
+        run_folder = path_parts[0] if path_parts else None
+        if run_folder and not services.ensure_run_folder_available(
+            run_folder, base_directory
+        ):
+            abort(404)
+
+        requested_path = os.path.normpath(
+            os.path.join(base_directory, normalized_relative)
+        )
         if not requested_path.startswith(os.path.abspath(base_directory)):
             abort(404)
-        return send_from_directory(base_directory, path)
+        if not os.path.exists(requested_path):
+            abort(404)
+        return send_from_directory(base_directory, normalized_relative)
 
     @app.route("/reports/<run_folder>/planos_de_acao/<filename>")
     def serve_planos(run_folder, filename):
@@ -464,7 +481,7 @@ def create_app(test_config=None):
         """
         try:
             success = services.delete_report_and_artifacts(
-                report_id=report_id, db=db, Report=models.Report
+                report_id=report_id, db=db, report_model=models.Report
             )
             if success:
                 return jsonify({"success": True}), 200

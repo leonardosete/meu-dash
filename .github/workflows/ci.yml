@@ -51,6 +51,13 @@ jobs:
         with:
           fetch-depth: 0 # Realiza um clone completo, essencial para a resolução de caminhos
 
+      - name: Read application version
+        id: app_version
+        run: |
+          VERSION_VALUE=$(cat VERSION)
+          echo "value=$VERSION_VALUE" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$VERSION_VALUE" >> $GITHUB_ENV
+
       # 2. Configuração dos Ambientes (Python e Node.js)
       - name: Set up Python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # Pinned to a specific commit
@@ -136,6 +143,9 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/smart-remedy:${{ steps.app_version.outputs.value }}
+          build-args: |
+            APP_VERSION=${{ steps.app_version.outputs.value }}
 
       - name: Trigger cd-deploy workflow
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_cd == 'true' }}

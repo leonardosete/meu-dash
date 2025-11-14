@@ -2,9 +2,11 @@
 Módulo de Serviço para encapsular a lógica de negócio principal da aplicação.
 """
 
+import io
 import json
-import shutil
 import os
+import shutil
+import zipfile
 from datetime import datetime
 import logging
 from werkzeug.utils import secure_filename
@@ -19,6 +21,7 @@ from .analise_tendencia import (
 )
 from .get_date_range import get_date_range_from_file
 from . import context_builder, gerador_paginas
+from .models import ReportBundle
 from .constants import (
     MAX_REPORTS_HISTORY,
     ACAO_FLAGS_ATUACAO,
@@ -29,8 +32,10 @@ from .constants import (
 
 logger = logging.getLogger(__name__)
 
+ACTION_PLAN_FILENAME = "atuar.html"
 
-def _enforce_report_limit(db, Report):
+
+def _enforce_report_limit(db, report_model):
     """
     Garante que o número de relatórios no banco de dados não exceda o limite.
 
@@ -39,7 +44,7 @@ def _enforce_report_limit(db, Report):
     performática e controlar o uso de disco.
     """
     try:
-        total_reports = Report.query.count()
+        total_reports = report_model.query.count()
         reports_to_delete_count = total_reports - MAX_REPORTS_HISTORY
 
         if reports_to_delete_count > 0:
@@ -50,7 +55,7 @@ def _enforce_report_limit(db, Report):
 
             # Encontra os relatórios mais antigos para excluir, ordenando por timestamp
             oldest_reports = (
-                Report.query.order_by(Report.timestamp.asc())
+                report_model.query.order_by(report_model.timestamp.asc())
                 .limit(reports_to_delete_count)
                 .all()
             )
@@ -69,6 +74,57 @@ def _enforce_report_limit(db, Report):
     except Exception as e:
         logger.error(f"Erro ao tentar aplicar o limite de histórico: {e}")
         db.session.rollback()
+
+
+def _zip_directory(source_dir: str) -> bytes:
+    """Compacta o conteúdo de um diretório e retorna os bytes do arquivo ZIP."""
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(source_dir):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                arcname = os.path.relpath(file_path, source_dir)
+                zipf.write(file_path, arcname)
+    buffer.seek(0)
+    return buffer.read()
+
+
+def _extract_bundle_to_directory(bundle_bytes: bytes, destination_dir: str) -> None:
+    """Extrai um arquivo ZIP armazenado em memória para o diretório de destino."""
+
+    with zipfile.ZipFile(io.BytesIO(bundle_bytes)) as zipf:
+        for member in zipf.infolist():
+            extracted_path = os.path.join(destination_dir, member.filename)
+            if member.is_dir():
+                os.makedirs(extracted_path, exist_ok=True)
+                continue
+            os.makedirs(os.path.dirname(extracted_path), exist_ok=True)
+            with zipf.open(member, "r") as src, open(extracted_path, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+
+
+def ensure_run_folder_available(run_folder: str, reports_folder: str) -> bool:
+    """Garante que os artefatos de um relatório estejam disponíveis no filesystem."""
+
+    run_folder_path = os.path.join(reports_folder, run_folder)
+    if os.path.exists(run_folder_path):
+        return True
+
+    bundle = ReportBundle.query.filter_by(run_folder=run_folder).first()
+    if not bundle:
+        logger.warning(
+            "Bundle não encontrado para o diretório de execução '%s'.", run_folder
+        )
+        return False
+
+    os.makedirs(run_folder_path, exist_ok=True)
+    _extract_bundle_to_directory(bundle.bundle, run_folder_path)
+    logger.info(
+        "Artefatos do relatório restaurados a partir do bundle para '%s'.",
+        run_folder_path,
+    )
+    return True
 
 
 def calculate_kpi_summary(report_path: str) -> dict | None:
@@ -148,56 +204,53 @@ def calculate_kpi_summary(report_path: str) -> dict | None:
         return None
 
 
-def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
-    """
-    Busca e consolida todos os dados necessários para o dashboard principal.
+def get_dashboard_summary_data(report_model, trend_model, reports_folder: str) -> dict:
+    """Monta os dados necessários para o dashboard principal."""
 
-    Esta função é chamada pelo endpoint da API e encapsula a lógica de negócio
-    de buscar o último relatório, calcular KPIs, verificar o plano de ação e
-    obter o histórico de tendências.
-
-    Args:
-        db: Instância do SQLAlchemy.
-        Report: Modelo Report.
-        TrendAnalysis: Modelo TrendAnalysis.
-
-    Returns:
-        Um dicionário contendo os dados brutos para o dashboard.
-    """
     kpi_summary = None
-    latest_report_files = None
+    latest_report_files: dict | None = None
     quick_diagnosis_html = None
     latest_report_date_range = None
 
-    last_report = Report.query.order_by(Report.timestamp.desc()).first()
+    last_report = report_model.query.order_by(report_model.timestamp.desc()).first()
     if last_report:
         latest_report_date_range = last_report.date_range
-        run_folder_path = os.path.dirname(last_report.report_path)
-        run_folder_name = os.path.basename(run_folder_path)
+        run_folder_name = os.path.basename(os.path.dirname(last_report.report_path))
 
-        # Calcula os KPIs do último relatório
-        if last_report.json_summary_path and os.path.exists(
-            last_report.json_summary_path
-        ):
-            kpi_summary = calculate_kpi_summary(last_report.json_summary_path)
+        if ensure_run_folder_available(run_folder_name, reports_folder):
+            run_folder_path = os.path.join(reports_folder, run_folder_name)
+            summary_filename = os.path.basename(last_report.report_path)
+            json_summary_filename = os.path.basename(last_report.json_summary_path)
 
-        # Prepara os nomes dos arquivos do último relatório para a API construir as URLs
-        latest_report_files = {
-            "run_folder": run_folder_name,
-            "summary": os.path.basename(last_report.report_path),
-        }
-        action_plan_path = os.path.join(run_folder_path, "atuar.html")
-        if os.path.exists(action_plan_path):
-            latest_report_files["action_plan"] = "atuar.html"
+            json_summary_full_path = os.path.join(
+                run_folder_path, json_summary_filename
+            )
+            if os.path.exists(json_summary_full_path):
+                kpi_summary = calculate_kpi_summary(json_summary_full_path)
 
-    # Busca o histórico de tendências separadamente
+            latest_report_files = {
+                "run_folder": run_folder_name,
+                "summary": summary_filename,
+            }
+
+            action_plan_path = os.path.join(run_folder_path, ACTION_PLAN_FILENAME)
+            if os.path.exists(action_plan_path):
+                latest_report_files["action_plan"] = ACTION_PLAN_FILENAME
+        else:
+            logger.warning(
+                "Não foi possível restaurar os artefatos do relatório '%s'.",
+                run_folder_name,
+            )
+
     trend_history = []
     trend_analyses = (
-        TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).limit(60).all()
+        trend_model.query.order_by(trend_model.timestamp.desc()).limit(60).all()
     )
-    for i, analysis in enumerate(trend_analyses):
+    for index, analysis in enumerate(trend_analyses):
         try:
             run_folder = os.path.basename(os.path.dirname(analysis.trend_report_path))
+            ensure_run_folder_available(run_folder, reports_folder)
+
             filename = os.path.basename(analysis.trend_report_path)
             trend_info = {
                 "run_folder": run_folder,
@@ -205,62 +258,86 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
                 "date": analysis.timestamp,
             }
             trend_history.append(trend_info)
-            # Se for a análise de tendência mais recente, adiciona ao `latest_report_files`
-            if i == 0 and latest_report_files:
+
+            if index == 0 and latest_report_files:
                 latest_report_files["trend_run_folder"] = run_folder
                 latest_report_files["trend"] = filename
-        except Exception as e:
+        except Exception as exc:  # pragma: no cover - logging defensivo
             logger.warning(
-                f"Erro ao processar histórico de tendência para o relatório {analysis.id}: {e}"
+                "Erro ao processar histórico de tendência %s: %s",
+                analysis.id,
+                exc,
             )
-            continue
 
-    # Se houver um relatório de tendência, tenta recriar o diagnóstico rápido
     if latest_report_files and latest_report_files.get("trend"):
-        latest_trend_analysis = TrendAnalysis.query.order_by(
-            TrendAnalysis.timestamp.desc()
+        latest_trend_analysis = trend_model.query.order_by(
+            trend_model.timestamp.desc()
         ).first()
         if latest_trend_analysis:
             prev_report = latest_trend_analysis.previous_report
             curr_report = latest_trend_analysis.current_report
-            if (
-                prev_report
-                and curr_report
-                and os.path.exists(prev_report.json_summary_path)
-                and os.path.exists(curr_report.json_summary_path)
-            ):
-                df_p1 = load_summary_from_json(prev_report.json_summary_path)
-                df_p2 = load_summary_from_json(curr_report.json_summary_path)
 
-                if df_p1 is not None and df_p2 is not None:
-                    df_p1_atuacao = df_p1[
-                        df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)
-                    ].copy()
-                    df_p2_atuacao = df_p2[
-                        df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)
-                    ].copy()
+            if prev_report and curr_report:
+                prev_run_folder = os.path.basename(
+                    os.path.dirname(prev_report.report_path)
+                )
+                curr_run_folder = os.path.basename(
+                    os.path.dirname(curr_report.report_path)
+                )
 
-                    kpis, merged_df = calculate_kpis_and_merged_df(
-                        df_p1_atuacao, df_p2_atuacao
+                prev_available = ensure_run_folder_available(
+                    prev_run_folder, reports_folder
+                )
+                curr_available = ensure_run_folder_available(
+                    curr_run_folder, reports_folder
+                )
+
+                if prev_available and curr_available:
+                    prev_json_path = os.path.join(
+                        reports_folder,
+                        prev_run_folder,
+                        os.path.basename(prev_report.json_summary_path),
                     )
-                    trend_data = prepare_trend_dataframes(
-                        merged_df, df_p1_atuacao, df_p2_atuacao
+                    curr_json_path = os.path.join(
+                        reports_folder,
+                        curr_run_folder,
+                        os.path.basename(curr_report.json_summary_path),
                     )
 
-                    current_run_folder = os.path.basename(
-                        os.path.dirname(curr_report.report_path)
-                    )
-                    # CORREÇÃO: Usa a variável de ambiente FRONTEND_BASE_URL para os links internos.
-                    base_url = os.getenv("FRONTEND_BASE_URL", "/")
+                    if os.path.exists(prev_json_path) and os.path.exists(
+                        curr_json_path
+                    ):
+                        df_p1 = load_summary_from_json(prev_json_path)
+                        df_p2 = load_summary_from_json(curr_json_path)
 
-                    quick_diagnosis_html = generate_executive_summary_html(
-                        kpis,
-                        trend_data["persistent_squads_summary"],
-                        trend_data["new_cases"],
-                        is_direct_comparison=False,
-                        run_folder=current_run_folder,
-                        base_url=base_url,
-                    )
+                        if df_p1 is not None and df_p2 is not None:
+                            df_p1_atuacao = df_p1[
+                                df_p1["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)
+                            ].copy()
+                            df_p2_atuacao = df_p2[
+                                df_p2["acao_sugerida"].isin(ACAO_FLAGS_ATUACAO)
+                            ].copy()
+
+                            kpis, merged_df = calculate_kpis_and_merged_df(
+                                df_p1_atuacao, df_p2_atuacao
+                            )
+                            trend_data = prepare_trend_dataframes(
+                                merged_df, df_p1_atuacao, df_p2_atuacao
+                            )
+
+                            current_run_folder = os.path.basename(
+                                os.path.dirname(curr_report.report_path)
+                            )
+                            base_url = os.getenv("FRONTEND_BASE_URL", "/")
+
+                            quick_diagnosis_html = generate_executive_summary_html(
+                                kpis,
+                                trend_data["persistent_squads_summary"],
+                                trend_data["new_cases"],
+                                is_direct_comparison=False,
+                                run_folder=current_run_folder,
+                                base_url=base_url,
+                            )
 
     return {
         "kpi_summary": kpi_summary,
@@ -271,14 +348,14 @@ def get_dashboard_summary_data(db, Report, TrendAnalysis) -> dict:
     }
 
 
-def get_unified_history_list(Report, TrendAnalysis) -> list:
+def get_unified_history_list(report_model, trend_model) -> list:
     """
     Busca e retorna uma lista unificada de todos os relatórios e análises de tendência.
     """
     history_items = []
 
     # 1. Busca relatórios de Análise Padrão
-    reports = Report.query.order_by(Report.timestamp.desc()).all()
+    reports = report_model.query.order_by(report_model.timestamp.desc()).all()
     for report in reports:
         try:
             history_items.append(
@@ -296,7 +373,7 @@ def get_unified_history_list(Report, TrendAnalysis) -> list:
             logger.warning(f"Erro ao processar relatório padrão {report.id}: {e}")
 
     # 2. Busca relatórios de Análise Comparativa (Tendência)
-    analyses = TrendAnalysis.query.order_by(TrendAnalysis.timestamp.desc()).all()
+    analyses = trend_model.query.order_by(trend_model.timestamp.desc()).all()
     for analysis in analyses:
         try:
             # Constrói um nome descritivo para a análise de tendência
@@ -339,19 +416,19 @@ def get_unified_history_list(Report, TrendAnalysis) -> list:
     return history_items
 
 
-def delete_report_and_artifacts(report_id: int, db, Report) -> bool:
+def delete_report_and_artifacts(report_id: int, db, report_model) -> bool:
     """
     Exclui um relatório e todos os seus artefatos associados (arquivos e registro no DB).
 
     Args:
-        report_id (int): O ID do relatório a ser excluído.
-        db (SQLAlchemy): A instância do banco de dados.
-        Report (Model): A classe do modelo Report.
+    report_id (int): O ID do relatório a ser excluído.
+    db (SQLAlchemy): A instância do banco de dados.
+    report_model (Model): A classe do modelo Report.
 
     Returns:
         bool: True se a exclusão for bem-sucedida, False caso contrário.
     """
-    report = db.session.get(Report, report_id)
+    report = db.session.get(report_model, report_id)
     if not report:
         logger.warning(
             f"Tentativa de excluir relatório inexistente com ID: {report_id}"
@@ -385,8 +462,9 @@ def process_upload_and_generate_reports(
     upload_folder: str,
     reports_folder: str,
     db,
-    Report,
-    TrendAnalysis,
+    report_model=None,
+    trend_model=None,
+    **legacy_models,
 ):
     """Orquestra o fluxo completo de processamento para um único arquivo de upload.
 
@@ -409,14 +487,26 @@ def process_upload_and_generate_reports(
         reports_folder (str): O caminho absoluto para a pasta onde os relatórios
             serão salvos.
         db (flask_sqlalchemy.SQLAlchemy): A instância do banco de dados SQLAlchemy.
-        Report (db.Model): A classe do modelo `Report` para interagir com o banco.
-        TrendAnalysis (db.Model): A classe do modelo `TrendAnalysis`.
+        report_model (db.Model, opcional): Classe do modelo `Report` utilizada para persistência.
+        trend_model (db.Model, opcional): Classe do modelo `TrendAnalysis` utilizada para persistência.
+        legacy_models: parâmetros legados (`Report` e `TrendAnalysis`) aceitos para
+            compatibilidade retroativa com chamadas antigas.
 
     Returns:
         dict | None: Um dicionário contendo `run_folder` e `report_filename` para
         construir a URL de redirecionamento em caso de sucesso. Retorna `None` se
         ocorrer uma falha no processo.
     """
+    report_model = report_model or legacy_models.pop("Report", None)
+    trend_model = trend_model or legacy_models.pop("TrendAnalysis", None)
+
+    if legacy_models:
+        unexpected = ", ".join(sorted(legacy_models.keys()))
+        raise TypeError(f"Argumentos inesperados: {unexpected}")
+
+    if report_model is None or trend_model is None:
+        raise ValueError("Modelos Report/TrendAnalysis não fornecidos.")
+
     # 1. Salvar arquivo, preparar ambiente e executar a análise completa UMA VEZ
     os.makedirs(upload_folder, exist_ok=True)
     filename_recente = secure_filename(file_recente.filename)
@@ -441,8 +531,8 @@ def process_upload_and_generate_reports(
     # 2. Análise Comparativa (se aplicável)
     # LÓGICA REVISADA: Busca o relatório correto para comparação.
     # Prioriza o último relatório que foi 'current' em uma análise de tendência.
-    last_trend_analysis_obj = TrendAnalysis.query.order_by(
-        TrendAnalysis.timestamp.desc()
+    last_trend_analysis_obj = trend_model.query.order_by(
+        trend_model.timestamp.desc()
     ).first()
     previous_report_for_trend = None
 
@@ -454,8 +544,8 @@ def process_upload_and_generate_reports(
         )
     else:
         # Se não há tendências, usa o último relatório geral como base (para a primeira tendência).
-        previous_report_for_trend = Report.query.order_by(
-            Report.timestamp.desc()
+        previous_report_for_trend = report_model.query.order_by(
+            report_model.timestamp.desc()
         ).first()
         if previous_report_for_trend:
             logger.info(
@@ -510,7 +600,7 @@ def process_upload_and_generate_reports(
             logger.info(f"Relatório de tendência gerado em: {output_trend_path}")
 
             # Prepara o objeto TrendAnalysis para ser salvo depois
-            new_trend_analysis = TrendAnalysis(
+            new_trend_analysis = trend_model(
                 trend_report_path=output_trend_path,
                 previous_report_id=previous_report_for_trend.id,
             )
@@ -547,12 +637,16 @@ def process_upload_and_generate_reports(
         frontend_url=frontend_url,
     )
 
-    # 5. Salvar registro no banco de dados
-    new_report = Report(
+    # 5. Compacta os artefatos gerados para armazenamento persistente
+    bundle_bytes = _zip_directory(output_dir)
+    report_bundle = ReportBundle(run_folder=run_folder_name, bundle=bundle_bytes)
+    # 6. Salvar registro no banco de dados
+    new_report = report_model(
         original_filename=filename_recente,
         report_path=summary_html_path,
         json_summary_path=analysis_results["json_path"],
         date_range=date_range_recente,
+        bundle=report_bundle,
     )
     db.session.add(new_report)
 
@@ -564,13 +658,15 @@ def process_upload_and_generate_reports(
 
     db.session.commit()
 
-    # 6. Aplicar política de retenção de histórico
-    _enforce_report_limit(db, Report)
+    # 7. Aplicar política de retenção de histórico
+    _enforce_report_limit(db, report_model)
 
-    # 7. Retornar resultado
+    # 8. Retornar resultado
     # Verifica a existência dos arquivos opcionais antes de incluir no retorno
     action_plan_filename = (
-        "atuar.html" if os.path.exists(os.path.join(output_dir, "atuar.html")) else None
+        ACTION_PLAN_FILENAME
+        if os.path.exists(os.path.join(output_dir, ACTION_PLAN_FILENAME))
+        else None
     )
 
     return {
