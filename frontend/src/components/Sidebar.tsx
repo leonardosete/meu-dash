@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   PieChart,
@@ -8,6 +8,7 @@ import {
   LogOut,
   FilePlus2,
   MessageSquare,
+  Info,
 } from "lucide-react";
 import { resolveApiUrl } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
@@ -85,30 +86,44 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [appVersion, setAppVersion] = useState<string | null>(null);
+  const [versionStatus, setVersionStatus] = useState<"idle" | "loading" | "loaded" | "error">("idle");
+  const [showVersionPopover, setShowVersionPopover] = useState(false);
+  let versionLabel = "Indisponível";
+  if (versionStatus === "loading") {
+    versionLabel = "Carregando...";
+  } else if (appVersion) {
+    versionLabel = `v${appVersion}`;
+  }
+
+  const fetchVersion = useCallback(async () => {
+    setVersionStatus("loading");
+    try {
+      const response = await fetch(resolveApiUrl("/health"), {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        setVersionStatus("error");
+        return;
+      }
+      const payload = await response.json();
+      setAppVersion(payload?.version ? String(payload.version) : null);
+      setVersionStatus("loaded");
+    } catch (error) {
+      console.warn("Falha ao buscar versão:", error);
+      setVersionStatus("error");
+    }
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchVersion = async () => {
-      try {
-        const response = await fetch(resolveApiUrl("/health"), {
-          cache: "no-store",
-        });
-        if (!response.ok) return;
-        const payload = await response.json();
-        if (isMounted && payload?.version) {
-          setAppVersion(String(payload.version));
-        }
-      } catch (error) {
-        console.warn("Falha ao buscar versão:", error);
-      }
-    };
-
     fetchVersion();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  }, [fetchVersion]);
+
+  const handleToggleVersion = async () => {
+    if (versionStatus === "idle" || versionStatus === "error") {
+      await fetchVersion();
+    }
+    setShowVersionPopover((prev) => !prev);
+  };
 
   const handleLogout = () => {
     logout();
@@ -118,11 +133,47 @@ const Sidebar: React.FC = () => {
   return (
     <>
       <aside className="sidebar-column">
-        <div className="sidebar-header">
-          <h2 className="sidebar-title">Menu</h2>
-          {appVersion && (
-            <div style={{ fontSize: "0.75rem", color: "var(--muted-text-color, #999)", marginTop: "0.5rem" }}>
-              v{appVersion}
+        <div className="sidebar-header" style={{ position: "relative" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+            <h2 className="sidebar-title" style={{ margin: 0 }}>Menu</h2>
+            <button
+              type="button"
+              onClick={handleToggleVersion}
+              aria-label="Ver versão do app"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "999px",
+                border: "1px solid var(--border-color, #d1d5db)",
+                background: "var(--card-bg, #fff)",
+                color: "var(--text-color)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+            >
+              <Info size={16} />
+            </button>
+          </div>
+          {showVersionPopover && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 0.25rem)",
+                right: 0,
+                zIndex: 10,
+                minWidth: 160,
+                padding: "0.5rem 0.75rem",
+                borderRadius: 8,
+                border: "1px solid var(--border-color, #d1d5db)",
+                background: "var(--card-bg, #fff)",
+                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
+                color: "var(--text-color)",
+              }}
+            >
+              <strong style={{ display: "block", marginBottom: 4 }}>Versão atual</strong>
+              <span>{versionLabel}</span>
             </div>
           )}
         </div>
