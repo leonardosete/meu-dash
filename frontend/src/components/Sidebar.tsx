@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   PieChart,
@@ -8,7 +8,6 @@ import {
   LogOut,
   FilePlus2,
   MessageSquare,
-  HelpCircle,
 } from "lucide-react";
 import { resolveApiUrl } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
@@ -85,32 +84,35 @@ const Sidebar: React.FC = () => {
   const { reportUrls, setReportUrls } = useDashboard();
   const navigate = useNavigate();
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
-  const [showVersion, setShowVersion] = useState(false);
-  const [versionMessage, setVersionMessage] = useState<string | null>(null);
+  const [appVersion, setAppVersion] = useState<string | null>(null);
 
-  const handleVersionClick = async () => {
-    setVersionMessage("Carregando...");
-    setShowVersion(true);
-    try {
-      const response = await fetch(resolveApiUrl("/health"), {
-        cache: "no-store",
-        credentials: "include",
-      });
-      if (!response.ok) {
-        setVersionMessage(`Versão não disponível (status ${response.status})`);
-        return;
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchVersion = async () => {
+      try {
+        const response = await fetch(resolveApiUrl("/health"), {
+          cache: "no-store",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          return;
+        }
+        const payload = await response.json();
+        if (isMounted && payload?.version) {
+          setAppVersion(String(payload.version));
+        }
+      } catch (error) {
+        console.warn("Não foi possível obter a versão da API:", error);
       }
-      const payload = await response.json();
-      if (payload?.version) {
-        setVersionMessage(`v${String(payload.version)}`);
-      } else {
-        setVersionMessage("Versão não disponível");
-      }
-    } catch (error) {
-      console.warn("Não foi possível obter a versão da API:", error);
-      setVersionMessage("Erro ao buscar versão");
-    }
-  };
+    };
+
+    fetchVersion();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -124,72 +126,7 @@ const Sidebar: React.FC = () => {
           <h2 className="sidebar-title">Menu</h2>
         </div>
 
-        <div
-          className="sidebar-cards-container"
-          style={{ position: "relative", paddingTop: "0.5rem" }}
-        >
-          <button
-            type="button"
-            onClick={handleVersionClick}
-            aria-label="Ver versão do app"
-            style={{
-              position: "absolute",
-              top: "0.5rem",
-              right: "0.5rem",
-              width: "28px",
-              height: "28px",
-              borderRadius: "999px",
-              border: "1px solid var(--border-color, #d1d5db)",
-              background: "var(--card-bg, #fff)",
-              color: "var(--text-color)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(15, 23, 42, 0.12)",
-            }}
-          >
-            <HelpCircle size={16} />
-          </button>
-          {showVersion && (
-            <div
-              style={{
-                position: "absolute",
-                top: "3.25rem",
-                right: "0.5rem",
-                zIndex: 10,
-                padding: "0.75rem",
-                borderRadius: "0.5rem",
-                border: "1px solid var(--border-color, #d1d5db)",
-                backgroundColor: "var(--card-bg, #fff)",
-                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.12)",
-                color: "var(--text-color)",
-                minWidth: "190px",
-              }}
-            >
-              <strong style={{ display: "block", marginBottom: "0.25rem" }}>
-                Versão do app
-              </strong>
-              <span>{versionMessage ?? "-"}</span>
-              <div style={{ marginTop: "0.5rem", textAlign: "right" }}>
-                <button
-                  type="button"
-                  onClick={() => setShowVersion(false)}
-                  style={{
-                    fontSize: "0.75rem",
-                    color: "var(--accent-color, #1d4ed8)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                  }}
-                >
-                  Fechar
-                </button>
-              </div>
-            </div>
-          )}
-
+        <div className="sidebar-cards-container">
           {location.pathname !== "/" && (
             <SideCard
               to="/"
@@ -238,6 +175,17 @@ const Sidebar: React.FC = () => {
         </div>
 
         <div className="sidebar-footer">
+          {appVersion && (
+            <div
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--muted-text-color, #64748b)",
+                marginBottom: "0.75rem",
+              }}
+            >
+              Versão do app: <strong>v{appVersion}</strong>
+            </div>
+          )}
           {isAuthenticated && (
             <SideCard
               onClick={handleLogout}
