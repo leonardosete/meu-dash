@@ -824,11 +824,13 @@ def gerar_analise_comparativa(
     body += """
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            function updateParentHeights(element) {
+            function updateParentHeights(element, visited = new Set()) {
+                if (!element) return;
                 let parentContent = element.closest('.collapsible-content');
-                if (parentContent && parentContent.style.maxHeight && parentContent.style.maxHeight !== '0px') {
+                if (parentContent && !visited.has(parentContent) && parentContent.style.maxHeight && parentContent.style.maxHeight !== '0px') {
+                    visited.add(parentContent);
                     parentContent.style.maxHeight = parentContent.scrollHeight + 50 + 'px';
-                    updateParentHeights(parentContent);
+                    updateParentHeights(parentContent, visited);
                 }
             }
 
