@@ -8,7 +8,7 @@ import {
   LogOut,
   FilePlus2,
   MessageSquare,
-  Info,
+  HelpCircle,
 } from "lucide-react";
 import { resolveApiUrl } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
@@ -85,29 +85,30 @@ const Sidebar: React.FC = () => {
   const { reportUrls, setReportUrls } = useDashboard();
   const navigate = useNavigate();
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
-  const [appVersion, setAppVersion] = useState<string | null>(null);
   const [showVersion, setShowVersion] = useState(false);
+  const [versionMessage, setVersionMessage] = useState<string | null>(null);
 
   const handleVersionClick = async () => {
-    setShowVersion(false);
+    setVersionMessage("Carregando...");
+    setShowVersion(true);
     try {
       const response = await fetch(resolveApiUrl("/health"), {
         cache: "no-store",
+        credentials: "include",
       });
       if (!response.ok) {
+        setVersionMessage(`Versão não disponível (status ${response.status})`);
         return;
       }
       const payload = await response.json();
       if (payload?.version) {
-        setAppVersion(String(payload.version));
+        setVersionMessage(`v${String(payload.version)}`);
       } else {
-        setAppVersion("Versão não disponível");
+        setVersionMessage("Versão não disponível");
       }
     } catch (error) {
       console.warn("Não foi possível obter a versão da API:", error);
-      setAppVersion("Erro ao buscar versão");
-    } finally {
-      setShowVersion(true);
+      setVersionMessage("Erro ao buscar versão");
     }
   };
 
@@ -123,74 +124,71 @@ const Sidebar: React.FC = () => {
           <h2 className="sidebar-title">Menu</h2>
         </div>
 
-        <div className="sidebar-cards-container">
-          <div
+        <div
+          className="sidebar-cards-container"
+          style={{ position: "relative", paddingTop: "0.5rem" }}
+        >
+          <button
+            type="button"
+            onClick={handleVersionClick}
+            aria-label="Ver versão do app"
             style={{
-              position: "relative",
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.5rem",
-              marginBottom: "0.75rem",
+              position: "absolute",
+              top: "0.5rem",
+              right: "0.5rem",
+              width: "28px",
+              height: "28px",
+              borderRadius: "999px",
+              border: "1px solid var(--border-color, #d1d5db)",
+              background: "var(--card-bg, #fff)",
+              color: "var(--text-color)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(15, 23, 42, 0.12)",
             }}
           >
-            <button
-              type="button"
-              onClick={handleVersionClick}
+            <HelpCircle size={16} />
+          </button>
+          {showVersion && (
+            <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                background: "none",
-                border: "1px solid var(--border-color, #d1d5db)",
+                position: "absolute",
+                top: "3.25rem",
+                right: "0.5rem",
+                zIndex: 10,
+                padding: "0.75rem",
                 borderRadius: "0.5rem",
-                padding: "0.5rem 0.75rem",
+                border: "1px solid var(--border-color, #d1d5db)",
+                backgroundColor: "var(--card-bg, #fff)",
+                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.12)",
                 color: "var(--text-color)",
-                cursor: "pointer",
-                transition: "background-color 0.2s ease",
+                minWidth: "190px",
               }}
             >
-              <Info size={18} />
-              <span style={{ fontSize: "0.9rem" }}>Ver versão</span>
-            </button>
-            {showVersion && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  zIndex: 10,
-                  marginTop: "0.5rem",
-                  padding: "0.75rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid var(--border-color, #d1d5db)",
-                  backgroundColor: "var(--card-bg, #fff)",
-                  boxShadow: "0 4px 16px rgba(15, 23, 42, 0.12)",
-                  color: "var(--text-color)",
-                  minWidth: "180px",
-                }}
-              >
-                <strong style={{ display: "block", marginBottom: "0.25rem" }}>
-                  Versão do app:
-                </strong>
-                <span>{appVersion ?? "-"}</span>
+              <strong style={{ display: "block", marginBottom: "0.25rem" }}>
+                Versão do app
+              </strong>
+              <span>{versionMessage ?? "-"}</span>
+              <div style={{ marginTop: "0.5rem", textAlign: "right" }}>
                 <button
                   type="button"
                   onClick={() => setShowVersion(false)}
                   style={{
-                    marginTop: "0.5rem",
                     fontSize: "0.75rem",
                     color: "var(--accent-color, #1d4ed8)",
-                    textDecoration: "underline",
                     background: "none",
                     border: "none",
                     cursor: "pointer",
+                    textDecoration: "underline",
                   }}
                 >
                   Fechar
                 </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {location.pathname !== "/" && (
             <SideCard
