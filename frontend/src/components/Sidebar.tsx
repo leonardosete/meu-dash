@@ -93,22 +93,18 @@ const Sidebar: React.FC = () => {
       try {
         const response = await fetch(resolveApiUrl("/health"), {
           cache: "no-store",
-          credentials: "include",
         });
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) return;
         const payload = await response.json();
         if (isMounted && payload?.version) {
           setAppVersion(String(payload.version));
         }
       } catch (error) {
-        console.warn("Não foi possível obter a versão da API:", error);
+        console.warn("Falha ao buscar versão:", error);
       }
     };
 
     fetchVersion();
-
     return () => {
       isMounted = false;
     };
@@ -124,6 +120,11 @@ const Sidebar: React.FC = () => {
       <aside className="sidebar-column">
         <div className="sidebar-header">
           <h2 className="sidebar-title">Menu</h2>
+          {appVersion && (
+            <div style={{ fontSize: "0.75rem", color: "var(--muted-text-color, #999)", marginTop: "0.5rem" }}>
+              v{appVersion}
+            </div>
+          )}
         </div>
 
         <div className="sidebar-cards-container">
@@ -175,17 +176,6 @@ const Sidebar: React.FC = () => {
         </div>
 
         <div className="sidebar-footer">
-          {appVersion && (
-            <div
-              style={{
-                fontSize: "0.75rem",
-                color: "var(--muted-text-color, #64748b)",
-                marginBottom: "0.75rem",
-              }}
-            >
-              Versão do app: <strong>v{appVersion}</strong>
-            </div>
-          )}
           {isAuthenticated && (
             <SideCard
               onClick={handleLogout}
