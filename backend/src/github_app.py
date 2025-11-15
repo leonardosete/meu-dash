@@ -16,19 +16,19 @@ class GitHubAppTokenProvider:
     _TOKEN_BUFFER_SECONDS = 60  # margem para evitar expiração em requests simultâneos
 
     def __init__(self) -> None:
-        self._app_id = os.getenv("GITHUB_APP_ID")
-        self._installation_id = os.getenv("GITHUB_APP_INSTALLATION_ID")
+        self._app_id = os.getenv("GH_APP_ID")
+        self._installation_id = os.getenv("GH_APP_INSTALLATION_ID")
         self._private_key = self._load_private_key()
         self._cached_token: Optional[str] = None
         self._cached_expiration_ts: Optional[float] = None
 
     @staticmethod
     def _load_private_key() -> Optional[str]:
-        key = os.getenv("GITHUB_APP_PRIVATE_KEY")
+        key = os.getenv("GH_APP_PRIVATE_KEY")
         if key:
             # Permite armazenar a chave no env com \n escapado.
             return key.replace("\\n", "\n")
-        key_path = os.getenv("GITHUB_APP_PRIVATE_KEY_PATH")
+        key_path = os.getenv("GH_APP_PRIVATE_KEY_PATH")
         if key_path and os.path.exists(key_path):
             with open(key_path, "r", encoding="utf-8") as fh:
                 return fh.read()
@@ -40,8 +40,8 @@ class GitHubAppTokenProvider:
     def get_installation_token(self) -> Optional[str]:
         if not self.is_configured():
             logger.error(
-                "GitHub App não configurado corretamente (verifique GITHUB_APP_ID, "
-                "GITHUB_APP_INSTALLATION_ID e chave privada)."
+                "GitHub App não configurado corretamente (verifique GH_APP_ID, "
+                "GH_APP_INSTALLATION_ID e chave privada)."
             )
             return None
 

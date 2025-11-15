@@ -19,6 +19,9 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       ADMIN_USER: ${{ secrets.ADMIN_USER }}
       ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      GH_APP_ID: ${{ secrets.GH_APP_ID }}
+      GH_APP_INSTALLATION_ID: ${{ secrets.GH_APP_INSTALLATION_ID }}
+      GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
     steps:
       - name: 📦 Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
@@ -49,7 +52,10 @@ jobs:
           kubectl -n "$BACKEND_NAMESPACE" delete secret smart-remedy-secrets 2>/dev/null || true
           CMD=(kubectl -n "$BACKEND_NAMESPACE" create secret generic smart-remedy-secrets \
             --from-literal=SECRET_KEY="$SECRET_KEY" \
-            --from-literal=DATABASE_URL="$DATABASE_URL")
+            --from-literal=DATABASE_URL="$DATABASE_URL" \
+            --from-literal=GH_APP_ID="$GH_APP_ID" \
+            --from-literal=GH_APP_INSTALLATION_ID="$GH_APP_INSTALLATION_ID" \
+            --from-literal=GH_APP_PRIVATE_KEY="$GH_APP_PRIVATE_KEY")
           if [[ -n "$ADMIN_USER" ]]; then
             CMD+=(--from-literal=ADMIN_USER="$ADMIN_USER")
           fi
