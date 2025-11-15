@@ -86,22 +86,6 @@ body {
   transition: all 0.3s ease-in-out;
 }
 
-
-.sidebar-version-label {
-  margin: 10px 0 0;
-  font-size: 0.85rem;
-  text-align: center;
-  color: rgba(224, 224, 224, 0.7);
-}
-
-body.light-mode .sidebar-version-label {
-  color: rgba(74, 74, 74, 0.75);
-}
-
-.layout-wrapper.sidebar-collapsed .sidebar-version-label {
-  font-size: 0.75rem;
-}
-
 .sidebar-column {
   display: flex;
   flex-direction: column;
