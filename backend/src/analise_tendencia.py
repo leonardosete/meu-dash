@@ -154,7 +154,7 @@ def _determine_action_points(
         if is_direct_comparison:
             action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> '{squad_highlight_html}'</strong> registrou o maior número de Casos sem remediação recentemente. Focar a investigação nesta equipe."
         else:
-            if run_folder and base_url:
+            if run_folder and base_url and base_url != "/":
                 action_plan_url = f"{base_url}/reports/{run_folder}/planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
             else:
                 action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
@@ -168,7 +168,7 @@ def _determine_action_points(
         if is_direct_comparison:
             action_point = f"<li>🔥 <strong>Ponto de Ação Principal:</strong> Squad<strong> '{squad_highlight_html}'</strong> concentra o maior número de problemas persistentes. Ação de causa raiz é necessária."
         else:
-            if run_folder and base_url:
+            if run_folder and base_url and base_url != "/":
                 action_plan_url = f"{base_url}/reports/{run_folder}/planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
             else:
                 action_plan_url = f"planos_de_acao/plano-de-acao-{sanitized_squad_name}.html?back=../comparativo_periodos.html"
