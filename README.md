@@ -49,6 +49,12 @@ Para mais detalhes sobre como contribuir, padrões de código e o processo de Pu
 
 ---
 
+### 🔧 Variáveis de Ambiente Relevantes
+
+- `FRONTEND_BASE_URL`: aponta para a URL pública do frontend (ex.: `https://smart-remedy.devops-master.shop`). Essa informação é usada para gerar links absolutos para relatórios e planos de ação, evitando que cliques dentro da SPA sejam interceptados pelo React Router. Caso não seja definida, o backend passa a usar automaticamente o domínio do próprio request como fallback.
+
+---
+
 ## 🚀 Como Usar
 
 Acesse a aplicação através do seu endereço web e faça o upload de um ou mais arquivos `.csv` contendo os dados de alerta. A aplicação processará os arquivos e gerará os relatórios automaticamente.

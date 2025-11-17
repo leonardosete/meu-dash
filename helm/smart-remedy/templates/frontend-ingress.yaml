@@ -15,7 +15,7 @@ metadata:
 spec:
   ingressClassName: {{ .Values.frontend.ingress.className }}
   rules:
-    - host: {{ .Values.frontend.ingress.host }}
+    - host: {{ required "global.frontend.host must be set" .Values.global.frontend.host | quote }}
       http:
         paths:
           - path: /

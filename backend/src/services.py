@@ -9,6 +9,7 @@ import shutil
 import zipfile
 from datetime import datetime
 import logging
+from flask import current_app, has_app_context, has_request_context, request
 from werkzeug.utils import secure_filename
 
 from .analisar_alertas import analisar_arquivo_csv
@@ -33,6 +34,41 @@ from .constants import (
 logger = logging.getLogger(__name__)
 
 ACTION_PLAN_FILENAME = "atuar.html"
+
+
+def _sanitize_base_url(value: str | None) -> str | None:
+    """Normaliza uma base URL removendo barras extras e espaços."""
+
+    if not value:
+        return None
+
+    sanitized = value.strip().rstrip("/")
+    if not sanitized:
+        return "/"
+
+    return sanitized
+
+
+def _resolve_frontend_base_url() -> str:
+    """Determina a URL base do frontend, caindo para o host atual se não houver env."""
+
+    fallback = "/"
+    candidates = [
+        os.getenv("FRONTEND_BASE_URL"),
+        current_app.config.get("FRONTEND_BASE_URL") if has_app_context() else None,
+        request.host_url if has_request_context() else None,
+    ]
+
+    for raw in candidates:
+        sanitized = _sanitize_base_url(raw)
+        if not sanitized:
+            continue
+        if sanitized == "/":
+            fallback = "/"
+            continue
+        return sanitized
+
+    return fallback
 
 
 def _enforce_report_limit(db, report_model):
@@ -328,7 +364,7 @@ def get_dashboard_summary_data(report_model, trend_model, reports_folder: str) -
                             current_run_folder = os.path.basename(
                                 os.path.dirname(curr_report.report_path)
                             )
-                            base_url = os.getenv("FRONTEND_BASE_URL", "/")
+                            base_url = _resolve_frontend_base_url()
 
                             quick_diagnosis_html = generate_executive_summary_html(
                                 kpis,
@@ -521,7 +557,7 @@ def process_upload_and_generate_reports(
     os.makedirs(output_dir, exist_ok=True)
 
     # Lê a URL do frontend UMA VEZ para garantir consistência em todos os relatórios gerados.
-    frontend_url = os.getenv("FRONTEND_BASE_URL", "/")
+    frontend_url = _resolve_frontend_base_url()
 
     logger.info(f"Executando análise completa para o arquivo: {filename_recente}")
     analysis_results = analisar_arquivo_csv(
@@ -703,7 +739,7 @@ def process_direct_comparison(files: list, upload_folder: str, reports_folder: s
             conteúdos).
     """
     # Lê a URL do frontend UMA VEZ para garantir consistência.
-    frontend_url = os.getenv("FRONTEND_BASE_URL", "/")
+    frontend_url = _resolve_frontend_base_url()
 
     saved_filepaths = []
     try:

@@ -62,11 +62,27 @@ spec:
         - name: api
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- $frontendHost := default "" .Values.global.frontend.host }}
+          {{- $frontendProtocol := default "https" .Values.global.frontend.protocol }}
+          {{- $frontendBaseURL := "" }}
+          {{- if $frontendHost }}
+            {{- $frontendBaseURL = printf "%s://%s" $frontendProtocol $frontendHost }}
+          {{- end }}
           env:
             - name: FLASK_APP
               value: {{ .Values.backend.flaskApp | quote }}
             - name: APP_VERSION
               value: {{ .Values.app.version | quote }}
+          {{- if $frontendBaseURL }}
+            - name: FRONTEND_BASE_URL
+              value: {{ $frontendBaseURL | quote }}
+          {{- end }}
+          {{- if .Values.backend.env }}
+          {{- range $key, $value := .Values.backend.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+          {{- end }}
+          {{- end }}
           envFrom:
             - secretRef:
                 name: {{ .Values.backend.secretName }}

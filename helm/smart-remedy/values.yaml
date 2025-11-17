@@ -1,6 +1,11 @@
 app:
   version: "0.2.0"
 
+global:
+  frontend:
+    host: smart-remedy.devops-master.shop
+    protocol: https
+
 image:
   repository: sevenleo/smart-remedy
   tag: latest
@@ -14,6 +19,7 @@ backend:
     app: smart-remedy-api
   secretName: smart-remedy-secrets
   flaskApp: "src.app:create_app()"
+  env: {}
   service:
     name: smart-remedy-api
     port: 5000
@@ -53,7 +59,6 @@ frontend:
   ingress:
     enabled: true
     className: nginx
-    host: smart-remedy.devops-master.shop
     forceSSLRedirect: true
   resources:
     requests:
