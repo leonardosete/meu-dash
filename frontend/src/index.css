@@ -43,8 +43,7 @@ body,
 
 body {
   margin: 0;
-  /* MUDANÇA: Padding simplificado para consistência */
-  padding: 20px;
+  padding: 20px 2% 2% 2%; /* Define o espaçamento geral da página */
   box-sizing: border-box;
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -110,13 +109,12 @@ body {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 15px; /* REDUCED */
-  /* MUDANÇA: Fundo alterado para o --bg-color (mais escuro) */
-  background: var(--bg-color);
+  background: var(--card-color);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 20px; /* REDUCED */
-  /* MUDANÇA: Sombra removida do painel principal, os cartões a terão */
-  box-shadow: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  overflow: hidden; /* <- ADICIONADO: Garante que o card principal não transborde */
 }
 
 .card {
@@ -296,33 +294,33 @@ button.side-card {
 .kpi-dashboard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  /* MUDANÇA: Gap adicionado para espaçar os cartões */
-  gap: 15px;
+  gap: 0;
   width: 100%;
-  /* MUDANÇA: Padding removido, o pai já tem */
-  padding: 0;
+  padding: 0 20px;
 }
 
 .kpi-card {
   position: relative;
-  /* MUDANÇA: Padding adicionado para espaçamento interno */
-  padding: 20px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  /* MUDANÇA: Gap aumentado */
-  gap: 8px;
-  /* MUDANÇA: Transformado em um cartão real */
-  background: var(--card-color);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
+  gap: 5px;
+  /* Remove estilos de card individual */
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
-/* MUDANÇA: Separador removido, pois agora são cartões */
 .kpi-card:not(:first-child)::before {
-  display: none;
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 1px;
+  background-color: var(--border-color);
 }
 
 .kpi-value {
@@ -795,7 +793,7 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   flex-direction: column;
   min-height: 0; /* Isso está correto e é importante */
   flex-grow: 1;
-  overflow-y: auto; /* <- ADICIONADO */
+  /* overflow-y: auto; */ /* <- REMOVA ESTA LINHA */
 }
 
 .report-previews-container {
@@ -840,14 +838,13 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 15px; /* REDUCED */
-  /* flex-grow: 1; */  /* <- REMOVIDO */
-  /* min-height: 0; */ /* <- REMOVIDO */
-  min-height: 400px; /* <- ADICIONE ISTO. Garante a altura dos 3 blocos. */
+  flex-basis: 450px; /* Define a altura "ideal" dos relatórios */
+  flex-shrink: 1;   /* Permite que encolham se a tela for muito baixa */
+  min-height: 0;    /* Necessário para o flex-shrink funcionar corretamente */
 }
 
 .preview-card {
-  /* MUDANÇA: Fundo alterado para --card-color (mais claro) */
-  background-color: var(--card-color);
+  background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 20px;
@@ -896,8 +893,7 @@ body.light-mode .preview-card {
   border-radius: 8px;
   overflow: hidden;
   position: relative;
-  /* MUDANÇA: Fundo branco removido para corrigir o "flash" branco */
-  background-color: var(--card-color);
+  background-color: #fff; /* Cor de fundo enquanto o iframe carrega */
   transition: border-color 0.3s ease;
 }
 
@@ -924,8 +920,10 @@ body.light-mode .preview-card {
 
 /* --- ESTILOS PARA O QUICK DIAGNOSIS --- */
 .quick-diagnosis-wrapper {
-  /* MUDANÇA: Margem alinhada com o gap do grid */
-  margin-top: 15px;
+  margin-top: 10px; /* REDUCED */
+  flex-grow: 1;      /* Faz este bloco ocupar todo o espaço restante */
+  min-height: 150px; /* Garante que ele não desapareça (altura mínima) */
+  overflow-y: auto;  /* Adiciona a barra de rolagem DENTRO dele */
 }
 
 .quick-diagnosis-wrapper .card.highlight {
