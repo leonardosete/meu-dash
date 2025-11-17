@@ -802,7 +802,7 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  justify-content: space-between; /* Empurra o conteúdo para o topo e para a base */
+  /* justify-content: space-between; */ /* <- REMOVIDO */
 }
 
 .previews-header {
@@ -919,7 +919,10 @@ body.light-mode .preview-card {
 
 /* --- ESTILOS PARA O QUICK DIAGNOSIS --- */
 .quick-diagnosis-wrapper {
-  margin-top: 10px; /* REDUCED */
+  margin-top: 10px;
+  flex-shrink: 0; /* Impede que o bloco encolha */
+  max-height: 350px; /* Define uma altura máxima (você pode ajustar esse valor) */
+  overflow-y: auto; /* Adiciona rolagem APENAS AQUI se o conteúdo for maior */
 }
 
 .quick-diagnosis-wrapper .card.highlight {
