@@ -1,0 +1,16 @@
+# criando as variaveis locais
+# para fornecer ao comando gh para criar no github secrets
+export DOCKERHUB_USERNAME=sevenleo
+export DOCKERHUB_TOKEN=""
+export SECRET_KEY='uma_chave_bem_grande_e_aleatoria'
+export DATABASE_URL='postgresql://postgres.env:PASSWORD@HOST:PORT/postgres'
+export ADMIN_USER='admin'
+export ADMIN_PASSWORD='admin'
+export GH_APP_ID="xxxxxxx"
+export GH_APP_INSTALLATION_ID="xxxxxxxx"
+# gerar conteudo da private key no formato correto para o secrets do GH
+export GH_APP_PRIVATE_KEY=$(awk 'NF {printf "%s\\n", $0}' smartremedy-feedback.private-key.pem)
+
+# script para criar no github secrets
+
+bash scripts/set-secrets.sh

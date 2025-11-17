@@ -1,6 +1,6 @@
 <!-- .github/copilot-instructions.md - orientações para agentes AI que trabalham neste repositório -->
 # Instruções rápidas para Copilot / agentes AI — smart-remedy
-
+Idioma padrão: PT-BR
 Público-alvo: agentes automatizados (estilo Copilot) que vão criar, modificar ou revisar código neste repositório.
 
 Mantenha isto curto e acionável. Se precisar de contexto mais amplo, consulte `README.md` e `ARCHITECTURE.md`.
