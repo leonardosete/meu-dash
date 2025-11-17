@@ -801,7 +801,7 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  justify-content: space-between; /* Empurra o conteúdo para o topo e para a base */
+  /* justify-content: space-between; */ /* <- REMOVIDO */
 }
 
 .previews-header {
@@ -837,8 +837,8 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 15px; /* REDUCED */
-  flex-grow: 1;
-  min-height: 0;
+  /* flex-grow: 1; */  /* <- REMOVIDO */
+  /* min-height: 0; */ /* <- REMOVIDO */
 }
 
 .preview-card {
@@ -919,6 +919,10 @@ body.light-mode .preview-card {
 /* --- ESTILOS PARA O QUICK DIAGNOSIS --- */
 .quick-diagnosis-wrapper {
   margin-top: 10px; /* REDUCED */
+  flex-grow: 1; /* <- ADICIONADO: Faz este bloco ocupar todo o espaço restante */
+  min-height: 0; /* <- ADICIONADO: Permite que o bloco encolha se necessário */
+  display: flex; /* <- ADICIONADO: Para fazer o card interno crescer */
+  flex-direction: column;
 }
 
 .quick-diagnosis-wrapper .card.highlight {
@@ -932,6 +936,11 @@ body.light-mode .preview-card {
   /* A largura máxima foi removida para permitir que o conteúdo se expanda */
   margin-left: auto;
   margin-right: auto;
+  
+  flex-grow: 1; /* <- ADICIONADO: Faz o card preencher o wrapper */
+  overflow-y: auto; /* <- ADICIONADO: Adiciona rolagem DENTRO do card */
+  display: flex; /* <- ADICIONADO: Correção para layout interno */
+  flex-direction: column; /* <- ADICIONADO: Correção para layout interno */
 }
 
 .quick-diagnosis-wrapper .highlight h2 {
