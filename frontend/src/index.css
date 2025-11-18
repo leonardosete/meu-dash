@@ -43,7 +43,8 @@ body,
 
 body {
   margin: 0;
-  padding: 20px 2% 2% 2%; /* Define o espaçamento geral da página */
+  /* MUDANÇA: Padding simplificado para consistência */
+  padding: 20px;
   box-sizing: border-box;
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -71,6 +72,8 @@ body {
 
 .layout-wrapper {
   display: flex;
+  /* MUDANÇA: Direção alterada para coluna (top-bar + conteúdo) */
+  flex-direction: column;
   align-items: stretch;
   gap: 30px;
   width: 100%;
@@ -88,20 +91,26 @@ body {
 
 .sidebar-column {
   display: flex;
-  flex-direction: column;
+  /* MUDANÇA: Direção alterada para linha (itens da top-bar) */
+  flex-direction: row;
+  /* MUDANÇA: Itens alinhados ao centro verticalmente */
+  align-items: center;
+  /* MUDANÇA: Espaçamento entre os grupos de itens */
+  justify-content: space-between;
   gap: 20px;
   width: 100%;
-  max-width: 380px;
+  /* MUDANÇA: Largura máxima removida (ocupa 100%) */
+  max-width: 100%;
+  /* MUDANÇA: Altura automática */
+  height: auto;
   flex-shrink: 0;
   background-color: var(--card-color);
   padding: 20px;
   border-radius: 16px;
   border: 1px solid var(--border-color);
-  transition:
-    max-width 0.3s ease-in-out,
-    padding 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
   position: relative;
-  z-index: 10; /* Garante que a sidebar e seus filhos (tooltips) fiquem acima do conteúdo principal */
+  z-index: 10;
 }
 
 .main-content {
@@ -109,12 +118,13 @@ body {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 15px; /* REDUCED */
-  background: var(--card-color);
+  /* MUDANÇA: Fundo alterado para o --bg-color (mais escuro) */
+  background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 20px; /* REDUCED */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  overflow: hidden; /* <- ADICIONADO: Garante que o card principal não transborde */
+  /* MUDANÇA: Sombra removida do painel principal, os cartões a terão */
+  box-shadow: none;
 }
 
 .card {
@@ -141,6 +151,8 @@ body {
   color: var(--text-color);
   transition: all 0.3s ease;
   text-align: left;
+  /* MUDANÇA: Adicionado flex-shrink para evitar quebra */
+  flex-shrink: 0;
 }
 .side-card:hover {
   transform: translateY(-5px);
@@ -174,10 +186,13 @@ button.side-card {
 
 .sidebar-header {
   display: flex;
-  justify-content: space-between;
+  /* MUDANÇA: Alinhamento e direção */
+  flex-direction: row;
   align-items: center;
-  padding: 0 10px;
-  margin-bottom: 10px;
+  gap: 15px;
+  padding: 0;
+  margin-bottom: 0;
+  flex-shrink: 0; /* Impede que o header encolha */
 }
 
 .sidebar-title {
@@ -194,19 +209,24 @@ button.side-card {
 
 .sidebar-cards-container {
   display: flex;
-  flex-direction: column;
+  /* MUDANÇA: Direção alterada para linha */
+  flex-direction: row;
   gap: 20px;
   overflow: visible; /* Permite que o tooltip seja exibido fora do contêiner */
   padding-top: 5px;
   padding-bottom: 5px;
+  /* MUDANÇA: Permite que os cards quebrem a linha se não couberem */
+  flex-wrap: wrap;
+  justify-content: center; /* Centraliza os cards se quebrar a linha */
 }
 
 /* --- ESTILOS DO TOOLTIP --- */
 .side-card-tooltip {
   position: absolute;
-  left: calc(100% + 15px);
-  top: 50%;
-  transform: translateY(-50%);
+  /* MUDANÇA: Posição alterada para baixo do card */
+  left: 50%;
+  top: calc(100% + 15px);
+  transform: translateX(-50%); /* Centraliza horizontalmente */
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   padding: 10px 15px;
@@ -224,16 +244,16 @@ button.side-card {
   pointer-events: none;
 }
 
-/* Seta padrão apontando para the esquerda */
+/* MUDANÇA: Seta apontando para cima */
 .side-card-tooltip::after {
   content: "";
   position: absolute;
-  top: 50%;
-  right: 100%;
-  margin-top: -5px;
+  bottom: 100%; /* No topo do tooltip */
+  left: 50%;
+  margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: transparent var(--bg-color) transparent transparent;
+  border-color: transparent transparent var(--bg-color) transparent;
 }
 
 .side-card:hover .side-card-tooltip {
@@ -254,35 +274,8 @@ button.side-card {
   opacity: 0.8;
 }
 
-/* --- ESTADO RECOLHIDO (AGORA É O PADRÃO) --- */
-.layout-wrapper.sidebar-collapsed {
-  gap: 15px;
-}
-
-.layout-wrapper.sidebar-collapsed .sidebar-column {
-  max-width: 88px;
-  align-items: center;
-}
-
-.layout-wrapper.sidebar-collapsed .sidebar-header {
-  width: 100%;
-  justify-content: center;
-}
-
-.layout-wrapper.sidebar-collapsed .sidebar-title {
-  display: none;
-}
-
-.layout-wrapper.sidebar-collapsed .side-card {
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  padding: 0;
-}
-
-.layout-wrapper.sidebar-collapsed .sidebar-footer {
-  align-items: center;
-}
+/* --- ESTADO RECOLHIDO (REMOVIDO) --- */
+/* MUDANÇA: A lógica de "sidebar-collapsed" foi removida */
 
 /* --- ESTILOS DO DASHBOARD DE KPI (ATUALIZADOS) --- */
 .kpi-section {
@@ -294,33 +287,33 @@ button.side-card {
 .kpi-dashboard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 0;
+  /* MUDANÇA: Gap adicionado para espaçar os cartões */
+  gap: 15px;
   width: 100%;
-  padding: 0 20px;
+  /* MUDANÇA: Padding removido, o pai já tem */
+  padding: 0;
 }
 
 .kpi-card {
   position: relative;
-  padding: 10px;
+  /* MUDANÇA: Padding adicionado para espaçamento interno */
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 5px;
-  /* Remove estilos de card individual */
-  background: none;
-  border: none;
-  box-shadow: none;
+  /* MUDANÇA: Gap aumentado */
+  gap: 8px;
+  /* MUDANÇA: Transformado em um cartão real */
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
 }
 
+/* MUDANÇA: Separador removido, pois agora são cartões */
 .kpi-card:not(:first-child)::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 20%;
-  bottom: 20%;
-  width: 1px;
-  background-color: var(--border-color);
+  display: none;
 }
 
 .kpi-value {
@@ -718,13 +711,17 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
 }
 
 .sidebar-footer {
-  margin-top: auto;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color);
+  /* MUDANÇA: Margin-top removida (não é mais 'auto') */
+  /* MUDANÇA: Agora é um item flexível na top-bar */
+  margin-left: auto; /* Empurra para a direita */
+  padding-top: 0;
+  border-top: none;
   display: flex;
-  flex-direction: column;
+  /* MUDANÇA: Direção de linha */
+  flex-direction: row;
   align-items: center;
   gap: 15px;
+  flex-shrink: 0; /* Impede que encolha */
 }
 
 .admin-actions {
@@ -793,7 +790,7 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   flex-direction: column;
   min-height: 0; /* Isso está correto e é importante */
   flex-grow: 1;
-  /* overflow-y: auto; */ /* <- REMOVA ESTA LINHA */
+  overflow-y: auto; /* <- ADICIONADO */
 }
 
 .report-previews-container {
@@ -838,13 +835,14 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 15px; /* REDUCED */
-  flex-basis: 450px; /* Define a altura "ideal" dos relatórios */
-  flex-shrink: 1;   /* Permite que encolham se a tela for muito baixa */
-  min-height: 0;    /* Necessário para o flex-shrink funcionar corretamente */
+  /* flex-grow: 1; */  /* <- REMOVIDO */
+  /* min-height: 0; */ /* <- REMOVIDO */
+  min-height: 400px; /* <- ADICIONE ISTO. Garante a altura dos 3 blocos. */
 }
 
 .preview-card {
-  background-color: var(--bg-color);
+  /* MUDANÇA: Fundo alterado para --card-color (mais claro) */
+  background-color: var(--card-color);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 20px;
@@ -893,7 +891,8 @@ body.light-mode .preview-card {
   border-radius: 8px;
   overflow: hidden;
   position: relative;
-  background-color: #fff; /* Cor de fundo enquanto o iframe carrega */
+  /* MUDANÇA: Fundo branco removido para corrigir o "flash" branco */
+  background-color: var(--card-color);
   transition: border-color 0.3s ease;
 }
 
@@ -920,10 +919,8 @@ body.light-mode .preview-card {
 
 /* --- ESTILOS PARA O QUICK DIAGNOSIS --- */
 .quick-diagnosis-wrapper {
-  margin-top: 10px; /* REDUCED */
-  flex-grow: 1;      /* Faz este bloco ocupar todo o espaço restante */
-  min-height: 150px; /* Garante que ele não desapareça (altura mínima) */
-  overflow-y: auto;  /* Adiciona a barra de rolagem DENTRO dele */
+  /* MUDANÇA: Margem alinhada com o gap do grid */
+  margin-top: 15px;
 }
 
 .quick-diagnosis-wrapper .card.highlight {
@@ -1016,7 +1013,7 @@ body.light-mode .preview-card {
 /* Para telas com largura máxima de 1024px (tablets e celulares) */
 @media (max-width: 1024px) {
   .layout-wrapper {
-    /* Altera o layout de lado a lado para empilhado */
+    /* Esta regra já está correta para o novo layout */
     flex-direction: column;
     height: auto; /* Permite que o conteúdo cresça verticalmente */
     gap: 15px;
@@ -1028,11 +1025,31 @@ body.light-mode .preview-card {
   }
 
   .sidebar-column {
-    /* A sidebar agora ocupa a largura total e tem uma altura fixa */
+    /* MUDANÇA: Agora a top-bar vai empilhar seus itens */
     max-width: 100%;
     height: auto;
-    flex-direction: row; /* Itens da sidebar ficam lado a lado */
+    /* MUDANÇA: Itens da top-bar empilhados */
+    flex-direction: column;
     justify-content: space-around; /* Espaça os itens da sidebar */
+    align-items: center; /* Centraliza os itens */
+    gap: 15px; /* Adiciona gap no empilhamento */
+  }
+
+  /* MUDANÇA: Garante que os containers internos também empilhem */
+  .sidebar-cards-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .sidebar-footer {
+    flex-direction: column;
+    gap: 15px;
+    margin-left: 0; /* Reseta a margem no mobile */
+  }
+
+  /* MUDANÇA: Ajusta o tooltip para não quebrar no mobile */
+  .side-card-tooltip {
+    display: none; /* Mais simples de esconder no mobile */
   }
 }
 
@@ -1319,9 +1336,10 @@ body.light-mode .preview-card {
   font-size: 0.9em;
   font-weight: 500;
   width: 100%;
-  max-width: 140px; /* Largura reduzida para caber na sidebar */
+  /* MUDANÇA: max-width aumentado para caber o texto */
+  max-width: 200px;
   justify-content: center;
-  margin: 0 auto; /* Centraliza o botão */
+  margin: 0; /* Removido auto, pois agora está no footer */
   position: relative; /* Necessário para o posicionamento do tooltip */
 }
 
@@ -1347,9 +1365,10 @@ body.light-mode .preview-card {
 /* Tooltip do botão de feedback */
 .feedback-button .side-card-tooltip {
   position: absolute;
-  left: calc(100% + 15px);
-  top: 50%;
-  transform: translateY(-50%);
+  /* MUDANÇA: Posição do tooltip */
+  left: 50%;
+  top: calc(100% + 15px);
+  transform: translateX(-50%);
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   padding: 10px 15px;
@@ -1367,16 +1386,16 @@ body.light-mode .preview-card {
   pointer-events: none;
 }
 
-/* Seta padrão apontando para the esquerda */
+/* MUDANÇA: Seta do tooltip */
 .feedback-button .side-card-tooltip::after {
   content: "";
   position: absolute;
-  top: 50%;
-  right: 100%;
-  margin-top: -5px;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: transparent var(--bg-color) transparent transparent;
+  border-color: transparent transparent var(--bg-color) transparent;
 }
 
 .feedback-button:hover .side-card-tooltip {
@@ -1395,14 +1414,4 @@ body.light-mode .preview-card {
   margin: 0;
   font-size: 0.85em;
   color: var(--text-secondary-color);
-}
-
-/* No modo sidebar recolhido, o botão fica menor */
-.layout-wrapper.sidebar-collapsed .feedback-button {
-  max-width: 60px;
-  padding: 12px 8px;
-}
-
-.layout-wrapper.sidebar-collapsed .feedback-button span {
-  display: none; /* Esconde o texto quando recolhido */
 }
