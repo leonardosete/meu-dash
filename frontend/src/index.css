@@ -43,18 +43,12 @@ body,
 
 body {
   margin: 0;
-  /* MUDANÇA: Padding removido do body */
-  /* padding: 20px; */
   box-sizing: border-box;
   background-color: var(--bg-color);
   color: var(--text-color);
-  /* MUDANÇA: Altura e overflow removidos do body */
-  /* height: 100vh; */
-  /* overflow: hidden; */
 }
 
 .app-container {
-  /* MUDANÇA: Este é o novo container principal */
   height: 100vh; /* Ocupa a altura total da tela */
   box-sizing: border-box; /* Garante que o padding não estoure a altura */
   padding: 20px;
@@ -81,20 +75,15 @@ body {
 
 .layout-wrapper {
   display: flex;
-  /* MUDANÇA: Direção alterada para COLUNA (top-bar acima, conteúdo abaixo) */
   flex-direction: column; 
   align-items: stretch;
   gap: 20px; /* Gap entre a top-bar e o conteúdo */
   width: 100%;
-  /* MUDANÇA: Height 100% para preencher o app-container */
   height: 100%;
   transition: gap 0.3s ease-in-out;
-  /* MUDANÇA: Min-height 0 para garantir o flex-grow correto */
   min-height: 0;
 }
 
-/* MUDANÇA: Este é o novo wrapper para o conteúdo principal */
-/* Você DEVE adicionar este div no seu HTML */
 .main-content-area {
   display: flex;
   flex-direction: column;
@@ -108,8 +97,6 @@ body {
 
 
 .content-wrapper {
-  /* Esta classe não é mais o wrapper principal, pode ser removida ou adaptada */
-  /* Se você a manteve, ela deve estar dentro de .main-content-area */
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -117,23 +104,18 @@ body {
   transition: all 0.3s ease-in-out;
 }
 
-/* MUDANÇA: .sidebar-column agora é a TOP-BAR */
 .sidebar-column {
   display: flex;
-  /* MUDANÇA: Itens na horizontal */
   flex-direction: row; 
-  /* MUDANÇA: Alinhados ao centro */
   align-items: center; 
-  /* MUDANÇA: Espaço entre os grupos (logo, cards, footer) */
   justify-content: space-between; 
   gap: 20px;
   width: 100%;
   max-width: 100%;
-  /* MUDANÇA: Altura automática, baseada no padding e conteúdo */
   height: auto; 
   flex-shrink: 0;
   background-color: var(--card-color);
-  padding: 15px 20px; /* Padding vertical reduzido para "achatar" a barra */
+  padding: 15px 20px; 
   border-radius: 16px;
   border: 1px solid var(--border-color);
   transition: all 0.3s ease-in-out;
@@ -142,8 +124,6 @@ body {
 }
 
 .main-content {
-  /* MUDANÇA: flex-grow removido, o pai .main-content-area cuida disso */
-  /* flex-grow: 1; */ 
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 15px; 
@@ -171,7 +151,6 @@ body {
   display: flex;
   align-items: center;
   gap: 15px;
-  /* MUDANÇA: Padding mantido quase igual ao original vertical */
   padding: 20px; 
   border-radius: 12px;
   background-color: var(--bg-color);
@@ -180,12 +159,8 @@ body {
   transition: all 0.3s ease;
   text-align: left;
   flex-shrink: 0;
-  /* MUDANÇA: Tamanho do card original (vertical) */
-  /* width: 100%; */ /* Removido */
-  /* max-width: 380px; */ /* Removido */
 }
 .side-card:hover {
-  /* MUDANÇA: Efeito de hover mantido */
   transform: translateY(-5px); 
   border-color: var(--accent-color);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
@@ -202,25 +177,20 @@ button.side-card:hover {
 }
 
 button.side-card {
-  /* MUDANÇA: Width auto para se ajustar ao conteúdo (se houver texto) */
   width: auto; 
-  /* MUDANÇA: Se for só ícone, podemos forçar um tamanho */
-  /* padding: 20px; */ /* Já definido acima */
   font-family: inherit;
   font-size: inherit;
   cursor: pointer;
 }
 
-/* MUDANÇA: Para os botões que são SÓ ÍCONES, como na sua imagem */
 .side-card.icon-only {
-  width: 60px; /* Largura similar à altura */
-  height: 60px; /* Altura similar à largura */
-  padding: 0; /* Remove padding */
-  justify-content: center; /* Centraliza o ícone */
+  width: 60px; 
+  height: 60px; 
+  padding: 0; 
+  justify-content: center; 
   gap: 0;
 }
 .side-card.icon-only .side-card-tooltip {
-  /* Ajuste do tooltip para botões de ícone */
   top: calc(100% + 10px);
 }
 
@@ -254,24 +224,32 @@ button.side-card {
   transform: translateX(0);
 }
 
+/* MUDANÇA: NOVO GRUPO PARA HEADER E CARDS */
+.sidebar-nav-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px; /* Espaço entre o "Menu" e os ícones */
+}
+
+
+/* --- CORREÇÃO AQUI --- */
+/* Esta era a regra que eu estraguei. Agora está correta. */
 .sidebar-cards-container {
   display: flex;
-  /* MUDANÇA: Itens na horizontal */
-  flex-direction: row; 
+  flex-direction: row; /* Itens na horizontal */
   gap: 15px; /* Gap entre os botões */
   overflow: visible; 
-  padding: 0; /* Padding removido */
-  /* MUDANÇA: Removido wrap e center para alinhamento à esquerda */
-  /* flex-wrap: wrap;  */
-  /* justify-content: center; */
+  padding: 0; 
 }
+/* --- FIM DA CORREÇÃO --- */
+
 
 /* --- ESTILOS DO TOOLTIP --- */
 .side-card-tooltip {
   position: absolute;
-  /* MUDANÇA: Posição para baixo do card */
   left: 50%;
-  top: calc(100% + 10px); /* Distância reduzida */
+  top: calc(100% + 10px); 
   transform: translateX(-50%); 
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
@@ -289,7 +267,6 @@ button.side-card {
   pointer-events: none;
 }
 
-/* MUDANÇA: CORREÇÃO PARA TOOLTIPS NAS BORDAS */
 .sidebar-cards-container .side-card:first-child .side-card-tooltip {
   left: 0;
   transform: translateX(0);
@@ -302,7 +279,6 @@ button.side-card {
 }
 
 
-/* MUDANÇA: Seta apontando para cima */
 .side-card-tooltip::after {
   content: "";
   position: absolute;
@@ -314,15 +290,14 @@ button.side-card {
   border-color: transparent transparent var(--bg-color) transparent;
 }
 
-/* MUDANÇA: CORREÇÃO DA SETA PARA TOOLTIPS NAS BORDAS */
 .sidebar-cards-container .side-card:first-child .side-card-tooltip::after {
-  left: 30px; /* Aproximadamente o centro de um ícone de 60px */
+  left: 30px; 
   margin-left: -5px;
 }
 
 .sidebar-cards-container .side-card:last-child .side-card-tooltip::after {
   left: auto;
-  right: 30px; /* Aproximadamente o centro de um ícone de 60px */
+  right: 30px; 
   margin-left: 0;
 }
 
@@ -345,8 +320,6 @@ button.side-card {
   opacity: 0.8;
 }
 
-/* --- ESTADO RECOLHIDO (REMOVIDO) --- */
-/* MUDANÇA: A lógica de "sidebar-collapsed" foi removida/simplificada */
 .layout-wrapper.sidebar-collapsed {
   gap: 15px;
 }
@@ -359,11 +332,9 @@ button.side-card {
   justify-content: flex-start;
 }
 .layout-wrapper.sidebar-collapsed .sidebar-title {
-  /* MUDANÇA: Título some para simular o "recolhido" */
   display: none;
 }
 .layout-wrapper.sidebar-collapsed .side-card {
-  /* MUDANÇA: Cards ficam só com ícone */
   width: 60px; 
   height: 60px;
   padding: 0;
@@ -373,7 +344,6 @@ button.side-card {
 .layout-wrapper.sidebar-collapsed .sidebar-footer {
   align-items: center;
 }
-/* MUDANÇA: Esconde o texto do botão de feedback no modo "recolhido" */
 .layout-wrapper.sidebar-collapsed .feedback-button span {
   display: none;
 }
@@ -392,18 +362,20 @@ button.side-card {
   padding-bottom: 15px; 
   border-bottom: 1px solid var(--border-color);
 }
-  transform: translateX(0);
+
+/* --- CORREÇÃO AQUI --- */
+/* Esta é a regra dos KPIs que eu quebrei. Agora está correta e separada. */
+.kpi-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  width: 100%;
+  padding: 0;
 }
 
-/* MUDANÇA: NOVO GRUPO PARA HEADER E CARDS */
-.sidebar-nav-group {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 20px; /* Espaço entre o "Menu" e os ícones */
-}
-
-.sidebar-cards-container {
+.kpi-card {
+  position: relative;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -414,6 +386,8 @@ button.side-card {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-radius: 12px;
 }
+/* --- FIM DA CORREÇÃO --- */
+
 
 .kpi-card:not(:first-child)::before {
   display: none;
@@ -814,7 +788,6 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
 }
 
 .sidebar-footer {
-  /* MUDANÇA: Alinhado à direita da top-bar */
   margin-left: auto; 
   padding-top: 0;
   border-top: none;
@@ -899,8 +872,6 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   display: flex;
   flex-direction: column;
   width: 100%;
-  /* MUDANÇA: Altura removida, o pai cuida disso */
-  /* height: 100%; */
 }
 
 .previews-header {
@@ -1016,9 +987,7 @@ body.light-mode .preview-card {
 
 /* --- ESTILOS PARA O QUICK DIAGNOSIS --- */
 .quick-diagnosis-wrapper {
-  /* MUDANÇA: Removida a margem, o gap do .main-content-area cuida disso */
   margin-top: 0; 
-  /* MUDANÇA: Garante que não encolha */
   flex-shrink: 0;
 }
 
@@ -1106,7 +1075,6 @@ body.light-mode .preview-card {
 
 /* --- CORREÇÃO: REGRAS DE RESPONSIVIDADE --- */
 
-/* Para telas com largura máxima de 1024px (tablets e celulares) */
 @media (max-width: 1024px) {
   .layout-wrapper {
     flex-direction: column;
@@ -1114,7 +1082,6 @@ body.light-mode .preview-card {
     gap: 15px;
   }
   
-  /* MUDANÇA: Área de conteúdo principal não precisa de scroll no mobile */
   .main-content-area {
     overflow-y: visible;
   }
@@ -1124,7 +1091,6 @@ body.light-mode .preview-card {
   }
 
   .sidebar-column {
-    /* MUDANÇA: Top-bar empilha os itens */
     flex-direction: column;
     height: auto;
     align-items: center; 
@@ -1132,7 +1098,6 @@ body.light-mode .preview-card {
   }
 
   .sidebar-cards-container {
-    /* MUDANÇA: Botões empilhados */
     flex-direction: column;
     gap: 15px;
   }
@@ -1140,26 +1105,23 @@ body.light-mode .preview-card {
   .sidebar-footer {
     flex-direction: column;
     gap: 15px;
-    margin-left: 0; /* Reseta margem */
+    margin-left: 0; 
   }
 
   .side-card-tooltip {
     display: none; 
   }
   
-  /* MUDANÇA: Traz de volta o comportamento de "recolhido" para mobile */
   .layout-wrapper.sidebar-collapsed .sidebar-cards-container {
-    flex-direction: column; /* Botões em coluna */
+    flex-direction: column; 
   }
   .layout-wrapper.sidebar-collapsed .side-card {
-     /* Botões com texto */
     width: 100%;
-    max-width: 380px; /* Largura original */
+    max-width: 380px; 
     height: auto;
     padding: 20px;
     justify-content: flex-start;
   }
-  /* MUDANÇA: Botão de feedback com texto no mobile */
   .layout-wrapper.sidebar-collapsed .feedback-button {
     width: 100%;
     max-width: 380px;
@@ -1455,7 +1417,7 @@ body.light-mode .preview-card {
 
 .feedback-button:hover {
   border-color: var(--accent-color);
-  transform: translateY(-2px); /* Efeito de hover */
+  transform: translateY(-2px); 
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   background-color: var(--bg-color); 
 }
@@ -1476,7 +1438,7 @@ body.light-mode .preview-card {
 .feedback-button .side-card-tooltip {
   position: absolute;
   left: 50%;
-  top: calc(100% + 10px); /* Distância reduzida */
+  top: calc(100% + 10px); 
   transform: translateX(-50%);
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
