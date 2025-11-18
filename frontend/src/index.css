@@ -88,8 +88,9 @@ body {
 .main-content-area {
   display: flex;
   flex-direction: column;
-  /* MUDANÇA: Gap removido, pois agora só há 1 filho (.main-content) */
-  /* gap: 15px; */ 
+  /* MUDANÇA: O gap de 15px foi RECOLOCADO AQUI. */
+  /* Isso vai separar o .main-content do .quick-diagnosis-wrapper. */
+  gap: 15px; 
   flex-grow: 1;
   min-width: 0;
   min-height: 0; /* Importante para o scroll */
@@ -127,8 +128,9 @@ body {
 
 .main-content {
   display: grid;
-  /* MUDANÇA: Ajustado para 3 linhas automáticas (KPIs, Previews, Diagnóstico) */
-  grid-template-rows: auto auto auto;
+  /* MUDANÇA: Voltando para 2 linhas (KPIs e Previews). */
+  /* O Diagnóstico Rápido NÃO está mais aqui. */
+  grid-template-rows: auto 1fr;
   gap: 15px; 
   background: var(--bg-color);
   border: 1px solid var(--border-color);
