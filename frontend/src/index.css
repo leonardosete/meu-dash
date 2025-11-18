@@ -89,7 +89,7 @@ body {
   display: flex;
   flex-direction: column;
   /* MUDANÇA: O gap de 15px foi RECOLOCADO AQUI. */
-  /* Isso vai separar o .main-content do .quick-diagnosis-wrapper. */
+  /* Isso vai criar o espaçamento entre os blocos. */
   gap: 15px; 
   flex-grow: 1;
   min-width: 0;
@@ -129,7 +129,7 @@ body {
 .main-content {
   display: grid;
   /* MUDANÇA: Voltando para 2 linhas (KPIs e Previews). */
-  /* O Diagnóstico Rápido NÃO está mais aqui. */
+  /* O Diagnóstico Rápido NÃO está aqui. */
   grid-template-rows: auto 1fr;
   gap: 15px; 
   background: var(--bg-color);
