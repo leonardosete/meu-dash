@@ -1,6 +1,6 @@
 apiVersion: v2
 name: smart-remedy
-version: 0.2.14
+version: 0.2.15
 description: Helm chart para o deploy do backend e frontend do Smart Remedy com namespaces separados.
 type: application
-appVersion: "0.2.14"
+appVersion: "0.2.15"

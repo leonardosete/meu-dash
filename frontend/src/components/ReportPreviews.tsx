@@ -24,6 +24,16 @@ const ReportPreviews: React.FC<ReportPreviewsProps> = ({
         </div>
       </div>
 
+      {/* Bloco movido para cima, conforme solicitado */}
+      {quickDiagnosis && (
+        <div className="quick-diagnosis-wrapper">
+          <div
+            className="card highlight"
+            dangerouslySetInnerHTML={{ __html: quickDiagnosis }}
+          />
+        </div>
+      )}
+
       <div className="previews-grid">
         {urls.summary && (
           <div className="preview-card">
@@ -87,14 +97,7 @@ const ReportPreviews: React.FC<ReportPreviewsProps> = ({
         )}
       </div>
 
-      {quickDiagnosis && (
-        <div className="quick-diagnosis-wrapper">
-          <div
-            className="card highlight"
-            dangerouslySetInnerHTML={{ __html: quickDiagnosis }}
-          />
-        </div>
-      )}
+      {/* O bloco quickDiagnosis foi movido daqui para cima */}
     </div>
   );
 };
