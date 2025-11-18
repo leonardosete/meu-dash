@@ -43,17 +43,24 @@ body,
 
 body {
   margin: 0;
-  padding: 20px;
+  /* MUDANÇA: Padding removido do body */
+  /* padding: 20px; */
   box-sizing: border-box;
   background-color: var(--bg-color);
   color: var(--text-color);
-  /* MUDANÇA: Garante que o layout ocupe 100% da altura */
-  height: 100vh;
-  overflow: hidden; /* Impede o scroll do body */
+  /* MUDANÇA: Altura e overflow removidos do body */
+  /* height: 100vh; */
+  /* overflow: hidden; */
 }
 
 .app-container {
-  height: 100%;
+  /* MUDANÇA: Este é o novo container principal */
+  height: 100vh; /* Ocupa a altura total da tela */
+  box-sizing: border-box; /* Garante que o padding não estoure a altura */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Gap entre a top-bar e o conteúdo */
 }
 
 /* Animação de Fade-in para as páginas */
@@ -79,8 +86,11 @@ body {
   align-items: stretch;
   gap: 20px; /* Gap entre a top-bar e o conteúdo */
   width: 100%;
+  /* MUDANÇA: Height 100% para preencher o app-container */
   height: 100%;
   transition: gap 0.3s ease-in-out;
+  /* MUDANÇA: Min-height 0 para garantir o flex-grow correto */
+  min-height: 0;
 }
 
 /* MUDANÇA: Este é o novo wrapper para o conteúdo principal */
@@ -279,6 +289,19 @@ button.side-card {
   pointer-events: none;
 }
 
+/* MUDANÇA: CORREÇÃO PARA TOOLTIPS NAS BORDAS */
+.sidebar-cards-container .side-card:first-child .side-card-tooltip {
+  left: 0;
+  transform: translateX(0);
+}
+
+.sidebar-cards-container .side-card:last-child .side-card-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateX(0);
+}
+
+
 /* MUDANÇA: Seta apontando para cima */
 .side-card-tooltip::after {
   content: "";
@@ -290,6 +313,19 @@ button.side-card {
   border-style: solid;
   border-color: transparent transparent var(--bg-color) transparent;
 }
+
+/* MUDANÇA: CORREÇÃO DA SETA PARA TOOLTIPS NAS BORDAS */
+.sidebar-cards-container .side-card:first-child .side-card-tooltip::after {
+  left: 30px; /* Aproximadamente o centro de um ícone de 60px */
+  margin-left: -5px;
+}
+
+.sidebar-cards-container .side-card:last-child .side-card-tooltip::after {
+  left: auto;
+  right: 30px; /* Aproximadamente o centro de um ícone de 60px */
+  margin-left: 0;
+}
+
 
 .side-card:hover .side-card-tooltip {
   visibility: visible;
@@ -356,18 +392,18 @@ button.side-card {
   padding-bottom: 15px; 
   border-bottom: 1px solid var(--border-color);
 }
-
-.kpi-dashboard {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 15px;
-  width: 100%;
-  padding: 0;
+  transform: translateX(0);
 }
 
-.kpi-card {
-  position: relative;
-  padding: 20px;
+/* MUDANÇA: NOVO GRUPO PARA HEADER E CARDS */
+.sidebar-nav-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px; /* Espaço entre o "Menu" e os ícones */
+}
+
+.sidebar-cards-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
