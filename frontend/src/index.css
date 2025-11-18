@@ -77,7 +77,8 @@ body {
   display: flex;
   flex-direction: column; 
   align-items: stretch;
-  gap: 20px; /* Gap entre a top-bar e o conteúdo */
+  /* MUDANÇA: O gap entre a barra e o conteúdo principal agora é gerenciado pelo .app-container */
+  /* gap: 20px; */ 
   width: 100%;
   height: 100%;
   transition: gap 0.3s ease-in-out;
@@ -87,7 +88,8 @@ body {
 .main-content-area {
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Espaço entre o main-content e o quick-diagnosis */
+  /* MUDANÇA: Gap removido, pois agora só há 1 filho (.main-content) */
+  /* gap: 15px; */ 
   flex-grow: 1;
   min-width: 0;
   min-height: 0; /* Importante para o scroll */
@@ -125,7 +127,8 @@ body {
 
 .main-content {
   display: grid;
-  grid-template-rows: auto 1fr;
+  /* MUDANÇA: Ajustado para 3 linhas automáticas (KPIs, Previews, Diagnóstico) */
+  grid-template-rows: auto auto auto;
   gap: 15px; 
   background: var(--bg-color);
   border: 1px solid var(--border-color);
