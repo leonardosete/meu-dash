@@ -23,6 +23,7 @@ interface SideCardProps {
   description: string;
   color: string;
   isExternal?: boolean;
+  disabled?: boolean; // Nova propriedade
 }
 
 const SideCard: React.FC<SideCardProps> = ({
@@ -33,21 +34,44 @@ const SideCard: React.FC<SideCardProps> = ({
   description,
   color,
   isExternal = false,
+  disabled = false, // Padrão é false
 }) => {
+  // Define a cor do ícone. Se disabled, usa a variável CSS ou um fallback cinza fixo (#a1a1aa)
+  const iconColor = disabled ? "var(--text-secondary-color, #a1a1aa)" : color;
+
   const content = (
     <>
-      {React.cloneElement(icon, { color })}
+      {React.cloneElement(icon, { color: iconColor })}
       <div className="side-card-tooltip">
-        <h3>{title}</h3>
+        <h3>{title} {disabled && "(Em Breve)"}</h3>
         <p>{description}</p>
       </div>
     </>
   );
 
   const commonProps = {
-    className: "card side-card",
-    title: "", // Adicionado para sobrescrever o tooltip nativo
+    className: `card side-card ${disabled ? "disabled" : ""}`,
+    title: "",
+    // Estilos para desativar visualmente e impedir cliques
+    style: disabled
+      ? { 
+          cursor: "not-allowed", 
+          opacity: 0.5, 
+          filter: "grayscale(0.8)", 
+          pointerEvents: "none" as const 
+        }
+      : {},
+    "aria-disabled": disabled,
   };
+
+  // Se desabilitado, renderiza uma div simples para manter o layout e o tooltip
+  if (disabled) {
+    return (
+      <div {...commonProps} style={{ ...commonProps.style, pointerEvents: "auto" }}>
+        {content}
+      </div>
+    );
+  }
 
   if (onClick) {
     return (
@@ -126,15 +150,7 @@ const Sidebar: React.FC = () => {
             color="var(--text-color)"
           />
 
-          <SideCard
-            to="/docs/doc_gerencial.html"
-            isExternal={true}
-            icon={<PieChart />}
-            title="Documentação Gerencial"
-            description="Conhecendo a ferramenta."
-            color="var(--accent-color)"
-          />
-
+          {/* Doc API movida para antes da Doc Gerencial */}
           <SideCard
             to="/apidocs/"
             isExternal={true}
@@ -142,6 +158,17 @@ const Sidebar: React.FC = () => {
             title="Documentação da API"
             description="Navegue e teste os endpoints (Swagger)."
             color="#38bdf8"
+          />
+
+          {/* Doc Gerencial movida para o final e desativada */}
+          <SideCard
+            to="/docs/doc_gerencial.html"
+            isExternal={true}
+            icon={<PieChart />}
+            title="Documentação Gerencial"
+            description="Documentação em desenvolvimento."
+            color="var(--accent-color)"
+            disabled={true}
           />
         </div>
 
