@@ -85,12 +85,13 @@ body {
   min-height: 0;
 }
 
-.main-content-area {
+/* CORREÇÃO 1: Renomeado de .main-content-area para .content-wrapper 
+  para corresponder ao seu componente Layout.tsx. 
+  Isto corrige o scroll e o layout principal.
+*/
+.content-wrapper {
   display: flex;
   flex-direction: column;
-  /* MUDANÇA: O gap de 15px foi RECOLOCADO AQUI. */
-  /* Isso vai criar o espaçamento entre os blocos. */
-  gap: 15px; 
   flex-grow: 1;
   min-width: 0;
   min-height: 0; /* Importante para o scroll */
@@ -98,14 +99,6 @@ body {
   padding-right: 5px; /* Espaço para a barra de rolagem */
 }
 
-
-.content-wrapper {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  min-width: 0;
-  transition: all 0.3s ease-in-out;
-}
 
 .sidebar-column {
   display: flex;
@@ -128,8 +121,9 @@ body {
 
 .main-content {
   display: grid;
-  /* MUDANÇA: Voltando para 2 linhas (KPIs e Previews). */
-  /* O Diagnóstico Rápido NÃO está aqui. */
+  /* CORRETO: 'auto 1fr' está correto pois os filhos 
+    são .kpi-section e .form-section-container (que contém os previews) 
+  */
   grid-template-rows: auto 1fr;
   gap: 15px; 
   background: var(--bg-color);
@@ -872,11 +866,16 @@ body.light-mode .form-disabled-overlay .overlay-content:hover {
   overflow-y: auto; 
 }
 
+/* CORREÇÃO 2: Adicionado 'gap: 15px' 
+  para criar o espaçamento entre .previews-grid e .quick-diagnosis-wrapper
+  que são filhos deste contentor.
+*/
 .report-previews-container {
   text-align: center;
   display: flex;
   flex-direction: column;
   width: 100%;
+  gap: 15px; /* <- CORREÇÃO DE ESPAÇAMENTO AQUI */
 }
 
 .previews-header {
@@ -1087,7 +1086,9 @@ body.light-mode .preview-card {
     gap: 15px;
   }
   
-  .main-content-area {
+  /* CORREÇÃO 1 (Continuação): Renomeado de .main-content-area para .content-wrapper
+  */
+  .content-wrapper {
     overflow-y: visible;
   }
 
