@@ -1206,7 +1206,9 @@ body.light-mode .preview-card {
   color: var(--primary-text-color);
   display: flex;
   align-items: center;
-  gap: 10px;
+  /* Removido `gap: 10px;` pois estava causando espaçamento desnecessário 
+     entre o ícone e o texto do h3, que não tem ícone */
+  /* gap: 10px; */ 
 }
 
 .modal-header h3 svg {
@@ -1218,12 +1220,14 @@ body.light-mode .preview-card {
   border: none;
   color: var(--text-secondary-color);
   cursor: pointer;
-  padding: 8px;
+  padding: 8px; /* Reduzindo o padding para diminuir o tamanho do botão */
   border-radius: 6px;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px; /* Largura fixa para o botão */
+  height: 32px; /* Altura fixa para o botão */
 }
 
 .modal-close:hover {
