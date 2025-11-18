@@ -37,6 +37,7 @@ const SideCard: React.FC<SideCardProps> = ({
   disabled = false, // Padrão é false
 }) => {
   // Define a cor do ícone. Se disabled, usa a variável CSS ou um fallback cinza fixo (#a1a1aa)
+  // O fallback (#a1a1aa) garante que o ícone apareça mesmo sem mexer no CSS global.
   const iconColor = disabled ? "var(--text-secondary-color, #a1a1aa)" : color;
 
   const content = (
