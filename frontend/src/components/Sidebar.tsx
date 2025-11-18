@@ -23,6 +23,7 @@ interface SideCardProps {
   description: string;
   color: string;
   isExternal?: boolean;
+  disabled?: boolean; // Nova propriedade opcional
 }
 
 const SideCard: React.FC<SideCardProps> = ({
@@ -33,21 +34,41 @@ const SideCard: React.FC<SideCardProps> = ({
   description,
   color,
   isExternal = false,
+  disabled = false, // Valor padrão false
 }) => {
+  // Se estiver desabilitado, usamos uma cor cinza/apagada para o ícone
+  const iconColor = disabled ? "var(--text-secondary-color)" : color;
+
   const content = (
     <>
-      {React.cloneElement(icon, { color })}
+      {React.cloneElement(icon, { color: iconColor })}
       <div className="side-card-tooltip">
-        <h3>{title}</h3>
+        <h3>{title} {disabled && "(Em Breve)"}</h3>
         <p>{description}</p>
       </div>
     </>
   );
 
   const commonProps = {
-    className: "card side-card",
-    title: "", // Adicionado para sobrescrever o tooltip nativo
+    className: `card side-card ${disabled ? "disabled" : ""}`, // Adiciona classe disabled se necessário
+    title: "",
+    // Se desabilitado, aplicamos estilo inline para cursor e opacidade
+    style: disabled
+      ? { cursor: "not-allowed", opacity: 0.6, pointerEvents: "none" as const }
+      : {},
+    "aria-disabled": disabled,
   };
+
+  // Se estiver desabilitado, renderiza apenas uma div (não clicável)
+  if (disabled) {
+    return (
+      <div {...commonProps} style={{ ...commonProps.style, pointerEvents: "auto" }}>
+        {/* pointerEvents: auto na div container permite que o tooltip ainda apareça no hover,
+            mas o link/botão não funciona */}
+        {content}
+      </div>
+    );
+  }
 
   if (onClick) {
     return (
@@ -126,13 +147,16 @@ const Sidebar: React.FC = () => {
             color="var(--text-color)"
           />
 
+          {/* AJUSTE AQUI: Item desabilitado e com nova descrição */}
           <SideCard
             to="/docs/doc_gerencial.html"
             isExternal={true}
             icon={<PieChart />}
             title="Documentação Gerencial"
-            description="Conhecendo a ferramenta."
+            // Nova descrição para o tooltip
+            description="Documentação em desenvolvimento." 
             color="var(--accent-color)"
+            disabled={true} 
           />
 
           <SideCard
