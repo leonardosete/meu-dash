@@ -1443,16 +1443,22 @@ body.light-mode .preview-card {
 /* Tooltip do botão de feedback */
 .feedback-button .side-card-tooltip {
   position: absolute;
-  left: 50%;
+  /* MUDANÇA: Alinhado à direita para não sair da tela */
+  left: auto;
+  right: 0; 
   top: calc(100% + 10px); 
-  transform: translateX(-50%);
+  /* MUDANÇA: Transform removido */
+  transform: translateX(0); 
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   padding: 10px 15px;
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   z-index: 100;
-  white-space: nowrap;
+  /* MUDANÇA: Permitir quebra de linha */
+  white-space: normal; 
+  /* MUDANÇA: Definir uma largura para a quebra de linha */
+  width: 250px; 
 
   visibility: hidden;
   opacity: 0;
@@ -1466,7 +1472,9 @@ body.light-mode .preview-card {
   content: "";
   position: absolute;
   bottom: 100%;
-  left: 50%;
+  /* MUDANÇA: Alinhar a seta com a direita do botão */
+  left: auto;
+  right: 20px; /* Ajustado para ficar próximo do centro do botão */
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
