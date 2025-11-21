@@ -1,7 +1,7 @@
 # Dockerfile de Produção Multi-Estágio
 
 # --- Estágio 1: Build do Frontend ---
-FROM node:20-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 
 ARG APP_VERSION=dev
 ENV VITE_APP_VERSION="${APP_VERSION}"
